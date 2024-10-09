@@ -1,10 +1,135 @@
-import React, { useState } from "react";
-import jsPDF from "jspdf";
-import "jspdf-autotable";
-import NU_logo from '../Images/NU_logo.png';
- 
+import React from "react";
+import { Document, Page, Text, View, StyleSheet, Image, PDFDownloadLink } from "@react-pdf/renderer";
+import NU_logo from "../Images/NU_logo.png";
+
+const AapPDF = ({ formData }) => (
+  <Document>
+    <Page style={styles.body}>
+      {/* Logo and Header */}
+      <View style={styles.header}>
+        <Image src={NU_logo} style={styles.logo} />
+        <View style={styles.headerText}>
+          <Text style={styles.title}>NU MOA</Text>
+          <Text>Student Development and Activities Office</Text>
+        </View>
+      </View>
+
+      <Text style={styles.formTitle}>STUDENT ORGANIZATION ACTIVITY APPLICATION FORM</Text>
+
+      {/* Event Location and Date */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>EVENT LOCATION</Text>
+        <View style={styles.formRow}>
+          <Text>Location: {formData.eventLocation}</Text>
+          <Text>Date of Application: {formData.applicationDate}</Text>
+        </View>
+        <View style={styles.formRow}>
+          <Text>On Campus: {formData.isOnCampus === "on-campus" ? "Yes" : "No"}</Text>
+        </View>
+      </View>
+
+      {/* Contact Information */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>1. CONTACT INFORMATION</Text>
+        <View style={styles.formRow}>
+          <Text>Student Organization: {formData.studentOrganization}</Text>
+          <Text>Contact Person: {formData.contactPerson}</Text>
+        </View>
+        <View style={styles.formRow}>
+          <Text>Contact No: {formData.contactNo}</Text>
+          <Text>Email Address: {formData.emailAddress}</Text>
+        </View>
+      </View>
+
+      {/* Event Details */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>2. EVENT DETAILS</Text>
+        <View style={styles.formRow}>
+          <Text>Event Title: {formData.eventTitle}</Text>
+          <Text>Event Type: {formData.eventType}</Text>
+        </View>
+        <View style={styles.formRow}>
+          <Text>Venue Address: {formData.venueAddress}</Text>
+          <Text>Event Date: {formData.eventDate}</Text>
+        </View>
+        <View style={styles.formRow}>
+          <Text>Event Time: {formData.eventTime}</Text>
+        </View>
+        <View style={styles.formRow}>
+          <Text>Organizer: {formData.organizer}</Text>
+          <Text>Budget Amount: {formData.budgetAmount}</Text>
+        </View>
+      </View>
+
+      {/* Core Values Integration */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>CORE VALUES INTEGRATION</Text>
+        <Text>{formData.coreValuesIntegration}</Text>
+      </View>
+
+      {/* Objectives */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>OBJECTIVES</Text>
+        <Text>{formData.objectives}</Text>
+      </View>
+
+      {/* Communications and Promotions */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>COMMUNICATIONS AND PROMOTIONS REQUIRED</Text>
+        <View style={styles.table}>
+          <View style={styles.tableRow}>
+            <Text>Marketing</Text>
+            <Text>{formData.marketing ? "Yes" : "No"}</Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text>Collaterals</Text>
+            <Text>{formData.collaterals ? "Yes" : "No"}</Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text>Press Release</Text>
+            <Text>{formData.pressRelease ? "Yes" : "No"}</Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text>Others</Text>
+            <Text>{formData.others ? formData.others : "N/A"}</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Facilities Considerations */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>FACILITIES CONSIDERATIONS</Text>
+        <View style={styles.table}>
+          <View style={styles.tableRow}>
+            <Text>Event Facilities</Text>
+            <Text>{formData.eventFacilities ? "Yes" : "No"}</Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text>Holding Area</Text>
+            <Text>{formData.holdingArea ? "Yes" : "No"}</Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text>Toilets</Text>
+            <Text>{formData.toilets ? "Yes" : "No"}</Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text>Transportation & Parking</Text>
+            <Text>{formData.transportation ? "Yes" : "No"}</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Event Management Head */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>3. EVENT MANAGEMENT TEAM</Text>
+        <Text>Event Management Head: {formData.eventManagementHead}</Text>
+      </View>
+    </Page>
+  </Document>
+);
+
 const Aap = () => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = React.useState({
     eventLocation: "",
     isOnCampus: "on-campus",
     applicationDate: "",
@@ -21,157 +146,29 @@ const Aap = () => {
     budgetAmount: "",
     coreValuesIntegration: "",
     objectives: "",
+    marketing: false,
+    collaterals: false,
+    pressRelease: false,
+    others: "",
+    eventFacilities: false,
+    holdingArea: false,
+    toilets: false,
+    transportation: false,
     eventManagementHead: "",
   });
- 
+
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     });
   };
- 
-  const checkPageEnd = (doc, y) => {
-    if (y > 270) { // Check if content is close to the bottom of the page
-      doc.addPage();
-      return 10; // Reset y-position for new page
-    }
-    return y;
-  };
- 
-  const generatePDF = () => {
-    const doc = new jsPDF("p", "mm", "a4");
-    let y = 10; // Y-position tracker
- 
-    // Add the logo at the top
-    doc.addImage(NU_logo, 'PNG', 10, 10, 30, 30);
-    y += 40; // Adjust y-position after adding logo
- 
-    // Add title and header
-    doc.setFontSize(16);
-    doc.text("NU MOA Student Development and Activities Office", 60, y);
-    y += 10;
- 
-    doc.setFontSize(14);
-    doc.text("STUDENT ORGANIZATION ACTIVITY APPLICATION FORM", 60, y);
-    y += 10;
- 
-    // Add header line
-    doc.setDrawColor(0);
-    doc.setLineWidth(1);
-    doc.line(10, y, 200, y);
-    y += 10;
- 
-    // Event Information Section
-    doc.setFillColor(200, 200, 255); // Light blue background
-    doc.rect(10, y, 190, 10, "F");
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text("1. EVENT INFORMATION", 12, y + 7);
-    y += 15;
- 
-    doc.setFont("helvetica", "normal");
-    doc.text(`Event Location: ${formData.eventLocation}`, 12, y);
-    doc.text(`On Campus: ${formData.isOnCampus === "on-campus" ? "Yes" : "No"}`, 140, y);
-    y += 10;
- 
-    doc.text(`Date of Application: ${formData.applicationDate}`, 12, y);
-    y += 10;
- 
-    // Contact Information Section
-    y = checkPageEnd(doc, y);
-    doc.setFillColor(200, 200, 255);
-    doc.rect(10, y, 190, 10, "F");
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text("2. CONTACT INFORMATION", 12, y + 7);
-    y += 15;
- 
-    doc.setFont("helvetica", "normal");
-    doc.text(`Student Organization: ${formData.studentOrganization}`, 12, y);
-    doc.text(`Contact Person: ${formData.contactPerson}`, 140, y);
-    y += 10;
- 
-    doc.text(`Contact No: ${formData.contactNo}`, 12, y);
-    doc.text(`Email Address: ${formData.emailAddress}`, 140, y);
-    y += 15;
- 
-    // Event Details Section
-    y = checkPageEnd(doc, y);
-    doc.setFillColor(200, 200, 255);
-    doc.rect(10, y, 190, 10, "F");
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text("3. EVENT DETAILS", 12, y + 7);
-    y += 15;
- 
-    doc.setFont("helvetica", "normal");
-    doc.text(`Event Title: ${formData.eventTitle}`, 12, y);
-    doc.text(`Event Type: ${formData.eventType}`, 140, y);
-    y += 10;
- 
-    doc.text(`Venue Address: ${formData.venueAddress}`, 12, y);
-    doc.text(`Event Date: ${formData.eventDate}`, 140, y);
-    y += 10;
- 
-    doc.text(`Event Time: ${formData.eventTime}`, 12, y);
-    y += 15;
- 
-    // Organizer and Budget
-    y = checkPageEnd(doc, y);
-    doc.text(`Organizer: ${formData.organizer}`, 12, y);
-    doc.text(`Budget Amount: ${formData.budgetAmount}`, 140, y);
-    y += 15;
- 
-    // Core Values Integration Section
-    y = checkPageEnd(doc, y);
-    doc.setFillColor(200, 200, 255);
-    doc.rect(10, y, 190, 10, "F");
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text("4. CORE VALUES INTEGRATION", 12, y + 7);
-    y += 15;
- 
-    doc.setFont("helvetica", "normal");
-    doc.text(`Core Values Integration: ${formData.coreValuesIntegration}`, 12, y);
-    y += 15;
- 
-    // Objectives Section
-    y = checkPageEnd(doc, y);
-    doc.setFillColor(200, 200, 255);
-    doc.rect(10, y, 190, 10, "F");
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text("5. OBJECTIVES", 12, y + 7);
-    y += 15;
- 
-    doc.setFont("helvetica", "normal");
-    doc.text(`Objectives: ${formData.objectives}`, 12, y);
-    y += 15;
- 
-    // Event Management Head
-    y = checkPageEnd(doc, y);
-    doc.setFillColor(200, 200, 255);
-    doc.rect(10, y, 190, 10, "F");
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text("6. EVENT MANAGEMENT HEAD", 12, y + 7);
-    y += 15;
- 
-    doc.setFont("helvetica", "normal");
-    doc.text(`Event Management Head: ${formData.eventManagementHead}`, 12, y);
-    y += 15;
- 
-    // Save the PDF
-    doc.save("Activity_Application_Form.pdf");
-  };
- 
+
   return (
     <div>
       <h1>Activity Application Form</h1>
       <form>
-        {/* Event Location */}
         <label>Event Location:</label>
         <input
           type="text"
@@ -180,8 +177,6 @@ const Aap = () => {
           onChange={handleChange}
         />
         <br />
- 
-        {/* On Campus / Off Campus */}
         <label>Is the event on campus?</label>
         <input
           type="radio"
@@ -189,7 +184,7 @@ const Aap = () => {
           value="on-campus"
           checked={formData.isOnCampus === "on-campus"}
           onChange={handleChange}
-        />{" "}
+        />
         Yes
         <input
           type="radio"
@@ -197,11 +192,9 @@ const Aap = () => {
           value="off-campus"
           checked={formData.isOnCampus === "off-campus"}
           onChange={handleChange}
-        />{" "}
+        />
         No
         <br />
- 
-        {/* Date of Application */}
         <label>Date of Application:</label>
         <input
           type="date"
@@ -210,145 +203,77 @@ const Aap = () => {
           onChange={handleChange}
         />
         <br />
- 
-        {/* Student Organization */}
-        <label>Student Organization:</label>
-        <input
-          type="text"
-          name="studentOrganization"
-          value={formData.studentOrganization}
-          onChange={handleChange}
-        />
-        <br />
- 
-        {/* Contact Information */}
-        <label>Contact Person:</label>
-        <input
-          type="text"
-          name="contactPerson"
-          value={formData.contactPerson}
-          onChange={handleChange}
-        />
-        <br />
- 
-        <label>Contact No:</label>
-        <input
-          type="text"
-          name="contactNo"
-          value={formData.contactNo}
-          onChange={handleChange}
-        />
-        <br />
- 
-        <label>Email Address:</label>
-        <input
-          type="email"
-          name="emailAddress"
-          value={formData.emailAddress}
-          onChange={handleChange}
-        />
-        <br />
- 
-        {/* Event Details */}
-        <label>Event Title:</label>
-        <input
-          type="text"
-          name="eventTitle"
-          value={formData.eventTitle}
-          onChange={handleChange}
-        />
-        <br />
- 
-        <label>Event Type:</label>
-        <input
-          type="text"
-          name="eventType"
-          value={formData.eventType}
-          onChange={handleChange}
-        />
-        <br />
- 
-        <label>Venue Address:</label>
-        <input
-          type="text"
-          name="venueAddress"
-          value={formData.venueAddress}
-          onChange={handleChange}
-        />
-        <br />
- 
-        <label>Event Date:</label>
-        <input
-          type="date"
-          name="eventDate"
-          value={formData.eventDate}
-          onChange={handleChange}
-        />
-        <br />
- 
-        <label>Event Time:</label>
-        <input
-          type="time"
-          name="eventTime"
-          value={formData.eventTime}
-          onChange={handleChange}
-        />
-        <br />
- 
-        <label>Organizer:</label>
-        <input
-          type="text"
-          name="organizer"
-          value={formData.organizer}
-          onChange={handleChange}
-        />
-        <br />
- 
-        <label>Budget Amount:</label>
-        <input
-          type="number"
-          name="budgetAmount"
-          value={formData.budgetAmount}
-          onChange={handleChange}
-        />
-        <br />
- 
-        {/* Core Values Integration */}
-        <label>Core Values Integration:</label>
-        <textarea
-          name="coreValuesIntegration"
-          value={formData.coreValuesIntegration}
-          onChange={handleChange}
-        />
-        <br />
- 
-        {/* Objectives */}
-        <label>Objectives:</label>
-        <textarea
-          name="objectives"
-          value={formData.objectives}
-          onChange={handleChange}
-        />
-        <br />
- 
-        {/* Event Management Head */}
-        <label>Event Management Head:</label>
-        <input
-          type="text"
-          name="eventManagementHead"
-          value={formData.eventManagementHead}
-          onChange={handleChange}
-        />
-        <br />
- 
-        {/* Generate PDF Button */}
-        <button type="button" onClick={generatePDF}>
-          Generate PDF
-        </button>
+        {/* Add other form fields here */}
+        <PDFDownloadLink
+          document={<AapPDF formData={formData} />}
+          fileName="Activity_Application_Form.pdf"
+        >
+          {({ loading }) =>
+            loading ? "Loading document..." : "Download Activity Application Form"
+          }
+        </PDFDownloadLink>
       </form>
     </div>
   );
 };
- 
+
+const styles = StyleSheet.create({
+  body: {
+    padding: 20,
+    fontSize: 12,
+  },
+  header: {
+    flexDirection: "row",
+    marginBottom: 20,
+  },
+  logo: {
+    width: 60,
+    height: 60,
+  },
+  headerText: {
+    marginLeft: 10,
+    justifyContent: "center",
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  formTitle: {
+    textAlign: "center",
+    fontSize: 14,
+    marginBottom: 20,
+    fontWeight: "bold",
+    textDecoration: "underline",
+  },
+  section: {
+    marginBottom: 15,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "#000",
+  },
+  sectionTitle: {
+    fontWeight: "bold",
+    backgroundColor: "#D9E8FC",
+    padding: 5,
+    borderBottom: "1 solid black",
+  },
+  formRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 5,
+  },
+  table: {
+    borderWidth: 1,
+    borderColor: "#000",
+    marginTop: 5,
+  },
+  tableRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    padding: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: "#000",
+  },
+});
+
 export default Aap;
- 
