@@ -1,0 +1,12 @@
+.admin-tab{
+    display: flex;
+    border: 1px solid black;
+    height: 699px;
+}
+
+.headerr{
+    display: flex;
+    width: 60%;
+    justify-content: center;
+    border: 1px solid;
+}

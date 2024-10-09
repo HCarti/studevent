@@ -1,0 +1,138 @@
+/* src/AdminHome.css */
+.orgmem-page {
+  font-family: Arial, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: url('../Images/NU_moa_bg.jpg') no-repeat fixed;
+  background-size: cover;
+  color: #fff;
+}
+
+.header {
+  background-color: rgba(230, 221, 221, 0.651);
+  padding: 2rem 1rem;
+  text-align: center;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.header-title {
+  color: #ecf0f1;
+  margin: 0;
+}
+
+.header h2 {
+  margin: 0;
+  font-family: "Poetsen One", sans-serif;
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #0175c8;
+  animation: fadeIn 2s ease-in-out;
+}
+
+.header img {
+  height: 200px; /* Adjusted for better responsiveness */
+  animation: fadeIn 2s ease-in-out;
+}
+
+.header h3 {
+  display: flex; /* Use flexbox to align items */
+  flex-direction: column; /* Stack icon and text vertically */
+  align-items: center; /* Align icon and text horizontally */
+  justify-content: center; /* Align icon and text vertically */
+  text-align: center;
+  width: 150px;
+  height: 120px;
+  gap: 20px;
+  cursor: pointer;
+  color: black;
+  padding: 0; /* Removed padding */
+  border-radius: 5px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+
+
+
+.header h3:hover {
+  transform: translateY(-10px);
+  border: 2px solid rgb(3, 78, 241);
+}
+
+.btns {
+  display: flex;
+  flex-wrap: wrap; /* Allows buttons to wrap on smaller screens */
+  justify-content: center;
+  gap: 10px; /* Increased gap for better spacing */
+  animation: fadeIn 2s ease-in-out;
+}
+
+.forms-btn, .events-btn, .profile-btn, .dashboard-btn {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 100px; /* Allows buttons to resize proportionally */
+  min-width: 120px; /* Ensures a minimum width */
+  max-width: 200px; /* Limits the maximum width */
+  margin: 10px;
+}
+
+@media (max-width: 768px) {
+  .header h2 {
+      font-size: 2rem; /* Smaller font size on smaller screens */
+  }
+
+  .header img {
+      height: 150px; /* Smaller image on smaller screens */
+  }
+
+  .header h3 {
+      font-size: 1.2rem; /* Smaller button text on smaller screens */
+  }
+}
+
+@media (max-width: 480px) {
+  .header h2 {
+      font-size: 1.5rem; /* Further reduce font size for mobile */
+  }
+
+  .header img {
+      height: 100px; /* Smaller image on mobile */
+  }
+
+  .header h3 {
+      font-size: 1rem; /* Smaller button text for mobile */
+  }
+
+  .btns {
+      flex-direction: column; /* Stack buttons vertically on very small screens */
+  }
+
+  .forms-btn, .events-btn, .profile-btn, .dashboard-btn {
+      width: 80%; /* Full width on mobile */
+      max-width: none; /* Remove max-width for mobile */
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+      opacity: 0;
+  }
+  100% {
+      opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  0% {
+      transform: translateY(20px);
+      opacity: 0;
+  }
+  100% {
+      transform: translateY(0);
+      opacity: 1;
+  }
+}

@@ -1,0 +1,107 @@
+/* src/LandingPage.css */
+.orgmem-page {
+  font-family: Arial, sans-serif;
+  min-height: 669px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: url('../Images/NU_moa_bg.jpg') no-repeat  fixed;
+  background-size: cover;
+  color: #fff;
+}
+
+.header {
+  background-color: rgba(230, 221, 221, 0.651);
+  padding: 2rem 1rem;
+  text-align: center;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.header-title {
+  color: #ecf0f1;
+  margin: 0;
+}
+
+.header h2 {
+  margin: 0;
+  font-family: "Poetsen One", sans-serif;
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #0175c8;
+  animation: fadeIn 2s ease-in-out;
+}
+
+.header img {
+  height: 300px;
+  animation: fadeIn 2s ease-in-out;
+}
+
+.header h3 {
+  align-items: center;
+  font-size: 24px; /* Adjust the font size if needed */
+  cursor: pointer; /* Makes the cursor a pointer when hovering over the h3 */
+  color: black; /* Button text color */
+  padding: 10px 20px; /* Padding around the text */
+  border-radius: 5px; /* Rounded corners */
+  transition: background-color 0.3s ease, transform 0.3s ease; /* Smooth transition for hover effect */
+}
+
+.header h3:hover {
+  transform: translateY(-10px); 
+  border: 2px solid rgb(3, 78, 241);
+}
+
+.header p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  animation: slideIn 1.5s ease-in-out;
+}
+
+.btns {
+  gap: 5px;
+  display: flex;
+  justify-content: center;
+  color: black;
+  animation: fadeIn 2s ease-in-out;
+}
+
+.forms-btn {
+  width: 35%;
+  display: flex;
+  flex-direction: column;
+}
+
+.events-btn {
+  width: 25%;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-btn {
+  width: 20%;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes fadeIn {
+  0% {
+      opacity: 0;
+  }
+  100% {
+      opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  0% {
+      transform: translateY(20px);
+      opacity: 0;
+  }
+  100% {
+      transform: translateY(0);
+      opacity: 1;
+  }
+}

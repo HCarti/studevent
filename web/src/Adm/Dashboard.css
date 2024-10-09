@@ -1,0 +1,124 @@
+/* Dashboard.css */
+
+/* Dashboard Container */
+.dashboard-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+  
+  /* Dashboard Title */
+  .dashboard-title {
+    font-size: 2rem;
+    text-align: center;
+    margin-bottom: 20px;
+    font-weight: bold;
+  }
+  
+  /* Top Section: Proposals, Liquidations, Pie Chart */
+  .top-section {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    width: 100%;
+    max-width: 800px;
+  }
+  
+  .proposal-box, .liquidation-box {
+    flex: 1;
+    text-align: center;
+    cursor: pointer;
+    border: 1px solid #ddd;
+    padding: 20px;
+    margin: 0 10px;
+    border-radius: 10px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .proposal-box:hover, .liquidation-box:hover {
+    background-color: #f1f1f1;
+  }
+  
+  .icon {
+    font-size: 2rem;
+    margin-top: 10px;
+  }
+  
+  .pie-chart {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 10px;
+  }
+  
+  /* Top Organizations Section */
+  .liquidation-section {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    max-width: 800px;
+    width: 100%;
+  }
+  
+  .top-organizations, .recent-events {
+    flex: 1;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    margin: 10px;
+  }
+  
+  .section-title {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    font-weight: bold;
+  }
+  
+  .organization-list {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  
+  /* Recent Events Section */
+  .event-date {
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+  
+  .event-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .event-icon {
+    font-size: 1.5rem;
+    margin-right: 10px;
+  }
+  
+  .event-text {
+    font-size: 1rem;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .top-section {
+      flex-direction: column;
+    }
+  
+    .proposal-box, .liquidation-box, .pie-chart {
+      margin-bottom: 20px;
+    }
+  
+    .liquidation-section {
+      flex-direction: column;
+    }
+  
+    .top-organizations, .recent-events {
+      width: 100%;
+      margin: 10px 0;
+    }
+  }
+  

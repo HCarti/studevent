@@ -1,0 +1,236 @@
+.organizations-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  /* padding: 20px; */
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-weight: bold;
+  padding-bottom: 10px;
+}
+ 
+.card-slider {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  flex-wrap: wrap; /* Allow cards to wrap on smaller screens */
+}
+ 
+.card {
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.5s;
+  padding: 15px;
+  width: 250px;
+  height: 350px;
+  margin: 0 15px;
+  opacity: 0.9;
+}
+ 
+.card:hover {
+  transform: translateY(-5px) scale(1.0);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  opacity: 1;
+}
+ 
+.card-image {
+  border-radius: 10px;
+  width: 100%;
+  height: auto;
+  transition: transform 0.3s ease;
+}
+ 
+.card-image:hover {
+  transform: rotate(2deg); /* Subtle rotation on hover */
+}
+ 
+.card-info {
+  margin-top: 15px;
+}
+ 
+.card-info h2 {
+  font-size: 1.5em;
+  color: #333;
+  text-align: center;
+  margin-bottom: 10px;
+}
+ 
+.card-info p {
+  font-size: 1em;
+  color: #777;
+  text-align: center;
+  animation: fadeInUp 0.5s ease-in-out;
+}
+ 
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+ 
+/* Custom dots, styled as circles, not numbers */
+.slick-dots.custom-dots li {
+  display: inline-block;
+ 
+}
+ 
+.slick-dots.custom-dots li button::before {
+  font-size: 10px;
+  color: #ccc;
+ 
+}
+ 
+.slick-dots.custom-dots li.slick-active button::before {
+  color: #333;
+}
+ 
+.slick-slider {
+  width: 100%;
+}
+ 
+.slick-list {
+  margin: 0 auto;
+  max-width: 900px;
+}
+ 
+.slick-slider .slick-dots {
+  position: relative;
+  bottom: -20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  margin-top: 20px;
+}
+ 
+.slick-slider .slick-dots li {
+  margin: 0 5px;
+}
+ 
+.slick-slider .slick-dots li button {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  background-color: #ccc;
+  transition: background-color 0.3s ease;
+}
+ 
+.slick-slider .slick-dots li.slick-active button {
+  background-color: #333;
+}
+ 
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+  .card {
+    width: 200px;
+    height: 300px;
+    margin: 10px;
+  }
+ 
+  .card-info h2 {
+    font-size: 1.2em;
+  }
+ 
+  .card-info p {
+    font-size: 0.9em;
+  }
+}
+ 
+@media screen and (max-width: 480px) {
+  .card {
+    width: 100%;
+    height: auto;
+    margin: 10px 0;
+  }
+ 
+  .card-info h2 {
+    font-size: 1em;
+  }
+ 
+  .card-info p {
+    font-size: 0.8em;
+  }
+}
+ 
+/* Footer Styling */
+footer {
+  background-color: #333;
+  color: white;
+  padding: 35px;
+}
+ 
+.footer-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+ 
+.footer-section {
+  padding: 10px;
+  text-align: center;
+}
+ 
+.footer-text {
+  padding: 35px;
+  animation: slide-in 1.0s ease forwards;
+  font-size: 20px;
+}
+ 
+.contact-info, .social-icons-container, .copyright-info {
+  text-align: center;
+}
+ 
+.footer h4 {
+  margin-bottom: 15px;
+  font-size: 20px;
+}
+ 
+.contact-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  justify-content: center;
+}
+ 
+.contact-item svg {
+  margin-right: 8px;
+}
+ 
+.social-icons-container {
+  display: flex;
+  justify-content: center;
+}
+ 
+.social-icon {
+  width: 24px;
+  height: 24px;
+  margin: 0 10px;
+}
+ 
+.mission-vision {
+  text-align: center;
+  margin-top: 30px;
+}
+ 
+ 
+.mission-vision p {
+  /* font-size: 1.1em; */
+  color: #555;
+  max-width: 800px;
+  margin: 0 auto 20px auto;
+  line-height: 1.5;
+}

@@ -1,0 +1,41 @@
+.control-pan{
+    padding: 20px;  
+    display: flex;
+    flex-direction: column;
+}
+.outer-p{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    border-radius: 10px;
+    background-color: #ded1cc;
+    gap: 40px;
+    align-items: center;
+    height: 250px;
+}
+.c-box-1, .c-box-2, .c-box-3, .c-box-4{
+    display: flex;
+    padding: 20px;
+    border: 1px solid;
+    flex-direction: column;
+    width: 16%;
+    height: 160px;
+    border-radius: 10px;
+    justify-content: flex-end;
+}
+
+.c-box-1{
+    background-color: #1cd69f;
+}
+
+.c-box-2{
+    background-color: #bd95ed;
+}
+
+.c-box-3{
+    background-color: #8ba8f0;
+}
+
+.c-box-4{
+    background-color: #fa9975;
+}

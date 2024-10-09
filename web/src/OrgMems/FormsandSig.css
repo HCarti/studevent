@@ -1,0 +1,99 @@
+.fs-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  height: 83vh;
+}
+
+.fs-title {
+  text-align: center;
+  color: #0055a2;
+  margin-bottom: 20px;
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.steps {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.step {
+  border: 1px solid #ddd;
+  width: 250px;
+  padding: 20px;
+  height: 42vh;
+  border-radius: 20px;
+  background-color: white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  position: relative; /* Important for absolute positioning inside */
+  overflow: hidden; /* To hide overflow of the icon */
+}
+
+.step-icon {
+  font-size: 6em;
+  color: #e0e0e0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  pointer-events: none; /* To make the icon non-interactive */
+}
+
+.step h2, .step p {
+  position: relative;
+  z-index: 1; /* Ensures text is above the icon */
+}
+
+.step h2 {
+  color: #0055a2;
+  font-size: 1.2em;
+  margin-bottom: 10px;
+}
+
+.step p {
+
+  font-size: 0.9em;
+  line-height: 1.4;
+}
+
+.bottom-links {
+  display: flex;
+  justify-content: center;
+  gap: 30vh;
+  width: 100%;
+  margin-top: 30px;
+}
+
+.link {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 15px;
+  text-align: center;
+  background-color: white;
+  width: 20%;
+  font-size: 0.9em;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s; /* Smooth transition for the color change */
+}
+
+.link:hover {
+  color: white; /* Change text color to white on hover */
+  background-color: #0055a2; /* Change background color to blue on hover */
+  border-color: #0055a2; /* Change border color to blue to match the background */
+}
+
+.forms-link {
+  color: #0055a2;
+}
+
+.proposal-link {
+  color: #0055a2;
+}

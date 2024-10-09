@@ -1,0 +1,112 @@
+/* Form container */
+.onboarding-form {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #ffffff;
+  font-family: 'Roboto', Arial, sans-serif;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Section headers */
+.onboarding-form .section-header {
+  font-size: 1.4em;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #2196F3;
+  color: #333;
+}
+
+/* Form group */
+.onboarding-form .form-group {
+  margin-bottom: 15px;
+}
+
+/* Labels */
+.onboarding-form label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* Inputs, selects, and textarea */
+.onboarding-form input[type="text"],
+.onboarding-form input[type="date"],
+.onboarding-form input[type="time"],
+.onboarding-form select,
+.onboarding-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+/* Select elements */
+.onboarding-form select {
+  height: 40px;
+  background-color: #f9f9f9;
+}
+
+/* Textarea elements */
+.onboarding-form textarea {
+  resize: vertical; /* Allow vertical resizing only */
+  max-height: 80px;
+}
+
+/* Form row */
+.onboarding-form .form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+/* Flex items */
+.onboarding-form .form-group {
+  flex: 1;
+  min-width: 240px;
+}
+
+/* Button styling */
+.onboarding-form button {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  margin-top: 20px;
+  background-color: #2196F3;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.onboarding-form button:hover {
+  background-color: #1976D2;
+}
+
+/* Required asterisk */
+.required {
+  color: #d32f2f;
+  margin-left: 5px;
+}
+
+/* Section styling */
+.section {
+  margin-bottom: 30px;
+  padding: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fafafa;
+}
+
+.section h2 {
+  font-size: 1.2em;
+  margin-bottom: 10px;
+  color: #2196F3;
+}

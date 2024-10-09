@@ -1,0 +1,292 @@
+/* General Styles */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  background-image: url(../Images/Nu_building2.png);
+  background-color: #ffffff; /* Fallback color */
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-position: center;
+  background-size: cover;
+}
+ 
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .login-container {
+    padding-top: 100px;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+ 
+  .login-box {
+    width: 100%; /* Make it full width */
+    padding: 20px; /* Adjust padding for smaller screens */
+  }
+ 
+  .nu-logo {
+    width: 80px; /* Adjust logo size */
+  }
+ 
+  .footer-container {
+    flex-direction: column; /* Stack sections vertically on mobile */
+    align-items: center; /* Center items in the middle */
+  }
+ 
+  .footer-section {
+    text-align: center; /* Center text on mobile */
+    padding: 5px; /* Reduce padding on smaller screens */
+  }
+ 
+  .footer-text h3 {
+    font-size: 18px;
+  }
+ 
+  .login-button {
+    padding: 10px; /* Adjust padding for smaller screens */
+  }
+ 
+  .input-container {
+    padding: 8px; /* Adjust input container padding */
+  }
+ 
+  .parallax-section {
+    padding: 50px 20px;
+  }
+ 
+  /* Adjust the footer for mobile screens */
+  footer {
+    padding: 20px;
+  }
+ 
+  .social-icon {
+    width: 20px; /* Adjust social icons for smaller screens */
+    height: 20px;
+  }
+}
+ 
+/* Animation Keyframes */
+@keyframes slide-in {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+ 
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 200px;
+}
+ 
+/* Login Box Styling */
+.login-box {
+  background-color: #f9f9f9;
+  border-radius: 20px;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  width: 400px;
+  text-align: center;
+  transition: width 0.3s ease;
+}
+ 
+.login-box h2 {
+  color: #1a3ab5;
+  margin-bottom: 30px;
+  font-size: 25px;
+  font-weight: bold;
+}
+ 
+.input-container {
+  display: flex;
+  align-items: center;
+  background-color: #fff;
+  margin-bottom: 15px;
+  padding: 10px;
+  border-radius: 17px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+ 
+.input-container input {
+  flex-grow: 1;
+  border: none;
+  padding-left: 10px;
+  font-size: 16px;
+  outline: none;
+}
+ 
+.input-focused {
+  transform: scale(1.05);
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+ 
+.password-container {
+  position: relative;
+}
+ 
+.password-container input {
+  padding-right: 40px;
+}
+ 
+.toggle-password-btn {
+  position: absolute;
+  right: 15px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.3s ease; /* Add transition for smooth effect */
+}
+ 
+/* Hover effect for toggle button */
+.toggle-password-btn:hover {
+  transform: scale(1.2); /* Scale up the button on hover */
+  color: #145ab7;
+}
+ 
+.login-button {
+  width: 100%;
+  padding: 12px 0;
+  background-color: #1a3ab5;
+  color: white;
+  border-radius: 17px;
+  border: none;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+ 
+/* Hover effect */
+.login-button:hover {
+  transform: scale(1.05); /* Scale up the button */
+  background-color: #145ab7; /* Darker shade on hover */
+}
+ 
+.logo-container {
+  margin-top: 20px;
+}
+ 
+.nu-logo {
+  width: 100px;
+}
+ 
+ 
+/* Footer Styling */
+.footer {
+  justify-content: center;
+  align-items: center;
+  background-color: #333;
+  color: white;
+}
+ 
+.footer-container {
+  align-content: center;
+  height: 300px;
+  width: 100%;
+  /* margin: 0 auto; */
+  flex-direction: row;
+}
+ 
+.footer-section {
+  flex:auto;
+  padding: 5px;
+  text-align: left;
+}
+ 
+.footer-text {
+  text-align: center; /* Center the footer text */
+  animation: slide-in 1.0s ease forwards; /* Apply animation */
+  font-size: 20px;
+}
+ 
+.social-icons-container{
+  justify-content: center;
+}
+.contact-info{
+  display: flex;
+  height: 100px;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+ 
+}
+.copyright-info{
+  text-align: center;
+  margin-top: 10px;
+}
+ 
+ 
+.footer h4 {
+  margin-bottom: 5px;
+  font-size: 10px;
+}
+ 
+.footer-text h3 {
+  color: #1a3ab5;
+  font-weight: bold;
+}
+ 
+.content-section h2 {
+  color: #1a3ab5;
+  font-weight: bold;
+  font-size: 25px;
+}
+ 
+.content-section{
+  font-size: 20px;
+}
+ 
+.contact-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+ 
+.contact-item svg {
+  margin-right: 8px;
+}
+ 
+.social-icons-container {
+  display: flex;
+  justify-content: center; /* Center the social icons */
+}
+ 
+.social-icon {
+  width: 24px;
+  height: 24px;
+  margin: 0 10px;
+}
+ 
+.two {
+  text-align: center;
+ 
+  padding-top: 80px;
+  padding-bottom: 100px;
+  animation: autoShowAnimation both;
+  animation-timeline: view(70% 5%);
+}
+ 
+ 
+@keyframes autoShowAnimation {
+  from {
+    opacity: 0;
+    transform: translateY(200px) scale(0.3);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.three {
+  border: 1px solid white;
+}

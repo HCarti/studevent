@@ -1,0 +1,219 @@
+  /* General Navbar Styles */
+  .navbar {
+    position: sticky; /* Change to fixed */
+    top: 0; /* Make it stick to the top */
+    left: 0; /* Align to the left */
+    right: 0; /* Align to the right */
+    background-color: #1a3ab5; /* Primary color */
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    border-bottom: 5px solid #ffd900;
+    z-index: 1000; /* Ensure it stays above other elements */
+  }
+ 
+  .navbar-logo {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+ 
+  .navbar-logo img {
+    margin-right: 10px;
+    height: 50px;
+  }
+ 
+  .navbar-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+  }
+ 
+  /* Navbar Menu Styling */
+  .navbar-menu ul {
+    display: flex;
+    align-items: center;
+    list-style: none; /* Remove bullets from list */
+    margin: 0;
+    padding: 0;
+   
+  }
+ 
+  .navbar-menu li {
+    margin: 0 15px; /* Space between menu items */
+    display: inline-block; /* Align horizontally */
+    font-weight: bold;
+   
+  }
+ 
+  .navbar-menu-item {
+    color: white;
+    text-decoration: none; /* Remove underline */
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease; /* Smooth transition for hover and active states */
+  }
+ 
+  /* Hover effect */
+  .navbar-menu-item:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #ffd900;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Add shadow on hover */
+  }
+ 
+  /* Active state for current page */
+  .navbar-menu-item.active {  
+    color: #ffd900; /* Change text color for active state */
+  }
+ 
+  /* Profile Picture */
+  .navbar-profile-pic {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white; /* Optional: adds a white border around the image */
+    background-color: #ccc; /* Placeholder color */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+  }
+ 
+  /* Notifications */
+  .navbar-notifications {
+    position: relative;
+    cursor: pointer;
+  }
+ 
+  .navbar-notification-icon {
+    font-size: 24px;
+  }
+ 
+  .badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    padding: 4px 6px;
+    font-size: 10px;
+    animation: bounce 0.6s infinite; /* Add a bounce effect */
+  }
+ 
+  /* Drawer (for mobile) */
+  .drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 250px;
+    height: 100%;
+    background-color:#1a3ab5; /* Changed to light color for visibility */
+    box-shadow: -3px 0 5px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    z-index: 1000;
+    transform: translateX(100%); /* Initially hidden */
+    transition: transform 0.3s ease; /* Smooth transition */
+  }
+ 
+  .drawer.open {
+    transform: translateX(0); /* Slide in when open */
+  }
+ 
+  .drawer-list {
+    list-style-type: none;
+  }
+ 
+  .drawer-list-item {
+    padding: 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f1f1;
+  }
+ 
+  .drawer-list-item:hover {
+    background-color: #f9f9f9;
+  }
+ 
+  /* Account Dropdown Menu */
+  .menu {
+    position: absolute;
+    top: 35px;
+    right: 0;
+    background-color: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: none;
+    z-index: 1000;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+ 
+  .menu.open {
+    display: block;
+  }
+ 
+  .menu-item {
+    padding: 10px 20px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.2s;
+  }
+ 
+  .menu-item:hover {
+    background-color: #f1f1f1;
+  }
+ 
+  /* Mobile Menu Icon */
+  .mobile-menu-icon {
+    font-size: 30px;
+    color: white;
+    display: none;
+    cursor: pointer;
+  }
+ 
+  @media (max-width: 600px) {
+    .navbar-menu {
+      display: none;
+    }
+ 
+    .mobile-menu-icon {
+      display: block;
+    }
+  }
+ 
+  /* Bounce animation for badge */
+  @keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+      transform: translateY(0);
+    }
+    40% {
+      transform: translateY(-5px);
+    }
+    60% {
+      transform: translateY(-2px);
+    }
+  }
+ 
+  .drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+  }
+ 
+  .drawer-title {
+    padding-top: 20px;
+    font-size: 20px;
+    font-weight: bold;
+  }
+ 
+  .drawer-close-icon {
+   
+    font-size: 24px;
+    cursor: pointer;
+  }
