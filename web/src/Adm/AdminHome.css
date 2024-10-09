@@ -11,7 +11,7 @@
 }
 
 .header {
-  /* background-color: rgba(230, 221, 221, 0.651); */
+  background-color: rgba(230, 221, 221, 0.651);
   padding: 2rem 1rem;
   text-align: center;
   flex-grow: 1;
