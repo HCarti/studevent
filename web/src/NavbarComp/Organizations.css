@@ -85,7 +85,8 @@
 }
  
 .slick-dots.custom-dots li button::before {
-  font-size: 10px;
+  font-size: 1px;
+  align-items: center;
   color: #ccc;
  
 }

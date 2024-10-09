@@ -159,7 +159,7 @@ const Home = ({ handleLogin }) => {
  
             {/* Parallax Section 3 - Footer */}
             <Parallax>
-              <div className="parallax-section three">
+              <div className="parallax-sectionz">
               <footer className="footer">
    <div className="footer-container">
     <div className="footer-section contact-info">

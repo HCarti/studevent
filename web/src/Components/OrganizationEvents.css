@@ -1,32 +1,111 @@
-.wrap{
-  padding: 10px;
+/* General Styles */
+.wrap {
+  padding: 20px;
   display: flex;
-  justify-content: center;
   flex-direction: column;
+  align-items: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-position: center;
+  background-size: cover;
+  overflow-x: hidden;
+  background-image: url('../Images/Nu_building2.png');
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
+
+/* Calendar Container */
 .calendar-container {
-  padding: 10px;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  width: 90%;
-  margin: 0 auto;
-  margin-bottom: 10vh;
+  /* flex-direction: row; */
+  justify-content: space-between;
+  width: 100%;
+  /* border: solid 1px black; */
+  /* max-width: 1200px; */
+  margin-bottom: 40px;
+  /* flex-wrap: wrap; */
+  padding-left: 20px;
+  padding-right: 20px;
+  height: 100%;
+  
 }
 
+/* Event Details - Left Side */
+/* Event Details */
+.event-details {
+  width: 30%;
+  height: 100%;
+  background-color: #ffffff;
+  color: #333333;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  min-width: 250px;
+  margin-left: 20px;
+}
+
+.event-details h2 {
+  font-size: 1.3rem;
+  margin-bottom: 15px;
+  color: #3174ad;
+}
+
+.event-details ul {
+  list-style: none;
+  padding: 0;
+}
+
+.event-details ul li {
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #f1f3f5;
+  border-radius: 6px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.event-details ul li:hover {
+  background-color: #e2e6ea;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.event-title {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.event-time {
+  font-size: 0.9rem;
+  color: #555555;
+}
+
+.no-events {
+  font-style: italic;
+  color: #777777;
+}
+
+/* Calendar Wrapper - Right Side */
 .calendar-wrapper {
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  width: 70%;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  width: 65%;
+  min-width: 300px;
+  margin-bottom: 20px;
 }
 
-.calendar-header input {
-  margin: 5px;
-  padding: 5px;
-  border: none;
-  border-radius: 4px;
+.calendar-header {
+  background-color: #3174ad;
+  padding: 15px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+.month-title {
+  font-size: 1.5rem;
+  color: #ffffff;
+  text-align: center;
+  font-weight: 600;
 }
 
 .calendar-content {
@@ -43,162 +122,210 @@
 }
 
 .rbc-month-row:nth-child(odd) {
-  background-color: lightblue;
+  background-color: #f9f9f9;
 }
 
 .rbc-month-row:nth-child(even) {
-  background-color: lightyellow;
+  background-color: #ffffff;
 }
 
 .rbc-date-cell {
   padding: 10px;
-  border: 1px solid #ddd;
+  border: 1px solid #e0e0e0;
+  transition: background-color 0.3s ease;
+}
+
+.rbc-date-cell:hover {
+  background-color: #e6f7ff;
+  cursor: pointer;
 }
 
 .rbc-event {
   font-size: 12px;
-  padding: 2px 5px;
-  background-color: #3174ad;
+  padding: 4px 8px;
+  background-color: #ff7f50;
   color: white;
-  border-radius: 3px;
+  border-radius: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: background-color 0.3s ease;
 }
 
 .rbc-event:hover {
+  background-color: #e76f43;
+}
+
+/* Custom Toolbar */
+.custom-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #ffffff;
+  border-top: 1px solid #e0e0e0;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+.toolbar-label {
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: #333333;
+}
+
+.toolbar-buttons {
+  display: flex;
+  gap: 15px;
+}
+
+.toolbar-button {
+  background-color: #3174ad;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.toolbar-button:hover {
   background-color: #265a88;
 }
 
-.event-details {
-  width: 30%;
-  background-color: #007bff;
-  color: white;
-  padding: 20px;
-  border-radius: 8px;
-  margin-left: 20px;
+/* Image Slider */
+.img-slide {
+  width: 100%;
+  max-width: 1200px;
+  margin-bottom: 40px;
 }
 
-.event-details h2 {
-  font-size: 1.2rem;
-  margin-bottom: 10px;
+.slide {
+  position: relative;
 }
 
-.event-details ul {
-  list-style: none;
-  padding: 0;
+.slider-image {
+  width: 100%;
+  height: 450px;
+  object-fit: cover;
+  border-radius: 10px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.5s ease;
 }
 
-.event-details ul li {
-  margin-bottom: 10px;
+.slider-image:hover {
+  transform: scale(1.02);
 }
 
-.event-details ul li span {
-  display: block;
-}
-
+/* Add Event Form */
 .add-event-form {
-  padding: 10px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  margin-bottom: 20px;
+  width: 100%;
+  max-width: 600px;
+  background-color: #ffffff;
+  padding: 20px 50px;
+  border-radius: 10px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 40px; /* Added margin to separate from other content */
+}
+
+.add-event-form h3 {
+  margin-bottom: 15px;
+  color: #3174ad;
 }
 
 .add-event-form input[type="text"],
-.add-event-form input[type="datetime-local"],
-.add-event-form button {
-  margin: 5px;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 14px;
+.add-event-form input[type="datetime-local"] {
+  width: 100%;
+  padding: 10px 2px;
+  margin-bottom: 15px;
+  border: 1px solid #cccccc;
+  border-radius: 5px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+  
+}
+
+.add-event-form input[type="text"]:focus,
+.add-event-form input[type="datetime-local"]:focus {
+  border-color: #3174ad;
+  
+  
 }
 
 .add-event-form button {
+  width: 100%;
+  padding: 12px 0;
   background-color: #3174ad;
-  color: white;
+  color: #ffffff;
   border: none;
+  border-radius: 5px;
+  font-size: 1rem;
   cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 .add-event-form button:hover {
   background-color: #265a88;
 }
 
-/* src/OrganizationEvents.css */
-.custom-toolbar {
-  display: flex;
-  justify-content: center;
-  margin-top: 10px;
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .calendar-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .event-details,
+  .calendar-wrapper {
+    width: 90%;
+    margin-right: 0;
+    margin-bottom: 20px;
+  }
+
+  .event-details {
+    margin-bottom: 20px;
+  }
 }
 
-.toolbar-label {
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 10px;
+@media (max-width: 768px) {
+  .slider-image {
+    height: 300px;
+  }
+
+  .month-title {
+    font-size: 1.2rem;
+  }
+
+  .toolbar-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .toolbar-button {
+    width: 100%;
+  }
 }
 
-.toolbar-buttons {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-  width: 500px;
-  gap: 50px;
-}
+@media (max-width: 480px) {
+  .slider-image {
+    height: 200px;
+  }
 
-.toolbar-buttons button {
-  background-color: #3174ad;
-  color: white;
-  border: none;
-  padding: 10px;
-  width: 100px;
-  border-radius: 5px;
-  cursor: pointer;
-}
+  .month-title {
+    font-size: 1rem;
+  }
 
-.toolbar-buttons button:hover {
-  background-color: #265a88;
-}
+  .toolbar-button {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
 
-.calendar-header {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 10px;
-}
+  .event-details {
+    padding: 15px;
+  }
 
-.month-title {
-  font-size: 24px;
-  font-weight: bold;
+  .add-event-form {
+    padding: 15px 20px;
+  }
 }
-
-.img-slide {
-  width: 100%; /* Ensure container is responsive */
-  display: flex;
-  justify-content: center; /* Center the image horizontally */
-  align-items: center;     /* Center the image vertically */
-}
-
-.img-slide {
-  width: 100%; 
-  height: 40%;/* Make the container responsive */
-  display: flex;
-  justify-content: center; /* Center the image horizontally */
-  align-items: center;     /* Center the image vertically */
-  margin-top: 10px;        /* Add some margin to separate it from other content */
-}
-
-.slider-image.pocket-size {
-  width: 700px;            /* Smaller, pocket-sized width */
-  height: 400px;           /* Smaller height */
-  object-fit: contain;     /* Ensure the image fits within the bounds without distortion */
-  background-color: #f0f0f0; /* Background color for padding */ 
-  border-radius: 6px;      /* Optional rounded corners */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add a slight shadow for effect */
-  transition: transform 0.3s ease; /* Smooth hover effect */
-}
-
-.slider-image.pocket-size:hover {
-  transform: scale(1.05); /* Slight zoom effect on hover */
-}
-

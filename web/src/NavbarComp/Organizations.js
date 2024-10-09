@@ -72,7 +72,7 @@ const Organizations = () => {
     slidesToShow: 3,
     slidesToScroll: 1,
     autoplay: true,
-    autoplaySpeed: 2500,
+    autoplaySpeed: 2000,
     pauseOnHover: true,
     cssEase: 'ease-in-out',
     dotsClass: 'slick-dots custom-dots',
