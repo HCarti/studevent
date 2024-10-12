@@ -91,10 +91,10 @@ const Organizations = () => {
       <h1>ORGANIZATIONS</h1>
       <Slider {...settings}>
         {organizations.map((org) => (
-          <div key={org.id} className="card-slider">
-            <div className="card" onClick={() => handleCardClick(org)}>
-              <img src={org.image} alt={org.name} className="card-image" />
-              <div className="card-info">
+          <div key={org.id} className="cards-slider">
+            <div className="cards" onClick={() => handleCardClick(org)}>
+              <img src={org.image} alt={org.name} className="cards-image" />
+              <div className="cards-info">
                 <h2>{org.name}</h2>
                 <p>{org.description}</p>
               </div>

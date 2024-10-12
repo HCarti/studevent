@@ -1,201 +1,390 @@
+/* Container Styles */
 .m-container {
-    flex-direction: column;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 91vh;
-  }
-  
-  .profile-container {
-    display: flex;
-    height: 60%;
-    width: 80%;
-    margin: 0 auto;
-    padding: 20px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-    background-color: #ffffff;
-  }
-  
-  .profile-left {
-    margin-top: 20px !important;
-    flex: 1;
-    text-align: center;
-    padding: 20px;
-    border-right: 2px solid #e0e0e0;
-  }
-  
-  .profile-pic {
-    width: 150px;
-  height: 150px;
-  background-color: #f0f0f0;
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  align-items: center;
-  border-radius: 50%;
+  padding: 40px 20px;
+  background-image: url('../Images/Nu_building2.png');
+  background-size: cover;
+  background-position: center;
+  width: 100%; 
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+.profile-title {
+  color: #3246a8;
+  font-size: 2.5rem; /* Increased font size for better prominence */
+  margin-bottom: 30px;
+  font-weight: 700;
+}
+
+/* Profile Container */
+.profile-container {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  max-width: 1000px; /* Increased max-width for better spacing */
+  background-color: #ffffff;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1); /* Enhanced shadow for depth */
+  border-radius: 12px;
   overflow: hidden;
-  }
+  animation: fadeIn 0.5s ease-in-out;
+}
 
-  .profile-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  
-  .profile-left h2 {
-    margin: 10px 0;
-    color: #0046ad;
-  }
-  
-  .upload-btn, .edit-btn, .save-btn {
-    display: block;
-    width: 80%;
-    margin: 10px auto;
-    padding: 10px;
-    background-color: #0046ad;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-
-
-
-  .upload-input {
-    display: none;
-  }
-  
-  .upload-btn:hover, .edit-btn:hover, .save-btn:hover {
-    background-color: #00358f;
-  }
-  
-  .profile-left p {
-    margin-top: 20px;
-    color: #a0a0a0;
-  }
-  
-  .profile-right {
-    margin-top: 50px;
-    flex: 2;
-    padding: 20px;
-  }
-  
-  .profile-right h2 {
-    color: #0046ad;
-    margin-bottom: 20px;
-  }
-  
-  .profile-right form {
-    display: grid;
-    grid-template-columns: 1fr 2fr;
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-  
-  .profile-right label {
-    text-align: right;
-    padding-right: 10px;
-    font-weight: bold;
-  }
-  
-  .profile-right input {
-    padding: 8px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-  }
-  
-  .password-security {
-    display: flex;
-  align-items: center;
-  padding: 10px;
+/* Left Section */
+.profile-left {
+  flex: 1;
   background-color: #f0f8ff;
-  border-radius: 5px;
-  cursor: pointer; /* Makes the div appear clickable */
-  transition: background-color 0.3s ease;
-  }
+  padding: 40px 30px; /* Increased padding for better spacing */
+  text-align: center;
+  position: relative;
+}
 
-  .password-security:hover {
-    background-color: #e6f1ff; /* Slightly darker background on hover */
-  }
-  
-  .security-icon {
-    width: 50px;
-    height: 50px;
-    background-color: #0046ad;
-    border-radius: 50%;
-    margin-right: 10px;
-  }
-  
-  .password-security p {
-    font-weight: bold;
+.profile-pic {
+  width: 100px; 
+  height: 100px;
+  margin: 0 auto  25px auto;
+  border-radius: 50%; 
+  overflow: hidden; 
+  background-color: #e0e0e0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+}
+
+.profile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; 
+  object-position: center;
+  align-items: center;
+}
+
+.placeholder-pic {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%; 
+}
+
+.upload-input {
+  display: none;
+}
+
+.upload-btn {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #3246a8;
+  color: #fff;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.upload-btn:hover {
+  background-color: #24327a;
+  transform: translateY(-2px);
+}
+
+.admin-name {
   color: #0046ad;
+  font-size: 1.8rem;
+  margin: 15px 0;
+  font-weight: 600;
+}
+
+.join-date {
+  color: #7d7d7d;
+  font-size: 1rem;
+  margin-bottom: 25px;
+}
+
+.edit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #28a745;
+  color: #fff;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.edit-btn:hover {
+  background-color: #218838;
+  transform: translateY(-2px);
+}
+
+.edit-btn svg {
+  margin-right: 10px;
+}
+
+/* Right Section */
+.profile-right {
+  flex: 2;
+  padding: 40px 50px;
+}
+
+.view-info,
+.edit-form,
+.password-form {
+  width: 100%;
+}
+
+.info-group {
+  margin-bottom: 40px;
+}
+
+.info-group h3 {
+  color: #3246a8;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 8px;
+}
+
+.info-group p {
+  margin: 15px 0;
+  font-size: 1.1rem;
+  color: #555555;
+}
+
+.password-security {
+  display: flex;
+  align-items: center;
+  padding: 25px;
+  background-color: #eaf4ff;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.password-security:hover {
+  background-color: #d0e8ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.security-icon {
+  font-size: 2.5rem; /* Increased size for better visibility */
+  color:goldenrod;
+  background-color:#24327a;
+  margin-right: 20px;
+}
+
+.security-text p {
+  font-weight: 600;
+  color: #3246a8;
   margin: 0;
-  }
-  
-  .password-security small {
-    color: #707070;
+  font-size: 1.2rem;
+}
+
+.security-text small {
+  color: #707070;
+  font-size: 0.9rem;
+}
+
+/* Forms */
+.edit-form,
+.password-form {
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease-in-out;
+}
+
+.password-form h3 {
+  color: #3246a8;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 8px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 25px;
+}
+
+.form-group label {
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333333;
+  font-size: 1rem;
+}
+
+.form-group input {
+  padding: 12px 18px;
+  border: 1px solid #cccccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group input:focus {
+  border-color: #3246a8;
+  box-shadow: 0 0 5px rgba(50, 70, 168, 0.5);
+  outline: none;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.button-group {
+  display: flex;
+  justify-content: flex-end;
+  gap: 20px;
+}
+
+.save-btn,
+.cancel-btn {
+  display: flex;
+  align-items: center;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  height: 50px;
+  margin-top: 20px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.save-btn {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.save-btn:hover {
+  background-color: #218838;
+  transform: translateY(-2px);
+}
+
+.save-btn svg {
+  margin-right: 10px;
+}
+
+.cancel-btn {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+.cancel-btn:hover {
+  background-color: #c82333;
+  transform: translateY(-2px);
+}
+
+.cancel-btn svg {
+  margin-right: 10px;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .profile-container {
+    flex-direction: column;
+    max-width: 800px;
   }
 
-  .password-form {
-    display: grid;
-    grid-template-columns: 1fr 2fr;
-    gap: 10px;
-    margin-top: 10px;
+  .profile-left {
+    padding: 30px 25px;
   }
 
-  .password-form label {
-    text-align: right;
-    padding-right: 10px;
-    font-weight: bold;
+  .profile-right {
+    padding: 30px 35px;
   }
-  
-  .password-form input {
-    padding: 8px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
+}
+
+@media (max-width: 768px) {
+  .profile-container {
+    flex-direction: column;
+    max-width: 100%;
   }
-  
-  .password-form .save-btn {
-    margin-top: 10px;
-    padding: 10px;
-    background-color: #0046ad;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+
+  .profile-left {
+    padding: 30px 20px;
+    border-right: none;
+    border-bottom: 2px solid #e0e0e0;
   }
-  
-  .password-form .save-btn:hover {
-    background-color: #00358f;
+
+  .profile-right {
+    padding: 25px 20px;
   }
 
   .button-group {
-    align-items: center;
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px; /* Adds space between buttons */
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .save-btn, .cancel-btn {
-    padding: 10px;
-    background-color: #0046ad;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-
+  .save-btn,
   .cancel-btn {
-    background-color: #e0e0e0;
-    color: #333;
-    height: 40px;
+    width: 100%;
+    justify-content: center;
   }
-  
-  .save-btn:hover, .cancel-btn:hover {
-    background-color: #00358f;
+
+  .profile-title {
+    font-size: 2rem;
   }
-  
-  .cancel-btn:hover {
-    background-color: #ccc;
+
+  .admin-name {
+    font-size: 1.5rem;
   }
-  
+
+  .security-text p {
+    font-size: 1.1rem;
+  }
+
+  .security-text small {
+    font-size: 0.8rem;
+  }
+
+  .password-security {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .security-icon {
+    margin-bottom: 10px;
+    margin-right: 0;
+  }
+
+  .security-text p {
+    text-align: left;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+ 

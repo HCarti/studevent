@@ -121,6 +121,15 @@ const OrganizationEvents = () => {
     autoplaySpeed: 4000,
     pauseOnHover: true,
     arrows: true,
+    dotsClass: 'slick-dots custom-dots',
+    customPaging: function (i) {
+      return <button className="custom-dot"></button>;
+    },
+    appendDots: (dots) => <ul style={{ display: 'flex', alignItems: 'center' }}>{dots.slice(0, 3)}</ul>,
+    responsive: [
+      { breakpoint: 1024, settings: { slidesToShow: 2 } },
+      { breakpoint: 600, settings: { slidesToShow: 1 } },
+    ],
   };
 
   const images = [image1, image2, image3, image4];
@@ -128,7 +137,6 @@ const OrganizationEvents = () => {
   return (
     <div className="wrap">
       <div className="calendar-container">
-        {/* Calendar on the Left */}
         <div className="calendar-wrapper">
           <div className="calendar-header">
             <span className="month-title">{moment(selectedDate).format('MMMM YYYY')}</span>

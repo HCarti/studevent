@@ -12,15 +12,15 @@
   padding-bottom: 10px;
 }
  
-.card-slider {
+.cards-slider {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
-  flex-wrap: wrap; /* Allow cards to wrap on smaller screens */
+  flex-wrap: wrap;
 }
  
-.card {
+.cards {
   background-color: #fff;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -32,35 +32,35 @@
   opacity: 0.9;
 }
  
-.card:hover {
+.cards:hover {
   transform: translateY(-5px) scale(1.0);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
   opacity: 1;
 }
  
-.card-image {
+.cards-image {
   border-radius: 10px;
   width: 100%;
   height: auto;
   transition: transform 0.3s ease;
 }
  
-.card-image:hover {
+.cards-image:hover {
   transform: rotate(2deg); /* Subtle rotation on hover */
 }
  
-.card-info {
+.cards-info {
   margin-top: 15px;
 }
  
-.card-info h2 {
+.cards-info h2 {
   font-size: 1.5em;
   color: #333;
   text-align: center;
   margin-bottom: 10px;
 }
  
-.card-info p {
+.cards-info p {
   font-size: 1em;
   color: #777;
   text-align: center;
@@ -133,33 +133,33 @@
  
 /* Responsive Design */
 @media screen and (max-width: 768px) {
-  .card {
+  .cards {
     width: 200px;
     height: 300px;
     margin: 10px;
   }
  
-  .card-info h2 {
+  .cards-info h2 {
     font-size: 1.2em;
   }
  
-  .card-info p {
+  .cards-info p {
     font-size: 0.9em;
   }
 }
  
 @media screen and (max-width: 480px) {
-  .card {
+  .cards {
     width: 100%;
     height: auto;
     margin: 10px 0;
   }
  
-  .card-info h2 {
+  .cards-info h2 {
     font-size: 1em;
   }
  
-  .card-info p {
+  .cards-info p {
     font-size: 0.8em;
   }
 }
