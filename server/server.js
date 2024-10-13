@@ -12,7 +12,7 @@ app.use(express.json(), express.urlencoded());
 app.use(cors());
 
 // Connect to MongoDB
-mongoose.connect('mongodb+srv://StudEvent:StudEvent2024@studevent.nvsci.mongodb.net/', {
+mongoose.connect('mongodb://localhost:27017/Studevent', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })

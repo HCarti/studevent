@@ -1,112 +1,181 @@
-/* Form container */
-.onboarding-form {
-  max-width: 900px;
-  margin: 20px auto;
-  padding: 20px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background-color: #ffffff;
-  font-family: 'Roboto', Arial, sans-serif;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+/* Form Container */
+.form-ubox {
+  display: flex;
+  gap: 20px;
+  padding: 50px;
+  max-width: 100%;
+  justify-content: center;
+  align-content: center;
+  border: 1px solid;
 }
 
-/* Section headers */
-.onboarding-form .section-header {
-  font-size: 1.4em;
-  margin-bottom: 12px;
-  padding-bottom: 6px;
-  border-bottom: 2px solid #2196F3;
-  color: #333;
+.inner-forms {
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  width: 100%;
+  background-color: #f0f2f5;
+  max-width: 100%;
+  box-shadow: #ccc;
 }
 
-/* Form group */
-.onboarding-form .form-group {
+.event-location{
   margin-bottom: 15px;
 }
 
-/* Labels */
-.onboarding-form label {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: 500;
+h1 {
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
   color: #333;
 }
 
-/* Inputs, selects, and textarea */
-.onboarding-form input[type="text"],
-.onboarding-form input[type="date"],
-.onboarding-form input[type="time"],
-.onboarding-form select,
-.onboarding-form textarea {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 16px;
-  box-sizing: border-box;
-}
-
-/* Select elements */
-.onboarding-form select {
-  height: 40px;
-  background-color: #f9f9f9;
-}
-
-/* Textarea elements */
-.onboarding-form textarea {
-  resize: vertical; /* Allow vertical resizing only */
-  max-height: 80px;
-}
-
-/* Form row */
-.onboarding-form .form-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-}
-
-/* Flex items */
-.onboarding-form .form-group {
-  flex: 1;
-  min-width: 240px;
-}
-
-/* Button styling */
-.onboarding-form button {
-  display: block;
-  width: 100%;
-  padding: 14px;
-  margin-top: 20px;
-  background-color: #2196F3;
-  border: none;
-  border-radius: 4px;
+/* Form Group */
+.form-group {
+  grid-column: 1 / -1;
+  background-color: #004c99;
   color: white;
+  padding: 10px;
+  border-radius: 20px;
+  align-items: center;
+  font-weight: bold;
+  font-size: 1.1em;
+  text-align: left;
+}
+
+.inner-forms label {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 5px;
+  margin-right: 15px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="date"],
+textarea {
+  width: 70%;
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-sizing: border-box;
+  font-size: 14px;
+  background-color: #f9f9f9;
+  color: #333;
+}
+
+input[type="radio"] {
+  margin-right: 5px;
+  margin-left: 10px;
+}
+
+textarea {
+  min-height: 35px;
+  resize: none;
+}
+
+/* Checkbox & Radio Inputs */
+input[type="checkbox"],
+input[type="radio"] {
+  margin-right: 10px;
+}
+
+input[type="checkbox"] + label,
+input[type="radio"] + label {
+  display: inline-block;
+  margin-right: 20px;
+}
+
+.radio-group, .checkbox-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+/* Download Button */
+.pdf-download {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.pdf-download a {
+  background-color: #007bff;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 6px;
+  text-decoration: none;
   font-size: 16px;
-  cursor: pointer;
+  font-weight: bold;
+  box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
   transition: background-color 0.3s ease;
 }
 
-.onboarding-form button:hover {
-  background-color: #1976D2;
+.pdf-download a:hover {
+  background-color: #0056b3;
 }
 
-/* Required asterisk */
-.required {
-  color: #d32f2f;
-  margin-left: 5px;
-}
-
-/* Section styling */
-.section {
-  margin-bottom: 30px;
-  padding: 20px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background-color: #fafafa;
-}
-
-.section h2 {
-  font-size: 1.2em;
+/* Section Titles */
+.section-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 30px;
   margin-bottom: 10px;
-  color: #2196F3;
+  color: #007bff;
 }
+
+/* Form Row Styling */
+.form-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.form-row input[type="text"],
+.form-row input[type="email"],
+.form-row input[type="date"],
+.form-row textarea {
+  flex: 1;
+}
+
+.form-row label {
+  flex-basis: 25%;
+}
+
+.form-row input[type="radio"] {
+  margin-top: 2px;
+}
+
+.download-link{
+  height: 40px;
+  width: 150px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid black;
+  text-decoration: none;
+  border-radius: 20px ;
+  display: flex;
+  color: black;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+  }
+
+  .form-row label {
+    flex-basis: 100%;
+  }
+
+  .inner-forms {
+    padding: 20px;
+  }
+
+  h1 {
+    font-size: 20px;
+  }
+}
+

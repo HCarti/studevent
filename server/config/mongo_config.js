@@ -5,10 +5,9 @@ const mongoose = require('mongoose');
 //     useUnifiedTopology: true
 // })
 
-mongoose.connect('mongodb+srv://StudEvent:StudEvent2024@studevent.nvsci.mongodb.net/', {
+mongoose.connect('mongodb://localhost:27017/Studevent', {
     useNewUrlParser: true,
-    useUnifiedTopology: true
+    useUnifiedTopology: true,
 })
-
-    .then(() => console.log('Established a connection to the database'))
-    .catch(err => console.log('Something went wrong when connecting to the database ', err));
+.then(() => console.log('Connected to MongoDB'))
+.catch(err => console.error('Error connecting to MongoDB: ', err));

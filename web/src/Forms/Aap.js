@@ -119,11 +119,75 @@ const AapPDF = ({ formData }) => (
         </View>
       </View>
 
-      {/* Event Management Head */}
+      {/* Event Management Team */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>3. EVENT MANAGEMENT TEAM</Text>
         <Text>Event Management Head: {formData.eventManagementHead}</Text>
       </View>
+
+      {/* Risk Assessments */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>4. RISK ASSESSMENTS</Text>
+        <View style={styles.table}>
+          <View style={styles.tableRow}>
+            <Text>Health</Text>
+            <Text>{formData.health ? formData.health : "N/A"}</Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text>Safety of Attendees</Text>
+            <Text>{formData.safetyAttendees ? formData.safetyAttendees : "N/A"}</Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text>Emergency/First Aid</Text>
+            <Text>{formData.emergencyFirstAid ? formData.emergencyFirstAid : "N/A"}</Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text>Fire Safety</Text>
+            <Text>{formData.fireSafety ? formData.fireSafety : "N/A"}</Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text>Weather</Text>
+            <Text>{formData.weather ? formData.weather : "N/A"}</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Signatures/Endorsements */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>5. SIGNATURES / ENDORSEMENTS</Text>
+        <View style={styles.signatureRow}>
+          <Text>Applicant Organization: {formData.applicantSignature}</Text>
+          <Text>Faculty Adviser/College Dean: {formData.facultySignature}</Text>
+        </View>
+        <View style={styles.signatureRow}>
+          <Text>Date: {formData.applicantDate}</Text>
+          <Text>Date: {formData.facultyDate}</Text>
+        </View>
+      </View>
+
+      {/* Approvals */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>6. APPROVALS</Text>
+        <View style={styles.table}>
+          <View style={styles.tableRow}>
+            <Text>Student Development Office: {formData.studentDevApproval}</Text>
+            <Text>Approved / Disapproved: {formData.studentDevApproved}</Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text>Academic Services Director: {formData.academicServicesApproval}</Text>
+            <Text>Approved / Disapproved: {formData.academicServicesApproved}</Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text>Academic Director: {formData.academicDirectorApproval}</Text>
+            <Text>Approved / Disapproved: {formData.academicDirectorApproved}</Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text>Executive Director: {formData.executiveDirectorApproval}</Text>
+            <Text>Approved / Disapproved: {formData.executiveDirectorApproved}</Text>
+          </View>
+        </View>
+      </View>
+
     </Page>
   </Document>
 );
@@ -131,7 +195,6 @@ const AapPDF = ({ formData }) => (
 const Aap = () => {
   const [formData, setFormData] = React.useState({
     eventLocation: "",
-    isOnCampus: "on-campus",
     applicationDate: "",
     studentOrganization: "",
     contactPerson: "",
@@ -155,6 +218,23 @@ const Aap = () => {
     toilets: false,
     transportation: false,
     eventManagementHead: "",
+    health: "",
+    safetyAttendees: "",
+    emergencyFirstAid: "",
+    fireSafety: "",
+    weather: "",
+    applicantSignature: "",
+    facultySignature: "",
+    applicantDate: "",
+    facultyDate: "",
+    studentDevApproval: "",
+    studentDevApproved: "",
+    academicServicesApproval: "",
+    academicServicesApproved: "",
+    academicDirectorApproval: "",
+    academicDirectorApproved: "",
+    executiveDirectorApproval: "",
+    executiveDirectorApproved: "",
   });
 
   const handleChange = (e) => {
@@ -164,55 +244,447 @@ const Aap = () => {
       [name]: type === "checkbox" ? checked : value,
     });
   };
-
+  
   return (
-    <div>
-      <h1>Activity Application Form</h1>
-      <form>
-        <label>Event Location:</label>
-        <input
-          type="text"
-          name="eventLocation"
-          value={formData.eventLocation}
-          onChange={handleChange}
-        />
-        <br />
-        <label>Is the event on campus?</label>
-        <input
-          type="radio"
-          name="isOnCampus"
-          value="on-campus"
-          checked={formData.isOnCampus === "on-campus"}
-          onChange={handleChange}
-        />
-        Yes
-        <input
-          type="radio"
-          name="isOnCampus"
-          value="off-campus"
-          checked={formData.isOnCampus === "off-campus"}
-          onChange={handleChange}
-        />
-        No
-        <br />
-        <label>Date of Application:</label>
-        <input
-          type="date"
-          name="applicationDate"
-          value={formData.applicationDate}
-          onChange={handleChange}
-        />
-        <br />
-        {/* Add other form fields here */}
-        <PDFDownloadLink
-          document={<AapPDF formData={formData} />}
-          fileName="Activity_Application_Form.pdf"
-        >
-          {({ loading }) =>
-            loading ? "Loading document..." : "Download Activity Application Form"
-          }
-        </PDFDownloadLink>
-      </form>
+    <div className="form-ubox">
+      <div className="inner-forms">
+        <h1>Activity Application Form</h1>
+
+          {/* Event Location and Date */}
+          <div className="event-location">
+            <label>Event Location:</label>
+              <select
+               name="eventLocation"
+               value={formData.eventLocation}
+               onChange={handleChange}>
+              <option value="On Campus">On Campus</option>
+              <option value="Off Campus">Off Campus</option>
+                </select>
+
+                 </div>
+          <div>
+            <label>Date of Application:</label>
+            <input
+              type="date"
+              name="applicationDate"
+              value={formData.applicationDate}
+              onChange={handleChange}
+            />
+          </div>
+
+          {/* Contact Information */}
+        <div className="form-group">Contact Information</div>
+          <div>
+            <label>Student Organization:</label>
+            <input
+              type="text"
+              name="studentOrganization"
+              value={formData.studentOrganization}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Contact Person:</label>
+            <input
+              type="text"
+              name="contactPerson"
+              value={formData.contactPerson}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Contact No:</label>
+            <input
+              type="text"
+              name="contactNo"
+              value={formData.contactNo}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Email Address:</label>
+            <input
+              type="email"
+              name="emailAddress"
+              value={formData.emailAddress}
+              onChange={handleChange}
+            />
+          </div>
+
+          {/* Event Details */}
+          <div className="form-group">Event Details</div>
+          <div>
+            <label>Event Title:</label>
+            <input
+              type="text"
+              name="eventTitle"
+              value={formData.eventTitle}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Event Type:</label>
+              <select
+               name="eventType"
+               value={formData.eventType}
+               onChange={handleChange}>
+              <option value="Student Organization Activity">Student Organization Activity</option>
+              <option value="Special Event">Special Event</option>
+              <option value="University/School Activity">University/School Activity</option>
+              <option value="Other">Other</option>
+                </select>
+              </div>
+
+          <div>
+            <label>Venue Address:</label>
+            <input
+              type="text"
+              name="venueAddress"
+              value={formData.venueAddress}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Event Date:</label>
+            <input
+              type="date"
+              name="eventDate"
+              value={formData.eventDate}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Event Time:</label>
+            <input
+              type="text"
+              name="eventTime"
+              value={formData.eventTime}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Organizer:</label>
+            <input
+              type="text"
+              name="organizer"
+              value={formData.organizer}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Budget Amount:</label>
+            <input
+              type="text"
+              name="budgetAmount"
+              value={formData.budgetAmount}
+              onChange={handleChange}
+            />
+          </div>
+
+          {/* Core Values Integration */}
+          <div className="form-group">Contact Information</div>
+          <div>
+            <label>Core Values Integration:</label>
+            <textarea
+              name="coreValuesIntegration"
+              value={formData.coreValuesIntegration}
+              onChange={handleChange}
+            />
+          </div>
+
+          {/* Objectives */}
+          <div>
+            <label>Objectives:</label>
+            <textarea
+              name="objectives"
+              value={formData.objectives}
+              onChange={handleChange}
+            />
+          </div>
+
+          {/* Communications and Promotions */}
+          <div>
+            <label>Marketing:</label>
+            <input
+              type="checkbox"
+              name="marketing"
+              checked={formData.marketing}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Collaterals:</label>
+            <input
+              type="checkbox"
+              name="collaterals"
+              checked={formData.collaterals}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Press Release:</label>
+            <input
+              type="checkbox"
+              name="pressRelease"
+              checked={formData.pressRelease}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Others:</label>
+            <input
+              type="text"
+              name="others"
+              value={formData.others}
+              onChange={handleChange}
+            />
+          </div>
+
+          {/* Facilities Considerations */}
+          <div>
+            <label>Event Facilities:</label>
+            <input
+              type="checkbox"
+              name="eventFacilities"
+              checked={formData.eventFacilities}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Holding Area:</label>
+            <input
+              type="checkbox"
+              name="holdingArea"
+              checked={formData.holdingArea}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Toilets:</label>
+            <input
+              type="checkbox"
+              name="toilets"
+              checked={formData.toilets}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Transportation & Parking:</label>
+            <input
+              type="checkbox"
+              name="transportation"
+              checked={formData.transportation}
+              onChange={handleChange}
+            />
+          </div>
+
+          {/* Event Management Team */}
+          <div className="form-group">Event Management Team</div>
+          <div>
+            <label>Event Management Head:</label>
+            <input
+              type="text"
+              name="eventManagementHead"
+              value={formData.eventManagementHead}
+              onChange={handleChange}
+            />
+          </div>
+
+          {/* Risk Assessments */}
+          <div>
+            <label>Health:</label>
+            <textarea
+              name="health"
+              value={formData.health}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Safety of Attendees:</label>
+            <textarea
+              name="safetyAttendees"
+              value={formData.safetyAttendees}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Emergency/First Aid:</label>
+            <textarea
+              name="emergencyFirstAid"
+              value={formData.emergencyFirstAid}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Fire Safety:</label>
+            <textarea
+              name="fireSafety"
+              value={formData.fireSafety}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Weather:</label>
+            <textarea
+              name="weather"
+              value={formData.weather}
+              onChange={handleChange}
+            />
+          </div>
+
+          {/* Signatures
+          <div>
+            <label>Applicant Organization:</label>
+            <input
+              type="text"
+              name="applicantSignature"
+              value={formData.applicantSignature}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Faculty Signature:</label>
+            <input
+              type="text"
+              name="facultySignature"
+              value={formData.facultySignature}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Date:</label>
+            <input
+              type="date"
+              name="applicantDate"
+              value={formData.applicantDate}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Faculty Date:</label>
+            <input
+              type="date"
+              name="facultyDate"
+              value={formData.facultyDate}
+              onChange={handleChange}
+            />
+          </div>
+
+          Approvals
+          <div>
+            <label>Student Development Office Approval:</label>
+            <input
+              type="text"
+              name="studentDevApproval"
+              value={formData.studentDevApproval}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Approved:</label>
+            <input
+              type="text"
+              name="studentDevApproved"
+              value={formData.studentDevApproved}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Academic Services Office Approval:</label>
+            <input
+              type="text"
+              name="academicServicesApproval"
+              value={formData.academicServicesApproval}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Approved:</label>
+            <input
+              type="text"
+              name="academicServicesApproved"
+              value={formData.academicServicesApproved}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Academic Director Approval:</label>
+            <input
+              type="text"
+              name="academicDirectorApproval"
+              value={formData.academicDirectorApproval}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Approved:</label>
+            <input
+              type="text"
+              name="academicDirectorApproved"
+              value={formData.academicDirectorApproved}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Executive Director Approval:</label>
+            <input
+              type="text"
+              name="executiveDirectorApproval"
+              value={formData.executiveDirectorApproval}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label>Approved:</label>
+            <input
+              type="text"
+              name="executiveDirectorApproved"
+              value={formData.executiveDirectorApproved}
+              onChange={handleChange}
+            />
+          </div> */}
+
+          {/* PDF Generation */}
+          <div className="pdf-container">
+            <PDFDownloadLink
+              document={<AapPDF formData={formData} />}
+              fileName="application-form.pdf"
+              className="download-link"
+            >
+              {({ blob, url, loading, error }) =>
+                loading ? "Loading document..." : "Download PDF"
+              }
+            </PDFDownloadLink>
+          </div>
+      </div>
     </div>
   );
 };
@@ -255,12 +727,16 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     backgroundColor: "#D9E8FC",
     padding: 5,
-    borderBottom: "1 solid black",
   },
   formRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 5,
+  },
+  signatureRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 10,
   },
   table: {
     borderWidth: 1,
