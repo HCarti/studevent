@@ -207,6 +207,7 @@ const Aap = () => {
     eventTime: "",
     organizer: "",
     budgetAmount: "",
+    budgetFrom:"",
     coreValuesIntegration: "",
     objectives: "",
     marketing: false,
@@ -251,7 +252,8 @@ const Aap = () => {
         <h1>Activity Application Form</h1>
 
           {/* Event Location and Date */}
-          <div className="event-location">
+            <div className="top-event">
+          <div>
             <label>Event Location:</label>
               <select
                name="eventLocation"
@@ -260,8 +262,7 @@ const Aap = () => {
               <option value="On Campus">On Campus</option>
               <option value="Off Campus">Off Campus</option>
                 </select>
-
-                 </div>
+              </div>
           <div>
             <label>Date of Application:</label>
             <input
@@ -269,8 +270,9 @@ const Aap = () => {
               name="applicationDate"
               value={formData.applicationDate}
               onChange={handleChange}
-            />
+              />
           </div>
+            </div>
 
           {/* Contact Information */}
         <div className="form-group">Contact Information</div>
@@ -389,8 +391,19 @@ const Aap = () => {
             />
           </div>
 
+          <div>
+            <label>Budget From:</label>
+              <select
+               name="budgetFrom"
+               value={formData.budgetFrom}
+               onChange={handleChange}>
+              <option value="College/Department">College/Department</option>
+              <option value="Org">Org</option>
+              <option value="SDAO">SDAO</option>
+                </select>
+              </div>
+
           {/* Core Values Integration */}
-          <div className="form-group">Contact Information</div>
           <div>
             <label>Core Values Integration:</label>
             <textarea
