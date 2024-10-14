@@ -18,8 +18,12 @@
   box-shadow: #ccc;
 }
 
-.event-location{
-  margin-bottom: 15px;
+.top-event{
+  border: 1px solid;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30%;
 }
 
 h1 {
@@ -44,7 +48,7 @@ h1 {
 }
 
 .inner-forms label {
-  font-size: 14px;
+  font-size: 20px;
   font-weight: bold;
   color: #333;
   margin-bottom: 5px;
