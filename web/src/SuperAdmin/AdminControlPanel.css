@@ -1,73 +1,41 @@
-.control-pan {
+.control-pan{
     padding: 20px;  
     display: flex;
     flex-direction: column;
-    background-color: #f8f9fa; /* Light background for contrast */
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
 }
-
-.dashboard-title {
-    font-size: 28px;
-    margin-bottom: 20px;
-    text-align: center;
-    color: #333; /* Darker title color */
-}
-
-.outer-p {
+.outer-p{
     display: flex;
     flex-direction: row;
     justify-content: center;
-    gap: 20px; /* Reduced gap for better alignment */
-    flex-wrap: wrap; /* Allow items to wrap on smaller screens */
-}
-
-.c-box {
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Center-align items */
-    padding: 20px;
     border-radius: 10px;
-    width: 200px; /* Fixed width for consistency */
-    height: 120px;
-    color: #fff; /* White text color */
-    position: relative; /* For positioning the icon */
-    transition: transform 0.3s; /* Smooth transform for hover effect */
+    background-color: #ded1cc;
+    gap: 40px;
+    align-items: center;
+    height: 250px;
+}
+.c-box-1, .c-box-2, .c-box-3, .c-box-4{
+    display: flex;
+    padding: 20px;
+    border: 1px solid;
+    flex-direction: column;
+    width: 16%;
+    height: 160px;
+    border-radius: 10px;
+    justify-content: flex-end;
 }
 
-.c-box:hover {
-    transform: scale(1.05); /* Slightly scale on hover */
+.c-box-1{
+    background-color: #1cd69f;
 }
 
-.c-box-1 {
-    background-color: #1cd69f; /* Total Users */
+.c-box-2{
+    background-color: #bd95ed;
 }
 
-.c-box-2 {
-    background-color: #bd95ed; /* Active Services */
+.c-box-3{
+    background-color: #8ba8f0;
 }
 
-.c-box-3 {
-    background-color: #8ba8f0; /* Monthly Sales */
-}
-
-.c-box-4 {
-    background-color: #fa9975; /* Pending Tasks */
-}
-
-.icon {
-    font-size: 40px; /* Increased icon size */
-    margin-bottom: 10px; /* Space between icon and text */
-}
-
-.metric-value {
-    font-size: 30px; /* Larger font for metric value */
-    font-weight: bold; /* Bold value for emphasis */
-    margin: 0; /* Remove default margins */
-}
-
-.metric-title {
-    margin: 5px 0 0 0; /* Proper spacing */
-    font-size: 18px; /* Consistent font size for titles */
-    text-align: center; /* Center-align titles */
+.c-box-4{
+    background-color: #fa9975;
 }

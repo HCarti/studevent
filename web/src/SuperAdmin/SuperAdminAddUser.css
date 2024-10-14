@@ -1,26 +1,56 @@
-/* General Styles */
-body {
-    font-family: 'Arial', sans-serif;
-    background-color: #f7f9fc;
-    color: #333;
-}
-
+/* Form Container */
 .form-container {
     background-color: #ffffff;
-    padding: 40px;
-    border-radius: 15px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-    max-width: 700px;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    max-width: 800px;
     width: 100%;
-    margin: 50px auto; /* Center the form */
 }
 
-/* Form Title */
-.form-title {
-    font-size: 28px;
-    margin-bottom: 30px;
-    text-align: center;
-    color: #1a3ab5;
+/* Form Header */
+.form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.form-header h2 {
+    font-size: 24px;
+    margin: 0;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.activate-btn {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.activate-btn:hover {
+    background-color: #218838;
+}
+
+.cancel-btn {
+    background-color: #6c757d;
+    color: #fff;
+}
+
+.cancel-btn:hover {
+    background-color: #5a6268;
 }
 
 /* Form Body */
@@ -28,7 +58,6 @@ body {
     display: flex;
 }
 
-/* Profile Image Section */
 .profile-image-section {
     display: flex;
     flex-direction: column;
@@ -37,15 +66,10 @@ body {
 }
 
 .profile-image {
-    width: 120px;
-    height: 120px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
     overflow: hidden;
-    border: 2px dashed #1a3ab5; /* Dashed border for logo upload area */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #e9ecef; /* Light background for the logo area */
     margin-bottom: 10px;
 }
 
@@ -55,121 +79,54 @@ body {
     object-fit: cover;
 }
 
-.placeholder-logo {
-    color: #6c757d; /* Placeholder text color */
-    font-size: 14px;
+.upload-btn {
+    padding: 8px 16px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
-/* Form Fields */
+.upload-btn:hover {
+    background-color: #0056b3;
+}
+
 .form-fields {
     flex: 1;
 }
 
-/* Form Group */
 .form-group {
     display: flex;
     flex-direction: column;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
-/* Labels */
 label {
-    font-weight: 600;
+    font-weight: 500;
     margin-bottom: 5px;
 }
 
-/* Inputs and Selects */
 input[type="text"],
 input[type="email"],
 input[type="password"],
 select {
-    padding: 12px;
-    font-size: 16px;
+    padding: 10px;
+    font-size: 14px;
     border: 1px solid #ccc;
     border-radius: 4px;
     outline: none;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease; /* Added transition for box-shadow */
 }
 
 input[type="text"]:focus,
 input[type="email"]:focus,
 input[type="password"]:focus,
 select:focus {
-    border-color: #1a3ab5; /* Highlight color on focus */
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Glow effect on focus */
+    border-color: #007bff;
 }
 
-/* Error States */
-.input-error {
-    border-color: #dc3545; /* Red border for error states */
-}
-
-.error-text {
-    color: #dc3545; /* Red color for error messages */
-    font-size: 12px;
+small {
+    color: red;
     margin-top: 5px;
-}
-
-/* Important Asterisk */
-.important {
-    color: #dc3545; /* Red color for important indicators */
-}
-
-/* Button */
-.btn {
-    padding: 12px 20px;
-    border: none;
-    border-radius: 4px;
-    font-size: 16px;
-    cursor: pointer;
-    background-color: #1a3ab5; /* Primary button color */
-    color: #ffffff;
-    transition: background-color 0.3s ease, transform 0.3s ease; /* Transition for hover effects */
-    width: 100%; /* Full width button */
-}
-
-.btn:hover {
-    background-color: #0056b3; /* Darker shade on hover */
-    transform: scale(1.05); /* Slight scaling on hover */
-}
-
-.btn:disabled {
-    background-color: #cccccc; /* Disabled button color */
-    cursor: not-allowed;
-}
-
-/* Upload Button for Logo */
-.upload-btn {
-    display: inline-block;
-    padding: 12px 20px;
-    background-color: #1a3ab5;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    text-align: center;
-    margin-top: 10px;
-    transition: background-color 0.3s ease, transform 0.3s ease;
-}
-
-.upload-btn:hover {
-    background-color: #0056b3;
-    transform: scale(1.05); /* Scale on hover */
-}
-
-.upload-btn input {
-    display: none; /* Hide the default file input */
-}
-
-/* Success and Error Messages */
-.success-message {
-    color: #28a745; /* Green for success messages */
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.error-message {
-    color: #dc3545; /* Red for error messages */
-    text-align: center;
-    margin-bottom: 20px;
+    font-size: 12px;
 }

@@ -1,101 +1,25 @@
-/* Sidebar container */
 .sidebar {
-  display: flex;
-  flex-direction: column;
-  width: 15%; /* Set the desired width */
-  height: 100vh;
-  padding: 20px 10px;
-  background-color: #f5f5f5;
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-  justify-content: flex-start;
-  transition: width 0.3s ease, padding 0.3s ease; /* Maintain transition for width and padding */
-}
+    display: flex;
+    flex-direction: column;
+    width: 5%;
+    height: 90vh;
+    padding: 10px;
+    align-content: center;
+    background-color: #f5f5f5;
 
-/* Expanded state styling */
-.sidebar.expanded {
-  width: 200px; /* Width when expanded */
-  padding: 20px; /* Full padding */
-}
-
-/* Collapsed state styling */
-.sidebar.collapsed {
-  width: 60px; /* Width when collapsed */
-  padding: 10px 0; /* Reduced padding */
-  opacity: 0.9; /* Slight opacity change for effect */
-}
-
-/* Sidebar item styling */
-.sidebar-item {
-  display: flex;
-  align-items: center;
-  padding: 15px 10px;
-  margin-bottom: 15px;
-  margin-left: 4px;
-  cursor: pointer;
-  border-radius: 8px;
-  transition: background-color 0.3s, box-shadow 0.3s, transform 0.3s;
-}
-
-/* Hover effect on sidebar item */
-.sidebar-item:hover {
-  background-color: #1a3ab5;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transform: translateX(5px); /* Sliding effect */
-}
-
-/* Sidebar item active state */
-.sidebar-item:active {
-  background-color: #005bb5;
-  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
-}
-
-/* Icon styling */
-.sidebar-icon {
-  font-size: 30px;
-  color: #1a3ab5;
-  margin-right: 10px;
-  transition: color 0.3s, transform 0.3s;
-
-}
-
-/* Text styling */
-.sidebar-text {
-  font-size: 16px;
-  font-weight: 500;
-  color: #333;
-  opacity: 1;
-  transition: opacity 0.3s ease, transform 0.3s ease; /* Smooth transition */
-}
-
-/* Hide text when collapsed */
-.sidebar-text.hidden {
-  opacity: 0; /* Fade out text */
-  transform: translateX(10px); /* Slide out */
-}
-
-/* Animation on hover - reveal text */
-.sidebar-item:hover .sidebar-text {
-  color: #fff;
-}
-
-/* Icon color changes on hover */
-.sidebar-item:hover .sidebar-icon {
-  color: #fff;
-}
-
-/* Keyframe animations */
-@keyframes fadeInUp {
-  0% {
-      opacity: 0;
-      transform: translateY(20px);
+    
   }
-  100% {
-      opacity: 1;
-      transform: translateY(0);
+  
+  .sidebar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+    cursor: pointer;
+    gap: 10px;
   }
-}
 
-/* Apply animation to sidebar items on load */
-.sidebar-item {
-  animation: fadeInUp 0.5s ease both;
-}
+  .sidebar-item:hover{
+    background-color: #a6caed;
+  }
+  
