@@ -1,47 +1,177 @@
-/* Modal.css */
+/* Modal Overlay */
 .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  overflow-y: auto;
+  padding: 20px; /* Padding to avoid touching screen edges */
+}
+
+/* Modal Content */
+.modal-content {
+  background-color: rgb(255, 255, 255);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Lighter shadow */
+  animation: fadeIn 0.3s ease;
+  overflow-y: auto;
+  max-height: 80vh; /* Prevents modal from overflowing screen */
+
+}
+
+/* Single Organization View */
+.single-org-view {
+  width: 40%; /* Smaller width for individual view */
+  max-width: 600px; /* Limit modal width */
+}
+
+.single-org-image {
+  width: 60%; /* Smaller logo for single org view */
+  height: auto;
+  margin-bottom: 20px;
+  border-radius: 10px; /* Rounded edges for a cleaner look */
+}
+
+.single-organization h2 {
+  margin-bottom: 15px;
+}
+
+.single-organization p {
+  line-height: 1.5;
+}
+
+/* View All Organizations View */
+.all-orgs-view {
+  width: 90%; /* Wider width for "View All" modal */
+  max-width: 1500px; /* Limit max width for larger screens */
+}
+
+.all-organizations {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); /* Flexible grid layout */
+  grid-gap: 20px; /* Space between cards */
+  max-height: 60vh; /* Limit the height */
+  overflow-y: auto; /* Scrollable if too many orgs */
+  padding-right: 10px; /* Space for scrollbar */
+}
+
+.org-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+  max-width: 250px;
+  height: 350px;
+  margin: 0 auto;
+  position: relative; /* For overlay effect */
+}
+
+/* .org-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); 
+} */
+
+.org-info h3 {
+  font-size: 1.2em;
+  color: #333;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.org-info p {
+  font-size: 0.9em;
+  color: #777;
+  line-height: 1.4;
+}
+
+/* Overlay on Hover (for additional info) */
+.org-card:hover .org-info {
+  background: rgba(255, 255, 255, 0.9);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 10px;
+  height: 100%; /* Cover entire card */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: background 0.3s ease;
+}
+
+.org-info:hover p {
+  display: block;
+}
+
+/* Card Info */
+.org-info {
+  margin-top: 15px;
+}
+
+/* Card Image */
+.org-image {
+  width: 100%;
+  height: 160px; /* Adjust height for a consistent card size */
+  object-fit: cover; /* Ensures image fits well */
+  border-radius: 10px;
+  transition: transform 0.3s ease;
+}
+
+/* Modal Close Button */
+.modal-close {
+  background-color: #333;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.modal-close:hover {
+  background-color: #555;
+}
+
+/* Responsive Adjustments */
+@media screen and (max-width: 768px) {
+  .single-org-view {
+    width: 90%; /* Adjust to fit small screens */
   }
- 
+
+  .all-orgs-view {
+    width: 90%;
+  }
+
+  .single-org-image {
+    width: 80%; /* Make logo smaller on mobile */
+  }
+
+  /* Disable animations on mobile to avoid performance issues */
   .modal-content {
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    width: 400px;
-    text-align: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    animation: fadeIn 0.3s ease;
+    animation: none;
   }
- 
-  .modal-image {
-    width: 100%;
-    height: auto;
-    margin-bottom: 15px;
+}
+
+/* Animation for fadeIn effect */
+@keyframes fadeIn {
+  from {
+    transform: scale(0.95); /* GPU-accelerated property */
+    opacity: 0;
   }
- 
-  .modal-close {
-    background-color: #333;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+  to {
+    transform: scale(1);
+    opacity: 1;
   }
- 
-  .modal-close:hover {
-    background-color: #555;
-  }
- 
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
+}

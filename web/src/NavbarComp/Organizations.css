@@ -81,14 +81,13 @@
 /* Custom dots, styled as circles, not numbers */
 .slick-dots.custom-dots li {
   display: inline-block;
- 
 }
  
+
 .slick-dots.custom-dots li button::before {
   font-size: 1px;
   align-items: center;
   color: #ccc;
- 
 }
  
 .slick-dots.custom-dots li.slick-active button::before {
@@ -234,4 +233,23 @@ footer {
   max-width: 800px;
   margin: 0 auto 20px auto;
   line-height: 1.5;
+}
+
+.view-all-container {
+  margin-top: 20px;
+}
+
+.view-all-btn {
+  background-color: #333;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  border-radius: 5px;
+}
+
+.view-all-btn:hover {
+  background-color: #555;
 }

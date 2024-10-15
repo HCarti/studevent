@@ -126,7 +126,6 @@ const SuperAdminAddUser = () => {
         <div className="form-container">
             <h2 className="form-title">Add New User</h2>
 
-            {/* Display errors or success messages */}
             {error && <p className="error-message">{error}</p>}
             {success && <p className="success-message">{success}</p>}
 
