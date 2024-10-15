@@ -6,8 +6,11 @@ import StepLabel from '@mui/material/StepLabel';
 import Button from '@mui/material/Button';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
+import { useNavigate } from 'react-router-dom';
 
 const ProgressTracker = () => {
+  const navigate = useNavigate();
+
   const steps = [
     { label: 'Submitted to Adviser', timestamp: '12:30pm 3/11/24', color: 'yellow' },
     { label: 'Reviewed and Signed by Adviser', timestamp: '1:30pm 3/11/24', color: 'green' },
@@ -29,6 +32,7 @@ const ProgressTracker = () => {
     setIsEditing(false); // Disable editing mode when "SAVE" or "UPDATE TRACKER" is clicked
   };
 
+
   // Function to handle checkbox selection logic
   const handleCheckboxChange = (checkbox) => {
     if (checkbox === 'approved') {
@@ -39,6 +43,11 @@ const ProgressTracker = () => {
       setIsDeclinedChecked(true);
     }
   };
+
+  const handleViewForms = () => {
+    navigate('/adminformview');
+  };
+
 
   return (
     <div className='prog-box'>
@@ -118,7 +127,7 @@ const ProgressTracker = () => {
               <Button variant="contained" className="action-button">
                 DONE
               </Button>
-              <Button variant="contained" className="action-button">
+              <Button variant="contained" className="action-button" onClick={handleViewForms}>
                 VIEW FORMS
               </Button>
               <Button variant="contained" className="action-button" onClick={handleEditClick}>

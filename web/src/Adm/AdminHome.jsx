@@ -45,7 +45,7 @@ const quotes = [
 
   const handleFormsClick = () => {
     handleButtonClick('forms');
-    navigate('/forms');
+    navigate('/formss');
   };
 
   const handleEventsClick = () => {
@@ -94,6 +94,8 @@ const quotes = [
           <h3>Dashboard</h3>
         </div>
       </div>
+
+      <button onClick={handleLogout} className="logout-bt">Logout</button>
 
       {/* Display the random quote with animation */}
       <div className="quote-container">

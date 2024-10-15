@@ -1,6 +1,7 @@
-import React from "react";
+import React, {useState} from "react";
 import { Document, Page, Text, View, StyleSheet, Image, PDFDownloadLink } from "@react-pdf/renderer";
 import NU_logo from "../Images/NU_logo.png";
+import { useNavigate } from 'react-router-dom';
 
 const AapPDF = ({ formData }) => (
   <Document>
@@ -15,6 +16,7 @@ const AapPDF = ({ formData }) => (
       </View>
 
       <Text style={styles.formTitle}>STUDENT ORGANIZATION ACTIVITY APPLICATION FORM</Text>
+      <Text></Text>
 
       {/* Event Location and Date */}
       <View style={styles.section}>
@@ -224,18 +226,6 @@ const Aap = () => {
     emergencyFirstAid: "",
     fireSafety: "",
     weather: "",
-    applicantSignature: "",
-    facultySignature: "",
-    applicantDate: "",
-    facultyDate: "",
-    studentDevApproval: "",
-    studentDevApproved: "",
-    academicServicesApproval: "",
-    academicServicesApproved: "",
-    academicDirectorApproval: "",
-    academicDirectorApproved: "",
-    executiveDirectorApproval: "",
-    executiveDirectorApproved: "",
   });
 
   const handleChange = (e) => {
@@ -245,6 +235,52 @@ const Aap = () => {
       [name]: type === "checkbox" ? checked : value,
     });
   };
+
+  const [formSent, setFormSent] = useState(false);  // <-- Add this
+
+  const handleSubmit = async () => {
+    // Validate required fields
+    const requiredFields = [
+        'eventLocation', 'dateofapplication', 'studentOrganization', 
+        'contactPerson', 'contactNo', 'emailAddress', 'eventTitle', 
+        'eventType', 'venueAddress', 'eventDate', 'eventTime', 
+        'organizer', 'budgetAmount', 'budgetFrom', 'coreValuesIntegration', 
+        'objectives', 'others', 'eventManagementHead', 'health', 
+        'safetyAttendees', 'emergencyFirstAid', 'fireSafety', 'weather'
+    ];
+
+    for (const field of requiredFields) {
+        if (!formData[field]) {
+            alert(`${field} is required.`);
+            return; // Stop submission if any field is empty
+        }
+    }
+
+    try {
+        // Send form data to the API
+        const response = await fetch('http://localhost:8000/api/forms/submit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Error submitting form:', errorData);
+            alert(`Error: ${errorData.details}`);
+            return;
+        }
+
+        const result = await response.json();
+        console.log('Form submitted successfully:', result);
+        alert('Form submitted successfully!');
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while submitting the form.');
+    }
+};
   
   return (
     <div className="form-ubox">
@@ -427,7 +463,7 @@ const Aap = () => {
           <div>
             <label>Marketing:</label>
             <input
-              type="checkbox"
+              type="text"
               name="marketing"
               checked={formData.marketing}
               onChange={handleChange}
@@ -437,7 +473,7 @@ const Aap = () => {
           <div>
             <label>Collaterals:</label>
             <input
-              type="checkbox"
+              type="text"
               name="collaterals"
               checked={formData.collaterals}
               onChange={handleChange}
@@ -447,7 +483,7 @@ const Aap = () => {
           <div>
             <label>Press Release:</label>
             <input
-              type="checkbox"
+              type="text"
               name="pressRelease"
               checked={formData.pressRelease}
               onChange={handleChange}
@@ -468,7 +504,7 @@ const Aap = () => {
           <div>
             <label>Event Facilities:</label>
             <input
-              type="checkbox"
+              type="text"
               name="eventFacilities"
               checked={formData.eventFacilities}
               onChange={handleChange}
@@ -478,7 +514,7 @@ const Aap = () => {
           <div>
             <label>Holding Area:</label>
             <input
-              type="checkbox"
+              type="text"
               name="holdingArea"
               checked={formData.holdingArea}
               onChange={handleChange}
@@ -488,7 +524,7 @@ const Aap = () => {
           <div>
             <label>Toilets:</label>
             <input
-              type="checkbox"
+              type="text"
               name="toilets"
               checked={formData.toilets}
               onChange={handleChange}
@@ -498,7 +534,7 @@ const Aap = () => {
           <div>
             <label>Transportation & Parking:</label>
             <input
-              type="checkbox"
+              type="text"
               name="transportation"
               checked={formData.transportation}
               onChange={handleChange}
@@ -563,140 +599,25 @@ const Aap = () => {
             />
           </div>
 
-          {/* Signatures
-          <div>
-            <label>Applicant Organization:</label>
-            <input
-              type="text"
-              name="applicantSignature"
-              value={formData.applicantSignature}
-              onChange={handleChange}
-            />
-          </div>
 
-          <div>
-            <label>Faculty Signature:</label>
-            <input
-              type="text"
-              name="facultySignature"
-              value={formData.facultySignature}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
-            <label>Date:</label>
-            <input
-              type="date"
-              name="applicantDate"
-              value={formData.applicantDate}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
-            <label>Faculty Date:</label>
-            <input
-              type="date"
-              name="facultyDate"
-              value={formData.facultyDate}
-              onChange={handleChange}
-            />
-          </div>
-
-          Approvals
-          <div>
-            <label>Student Development Office Approval:</label>
-            <input
-              type="text"
-              name="studentDevApproval"
-              value={formData.studentDevApproval}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
-            <label>Approved:</label>
-            <input
-              type="text"
-              name="studentDevApproved"
-              value={formData.studentDevApproved}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
-            <label>Academic Services Office Approval:</label>
-            <input
-              type="text"
-              name="academicServicesApproval"
-              value={formData.academicServicesApproval}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
-            <label>Approved:</label>
-            <input
-              type="text"
-              name="academicServicesApproved"
-              value={formData.academicServicesApproved}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
-            <label>Academic Director Approval:</label>
-            <input
-              type="text"
-              name="academicDirectorApproval"
-              value={formData.academicDirectorApproval}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
-            <label>Approved:</label>
-            <input
-              type="text"
-              name="academicDirectorApproved"
-              value={formData.academicDirectorApproved}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
-            <label>Executive Director Approval:</label>
-            <input
-              type="text"
-              name="executiveDirectorApproval"
-              value={formData.executiveDirectorApproval}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
-            <label>Approved:</label>
-            <input
-              type="text"
-              name="executiveDirectorApproved"
-              value={formData.executiveDirectorApproved}
-              onChange={handleChange}
-            />
-          </div> */}
-
-          {/* PDF Generation */}
+          {/* Send to SDAO button */}
           <div className="pdf-container">
-            <PDFDownloadLink
-              document={<AapPDF formData={formData} />}
-              fileName="application-form.pdf"
-              className="download-link"
-            >
-              {({ blob, url, loading, error }) =>
-                loading ? "Loading document..." : "Download PDF"
-              }
-            </PDFDownloadLink>
-          </div>
+            <button
+            onClick={handleSubmit}
+            style={{
+              padding: '10px 15px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          >
+            Send to SDAO
+          </button>
+        </div>
+        {/* Show a notification when the form is sent */}
+        {formSent && <p>Form successfully sent to the SDAO!</p>}  {/* <-- Add this */}
       </div>
     </div>
   );
@@ -712,7 +633,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   logo: {
-    width: 60,
+    width: 60, 
     height: 60,
   },
   headerText: {
@@ -728,7 +649,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 20,
     fontWeight: "bold",
-    textDecoration: "underline",
   },
   section: {
     marginBottom: 15,
@@ -765,4 +685,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Aap;
+export default Aap; 

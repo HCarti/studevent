@@ -42,7 +42,7 @@ const OrgMemHome = () => {
   const handleFormsClick = () => {
     handleButtonClick('forms');
     console.log("Forms/Signature clicked");
-    navigate('/forms');
+    navigate('/formss');
   };
 
   const handleEventsClick = () => {

@@ -17,7 +17,7 @@ const FormsandSig = () => {
 
   const handleSig = () => {
     console.log("signature tracker has been clicked");
-    navigate('/sigtrack');
+    navigate('/progtrack');
   };
   
 

@@ -42,7 +42,7 @@ const SuperAdminHome = () => {
 
   const handleFormsClick = () => {
     handleButtonClick('forms');
-    navigate('/forms');
+    navigate('/formss');
   };
 
   const handleEventsClick = () => {
