@@ -4,12 +4,10 @@ import './SuperAdminAddUser.css';
 
 const SuperAdminAddUser = () => {
     const [formData, setFormData] = useState({
-        role: 'Authority',
+        role: 'Admin', 
         firstName: '',
         lastName: '',
         email: '',
-        faculty: '',
-        organizationType: '',
         password: '',
         confirmPassword: '',
     });
@@ -19,6 +17,12 @@ const SuperAdminAddUser = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [validationErrors, setValidationErrors] = useState({});
+
+    const faculties = ['Adviser', 'Dean', 'Academic Services', 'Academic Director'];
+    const typeorganizations = [
+        'Recognized Student Organization - Special Interest', 
+        'Recognized Student Organization - Academic',
+        'College Student Council']; // Organization type
 
     const handleChange = (e) => {
         setFormData({
@@ -92,7 +96,7 @@ const SuperAdminAddUser = () => {
         data.append('lastName', formData.lastName);
         data.append('email', formData.email);
         data.append('faculty', formData.faculty);
-        data.append('organizationType', formData.organizationType);
+        data.append('organization', formData.organization); // Include organization field
         data.append('password', formData.password);
         data.append('logo', logo);
 
@@ -110,7 +114,7 @@ const SuperAdminAddUser = () => {
                 lastName: '',
                 email: '',
                 faculty: '',
-                organizationType: '',
+                organization: '',
                 password: '',
                 confirmPassword: '',
             });
@@ -149,6 +153,7 @@ const SuperAdminAddUser = () => {
                         <div className="form-group">
                             <label htmlFor="role">Role:</label>
                             <select name="role" value={formData.role} onChange={handleChange}>
+                                <option value="Admin">Admin</option>
                                 <option value="Authority">Authority</option>
                                 <option value="Organization">Organization</option>
                             </select>
@@ -191,15 +196,33 @@ const SuperAdminAddUser = () => {
                         </div>
 
                         {formData.role === 'Authority' && (
-                            <div className="form-group">
-                                <label htmlFor="faculty">Faculty:</label>
-                                <input
-                                    type="text"
-                                    name="faculty"
-                                    value={formData.faculty}
-                                    onChange={handleChange}
-                                />
-                            </div>
+                            <>
+                                <div className="form-group">
+                                    <label htmlFor="faculty">Faculty and School Admin:</label>
+                                    <select name="faculty" value={formData.faculty} onChange={handleChange}>
+                                        <option value="">Select Role</option>
+                                        {faculties.map((faculty, index) => (
+                                            <option key={index} value={faculty}>
+                                                {faculty}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {formData.faculty === 'Adviser' && (
+                                    <div className="form-group">
+                                        <label htmlFor="organization">Type of Organizations:</label>
+                                        <select name="organization" value={formData.organization} onChange={handleChange}>
+                                            <option value="">Select Organization</option>
+                                            {typeorganizations.map((organization, index) => (
+                                                <option key={index} value={organization}>
+                                                    {organization}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+                            </>
                         )}
 
                         {formData.role === 'Organization' && (

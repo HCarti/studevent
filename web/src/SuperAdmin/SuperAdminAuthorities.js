@@ -68,7 +68,7 @@ const SuperAdminAuthorities = () => {
             <table>
                 <thead>
                     <tr>
-                        <th>Logo</th>
+                        <th>Picture</th>
                         <th>Name</th>
                         <th>Email</th>
                         <th>Faculty</th>

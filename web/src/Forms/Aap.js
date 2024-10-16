@@ -80,12 +80,8 @@ const AapPDF = ({ formData }) => (
         <Text style={styles.sectionTitle}>COMMUNICATIONS AND PROMOTIONS REQUIRED</Text>
         <View style={styles.table}>
           <View style={styles.tableRow}>
-            <Text>Marketing</Text>
+            <Text>Marketing Collaterals</Text>
             <Text>{formData.marketing ? "Yes" : "No"}</Text>
-          </View>
-          <View style={styles.tableRow}>
-            <Text>Collaterals</Text>
-            <Text>{formData.collaterals ? "Yes" : "No"}</Text>
           </View>
           <View style={styles.tableRow}>
             <Text>Press Release</Text>
@@ -125,7 +121,9 @@ const AapPDF = ({ formData }) => (
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>3. EVENT MANAGEMENT TEAM</Text>
         <Text>Event Management Head: {formData.eventManagementHead}</Text>
+        <Text>Event Committees and Members: {formData.eventCommitteesandMembers}</Text>
       </View>
+      
 
       {/* Risk Assessments */}
       <View style={styles.section}>
@@ -221,6 +219,7 @@ const Aap = () => {
     toilets: false,
     transportation: false,
     eventManagementHead: "",
+    eventCommitteesandMembers: "",
     health: "",
     safetyAttendees: "",
     emergencyFirstAid: "",
@@ -241,13 +240,17 @@ const Aap = () => {
   const handleSubmit = async () => {
     // Validate required fields
     const requiredFields = [
-        'eventLocation', 'applicationDate', 'studentOrganization', 
-        'contactPerson', 'contactNo', 'emailAddress', 'eventTitle', 
-        'eventType', 'venueAddress', 'eventDate', 'eventTime', 
-        'organizer', 'budgetAmount', 'budgetFrom', 'coreValuesIntegration', 
-        'objectives', 'others', 'eventManagementHead', 'health', 
-        'safetyAttendees', 'emergencyFirstAid', 'fireSafety', 'weather'
-    ];
+      'eventLocation', 'applicationDate', 'studentOrganization', 
+      'contactPerson', 'contactNo', 'emailAddress', 'eventTitle', 
+      'eventType', 'venueAddress', 'eventDate', 'eventTime', 
+      'organizer', 'budgetAmount', 'budgetFrom', 'coreValuesIntegration', 
+      'objectives', 'marketingCollaterals', 'pressRelease', 'others', 'eventFacilities', 
+      'holdingArea', 'toilets', 'transportationandParking', 'others2', 
+      'licensesRequired','houseKeeping', 'wasteManagement',
+      'eventManagementHead','eventCommitteesandMembers',  // This is the correct key
+      'health', 'safetyAttendees', 'emergencyFirstAid', 'fireSafety', 'weather'
+  ];
+  
 
     for (const field of requiredFields) {
         if (!formData[field]) {
@@ -295,7 +298,7 @@ const Aap = () => {
                name="eventLocation"
                value={formData.eventLocation}
                onChange={handleChange}>
-              <option value="On Campus">Select An Option...</option>
+              <option value="selectoption">Select An Option...</option>
               <option value="On Campus">On Campus</option>
               <option value="Off Campus">Off Campus</option>
               
@@ -308,13 +311,12 @@ const Aap = () => {
               name="applicationDate"
               value={formData.applicationDate}
               onChange={handleChange}
-
               />
           </div>
             </div>
 
           {/* Contact Information */}
-        <div className="form-group">Contact Information</div>
+        <div className="form-group-activity">Contact Information</div>
           <div>
             <label>Student Organization:</label>
             <input
@@ -357,7 +359,7 @@ const Aap = () => {
           </div>
 
           {/* Event Details */}
-          <div className="form-group">Event Details</div>
+          <div className="form-group-activity">Event Details</div>
           <div>
             <label>Event Title:</label>
             <input
@@ -374,7 +376,7 @@ const Aap = () => {
                name="eventType"
                value={formData.eventType}
                onChange={handleChange}>
-              <option value="Student Organization Activity">Select An Option...</option>
+              <option value="Selectoption">Select An Option...</option>
               <option value="Student Organization Activity">Student Organization Activity</option>
               <option value="Special Event">Special Event</option>
               <option value="University/School Activity">University/School Activity</option>
@@ -438,7 +440,7 @@ const Aap = () => {
                name="budgetFrom"
                value={formData.budgetFrom}
                onChange={handleChange}>
-              <option value="College/Department">Select An Option...</option>
+              <option value="Selectoption">Select An Option...</option>
               <option value="College/Department">College/Department</option>
               <option value="Org">Org</option>
               <option value="SDAO">SDAO</option>
@@ -449,6 +451,9 @@ const Aap = () => {
           <div>
             <label>Core Values Integration:</label>
             <textarea
+            style={{resize:'none',
+              overflow:'hidden'
+            }}
               name="coreValuesIntegration"
               value={formData.coreValuesIntegration}
               onChange={handleChange}
@@ -459,6 +464,9 @@ const Aap = () => {
           <div>
             <label>Objectives:</label>
             <textarea
+              style={{resize:'none'
+                ,overflow:'hidden'
+              }} 
               name="objectives"
               value={formData.objectives}
               onChange={handleChange}
@@ -467,21 +475,11 @@ const Aap = () => {
 
           {/* Communications and Promotions */}
           <div>
-            <label>Marketing:</label>
+            <label>Marketing Collaterals:</label>
             <input
               type="text"
-              name="marketing"
-              checked={formData.marketing}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
-            <label>Collaterals:</label>
-            <input
-              type="text"
-              name="collaterals"
-              checked={formData.collaterals}
+              name="marketingCollaterals"
+              checked={formData.marketingCollaterals}
               onChange={handleChange}
             />
           </div>
@@ -541,14 +539,50 @@ const Aap = () => {
             <label>Transportation & Parking:</label>
             <input
               type="text"
-              name="transportation"
-              checked={formData.transportation}
+              name="transportationandParking"
+              checked={formData.transportationandParking}
+              onChange={handleChange}
+            />
+          </div>
+          <div>
+            <label>Others:</label>
+            <input
+              type="text"
+              name="others2"
+              checked={formData.more}
+              onChange={handleChange}
+            />
+          </div>
+          <div>
+            <label>Licenses Required:</label>
+            <input
+              type="text"
+              name="licensesRequired"
+              checked={formData.licensesRequired}
+              onChange={handleChange}
+            />
+          </div>
+          <div>
+            <label>HouseKeeping:</label>
+            <input
+              type="text"
+              name="houseKeeping"
+              checked={formData.houseKeeping}
+              onChange={handleChange}
+            />
+          </div>
+          <div>
+            <label>Waste Management:</label>
+            <input
+              type="text"
+              name="wasteManagement"
+              checked={formData.wasteManagement}
               onChange={handleChange}
             />
           </div>
 
           {/* Event Management Team */}
-          <div className="form-group">Event Management Team</div>
+          <div className="form-group-activity">Event Management Team</div>
           <div>
             <label>Event Management Head:</label>
             <input
@@ -559,10 +593,23 @@ const Aap = () => {
             />
           </div>
 
+          <div>
+  <label>Event Committees & Members:</label>
+  <input
+    type="text"
+    name="eventCommitteesandMembers"  // Use uppercase 'M' to match the PDF
+    value={formData.eventCommitteesandMembers}
+    onChange={handleChange}
+  />
+</div>
+
           {/* Risk Assessments */}
           <div>
             <label>Health:</label>
             <textarea
+              style={{resize:'none',
+                overflow:'hidden'
+              }}
               name="health"
               value={formData.health}
               onChange={handleChange}
@@ -572,6 +619,9 @@ const Aap = () => {
           <div>
             <label>Safety of Attendees:</label>
             <textarea
+              style={{resize:'none',
+                overflow:'hidden'
+              }}
               name="safetyAttendees"
               value={formData.safetyAttendees}
               onChange={handleChange}
@@ -581,6 +631,9 @@ const Aap = () => {
           <div>
             <label>Emergency/First Aid:</label>
             <textarea
+              style={{resize:'none',
+                overflow:'hidden'
+              }}
               name="emergencyFirstAid"
               value={formData.emergencyFirstAid}
               onChange={handleChange}
@@ -590,6 +643,9 @@ const Aap = () => {
           <div>
             <label>Fire Safety:</label>
             <textarea
+              style={{resize:'none'
+                ,overflow:'hidden'
+              }}
               name="fireSafety"
               value={formData.fireSafety}
               onChange={handleChange}
@@ -599,6 +655,9 @@ const Aap = () => {
           <div>
             <label>Weather:</label>
             <textarea
+              style={{resize:'none'
+                ,overflow:'hidden'
+              }}
               name="weather"
               value={formData.weather}
               onChange={handleChange}

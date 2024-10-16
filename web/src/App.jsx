@@ -28,7 +28,6 @@ import AdminTab from './SuperAdmin/AdminTab';
 import SuperAdminAuthorities from './SuperAdmin/SuperAdminAuthorities';
 import SuperAdminUsers from './SuperAdmin/SuperAdminUsers';
 import SuperAdminAddUser from './SuperAdmin/SuperAdminAddUser';
-import PdfPreviewPage from './Forms/PdfPreviewPage';
 import AdminFormView from './Adm/AdminFormView';
 
 const App = () => {
@@ -90,7 +89,6 @@ const App = () => {
             <Route path="/formss" element={<FormsandSig />} />
             <Route path="/forms" element={<Forms />} />
             <Route path="/activity" element={<Aap />} />
-            <Route path="/pdf-preview" element={<PdfPreviewPage />} />
             <Route path="/budget" element={<Budget />} />
             <Route path="/project" element={<Project />} />
           </>

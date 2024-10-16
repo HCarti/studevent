@@ -24,7 +24,7 @@ const formSchema = new mongoose.Schema({
     holdingArea: { type: String, required: true },
     toilets: { type: String, required: true },
     transportationandParking: { type: String, required: true },
-    others2: { type: String, required: true },
+    more: { type: String, required: true },
     licensesRequired: { type: String, required: true },
     houseKeeping: { type: String, required: true },
     wasteManagement: { type: String, required: true },

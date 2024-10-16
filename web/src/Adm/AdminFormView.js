@@ -36,6 +36,7 @@ const AdminFormView = () => {
             {submittedForms.map((form, index) => (
               <li key={index} style={{ listStyleType: 'none' }}>
                 <button
+                  className="admin-button"
                   onClick={() => handleFormSelect(form)}
                   style={{ 
                     padding: '10px', 
@@ -62,106 +63,106 @@ const AdminFormView = () => {
           <h2>Form Details</h2>
 
           {/* Read-only form with inputs */}
-          <form>
-            <label>Event Location:</label>
-            <input type="text" value={selectedForm.eventLocation} readOnly />
+          <form classname="">
+            <label className="admin-label">Event Location:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.eventLocation} readOnly />
 
-            <label>Date Of Application:</label>
-            <input type="text" value={selectedForm.applicationDate} readOnly />
+            <label className="admin-label">Date Of Application:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.applicationDate} readOnly />
 
-            <label>Student Organization:</label>
-            <input type="text" value={selectedForm.studentOrganization} readOnly />
+            <label className="admin-label">Student Organization:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.studentOrganization} readOnly />
 
-            <label>Contact Person:</label>
-            <input type="text" value={selectedForm.contactPerson} readOnly />
+            <label className="admin-label">Contact Person:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.contactPerson} readOnly />
 
-            <label>Contact No:</label>
-            <input type="text" value={selectedForm.contactNo} readOnly />
+            <label className="admin-label">Contact No:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.contactNo} readOnly />
 
-            <label>Email Address:</label>
-            <input type="text" value={selectedForm.emailAddress} readOnly />
+            <label className="admin-label">Email Address:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.emailAddress} readOnly />
 
-            <label>Event Title:</label>
-            <input type="text" value={selectedForm.eventTitle} readOnly />
+            <label className="admin-label">Event Title:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.eventTitle} readOnly />
 
-            <label>Type of Event:</label>
-            <input type="text" value={selectedForm.eventType} readOnly />
+            <label className="admin-label">Type of Event:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.eventType} readOnly />
 
-            <label>Venue Address:</label>
-            <input type="text" value={selectedForm.venueAddress} readOnly />
+            <label className="admin-label">Venue Address:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.venueAddress} readOnly />
 
-            <label>Event Date:</label>
-            <input type="text" value={selectedForm.eventDate} readOnly />
+            <label className="admin-label">Event Date:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.eventDate} readOnly />
 
-            <label>Event Time:</label>
-            <input type="text" value={selectedForm.objectives} readOnly />
+            <label className="admin-label">Event Time:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.objectives} readOnly />
 
-            <label>Organizer:</label>
-            <input type="text" value={selectedForm.organizer} readOnly />
+            <label className="admin-label">Organizer:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.organizer} readOnly />
 
-            <label>Event Budget Amount:</label>
-            <input type="text" value={selectedForm.budgetAmount} readOnly />
+            <label className="admin-label">Event Budget Amount:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.budgetAmount} readOnly />
 
-            <label>Event Budget From:</label>
-            <input type="text" value={selectedForm.budgetFrom} readOnly />
+            <label className="admin-label">Event Budget From:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.budgetFrom} readOnly />
 
-            <label>Core Values Integration:</label>
-            <input type="text" value={selectedForm.coreValuesIntegration} readOnly />
+            <label className="admin-label">Core Values Integration:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.coreValuesIntegration} readOnly />
 
-            <label>Objectives:</label>
-            <input type="text" value={selectedForm.objectives} readOnly />
+            <label className="admin-label">Objectives:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.objectives} readOnly />
 
             {/* Add more fields as necessary in the same format */}
-            <label>Marketing Collaterals:</label>
-            <input type="text" value={selectedForm.marketingCollaterals} readOnly />
+            <label className="admin-label">Marketing Collaterals:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.marketingCollaterals} readOnly />
 
-            <label>Press Release:</label>
-            <input type="text" value={selectedForm.pressRelease} readOnly />
+            <label className="admin-label">Press Release:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.pressRelease} readOnly />
 
-            <label>Others:</label>
-            <input type="text" value={selectedForm.others} readOnly />
+            <label className="admin-label">Others:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.others} readOnly />
 
-            <label>Event Facilities:</label>
-            <input type="text" value={selectedForm.eventFacilities} readOnly />
+            <label className="admin-label">Event Facilities:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.eventFacilities} readOnly />
 
-            <label>Holding Area:</label>
-            <input type="text" value={selectedForm.holdingArea} readOnly />
+            <label className="admin-label">Holding Area:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.holdingArea} readOnly />
 
-            <label>Toilets:</label>
-            <input type="text" value={selectedForm.toilets} readOnly />
+            <label className="admin-label">Toilets:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.toilets} readOnly />
 
-            <label>Transportation & Parking:</label>
-            <input type="text" value={selectedForm.transportationandParking} readOnly />
+            <label className="admin-label">Transportation & Parking:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.transportationandParking} readOnly />
 
-            <label>Licenses Required:</label>
-            <input type="text" value={selectedForm.licensesRequired} readOnly />
+            <label className="admin-label">Licenses Required:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.licensesRequired} readOnly />
 
-            <label>Housekeeping:</label>
-            <input type="text" value={selectedForm.houseKeeping} readOnly />
+            <label className="admin-label">Housekeeping:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.houseKeeping} readOnly />
 
-            <label>Waste Management:</label>
-            <input type="text" value={selectedForm.wasteMangement} readOnly />
+            <label className="admin-label">Waste Management:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.wasteMangement} readOnly />
 
-            <label>Event Management Head:</label>
-            <input type="text" value={selectedForm.eventManagementHead} readOnly />
+            <label className="admin-label">Event Management Head:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.eventManagementHead} readOnly />
 
-            <label>Event Committees & Members:</label>
-            <input type="text" value={selectedForm.eventCommitteesandMembers} readOnly />
+            <label className="admin-label">Event Committees & Members:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.eventCommitteesandMembers} readOnly />
 
-            <label>Health:</label>
-            <input type="text" value={selectedForm.health} readOnly />
+            <label className="admin-label">Health:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.health} readOnly />
 
-            <label>Safety Of Attendees:</label>
-            <input type="text" value={selectedForm.safetyAttendees} readOnly />
+            <label className="admin-label">Safety Of Attendees:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.safetyAttendees} readOnly />
 
-            <label>Emergency/First Aid:</label>
-            <input type="text" value={selectedForm.emergencyFirstAid} readOnly />
+            <label className="admin-label">Emergency/First Aid:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.emergencyFirstAid} readOnly />
 
-            <label>Fire Safety:</label>
-            <input type="text" value={selectedForm.fireSafety} readOnly />
+            <label className="admin-label">Fire Safety:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.fireSafety} readOnly />
 
-            <label>Weather:</label>
-            <input type="text" value={selectedForm.weather} readOnly />
+            <label className="admin-label">Weather:</label>
+            <input className="inputtypeadmin" type="text" value={selectedForm.weather} readOnly />
           </form>
         </div>
       )}

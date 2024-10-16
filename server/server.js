@@ -15,7 +15,7 @@ app.use(express.urlencoded({ extended: true })); // Specify extended for parsing
 app.use(cors());
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/Studevent', {
+mongoose.connect('mongodb+srv://StudEvent:StudEvent2024@studevent.nvsci.mongodb.net/', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
