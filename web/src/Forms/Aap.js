@@ -241,7 +241,7 @@ const Aap = () => {
   const handleSubmit = async () => {
     // Validate required fields
     const requiredFields = [
-        'eventLocation', 'dateofapplication', 'studentOrganization', 
+        'eventLocation', 'applicationDate', 'studentOrganization', 
         'contactPerson', 'contactNo', 'emailAddress', 'eventTitle', 
         'eventType', 'venueAddress', 'eventDate', 'eventTime', 
         'organizer', 'budgetAmount', 'budgetFrom', 'coreValuesIntegration', 
@@ -295,8 +295,10 @@ const Aap = () => {
                name="eventLocation"
                value={formData.eventLocation}
                onChange={handleChange}>
+              <option value="On Campus">Select An Option...</option>
               <option value="On Campus">On Campus</option>
               <option value="Off Campus">Off Campus</option>
+              
                 </select>
               </div>
           <div>
@@ -306,6 +308,7 @@ const Aap = () => {
               name="applicationDate"
               value={formData.applicationDate}
               onChange={handleChange}
+
               />
           </div>
             </div>
@@ -329,6 +332,7 @@ const Aap = () => {
               name="contactPerson"
               value={formData.contactPerson}
               onChange={handleChange}
+              required
             />
           </div>
 
@@ -370,6 +374,7 @@ const Aap = () => {
                name="eventType"
                value={formData.eventType}
                onChange={handleChange}>
+              <option value="Student Organization Activity">Select An Option...</option>
               <option value="Student Organization Activity">Student Organization Activity</option>
               <option value="Special Event">Special Event</option>
               <option value="University/School Activity">University/School Activity</option>
@@ -433,6 +438,7 @@ const Aap = () => {
                name="budgetFrom"
                value={formData.budgetFrom}
                onChange={handleChange}>
+              <option value="College/Department">Select An Option...</option>
               <option value="College/Department">College/Department</option>
               <option value="Org">Org</option>
               <option value="SDAO">SDAO</option>
