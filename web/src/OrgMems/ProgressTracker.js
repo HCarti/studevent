@@ -13,7 +13,16 @@ const socket = io('http://localhost:3000');  // Connect to the backend server
 
 const ProgressTracker = () => {
   const navigate = useNavigate();
-  const [trackerData, setTrackerData] = useState(null);  // State to store tracker data
+  // Set initial dummy tracker data for testing
+  const [trackerData, setTrackerData] = useState({
+    steps: [
+      { label: 'Submitted to Adviser', color: 'yellow', timestamp: Date.now() },
+      { label: 'Reviewed and Signed by Adviser', color: 'yellow', timestamp: Date.now() },
+      { label: 'Reviewed and Signed by college dean', color: 'yellow', timestamp: Date.now() },
+      { label: 'Reviewed and Signed by Academic Services', color: 'yellow', timestamp: Date.now() },
+      { label: 'Reviewed and Signed by Executive Director', color: 'yellow', timestamp: Date.now() }
+    ]
+  });
   const [remarks, setRemarks] = useState('');
   const [isEditing, setIsEditing] = useState(false); // State for editing mode
   const [isApprovedChecked, setIsApprovedChecked] = useState(false); // State for Approved checkbox
@@ -22,12 +31,14 @@ const ProgressTracker = () => {
   const eventId = 'YOUR_EVENT_ID';  // Replace with the actual event ID
 
   useEffect(() => {
-    // Fetch the tracker data when the component mounts
+    // Skipping fetch for now to display dummy data
+    /*
     fetch(`/trackers/${eventId}`)
       .then(response => response.json())
       .then(data => setTrackerData(data))
       .catch(error => console.error('Error fetching tracker:', error));
-
+    */
+    
     // Listen for real-time updates via socket
     socket.on('trackerUpdated', (updatedTracker) => {
       setTrackerData(updatedTracker);
@@ -43,38 +54,29 @@ const ProgressTracker = () => {
   };
 
   const handleSaveClick = (stepIndex) => {
-    // Prepare the status (approved or declined)
     const status = isApprovedChecked ? 'approved' : 'declined';
+    const data = { status, remarks };
 
-    const data = { 
-      status, 
-      remarks 
-    };
-
-    // Send the update request to the backend
-    fetch(`/trackers/${eventId}/step/${stepIndex}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(updatedTracker => {
-      socket.emit('updateTracker', updatedTracker); // Notify server of the update
-      setTrackerData(updatedTracker);  // Update the tracker data in state
-      setIsEditing(false);  // Exit editing mode
-    })
-    .catch(error => console.error('Error updating tracker:', error));
+    // Simulate sending update request to backend
+    setTrackerData((prevData) => {
+      const updatedSteps = [...prevData.steps];
+      updatedSteps[stepIndex] = {
+        ...updatedSteps[stepIndex],
+        status,
+        color: status === 'approved' ? 'green' : 'red',
+        timestamp: Date.now(),
+      };
+      return { ...prevData, steps: updatedSteps };
+    });
+    setIsEditing(false);
   };
 
-  // Handle checkbox selection logic
   const handleCheckboxChange = (checkbox) => {
     if (checkbox === 'approved') {
       setIsApprovedChecked(true);
-      setIsDeclinedChecked(false); // Disable the Declined checkbox when Approved is checked
+      setIsDeclinedChecked(false);
     } else if (checkbox === 'declined') {
-      setIsApprovedChecked(false); // Disable the Approved checkbox when Declined is checked
+      setIsApprovedChecked(false);
       setIsDeclinedChecked(true);
     }
   };
@@ -83,10 +85,6 @@ const ProgressTracker = () => {
     navigate('/adminformview');
   };
 
-  if (!trackerData) {
-    return <div>Loading tracker data...</div>;
-  }
-
   return (
     <div className='prog-box'>
       <h3 style={{ textAlign: 'center' }}>Event Proposal Tracker</h3>
@@ -94,21 +92,26 @@ const ProgressTracker = () => {
         <div className="upper-row">
           {/* Progress Bar and Steps */}
           <div className="progress-bar-container">
-            {trackerData.steps.map((step, index) => (
-              <div key={index} className="step-container">
-                <div className="progress-step">
-                  {step.color === 'green' ? (
-                    <CheckCircleIcon style={{ color: '#4caf50', fontSize: 24 }} />
-                  ) : (
-                    <RadioButtonUncheckedIcon style={{ color: step.color === 'red' ? 'red' : '#ffeb3b', fontSize: 24 }} />
-                  )}
+            {trackerData.steps.map((step, index) => {
+              // Only show step if all previous steps are completed (either green or red)
+              const canShowStep = index === 0 || trackerData.steps.slice(0, index).every(prevStep => prevStep.color === 'green' || prevStep.color === 'red');
+
+              return canShowStep ? (
+                <div key={index} className="step-container">
+                  <div className="progress-step">
+                    {step.color === 'green' ? (
+                      <CheckCircleIcon style={{ color: '#4caf50', fontSize: 24 }} />
+                    ) : (
+                      <RadioButtonUncheckedIcon style={{ color: step.color === 'red' ? 'red' : '#ffeb3b', fontSize: 24 }} />
+                    )}
+                  </div>
+                  <div className="step-label">
+                    {step.label}
+                    <span className="timestamp">{new Date(step.timestamp).toLocaleString()}</span>
+                  </div>
                 </div>
-                <div className="step-label">
-                  {step.label}
-                  <span className="timestamp">{new Date(step.timestamp).toLocaleString()}</span>
-                </div>
-              </div>
-            ))}
+              ) : null;
+            })}
           </div>
 
           {/* Remarks or Edit Tracker */}
@@ -131,7 +134,7 @@ const ProgressTracker = () => {
                   /> Declined
                 </label>
               </div>
-              <Button variant="contained" className="save-button" onClick={() => handleSaveClick(0)}> {/* You need to set the correct stepIndex */}
+              <Button variant="contained" className="save-button" onClick={() => handleSaveClick(0)}>
                 SAVE
               </Button>
             </div>
