@@ -44,7 +44,7 @@ ul {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-form {
+.admin-form-view {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 20px;

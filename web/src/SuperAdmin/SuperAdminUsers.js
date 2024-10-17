@@ -6,17 +6,23 @@ const SuperAdminUsers = () => {
     const [organizations, setOrganizations] = useState([]);
     const [editingOrg, setEditingOrg] = useState(null); // State to track editing org
     const [editFormData, setEditFormData] = useState({}); // State to store edit form data
+    const [loading, setLoading] = useState(true); // Loading state for data fetching
 
     useEffect(() => {
         const fetchOrganizations = async () => {
-            try {
-                const response = await axios.get('http://localhost:8000/api/users');
-                const filteredOrganizations = response.data.filter(user => user.role === 'Organization');
-                setOrganizations(filteredOrganizations);
-            } catch (error) {
-                console.error('Error fetching organizations:', error);
-            }
-        };
+    try {
+        const response = await axios.get('http://localhost:8000/api/users');
+        console.log('API Response:', response.data); // Log the entire response data
+        const filteredOrganizations = response.data.filter(user => user.role === 'Organization');
+        console.log('Filtered Organizations:', filteredOrganizations); // Log filtered organizations
+        setOrganizations(filteredOrganizations);
+    } catch (error) {
+        console.error('Error fetching organizations:', error);
+    } finally {
+        setLoading(false);
+    }
+};
+
 
         fetchOrganizations();
     }, []);
@@ -33,10 +39,8 @@ const SuperAdminUsers = () => {
     const handleEditClick = (organization) => {
         setEditingOrg(organization._id); // Set the currently editing org ID
         setEditFormData({
-            firstName: organization.firstName,
-            lastName: organization.lastName,
             email: organization.email,
-            organizationType: organization.organizationType,
+            organizationType: organization.organizationType || '', // Default to empty string if undefined
             status: organization.status,
         });
     };
@@ -65,66 +69,55 @@ const SuperAdminUsers = () => {
     return (
         <div className="table-container">
             <h2>Organizations List</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Logo</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Organization Type</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {organizations.map((organization) => (
-                        <tr key={organization._id}>
-                            <td>
-                                {organization.logo ? (
-                                    <img
-                                        src={`http://localhost:8000/uploads/${organization.logo}`}
-                                        alt="Organization Logo"
-                                        width="50"
-                                        height="50"
-                                    />
-                                ) : (
-                                    'No Logo'
-                                )}
-                            </td>
-                            <td>{organization.firstName} {organization.lastName}</td>
-                            <td>{organization.email}</td>
-                            <td>{organization.organizationType}</td>
-                            <td>{organization.status}</td>
-                            <td>
-                                <button onClick={() => deleteUser(organization._id)}>Delete</button>
-                                <button onClick={() => handleEditClick(organization)}>Edit</button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+            {loading ? (
+                <p>Loading organizations...</p>
+            ) : (
+                <>
+                    <h3>Total Organizations: {organizations.length}</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Logo</th>
+                                <th>Email</th>
+                                <th>Organization Type</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {organizations.map((organization) => (
+                                <tr key={organization._id}>
+                                    <td>
+                                        {organization.logo ? (
+                                            <img
+                                                src={`http://localhost:8000/uploads/${organization.logo}`}
+                                                alt="Organization Logo"
+                                                width="50"
+                                                height="50"
+                                            />
+                                        ) : (
+                                            'No Logo'
+                                        )}
+                                    </td>
+                                    <td>{organization.email}</td>
+                                    <td>{organization.organizationType !== undefined ? organization.organizationType : 'Not Provided'}</td>
+                                    <td>{organization.status}</td>
+                                    <td>
+                                        <button onClick={() => deleteUser(organization._id)}>Delete</button>
+                                        <button onClick={() => handleEditClick(organization)}>Edit</button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </>
+            )}
 
             {/* Edit form modal or section */}
             {editingOrg && (
                 <div className="edit-form-container">
                     <h2>Edit Organization</h2>
                     <form onSubmit={handleEditSubmit}>
-                        <input
-                            type="text"
-                            name="firstName"
-                            value={editFormData.firstName}
-                            onChange={handleInputChange}
-                            placeholder="First Name"
-                            required
-                        />
-                        <input
-                            type="text"
-                            name="lastName"
-                            value={editFormData.lastName}
-                            onChange={handleInputChange}
-                            placeholder="Last Name"
-                            required
-                        />
                         <input
                             type="email"
                             name="email"

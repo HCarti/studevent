@@ -5,6 +5,7 @@ const path = require('path');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/user_routes');
 const formRoutes = require('./routes/formRoutes');
+const trackerRoutes = require('./routes/trackerRoutes'); // Import tracker routes
 const Form = require('./models/Form'); // Import your Form model
 
 const app = express();
@@ -14,8 +15,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Specify extended for parsing
 app.use(cors());
 
-// Connect to MongoDB
-mongoose.connect('mongodb+srv://StudEvent:StudEvent2024@studevent.nvsci.mongodb.net/', {
+// MongoDB connection
+mongoose.connect('mongodb://localhost:27017/Studevent', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
@@ -29,6 +30,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/forms', formRoutes);
+app.use('/api/trackers', trackerRoutes); // Register the tracker routes
+
+// Fetch all submitted forms
 app.get('/api/forms/submitted', async (req, res) => {
   try {
     const forms = await Form.find(); // Fetch all forms from the database

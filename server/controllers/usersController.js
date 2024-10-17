@@ -13,8 +13,16 @@ const getUsers = async (req, res) => {
 // Add user
 const addUser = async (req, res) => {
   try {
-    if (!req.body.firstName || !req.body.email || !req.body.password) {
-      return res.status(400).json({ message: 'Missing required fields' });
+    // Common required fields
+    if (!req.body.email || !req.body.password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+
+    // Role-specific validation
+    if (req.body.role === 'Authority' && (!req.body.firstName || !req.body.faculty)) {
+      return res.status(400).json({ message: 'First name and faculty are required for Authority' });
+    } else if (req.body.role === 'Organization' && !req.body.organizationType) {
+      return res.status(400).json({ message: 'Organization Type is required for Organization' });
     }
 
     const existingUser = await User.findOne({ email: req.body.email });
@@ -22,25 +30,29 @@ const addUser = async (req, res) => {
       return res.status(400).json({ message: 'Email already exists' });
     }
 
-    // Handle fields based on role
+    // Prepare user data based on role
     const userData = {
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
       email: req.body.email,
       password: req.body.password,
       role: req.body.role,
       status: 'Active',
     };
 
-    // Attach faculty or organization type and logo/photo based on the role
-     if (req.body.role === 'Authority') {
+    // Add fields for 'Authority' role
+    if (req.body.role === 'Authority') {
+      userData.firstName = req.body.firstName;
+      userData.lastName = req.body.lastName || '';
       userData.faculty = req.body.faculty || null;
-      userData.logo = req.file ? req.file.filename : null;  // Ensure logo is being added here
-    } else if (req.body.role === 'Organization') {
-      userData.organizationType = req.body.organizationType || null;
-      userData.logo = req.file ? req.file.filename : null; // Add logo/photo for Organizations
+      userData.logo = req.file ? req.file.filename : null;
     }
 
+    // Add fields for 'Organization' role
+    if (req.body.role === 'Organization') {
+      userData.organizationType = req.body.organizationType || null;
+      userData.logo = req.file ? req.file.filename : null;
+    }
+
+    // Save the new user
     const newUser = new User(userData);
     await newUser.save();
     res.status(201).json({ message: 'User created successfully', user: newUser });
@@ -49,6 +61,7 @@ const addUser = async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
 };
+
 
 // Get user by ID
 const getUserById = async (req, res) => {

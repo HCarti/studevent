@@ -4,12 +4,15 @@ import './SuperAdminAddUser.css';
 
 const SuperAdminAddUser = () => {
     const [formData, setFormData] = useState({
-        role: 'Admin', 
+        role: 'Admin',
         firstName: '',
         lastName: '',
         email: '',
         password: '',
         confirmPassword: '',
+        faculty: '',
+        organization: '', // This field is for the Faculty 'Adviser'
+        organizationType: '', // Make sure this is included in the state
     });
 
     const [logo, setLogo] = useState(null);
@@ -20,9 +23,10 @@ const SuperAdminAddUser = () => {
 
     const faculties = ['Adviser', 'Dean', 'Academic Services', 'Academic Director'];
     const typeorganizations = [
-        'Recognized Student Organization - Special Interest', 
+        'Recognized Student Organization - Special Interest',
         'Recognized Student Organization - Academic',
-        'College Student Council']; // Organization type
+        'College Student Council'
+    ]; // Organization type
 
     const handleChange = (e) => {
         setFormData({
@@ -39,18 +43,28 @@ const SuperAdminAddUser = () => {
     };
 
     const validateForm = () => {
-        const { firstName, lastName, email, password, confirmPassword } = formData;
+        const { firstName, lastName, email, password, confirmPassword, role, organizationType } = formData;
         let errors = {};
         let isValid = true;
 
-        if (!firstName) {
-            isValid = false;
-            errors.firstName = 'First Name is required.';
+        console.log('Form Data:', formData);
+
+        if (role !== 'Organization') {
+            if (!firstName) {
+                isValid = false;
+                errors.firstName = 'First Name is required.';
+            }
+            if (!lastName) {
+                isValid = false;
+                errors.lastName = 'Last Name is required.';
+            }
         }
-        if (!lastName) {
+
+        if (role === 'Organization' && !organizationType) {
             isValid = false;
-            errors.lastName = 'Last Name is required.';
+            errors.organizationType = 'Organization Type is required.';
         }
+
         if (!email) {
             isValid = false;
             errors.email = 'Email is required.';
@@ -58,6 +72,7 @@ const SuperAdminAddUser = () => {
             isValid = false;
             errors.email = 'Enter a valid email address.';
         }
+
         if (!password) {
             isValid = false;
             errors.password = 'Password is required.';
@@ -65,6 +80,7 @@ const SuperAdminAddUser = () => {
             isValid = false;
             errors.password = 'Password must be at least 6 characters.';
         }
+
         if (!confirmPassword) {
             isValid = false;
             errors.confirmPassword = 'Confirm Password is required.';
@@ -92,13 +108,17 @@ const SuperAdminAddUser = () => {
 
         const data = new FormData();
         data.append('role', formData.role);
-        data.append('firstName', formData.firstName);
-        data.append('lastName', formData.lastName);
         data.append('email', formData.email);
-        data.append('faculty', formData.faculty);
-        data.append('organization', formData.organization); // Include organization field
         data.append('password', formData.password);
         data.append('logo', logo);
+
+        if (formData.role === 'Authority') {
+            data.append('firstName', formData.firstName);
+            data.append('lastName', formData.lastName);
+            data.append('faculty', formData.faculty);
+        } else if (formData.role === 'Organization') {
+            data.append('organizationType', formData.organizationType); // Correctly use organizationType
+        }
 
         try {
             setLoading(true);
@@ -115,6 +135,7 @@ const SuperAdminAddUser = () => {
                 email: '',
                 faculty: '',
                 organization: '',
+                organizationType: '', // Reset this field
                 password: '',
                 confirmPassword: '',
             });
@@ -159,29 +180,33 @@ const SuperAdminAddUser = () => {
                             </select>
                         </div>
 
-                        <div className="form-group">
-                            <label htmlFor="firstName">First Name <span className="important">*</span></label>
-                            <input
-                                type="text"
-                                name="firstName"
-                                value={formData.firstName}
-                                onChange={handleChange}
-                                className={validationErrors.firstName ? 'input-error' : ''}
-                            />
-                            {validationErrors.firstName && <small className="error-text">{validationErrors.firstName}</small>}
-                        </div>
+                        {formData.role !== 'Organization' && (
+                            <>
+                                <div className="form-group">
+                                    <label htmlFor="firstName">First Name <span className="important">*</span></label>
+                                    <input
+                                        type="text"
+                                        name="firstName"
+                                        value={formData.firstName}
+                                        onChange={handleChange}
+                                        className={validationErrors.firstName ? 'input-error' : ''}
+                                    />
+                                    {validationErrors.firstName && <small className="error-text">{validationErrors.firstName}</small>}
+                                </div>
 
-                        <div className="form-group">
-                            <label htmlFor="lastName">Last Name <span className="important">*</span></label>
-                            <input
-                                type="text"
-                                name="lastName"
-                                value={formData.lastName}
-                                onChange={handleChange}
-                                className={validationErrors.lastName ? 'input-error' : ''}
-                            />
-                            {validationErrors.lastName && <small className="error-text">{validationErrors.lastName}</small>}
-                        </div>
+                                <div className="form-group">
+                                    <label htmlFor="lastName">Last Name <span className="important">*</span></label>
+                                    <input
+                                        type="text"
+                                        name="lastName"
+                                        value={formData.lastName}
+                                        onChange={handleChange}
+                                        className={validationErrors.lastName ? 'input-error' : ''}
+                                    />
+                                    {validationErrors.lastName && <small className="error-text">{validationErrors.lastName}</small>}
+                                </div>
+                            </>
+                        )}
 
                         <div className="form-group">
                             <label htmlFor="email">Email <span className="important">*</span></label>
@@ -228,12 +253,20 @@ const SuperAdminAddUser = () => {
                         {formData.role === 'Organization' && (
                             <div className="form-group">
                                 <label htmlFor="organizationType">Organization Type:</label>
-                                <input
-                                    type="text"
-                                    name="organizationType"
-                                    value={formData.organizationType}
+                                <select 
+                                    name="organizationType" // Ensure this name matches the state property
+                                    value={formData.organizationType} 
                                     onChange={handleChange}
-                                />
+                                    className={validationErrors.organizationType ? 'input-error' : ''}
+                                >
+                                    <option value="">Select Organization Type</option>
+                                    {typeorganizations.map((type, index) => (
+                                        <option key={index} value={type}>
+                                            {type}
+                                        </option>
+                                    ))}
+                                </select>
+                                {validationErrors.organizationType && <small className="error-text">{validationErrors.organizationType}</small>}
                             </div>
                         )}
 
@@ -260,12 +293,12 @@ const SuperAdminAddUser = () => {
                             />
                             {validationErrors.confirmPassword && <small className="error-text">{validationErrors.confirmPassword}</small>}
                         </div>
-
-                        <button type="submit" className="btn" disabled={loading}>
-                            {loading ? 'Adding User...' : 'Add User'}
-                        </button>
                     </div>
                 </div>
+
+                <button type="submit" className="btn" disabled={loading}>
+                    {loading ? 'Adding User...' : 'Add User'}
+                </button>
             </form>
         </div>
     );

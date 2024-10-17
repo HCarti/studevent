@@ -218,6 +218,10 @@ const Aap = () => {
     holdingArea: false,
     toilets: false,
     transportation: false,
+    more: "",
+    licensesRequired:"",
+    houseKeeping:"",
+    wasteManagement:"",
     eventManagementHead: "",
     eventCommitteesandMembers: "",
     health: "",
@@ -244,12 +248,12 @@ const Aap = () => {
       'contactPerson', 'contactNo', 'emailAddress', 'eventTitle', 
       'eventType', 'venueAddress', 'eventDate', 'eventTime', 
       'organizer', 'budgetAmount', 'budgetFrom', 'coreValuesIntegration', 
-      'objectives', 'marketingCollaterals', 'pressRelease', 'others', 'eventFacilities', 
-      'holdingArea', 'toilets', 'transportationandParking', 'others2', 
-      'licensesRequired','houseKeeping', 'wasteManagement',
-      'eventManagementHead','eventCommitteesandMembers',  // This is the correct key
-      'health', 'safetyAttendees', 'emergencyFirstAid', 'fireSafety', 'weather'
-  ];
+      'objectives', 'marketingCollaterals', 'pressRelease', 'others', 
+      'eventFacilities', 'holdingArea', 'toilets', 'transportationandParking', 
+      'more', 'licensesRequired', 'houseKeeping', 'wasteManagement',
+      'eventManagementHead', 'eventCommitteesandMembers', 'health', 
+      'safetyAttendees', 'emergencyFirstAid', 'fireSafety', 'weather'
+    ];
   
 
     for (const field of requiredFields) {
@@ -548,11 +552,12 @@ const Aap = () => {
             <label>Others:</label>
             <input
               type="text"
-              name="others2"
-              checked={formData.more}
+              name="more" 
+              value={formData.more}
               onChange={handleChange}
             />
           </div>
+
           <div>
             <label>Licenses Required:</label>
             <input

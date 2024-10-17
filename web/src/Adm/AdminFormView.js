@@ -63,7 +63,7 @@ const AdminFormView = () => {
           <h2>Form Details</h2>
 
           {/* Read-only form with inputs */}
-          <form classname="">
+          <form classname="admin-form-view">
             <label className="admin-label">Event Location:</label>
             <input className="inputtypeadmin" type="text" value={selectedForm.eventLocation} readOnly />
 
@@ -141,7 +141,7 @@ const AdminFormView = () => {
             <input className="inputtypeadmin" type="text" value={selectedForm.houseKeeping} readOnly />
 
             <label className="admin-label">Waste Management:</label>
-            <input className="inputtypeadmin" type="text" value={selectedForm.wasteMangement} readOnly />
+            <input className="inputtypeadmin" type="text" value={selectedForm.wasteManagement} readOnly />
 
             <label className="admin-label">Event Management Head:</label>
             <input className="inputtypeadmin" type="text" value={selectedForm.eventManagementHead} readOnly />
