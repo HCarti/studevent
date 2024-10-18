@@ -1,52 +1,57 @@
-// backend/models/User.js
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const userSchema = new mongoose.Schema({
-  role: { 
-    type: String, 
-    required: true, 
-    enum: ['Authority', 'Organization', 'SuperAdmin', 'Admin']
+const userSchema = new Schema({
+  email: {
+    type: String,
+    required: true,
+    unique: true,
   },
-  firstName: { 
-    type: String, 
-    required: function() { 
-      return this.role !== 'Organization';  // Only required if role is not 'Organization'
+  password: {
+    type: String,
+    required: true,
+  },
+  role: {
+    type: String,
+    enum: ['Admin', 'Authority', 'Organization'],
+    required: true,
+  },
+  firstName: {
+    type: String,
+    required: function() {
+      return this.role === 'Admin' || this.role === 'Authority'; // Required for Admin and Authority
     }
   },
-  lastName: { 
-    type: String, 
-    required: function() { 
-      return this.role !== 'Organization';  // Only required if role is not 'Organization'
+  lastName: {
+    type: String,
+    required: function() {
+      return this.role === 'Admin' || this.role === 'Authority'; // Required for Admin and Authority
     }
   },
-  email: { 
-    type: String, 
-    required: true, 
-    unique: true 
-  },
-  password: { 
-    type: String, 
-    required: true 
-  },
-  faculty: { 
-    type: String, 
-    required: function() { 
-      return this.role === 'Authority';  // Only required for 'Authority' role
+  organizationType: {
+    type: String,
+    required: function() {
+      return this.role === 'Organization'; // Required for Organization
     }
   },
-  organizationType: { 
-    type: String, 
-    required: function() { 
-      return this.role === 'Organization';  // Only required for 'Organization' role
+  organizationName: {
+    type: String,
+    required: function() {
+      return this.role === 'Organization'; // Required for Organization
     }
   },
-  logo: { 
-    type: String  // Optional, no unique constraint
+  faculty: {
+    type: String,
+    required: function() {
+      return this.role === 'Authority'; // Required for Authority
+    }
   },
-  status: { 
-    type: String, 
-    default: 'Active'  // Default status
+  logo: String, // Optional for all roles
+  status: {
+    type: String,
+    default: 'Active'
   }
 });
 
-module.exports = mongoose.model('User', userSchema);
+const User = mongoose.model('User', userSchema);
+module.exports = User;

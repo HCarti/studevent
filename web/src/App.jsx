@@ -1,4 +1,4 @@
-import React, { useState } from 'react'; //fsdfsf
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Navbar from './Components/Navbar';
 import Home from './Components/Home';
@@ -23,7 +23,7 @@ import Proposal from './Adm/Proposal';
 import AdminProfile from './Adm/AdminProfile';
 import SuperAdminHome from './SuperAdmin/SuperAdmnHome';
 import AdminControlPanel from './SuperAdmin/AdminControlPanel';
-import SuperAdminLayout from './SuperAdmin/SuperAdminLayout'; // Import the new layout
+import SuperAdminLayout from './SuperAdmin/SuperAdminLayout';
 import AdminTab from './SuperAdmin/AdminTab';
 import SuperAdminAuthorities from './SuperAdmin/SuperAdminAuthorities';
 import SuperAdminUsers from './SuperAdmin/SuperAdminUsers';
@@ -45,57 +45,71 @@ const App = () => {
     <Router>
       <Navbar isLoggedIn={isSignedIn} handleLogout={handleLogout} />
       <div className="main-content">
-      <Routes>
-        <Route path="/" element={isSignedIn ? <Navigate to={role === 'Authority' ? '/admin' : role === 'superadmin' ? '/superadmin' : '/member'} /> : <Home />} />
-        <Route path="/unauthorized" element={<Unauthorized />} />
+        <Routes>
+          {/* Home Route */}
+          <Route
+            path="/"
+            element={
+              isSignedIn ? (
+                role ? (
+                  <Navigate to={role === 'Admin' ? '/admin' : role === 'SuperAdmin' ? '/superadmin' : '/member'} />
+                ) : null // No loading, just null while role is being determined
+              ) : (
+                <Home />
+              )
+            }
+          />
+          <Route path="/unauthorized" element={<Unauthorized />} />
 
-        {/* SuperAdmin Routes */}
-        {/* {role === 'superadmin' && ( */}
-            <Route path="/superadmin" element={<SuperAdminHome />} />
-            <Route path="/orgcalendar" element={<OrganizationEvents />} />
-            <Route element={<SuperAdminLayout />}> {/* Wrap SuperAdmin routes in this layout */}
-            <Route path="/controlpanel" element={<AdminControlPanel />} />
-            <Route path="/authorities" element={<SuperAdminAuthorities />} />
-            <Route path="/adminuser" element={<SuperAdminUsers />} />
-            <Route path="/adduser" element={<SuperAdminAddUser />} />
-            <Route path="/admintab" element={<AdminTab />} />
-          </Route>
-        {/* )} */}
+          {/* SuperAdmin Routes */}
+          {role === 'SuperAdmin' && (
+            <>
+              <Route path="/superadmin" element={<SuperAdminHome />} />
+              <Route path="/orgcalendar" element={<OrganizationEvents />} />
+              <Route element={<SuperAdminLayout />}>
+                <Route path="/controlpanel" element={<AdminControlPanel />} />
+                <Route path="/authorities" element={<SuperAdminAuthorities />} />
+                <Route path="/adminuser" element={<SuperAdminUsers />} />
+                <Route path="/adduser" element={<SuperAdminAddUser />} />
+                <Route path="/admintab" element={<AdminTab />} />
+              </Route>
+            </>
+          )}
 
-        {/* Admin Routes */}
-        {/* {role === 'admin' && ( */}
-          <>
-            <Route path="/admin" element={<AdminHome />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/orgcalendar" element={<OrganizationEvents />} />
-            <Route path="/adminprofile" element={<AdminProfile />} />
-            <Route path="/adminproposal" element={<Proposal />} />
-            <Route path="/adminliquidation" element={<DashLiquidation />} />
-            <Route path="/budget" element={<Budget />} />
-            <Route path="/adminformview" element={<AdminFormView />} />
-            <Route path="/activity" element={<Aap />} />
-            <Route path="/project" element={<Project />} />
-            <Route path="/organizations" element={<Organizations />} />
-          </>
-        {/* )} */}
+          {/* Admin Routes */}
+          {role === 'Admin' && (
+            <>
+              <Route path="/admin" element={<AdminHome />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/orgcalendar" element={<OrganizationEvents />} />
+              <Route path="/adminprofile" element={<AdminProfile />} />
+              <Route path="/adminproposal" element={<Proposal />} />
+              <Route path="/adminliquidation" element={<DashLiquidation />} />
+              <Route path="/budget" element={<Budget />} />
+              <Route path="/adminformview" element={<AdminFormView />} />
+              <Route path="/activity" element={<Aap />} />
+              <Route path="/project" element={<Project />} />
+              <Route path="/organizations" element={<Organizations />} />
+            </>
+          )}
 
-        {/* Member Routes */}
-        {/* {role === 'member' && ( */}
-          <>
-            <Route path="/member" element={<OrgMemHome />} />
-            <Route path="/orgcalendar" element={<OrganizationEvents />} />
-            <Route path="/orgprof" element={<OrgProf />} />
-            <Route path="/progtrack" element={<ProgressTracker />} />
-            <Route path="/formss" element={<FormsandSig />} />
-            <Route path="/forms" element={<Forms />} />
-            <Route path="/activity" element={<Aap />} />
-            <Route path="/budget" element={<Budget />} />
-            <Route path="/project" element={<Project />} />
-          </>
-        {/* )} */}
+          {/* Member Routes */}
+          {role === 'Organization' && (
+            <>
+              <Route path="/member" element={<OrgMemHome />} />
+              <Route path="/orgcalendar" element={<OrganizationEvents />} />
+              <Route path="/orgprof" element={<OrgProf />} />
+              <Route path="/progtrack" element={<ProgressTracker />} />
+              <Route path="/formss" element={<FormsandSig />} />
+              <Route path="/forms" element={<Forms />} />
+              <Route path="/activity" element={<Aap />} />
+              <Route path="/budget" element={<Budget />} />
+              <Route path="/project" element={<Project />} />
+            </>
+          )}
 
-        <Route path="*" element={<PageNotFound />} />
-      </Routes>
+          <Route path="*" element={<PageNotFound />} />
+        </Routes>
       </div>
     </Router>
   );

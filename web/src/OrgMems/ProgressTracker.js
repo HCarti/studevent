@@ -11,9 +11,10 @@ import io from 'socket.io-client';
 
 const socket = io('http://localhost:3000');  // Connect to the backend server
 
-const ProgressTracker = () => {
+const ProgressTracker = ({currentUser}) => {
   const navigate = useNavigate();
-  // Set initial dummy tracker data for testing
+  const [eventId, setEventId] = useState(null); // Step 1: Define eventId state
+  const [currentStep, setCurrentStep] = useState(0); // Track the current step
   const [trackerData, setTrackerData] = useState({
     steps: [
       { label: 'Submitted to Adviser', color: 'yellow', timestamp: Date.now() },
@@ -24,22 +25,18 @@ const ProgressTracker = () => {
     ]
   });
   const [remarks, setRemarks] = useState('');
-  const [isEditing, setIsEditing] = useState(false); // State for editing mode
-  const [isApprovedChecked, setIsApprovedChecked] = useState(false); // State for Approved checkbox
-  const [isDeclinedChecked, setIsDeclinedChecked] = useState(false); // State for Declined checkbox
-
-  const eventId = 'YOUR_EVENT_ID';  // Replace with the actual event ID
+  const [isEditing, setIsEditing] = useState(false);
+  const [isApprovedChecked, setIsApprovedChecked] = useState(false);
+  const [isDeclinedChecked, setIsDeclinedChecked] = useState(false);
 
   useEffect(() => {
     // Skipping fetch for now to display dummy data
-    /*
-    fetch(`/trackers/${eventId}`)
-      .then(response => response.json())
-      .then(data => setTrackerData(data))
-      .catch(error => console.error('Error fetching tracker:', error));
-    */
-    
     // Listen for real-time updates via socket
+    const storedEventId = localStorage.getItem('eventId'); // or fetch from API
+    if (storedEventId) {
+      setEventId(storedEventId);
+    }
+
     socket.on('trackerUpdated', (updatedTracker) => {
       setTrackerData(updatedTracker);
     });
@@ -47,29 +44,41 @@ const ProgressTracker = () => {
     return () => {
       socket.off('trackerUpdated');
     };
-  }, [eventId]);
+  }, []);
 
   const handleEditClick = () => {
-    setIsEditing(true); // Enable editing mode
+    setIsEditing(true);
   };
 
   const handleSaveClick = (stepIndex) => {
+    if (!eventId || !currentUser) {
+      console.error('Missing eventId or currentUser');
+      return;
+    }
+  
     const status = isApprovedChecked ? 'approved' : 'declined';
-    const data = { status, remarks };
-
-    // Simulate sending update request to backend
+    const data = { status, remarks, eventId, userId: currentUser.id }; // Include userId
+    const updatedStep = { status, remarks, stepIndex };
+  
+    // Emit the correct data including stepIndex
+    socket.emit('updateTracker', { eventId, updatedStep, stepIndex, status, remarks, userId: currentUser.id });
+    
+    // Update the local state
     setTrackerData((prevData) => {
       const updatedSteps = [...prevData.steps];
       updatedSteps[stepIndex] = {
         ...updatedSteps[stepIndex],
         status,
+        remarks,
         color: status === 'approved' ? 'green' : 'red',
         timestamp: Date.now(),
       };
       return { ...prevData, steps: updatedSteps };
     });
+    
     setIsEditing(false);
   };
+  
 
   const handleCheckboxChange = (checkbox) => {
     if (checkbox === 'approved') {
@@ -90,10 +99,8 @@ const ProgressTracker = () => {
       <h3 style={{ textAlign: 'center' }}>Event Proposal Tracker</h3>
       <div className="progress-tracker">
         <div className="upper-row">
-          {/* Progress Bar and Steps */}
           <div className="progress-bar-container">
             {trackerData.steps.map((step, index) => {
-              // Only show step if all previous steps are completed (either green or red)
               const canShowStep = index === 0 || trackerData.steps.slice(0, index).every(prevStep => prevStep.color === 'green' || prevStep.color === 'red');
 
               return canShowStep ? (
@@ -114,7 +121,6 @@ const ProgressTracker = () => {
             })}
           </div>
 
-          {/* Remarks or Edit Tracker */}
           {isEditing ? (
             <div className="edit-tracker">
               <h3 className="edit-tracker-title">EDIT TRACKER</h3>
@@ -152,7 +158,6 @@ const ProgressTracker = () => {
           )}
         </div>
 
-        {/* Action Buttons Section */}
         <div className="action-buttons">
           {isEditing ? (
             <>

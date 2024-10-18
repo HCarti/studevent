@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './Navbar.css';
 import StudeventLogo from '../Images/Studevent.png';
- 
+
 const Navbar = ({ isLoggedIn }) => {
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const navigate = useNavigate();
- 
+
   let user = null;
   try {
     const userJSON = localStorage.getItem("user");
@@ -19,28 +19,28 @@ const Navbar = ({ isLoggedIn }) => {
   } catch (error) {
     console.error("Error retrieving user from localStorage", error);
   }
- 
+
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
   };
- 
+
   const toggleNotificationMenu = () => {
     setNotificationMenuOpen(!notificationMenuOpen);
   };
- 
+
   const toggleAccountMenu = () => {
     setAccountMenuOpen(!accountMenuOpen);
   };
- 
+
   const handleNavbarClick = () => {
     navigate('/');
   };
- 
+
   const handleLogout = () => {
     localStorage.removeItem("user");
     navigate("/");
   };
- 
+
   const renderMenuItems = () => (
     <>
       <li>
@@ -61,9 +61,9 @@ const Navbar = ({ isLoggedIn }) => {
           Organizations
         </Link>
       </li>
-      {isLoggedIn && (
+      {isLoggedIn && user && (
         <li className="navbar-menu-item" onClick={toggleAccountMenu}>
-          {user?.profilePicture ? (
+          {user.profilePicture ? (
             <img
               src={user.profilePicture}
               alt="Profile"
@@ -72,11 +72,16 @@ const Navbar = ({ isLoggedIn }) => {
           ) : (
             <span>Account</span>
           )}
+          {accountMenuOpen && (
+            <div className="account-dropdown">
+              <div className="dropdown-item" onClick={handleLogout}>Logout</div>
+            </div>
+          )}
         </li>
       )}
     </>
   );
- 
+
   return (
     <div className="navbar">
       <div className="navbar-logo" onClick={handleNavbarClick}>
@@ -113,16 +118,13 @@ const Navbar = ({ isLoggedIn }) => {
         </div>
         <ul className="drawer-list">
           {renderMenuItems()}
-          <li className="drawer-list-item" onClick={handleLogout}>Logout</li>
+          {isLoggedIn && (
+            <li className="drawer-list-item" onClick={handleLogout}>Logout</li>
+          )}
         </ul>
       </div>
-      {accountMenuOpen && (
-        <div className="menu">
-          <div className="menu-item" onClick={handleLogout}>Logout</div>
-        </div>
-      )}
     </div>
   );
 };
- 
+
 export default Navbar;

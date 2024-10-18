@@ -5,7 +5,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 const AdminRoutes = () => {
     const role = getUserRole();
 
-    return role == "admin" ? <Outlet /> : <Navigate to={"/unauthorized"} />
+    return role == "Admin" ? <Outlet /> : <Navigate to={"/unauthorized"} />
 }
 
 export default AdminRoutes
