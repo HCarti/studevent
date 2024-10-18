@@ -60,7 +60,6 @@ const App = () => {
             <Route path="/admintab" element={<AdminTab />} />
           </Route>
 
-<<<<<<< HEAD
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminHome />} />
           <Route path="/dashboard" element={<Dashboard />} />
@@ -83,39 +82,6 @@ const App = () => {
           <Route path="/activity" element={<Aap />} />
           <Route path="/budget" element={<Budget />} />
           <Route path="/project" element={<Project />} />
-=======
-        {/* Admin Routes */}
-         {/* {role === 'admin' && (  */}
-          <>
-            <Route path="/admin" element={<AdminHome />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/orgcalendar" element={<OrganizationEvents />} />
-            <Route path="/adminprofile" element={<AdminProfile />} />
-            <Route path="/adminproposal" element={<Proposal />} />
-            <Route path="/adminliquidation" element={<DashLiquidation />} />
-            <Route path="/budget" element={<Budget />} />
-            <Route path="/adminformview" element={<AdminFormView />} />
-            <Route path="/activity" element={<Aap />} />
-            <Route path="/project" element={<Project />} />
-            <Route path="/organizations" element={<Organizations />} />
-          </>
-        {/* )}  */}
-
-        {/* Member Routes */}
-          {/* {role === 'Organization' && (   */}
-          <>
-            <Route path="/member" element={<OrgMemHome />} />
-            <Route path="/orgcalendar" element={<OrganizationEvents />} />
-            <Route path="/orgprof" element={<OrgProf />} />
-            <Route path="/progtrack" element={<ProgressTracker />} />
-            <Route path="/formss" element={<FormsandSig />} />
-            <Route path="/forms" element={<Forms />} /> 
-            <Route path="/activity" element={<Aap />} />
-            <Route path="/budget" element={<Budget />} />
-            <Route path="/project" element={<Project />} />
-          </>
-        {/* //  )}   */}
->>>>>>> 8f704c28e8e39f1e43df8f594ca6000963b84412
 
           <Route path="*" element={<PageNotFound />} />
         </Routes>

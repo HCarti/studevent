@@ -1,107 +1,228 @@
-/* src/LandingPage.css */
-.orgmem-page {
-  font-family: Arial, sans-serif;
-  min-height: 669px;
+/* src/OrgMemHome.css */
+
+body, html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden; /* Disable horizontal scrolling */
+}
+
+.orgmem-home {
+  font-family: 'Roboto', sans-serif;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  background: url('../Images/NU_moa_bg.jpg') no-repeat  fixed;
+  min-height: 100vh;
+  justify-content: flex-start;
+  align-items: center;
+  background-image: url('../Images/Nu_building2.png');
   background-size: cover;
-  color: #fff;
+  background-position: center;
+  width: 100%; /* Ensure admin-home takes full width */
+  overflow-x: hidden; /* Disable horizontal scrolling */ 
 }
 
-.header {
-  background-color: rgba(230, 221, 221, 0.651);
-  padding: 2rem 1rem;
+.header-admin {
   text-align: center;
-  flex-grow: 1;
+  padding: 2rem 1rem;
+  margin-top: 70px;
+  margin-bottom: 2rem;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: center; 
+  border-radius: 10px;
 }
 
-.header-title {
-  color: #ecf0f1;
-  margin: 0;
+.logo {
+  height: 180px;
+  animation: fadeIn 2s ease-in-out;
 }
 
-.header h2 {
-  margin: 0;
-  font-family: "Poetsen One", sans-serif;
+.header-admin h2 {
   font-size: 2.5rem;
-  margin-bottom: 1rem;
   color: #0175c8;
+  margin-top: 1rem;
   animation: fadeIn 2s ease-in-out;
 }
 
-.header img {
-  height: 300px;
-  animation: fadeIn 2s ease-in-out;
-}
-
-.header h3 {
-  align-items: center;
-  font-size: 24px; /* Adjust the font size if needed */
-  cursor: pointer; /* Makes the cursor a pointer when hovering over the h3 */
-  color: black; /* Button text color */
-  padding: 10px 20px; /* Padding around the text */
-  border-radius: 5px; /* Rounded corners */
-  transition: background-color 0.3s ease, transform 0.3s ease; /* Smooth transition for hover effect */
-}
-
-.header h3:hover {
-  transform: translateY(-10px); 
-  border: 2px solid rgb(3, 78, 241);
-}
-
-.header p {
-  font-size: 1.2rem;
-  margin-bottom: 2rem;
-  animation: slideIn 1.5s ease-in-out;
-}
-
-.btns {
-  gap: 5px;
+.menu-container {
   display: flex;
   justify-content: center;
-  color: black;
-  animation: fadeIn 2s ease-in-out;
+  gap: 1.5rem;
+  padding: 1rem;
+  flex-wrap: wrap;
 }
 
-.forms-btn {
-  width: 35%;
+.menu-item {
+  background-color: #f9f9f9;
+  width: 200px;
+  height: 150px;
+  text-align: center;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.menu-item:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.menu-item.active {
+  background-color: #e0f3ff;
+  border: 2px solid #0175c8;
+}
+
+.menu-icon {
+  font-size: 50px;
+  color: #0175c8;
+  margin-bottom: 0.5rem;
+}
+
+.logout-btn {
+  margin-top: 2rem;
+  padding: 10px 20px;
+  background-color: #0175c8;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.logout-btn:hover {
+  background-color: #005fa3;
+}
+
+.quote-container {
+  margin-top: 10px;
+  padding: 20px;
+  text-align: center;
+  width: 100%;
+  max-width: 700px;
+  animation: fadeInText 2s ease-in-out;
+}
+
+.quote {
+  font-size: 1.4rem;
+  color: #333;
+  font-style: italic;
+  line-height: 1.8;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.footer3 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #333;
+  color: white;
+  width:2000px;
+  height: 450px;
+  box-sizing: border-box;
+  position: relative; /* Ensures proper footer positioning */ 
+}
+
+.footer3-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;  /* Aligns items centrally */
   flex-direction: column;
 }
 
-.events-btn {
-  width: 25%;
-  display: flex;
-  flex-direction: column;
+.footer3-section {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
 }
 
-.profile-btn {
-  width: 20%;
+.contact-info h4,
+.social-icons-container h4 {
+  font-size: 15px;
+  margin-bottom: 10px;
+}
+
+.contact-item {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.contact-item span {
+  margin-left: 10px;
+  font-size: 15px;
+}
+
+.social-icons-container h4 {
+  font-weight: bold;
+  font-size: 20px;
+}
+
+.social-icons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.social-icon {
+  width: 24px;
+  height: 24px;
+  margin: 0 10px;
+  transition: transform 0.3s ease;
+}
+
+.social-icon:hover {
+  transform: scale(1.2);
+}
+
+.copyright-info h4,
+.copyright-info p {
+  font-size: 15px;
 }
 
 @keyframes fadeIn {
-  0% {
-      opacity: 0;
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
   }
-  100% {
-      opacity: 1;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@keyframes slideIn {
-  0% {
-      transform: translateY(20px);
-      opacity: 0;
+@keyframes fadeInText {
+  from {
+    opacity: 0;
   }
-  100% {
-      transform: translateY(0);
-      opacity: 1;
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .menu-container {
+    flex-direction: column;
+  }
+
+  .footer3-container {
+    flex-direction: column;
+  }
+
+  .header-admin {
+    margin-top: 50px;
+  }
+
+  .menu-item {
+    width: 80%;
+    height: 120px;
   }
 }
