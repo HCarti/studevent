@@ -18,31 +18,33 @@ router.get('/:eventId', async (req, res) => {
 
 // Update tracker step status
 router.put('/:eventId/step/:stepIndex', async (req, res) => {
-  const { status, remarks } = req.body; // Status could be 'approved' or 'declined'
+  const { status, remarks } = req.body;
   const { eventId, stepIndex } = req.params;
 
   try {
     const tracker = await Tracker.findOne({ eventId });
+
     if (!tracker) {
       return res.status(404).json({ message: 'Tracker not found' });
     }
 
-    // Update step status and color
-    tracker.steps[stepIndex].status = status;
-    tracker.steps[stepIndex].color = status === 'approved' ? 'green' : 'red';
-    tracker.steps[stepIndex].timestamp = Date.now(); // Update timestamp
-
-    // Optionally add remarks if provided
-    if (remarks) {
-      tracker.remarks = remarks;
+    const step = tracker.steps[stepIndex];
+    if (!step) {
+      return res.status(404).json({ message: 'Step not found' });
     }
 
-    // Update the lastUpdated field
-    tracker.lastUpdated = Date.now();
+    step.status = status;
+    step.color = status === 'approved' ? 'green' : 'red';
+    step.timestamp = Date.now();
+
+    if (remarks) {
+      step.remarks = remarks;
+    }
 
     await tracker.save();
     res.json(tracker);
   } catch (error) {
+    console.error('Error updating tracker:', error);  // Log error
     res.status(500).json({ message: error.message });
   }
 });

@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 //     useUnifiedTopology: true
 // })
 
-mongoose.connect('mongodb+srv://StudEvent:StudEvent2024@studevent.nvsci.mongodb.net/', {
+mongoose.connect('mongodb://localhost:27017/Studevent', {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 })

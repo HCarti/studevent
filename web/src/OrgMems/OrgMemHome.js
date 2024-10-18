@@ -13,21 +13,26 @@ const OrgMemHome = () => {
   const [currentOrganization, setCurrentOrganization] = useState(null); // New state to hold the current organization
 
   useEffect(() => {
-      const fetchOrganizations = async () => {
-          try {
-              const response = await axios.get('http://localhost:8000/api/users');
-              const filteredOrganizations = response.data.filter(user => user.role === 'Organization');
-              setOrganizations(filteredOrganizations);
-              if (filteredOrganizations.length > 0) {
-                setCurrentOrganization(filteredOrganizations[0]); // Set the first organization as the current one (adjust this logic as needed)
-              }
-          } catch (error) {
-              console.error('Error fetching organizations:', error);
-          }
-      };
+    const fetchOrganizations = async () => {
+        try {
+            const response = await axios.get('http://localhost:8000/api/users');
+            console.log("Response Data: ", response.data);  // Log the full response data
+            const filteredOrganizations = response.data.filter(user => user.role === 'Organization');
+            console.log("Filtered Organizations: ", filteredOrganizations);  // Log the filtered organizations
+            setOrganizations(filteredOrganizations);
+            if (filteredOrganizations.length > 0) {
+              setCurrentOrganization(filteredOrganizations[0]); // Set the first organization as the current one
+              console.log("Current Organization: ", filteredOrganizations[0]);  // Log the current organization
+            }
+        } catch (error) {
+            console.error('Error fetching organizations:', error);
+        }
+    };
 
-      fetchOrganizations();
-  }, []);
+    fetchOrganizations();
+}, []);
+
+
 
   const navigate = useNavigate();
   const [clickedButton, setClickedButton] = useState(null);
@@ -67,7 +72,7 @@ const OrgMemHome = () => {
       <header className="header">
         <img src={StudeventLogo} alt="Studevent Logo" />
         {/* Dynamically render the organization type next to "Welcome" */}
-        <h2>Welcome, {currentOrganization ? `${currentOrganization.organizationType}` : 'Loading...'}</h2>
+        <h2>Welcome, {currentOrganization ? `${currentOrganization.organizationName}` : 'Loading...'}</h2>
         <div className='btns'>
           <div className={`events-btn ${clickedButton === 'events' ? 'clicked' : ''}`}>
             <h3 onClick={handleEventsClick}>

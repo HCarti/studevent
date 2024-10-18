@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const { addUser, getUsers, getUserById, updateUserById, deleteUserById, updateUser } = require('../controllers/usersController');
+const { addUser, getUsers, getUserById, deleteUserById, updateUser } = require('../controllers/usersController');
 
 // Set up multer for file storage
 const storage = multer.diskStorage({

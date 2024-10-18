@@ -5,17 +5,20 @@ const formController = require('../controllers/formController');
 
 // POST route to handle form submission
 router.post('/submit', async (req, res) => {
-  try {
-    const newForm = new Form(req.body);
-    await newForm.save();
-    res.status(201).json({ message: 'Form submitted successfully' });
-  } catch (error) {
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({ error: 'Validation Error', details: error.message });
+    try {
+        const newForm = new Form(req.body);
+        const savedForm = await newForm.save(); // Save the form and get the saved instance
+        res.status(201).json({ 
+            message: 'Form submitted successfully', 
+            id: savedForm._id // Return the Object ID of the saved form
+        });
+    } catch (error) {
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ error: 'Validation Error', details: error.message });
+        }
+        console.error('Error saving form:', error.message);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-    console.error('Error saving form:', error.message);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
 });
 
 // Route to get all forms (admin view)

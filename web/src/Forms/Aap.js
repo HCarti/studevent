@@ -240,6 +240,7 @@ const Aap = () => {
   };
 
   const [formSent, setFormSent] = useState(false);  // <-- Add this
+  const [eventId, setEventId] = useState(null);
 
   const handleSubmit = async () => {
     // Validate required fields
@@ -282,6 +283,11 @@ const Aap = () => {
 
         const result = await response.json();
         console.log('Form submitted successfully:', result);
+        // Get the form Object ID
+       
+        const formId = result.id; // Assuming the response contains an ID
+        setEventId(formId); // Set the event ID
+        console.log('Form Object ID:', formId);
         alert('Form submitted successfully!');
     } catch (error) {
         console.error('Error:', error);
