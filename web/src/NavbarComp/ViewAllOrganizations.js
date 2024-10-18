@@ -1,11 +1,7 @@
-// OrganizationsPage.js
-import React, { useState } from 'react'; // Import useState
-import Slider from 'react-slick';
-import 'slick-carousel/slick/slick.css';
-import 'slick-carousel/slick/slick-theme.css';
-import './Organizations.css';
-import Modal from './Modal'; // Import Link from react-router-dom
-import { Link } from 'react-router-dom'; // Ensure Link is imported
+// ViewAllOrganizations.js
+import React from 'react';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate for navigation
+import './ViewAllOrganizations.css'; // A new CSS file for this page
 
 // Import images
 import nuOrg1 from '../Images/Orgs/JPCS.png';
@@ -63,85 +59,29 @@ const organizations = [
   { id: 24, name: 'RED CROSS', image: nuOrg24, description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.' },
   { id: 25, name: 'SAM', image: nuOrg25, description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.' },
   { id: 26, name: 'Tousoc', image: nuOrg26, description: 'Donec vitae ligula at sem ultricies posuere.' },
-  { id: 27, name: 'YUGEN', image: nuOrg27, description: 'Donec vitae ligula at sem ultricies posuere.' }
+  { id: 27, name: 'YUGEN', image: nuOrg27, description: 'Donec vitae ligula at sem ultricies posuere.' },
 ];
 
-const Organizations = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedOrganization, setSelectedOrganization] = useState(null);
-
-  const openModal = (org) => {
-    setSelectedOrganization(org);
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedOrganization(null);
-  };
-
-  const settings = {
-    dots: true,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 3,
-    slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 2000,
-    pauseOnHover: true,
-    cssEase: 'ease-in-out',
-    dotsClass: 'slick-dots custom-dots',
-    customPaging: function (i) {
-      return <button className="custom-dot"></button>;
-    },
-    appendDots: (dots) => <ul style={{ display: 'flex', alignItems: 'center' }}>{dots.slice(0, 3)}</ul>,
-    responsive: [
-      { breakpoint: 1024, settings: { slidesToShow: 2 } },
-      { breakpoint: 600, settings: { slidesToShow: 1 } },
-    ],
-  };
+const ViewAllOrganizations = () => {
+  const navigate = useNavigate(); // Initialize useNavigate hook
 
   return (
-    <div className="organizations-page">
-      <h1>ORGANIZATIONS</h1>
-      <Slider {...settings}>
+    <div className="view-all-organizations-page">
+      <h1>All Organizations</h1>
+      <div className="organizations-list">
         {organizations.map((org) => (
-          <div key={org.id} className="cards-slider">
-            <div className="cards" onClick={() => openModal(org)}> {/* Open modal on click */}
-              <img src={org.image} alt={org.name} className="cards-image" />
-              <div className="cards-info">
-                <h2>{org.name}</h2>
-                <p>{org.description}</p>
-              </div>
-            </div>
+          <div key={org.id} className="organization-card">
+            <img src={org.image} alt={org.name} className="organization-image" />
+            <h2>{org.name}</h2>
+            <p>{org.description}</p>
           </div>
         ))}
-      </Slider>
-
-      {/* View All Organizations Button */}
-      <div className="view-all-container">
-        <Link to="/view-all-organizations" className="view-all-btn">
-          View All Organizations
-        </Link>
       </div>
-
-      {/* Render the Modal if it's open */}
-      {isModalOpen && (
-        <Modal 
-          organization={selectedOrganization} 
-          closeModal={closeModal} 
-        />
-      )}
-
-      {/* Add mission and vision below the slider */}
-      <div className="mission-vision">
-        <p>School organizations bring students together to pursue shared interests, build community, and develop leadership skills.
-          <br />
-          They play a key role in enhancing student life and fostering personal growth.
-        </p>
-      </div>
+      <button className="back-button" onClick={() => navigate(-1)}>
+        Back
+      </button>
     </div>
   );
 };
 
-export default Organizations;
+export default ViewAllOrganizations;

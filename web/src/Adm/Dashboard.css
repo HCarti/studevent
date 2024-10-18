@@ -1,102 +1,163 @@
 /* Dashboard Container */
 .dashboard-wrapper {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
   padding: 20px;
-  background-image: url('../Images/Nu_building2.png');
-  background-size: cover;
-  background-position: center;
-  width: 100%; 
-  overflow-x: hidden;
-  overflow: hidden;
+  background-color: #f5f5f5;
+  min-height: 100vh;
 }
 
-/* Title */ 
+/* Title */
 .dashboard-heading {
-  color: #0055a2;
-  font-size: 50px !important;
-  margin-bottom: 30px;
-  font-weight: bold !important;
+  color: #343a40;
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 25px;
 }
-
-/* Section for Proposal, Liquidation, and Chart */
-.widget-section {
-  display: flex;
+  
+/* Top Stats Section */
+.top-stats {
   justify-content: space-between;
-  width: 100%;
-  max-width: 1200px;
   margin-bottom: 30px;
 }
 
-/* General Widget Styles */
-.widget-box {
+.stat-box {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   padding: 20px;
-  margin-top: 50px;
-  border-radius: 25px!important;
+  background-color: #ffffff;
+  border-radius: 15px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.5s;
-  width: 250px;
-  height: 350px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+  margin-left: 25px;
 }
 
-.widget-box:hover {
+.stat-box:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);  
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-
-/* .proposal-widget {
-  background-color: rgba(0, 102, 255, 0.37) !important; 
-}
-
-
-.liquidation-widget {
-  background-color: rgba(255, 217, 0, 0.438) !important; 
-} */
-
-/* Icon Styles */
-.widget-icon {
-  font-size: 4.5rem;
-  color: #0055a2;
-  margin-bottom: 15px;
-}
-
-/* Number and Text Styles */
-.widget-number {
-  font-size: 2.5rem !important;
-  font-weight: bold !important;
+.stat-icon {
+  font-size: 2.5rem;
   color: #343a40;
   margin-bottom: 10px;
 }
 
-.widget-text {
-  font-size: 1.2rem !important;
-  font-weight:bold !important;
-  color: #050607;
+.stat-number {
+  font-size: 1.8rem;
+  color: #007bff;
 }
 
-/* Pie Chart Widget */
-.pie-chart-widget {
+.stat-text {
+  font-size: 1rem;
+  color: #6c757d;
+}
+
+/* Charts Section */
+.chart-box {
+  padding: 20px;  
+  background-color: #ffffff;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.chart-heading {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  color: #343a40;
+}
+
+@media (max-width: 768px) {
+  .top-stats, .chart-box {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+/* Dashboard Container */
+.dashboard-wrapper {
   padding: 20px;
+  background-color: #f5f5f5;
+  background-image: url(../Images/Nu_building2.png);
+  background-color: #ffffff; /* Fallback color */
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-position: center;
+  background-size: cover;
+  overflow-x: hidden;
+  min-height: 100vh;
+  justify-content: center;
+  align-items: center;
 }
 
-/* Details Section */
-.details-wrapper {
-  display: flex;
+/* Title */
+.dashboard-heading {
+  color: #343a40;
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+/* Top Stats Section */
+.top-stats {
   justify-content: space-between;
-  width: 100%;
-  max-width: 1200px;
+  margin-bottom: 30px;
 }
 
+.stat-box {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.stat-box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  color: #343a40;
+  margin-bottom: 10px;
+}
+
+.stat-number {
+  font-size: 1.8rem;
+  color: #007bff;
+}
+
+.stat-text {
+  font-size: 1rem;
+  color: #6c757d;
+}
+
+/* Charts Section */
+.chart-box {
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.chart-heading {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  color: #343a40;
+}
+
+/* Detail Boxes (Top Organizations & Recent Events) */
 .detail-box {
   padding: 20px;
+  background-color: #ffffff;
   border-radius: 15px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
@@ -105,23 +166,19 @@
   font-size: 1.5rem;
   margin-bottom: 15px;
   color: #343a40;
+  text-align: left; /* Align text to the left */
 }
 
 .detail-text {
   font-size: 1rem;
-  color: #6C757D;
-  margin-bottom: 8px;
+  color: #6c757d;
+  margin: 5px 0; /* Space between items */
 }
 
-/* Responsive Design */
+/* Media Queries for Responsive Design */
 @media (max-width: 768px) {
-  .widget-section, .details-wrapper {
+  .top-stats, .chart-box, .detail-box {
     flex-direction: column;
     align-items: center;
-  }
-
-  .widget-box, .detail-box {
-    margin-bottom: 20px;
-    width: 100%;
   }
 }

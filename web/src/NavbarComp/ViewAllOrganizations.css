@@ -1,0 +1,58 @@
+/* ViewAllOrganizations.css */
+.view-all-organizations-page {
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .back-button {
+    margin-top: 20px;
+    padding: 8px 16px;
+    background-color:  #1a3ab5;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: background-color 0.3s;
+  }
+  
+  .back-button:hover {
+    background-color: #0056b3;
+  }
+  
+  .organizations-list {
+    display: flex; /* Use flexbox for horizontal layout */
+    flex-wrap: wrap; /* Allow wrapping to fit within the viewport */
+    justify-content: center; /* Center the cards */
+    gap: 10px; /* Space between the cards */
+  }
+  
+  .organization-card {
+    border: 1px solid #ccc;
+    border-radius: 8px; /* Add rounded corners to the card */
+    padding: 10px; /* Set padding for a compact appearance */
+    background-color: white; /* Set background to white */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s;
+    flex: 0 1 calc(20% - 10px); /* Use a percentage for responsive width with gap adjustment */
+    text-align: center;
+  }
+  
+  .organization-card:hover {
+    transform: scale(1.05);
+  }
+  
+  .organization-image {
+    max-width: 100%; /* Make the image responsive */
+    max-height: 100px; /* Set a fixed height for consistency */
+    object-fit: contain; /* Ensure the image is fully visible without cropping */
+    margin: 0 auto; /* Center the image horizontally */
+    border-radius: 8px; /* Add border radius to the image */
+  }
+  
+  h1 {
+    color: #333;
+    margin-bottom: 20px;
+  }
+  

@@ -27,7 +27,7 @@
   transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.5s;
   padding: 15px;
   width: 250px;
-  height: 350px;
+  height: 400px;
   margin: 0 15px;
   opacity: 0.9;
 }
@@ -236,7 +236,8 @@ footer {
 }
 
 .view-all-container {
-  margin-top: 20px;
+  margin-top: 50px;
+  margin-bottom: 20px;
 }
 
 .view-all-btn {
@@ -248,6 +249,7 @@ footer {
   cursor: pointer;
   transition: background-color 0.3s ease;
   border-radius: 5px;
+  border: 2px solid black;
 }
 
 .view-all-btn:hover {
