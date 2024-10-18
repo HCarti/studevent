@@ -1,114 +1,93 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';  // Import axios for making API calls
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import './OrganizationEvents.css'; // Import custom styles
+import './OrganizationEvents.css';
 import image1 from '../Images/NU_moa_event2.jpg';
 import image2 from '../Images/NU_moa_event6.jpg';
 import image3 from '../Images/NU_moa_event3.jpg';
 import image4 from '../Images/NU_moa_event4.jpg';
-import Slider from 'react-slick'; // Import react-slick for the carousel
+import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css'; 
 import 'slick-carousel/slick/slick-theme.css';
 
 const localizer = momentLocalizer(moment);
 
-// Custom Toolbar Component
-const CustomToolbar = ({ onNavigate, label }) => {
-  return (
-    <div className="custom-toolbar">
-      <div className="toolbar-label">
-        <span>{label}</span>
-      </div>
-      <div className="toolbar-buttons">
-        <button onClick={() => onNavigate('PREV')} className="toolbar-button">
-          &#8592; Previous
-        </button>
-        <button onClick={() => onNavigate('NEXT')} className="toolbar-button">
-          Next &#8594;
-        </button>
-      </div>
-    </div>
-  );
-};
-
 const OrganizationEvents = () => {
-  const [events, setEvents] = useState([
-    {
-      id: 1,
-      title: 'Sample Event',
-      start: new Date(),
-      end: new Date(moment().add(1, 'hour').toDate()),
-    },
-  ]);
-
+  const [events, setEvents] = useState([]);
   const [newEvent, setNewEvent] = useState({ title: '', start: '', end: '' });
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [hoveredEventId, setHoveredEventId] = useState(null); 
-  const [isEditing, setIsEditing] = useState(false); // Track if editing mode is on
-  const [editingEventId, setEditingEventId] = useState(null); // Store the event being edited
+  const [isEditing, setIsEditing] = useState(false); 
+  const [editingEventId, setEditingEventId] = useState(null); 
 
-  const generateUniqueId = () => Date.now() + Math.random();
+  useEffect(() => {
+    fetchEvents();
+  }, []);
 
-  const handleAddEvent = () => {
-    if (newEvent.title && newEvent.start && newEvent.end) {
-      if (isEditing) {
-        // Update existing event
-        setEvents(events.map(event => 
-          event.id === editingEventId ? { ...event, ...newEvent } : event
-        ));
-        setIsEditing(false); // Exit editing mode
-        setEditingEventId(null); // Clear editing event ID
-      } else {
-        const id = generateUniqueId();
-        setEvents([
-          ...events,
-          { 
-            id, 
-            ...newEvent, 
-            start: new Date(newEvent.start), 
-            end: new Date(newEvent.end) 
-          }
-        ]);
-      }
-      setNewEvent({ title: '', start: '', end: '' });
+  // Fetch events from the backend
+  const fetchEvents = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/api/events');
+      const formattedEvents = response.data.map(event => ({
+        ...event,
+        start: moment(event.start).toDate(),
+        end: moment(event.end).toDate(),
+      }));
+      setEvents(formattedEvents);
+    } catch (error) {
+      console.error('Error fetching events:', error);
+    }
+  };
+  
+
+  // Handle deleting an event from the backend
+  const handleDeleteEvent = async (id) => {
+    try {
+      await axios.delete(`http://localhost:8000/api/events/${id}`);
+      setEvents(events.filter(event => event._id !== id));
+      alert('Event deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      alert('Failed to delete event.');
     }
   };
 
-  const handleDeleteEvent = (id) => {
-    setEvents(events.filter(event => event.id !== id));
-  };
-
+  // Handle editing an event
   const handleEditEvent = (event) => {
     setNewEvent({
       title: event.title,
-      start: moment(event.start).format('YYYY-MM-DDTHH:mm'), // Format for input fields
+      start: moment(event.start).format('YYYY-MM-DDTHH:mm'),
       end: moment(event.end).format('YYYY-MM-DDTHH:mm')
     });
-    setIsEditing(true); // Enable editing mode
-    setEditingEventId(event.id); // Store the ID of the event being edited
+    setIsEditing(true);
+    setEditingEventId(event._id);  // Use _id for MongoDB consistency
   };
 
-  const getEventsForDate = (date) => {
-    return events.filter(
-      (event) =>
-        moment(event.start).isSame(date, 'day') ||
-        moment(event.end).isSame(date, 'day') ||
-        (moment(event.start).isBefore(date) && moment(event.end).isAfter(date))
-    );
+  // Handle updating an event in the backend
+  const handleUpdateEvent = async () => {
+    try {
+      const updatedEvent = {
+        title: newEvent.title,
+        start: newEvent.start,
+        end: newEvent.end
+      };
+
+      await axios.put(`http://localhost:8000/api/events/${editingEventId}`, updatedEvent);
+      setEvents(events.map(event => event._id === editingEventId ? { ...event, ...updatedEvent } : event));
+      setIsEditing(false);
+      setEditingEventId(null);
+      alert('Event updated successfully!');
+    } catch (error) {
+      console.error('Error updating event:', error);
+      alert('Failed to update event.');
+    }
   };
 
-  useEffect(() => {
-    setSelectedDate(new Date());
-  }, []);
-
+  // Handle selecting a date on the calendar
   const handleDateClick = (date) => {
     setSelectedDate(date);
-  };
-
-  const handleNavigate = (action) => {
-    const calendar = document.querySelector('.rbc-calendar');
-    calendar.dispatchEvent(new CustomEvent('navigate', { detail: { action } }));
   };
 
   const sliderSettings = {
@@ -134,6 +113,18 @@ const OrganizationEvents = () => {
 
   const images = [image1, image2, image3, image4];
 
+  <Calendar
+  localizer={localizer}
+  events={Array.isArray(events) ? events : []} // Ensures events is an array
+  startAccessor="start"
+  endAccessor="end"
+  views={['month']}
+  style={{ height: 500 }}
+  selectable
+  onNavigate={(date) => setSelectedDate(date)}
+/>
+
+
   return (
     <div className="wrap">
       <div className="calendar-container">
@@ -149,91 +140,62 @@ const OrganizationEvents = () => {
               endAccessor="end"
               views={['month']}
               style={{ height: 500 }}
-              onSelectSlot={(slotInfo) => handleDateClick(slotInfo.start)}
               selectable
-              toolbar={false}  
               onNavigate={(date) => setSelectedDate(date)}
-              eventPropGetter={(event) => {
-                if (event.id === hoveredEventId) {
-                  return { style: { backgroundColor: '#ff5722', color: 'white' } };
-                }
-                return {};
-              }}
             />
           </div>
-          <CustomToolbar onNavigate={handleNavigate} />
         </div>
 
-        {/* Event Details on the Right */}
         <div className="event-details">
           <h2>{moment(selectedDate).format('MMMM D, YYYY')}</h2>
           <ul>
-            {getEventsForDate(selectedDate).length > 0 ? (
-              getEventsForDate(selectedDate).map((event) => (
+            {events.filter(event => moment(event.start).isSame(selectedDate, 'day')).length > 0 ? (
+              events.filter(event => moment(event.start).isSame(selectedDate, 'day')).map((event) => (
                 <li 
-                  key={event.id} 
+                  key={event._id}  // Use _id for MongoDB objects
                   className="event-item" 
-                  onMouseEnter={() => setHoveredEventId(event.id)}
+                  onMouseEnter={() => setHoveredEventId(event._id)}  // Consistent use of _id
                   onMouseLeave={() => setHoveredEventId(null)}
                 >
                   <span className="event-title">{event.title}</span>
                   <span className="event-time">
                     {moment(event.start).format('LT')} - {moment(event.end).format('LT')}
                   </span>
-                  <button 
-                    onClick={() => handleDeleteEvent(event.id)} 
-                    style={{ marginLeft: '10px', color: 'red', cursor: 'pointer' }}
-                  >
-                    Delete
-                  </button>
-                  <button 
-                    onClick={() => handleEditEvent(event)} 
-                    style={{ marginLeft: '10px', color: 'blue', cursor: 'pointer' }}
-                  >
-                    Edit
-                  </button>
+                  <button onClick={() => handleDeleteEvent(event._id)}>Delete</button>
+                  <button onClick={() => handleEditEvent(event)}>Edit</button>
                 </li>
               ))
             ) : (
-              <li className="no-events">No events for this day.</li>
+              <li>No events for this day.</li>
             )}
           </ul>
         </div>
+
+        {/* Conditionally show the form for editing an event */}
+        {isEditing && (
+          <div className="edit-event-form">
+            <h3>Edit Event</h3>
+            <input
+              type="text"
+              value={newEvent.title}
+              onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
+              placeholder="Event Title"
+            />
+            <input
+              type="datetime-local"
+              value={newEvent.start}
+              onChange={(e) => setNewEvent({ ...newEvent, start: e.target.value })}
+            />
+            <input
+              type="datetime-local"
+              value={newEvent.end}
+              onChange={(e) => setNewEvent({ ...newEvent, end: e.target.value })}
+            />
+            <button onClick={handleUpdateEvent}>Update Event</button>
+            <button onClick={() => setIsEditing(false)}>Cancel</button>
+          </div>
+        )}
       </div>
-
-      {/* Add/Edit Event Form - Now placed above the slider */}
-      <div className="add-event-form">
-  <h3>{isEditing ? 'Edit Event' : 'Add New Event'}</h3>
-  
-  {/* Event Title Input */}
-  <input
-    type="text"
-    placeholder="Event Title"
-    value={newEvent.title}
-    onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
-  />
-
-  {/* Start Date & Time Input with Label */}
-  <label>Start Date & Time</label>
-  <input
-    type="datetime-local"
-    value={newEvent.start}
-    onChange={(e) => setNewEvent({ ...newEvent, start: e.target.value })}
-  />
-
-  {/* End Date & Time Input with Label */}
-  <label>End Date & Time</label>
-  <input
-    type="datetime-local"
-    value={newEvent.end}
-    onChange={(e) => setNewEvent({ ...newEvent, end: e.target.value })}
-  />
-
-  {/* Add/Update Event Button */}
-  <button onClick={handleAddEvent}>
-    {isEditing ? 'Update Event' : 'Add Event'}
-  </button>
-   </div>
       {/* Image Slider Section */}
       <div className="img-slide">
         <Slider {...sliderSettings}>

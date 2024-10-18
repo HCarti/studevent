@@ -201,3 +201,10 @@ textarea {
     width: 100%;
   }
 }
+
+.event-dates{
+  display: flex;
+  
+  justify-content: center;
+  gap: 400px;
+}

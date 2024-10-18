@@ -1,4 +1,6 @@
 import React, {useState} from "react";
+import axios from 'axios';
+import moment from 'moment';
 import { Document, Page, Text, View, StyleSheet, Image, PDFDownloadLink } from "@react-pdf/renderer";
 import NU_logo from "../Images/NU_logo.png";
 import { useNavigate } from 'react-router-dom';
@@ -52,7 +54,8 @@ const AapPDF = ({ formData }) => (
         </View>
         <View style={styles.formRow}>
           <Text>Venue Address: {formData.venueAddress}</Text>
-          <Text>Event Date: {formData.eventDate}</Text>
+          <Text>Event Start Date: {formData.eventStartDate}</Text>
+          <Text>Event End Date: {formData.eventEndDate}</Text>
         </View>
         <View style={styles.formRow}>
           <Text>Event Time: {formData.eventTime}</Text>
@@ -193,7 +196,7 @@ const AapPDF = ({ formData }) => (
 );
 
 const Aap = () => {
-  const [formData, setFormData] = React.useState({
+  const [formData, setFormData] = useState({
     eventLocation: "",
     applicationDate: "",
     studentOrganization: "",
@@ -203,11 +206,11 @@ const Aap = () => {
     eventTitle: "",
     eventType: "",
     venueAddress: "",
-    eventDate: "",
-    eventTime: "",
+    eventStartDate: "",
+    eventEndDate: "",
     organizer: "",
     budgetAmount: "",
-    budgetFrom:"",
+    budgetFrom: "",
     coreValuesIntegration: "",
     objectives: "",
     marketing: false,
@@ -219,43 +222,43 @@ const Aap = () => {
     toilets: false,
     transportation: false,
     more: "",
-    licensesRequired:"",
-    houseKeeping:"",
-    wasteManagement:"",
+    licensesRequired: "",
+    houseKeeping: "",
+    wasteManagement: "",
     eventManagementHead: "",
     eventCommitteesandMembers: "",
     health: "",
     safetyAttendees: "",
     emergencyFirstAid: "",
     fireSafety: "",
-    weather: "",
+    weather: ""
   });
+
+  const [formSent, setFormSent] = useState(false); 
+  const [eventId, setEventId] = useState(null);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === "checkbox" ? checked : value
     });
   };
-
-  const [formSent, setFormSent] = useState(false);  // <-- Add this
-  const [eventId, setEventId] = useState(null);
 
   const handleSubmit = async () => {
     // Validate required fields
     const requiredFields = [
-      'eventLocation', 'applicationDate', 'studentOrganization', 
-      'contactPerson', 'contactNo', 'emailAddress', 'eventTitle', 
-      'eventType', 'venueAddress', 'eventDate', 'eventTime', 
-      'organizer', 'budgetAmount', 'budgetFrom', 'coreValuesIntegration', 
-      'objectives', 'marketingCollaterals', 'pressRelease', 'others', 
-      'eventFacilities', 'holdingArea', 'toilets', 'transportationandParking', 
-      'more', 'licensesRequired', 'houseKeeping', 'wasteManagement',
-      'eventManagementHead', 'eventCommitteesandMembers', 'health', 
-      'safetyAttendees', 'emergencyFirstAid', 'fireSafety', 'weather'
+        'eventLocation', 'applicationDate', 'studentOrganization', 
+        'contactPerson', 'contactNo', 'emailAddress', 'eventTitle', 
+        'eventType', 'venueAddress', 'eventStartDate', 'eventEndDate', 
+        'organizer', 'budgetAmount', 'budgetFrom', 
+        'coreValuesIntegration', 'objectives', 'marketingCollaterals', 
+        'pressRelease', 'others', 'eventFacilities', 
+        'holdingArea', 'toilets', 'transportationandParking', 'more', 
+        'licensesRequired', 'houseKeeping', 'wasteManagement',
+        'eventManagementHead', 'eventCommitteesandMembers', 'health', 
+        'safetyAttendees', 'emergencyFirstAid', 'fireSafety', 'weather'
     ];
-  
 
     for (const field of requiredFields) {
         if (!formData[field]) {
@@ -264,36 +267,61 @@ const Aap = () => {
         }
     }
 
+    // Ensure valid dates and calculate event length
+    const eventStart = moment(formData.eventStartDate);
+    const eventEnd = moment(formData.eventEndDate);
+    if (!eventStart.isValid() || !eventEnd.isValid()) {
+        alert("Invalid event start or end date.");
+        return;
+    }
+
+    if (eventEnd.isBefore(eventStart)) {
+        alert("End date must be after the start date.");
+        return;
+    }
+
+    const eventLength = eventEnd.diff(eventStart, 'hours'); // Calculate event length in hours
+
+    const eventData = {
+        title: formData.eventTitle,
+        start: formData.eventStartDate,
+        end: formData.eventEndDate,
+        length: eventLength
+    };
+
     try {
         // Send form data to the API
-        const response = await fetch('http://localhost:8000/api/forms/submit', {
+        const response = await fetch('http://localhost:8000/api/events', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(formData),
+            body: JSON.stringify(eventData),
         });
 
         if (!response.ok) {
             const errorData = await response.json();
-            console.error('Error submitting form:', errorData);
-            alert(`Error: ${errorData.details}`);
+            console.error('Error submitting event:', errorData);
+            alert(`Error: ${errorData.error || 'Submission failed'}`);
             return;
         }
 
         const result = await response.json();
-        console.log('Form submitted successfully:', result);
-        // Get the form Object ID
-       
-        const formId = result.id; // Assuming the response contains an ID
-        setEventId(formId); // Set the event ID
-        console.log('Form Object ID:', formId);
+        console.log('Event submitted successfully:', result);
+        
+        // Get the event Object ID
+        const eventId = result._id; // Assuming the response contains an ID
+        setEventId(eventId); // Set the event ID
+        console.log('Event Object ID:', eventId);
         alert('Form submitted successfully!');
+
     } catch (error) {
         console.error('Error:', error);
         alert('An error occurred while submitting the form.');
     }
 };
+
+  
   
   return (
     <div className="form-ubox">
@@ -403,26 +431,28 @@ const Aap = () => {
               onChange={handleChange}
             />
           </div>
+          <div className="event-dates">
+              <div>
+                <label>Event Start Date:</label>
+                <input
+                  type="datetime-local"  // Changed to datetime-local to capture both date and time
+                  name="eventStartDate"
+                  value={formData.eventStartDate}
+                  onChange={handleChange}
+                />
+              </div>
 
-          <div>
-            <label>Event Date:</label>
-            <input
-              type="date"
-              name="eventDate"
-              value={formData.eventDate}
-              onChange={handleChange}
-            />
-          </div>
+              <div>
+                <label>Event End Date:</label>
+                <input
+                  type="datetime-local"  // Changed to datetime-local for end date as well
+                  name="eventEndDate"
+                  value={formData.eventEndDate}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
 
-          <div>
-            <label>Event Time:</label>
-            <input
-              type="text"
-              name="eventTime"
-              value={formData.eventTime}
-              onChange={handleChange}
-            />
-          </div>
 
           <div>
             <label>Organizer:</label>
