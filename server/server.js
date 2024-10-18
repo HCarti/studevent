@@ -7,7 +7,6 @@ const userRoutes = require('./routes/user_routes');
 const formRoutes = require('./routes/formRoutes');
 const trackerRoutes = require('./routes/trackerRoutes'); // Import tracker routes
 const Form = require('./models/Form'); // Import your Form model
-const authenticateJWT = require('./middleware/authenticateJWT'); // Import the middleware
 
 const app = express();
 
@@ -17,7 +16,7 @@ app.use(express.urlencoded({ extended: true })); // Specify extended for parsing
 app.use(cors());
 
 // MongoDB connection
-mongoose.connect('mongodb+srv://StudEvent:StudEvent2024@studevent.nvsci.mongodb.net/', {
+mongoose.connect('mongodb://localhost:27017/Studevent', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
@@ -29,9 +28,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes); // Auth routes do not need JWT authentication
-app.use('/api/users', authenticateJWT, userRoutes); // Protect /users routes with JWT
-app.use('/api/forms', authenticateJWT, formRoutes); // Protect /forms routes with JWT
-app.use('/api/trackers', authenticateJWT, trackerRoutes); // Protect /trackers routes with JWT
+app.use('/api/users', userRoutes); // Protect /users routes with JWT
+app.use('/api/forms', formRoutes); // Protect /forms routes with JWT
+app.use('/api/trackers', trackerRoutes); // Protect /trackers routes with JWT
 
 // Fetch all submitted forms
 app.get('/api/forms/submitted', async (req, res) => {
