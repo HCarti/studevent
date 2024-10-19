@@ -89,6 +89,7 @@ const Home = ({ handleLogin }) => {
                     <div className={`input-container ${isFocused ? 'input-focused' : ''}`}>
                       <Person2Icon />
                       <input
+                        className="inputEmail"
                         type="email"
                         placeholder="Email"
                         value={email}
@@ -102,6 +103,7 @@ const Home = ({ handleLogin }) => {
                     <div className={`input-container password-container ${passwordFocused ? 'input-focused' : ''}`}>
                       <LockIcon />
                       <input
+                        className="inputPass"
                         type={showPassword ? 'text' : 'password'}
                         placeholder="Password"
                         value={password}
@@ -110,13 +112,13 @@ const Home = ({ handleLogin }) => {
                         onBlur={() => setPasswordFocused(false)}
                         required
                       />
-                      <button
+                      {/* <button
                         type="button"
                         className="toggle-password-btn"
                         onClick={togglePasswordVisibility}
                       >
                         {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                      </button>
+                      </button> */}
                     </div>
 
                     <button type="submit" className="login-button">Log in</button>
@@ -130,7 +132,8 @@ const Home = ({ handleLogin }) => {
 
                 <div className="footer-text">
                   <h3>NU MOA - SDAO SYSTEM</h3>
-                  <p>SDAO manages the student activities and development programs of the institution with the help of the student councils and student organizations.</p>
+                  <p>SDAO manages the student activities and development programs of the institution</p> 
+                   <p>with the help of the student councils and student organizations.</p>
                 </div>
               </div>
             </div>
@@ -141,7 +144,10 @@ const Home = ({ handleLogin }) => {
             <div className="parallax-section two">
               <div className="content-section">
                 <h2>About Us</h2>
-                <p> At SDAO (Student Development and Activities Office), we are committed to enriching the student experience by managing a wide range of student activities and development programs. Working hand-in-hand with student councils and organizations, we strive to create a dynamic and engaging environment that fosters leadership, teamwork, and personal growth. Our goal is to support and empower students in making the most of their academic journey through meaningful opportunities and initiatives that promote holistic development.</p>
+                 <p> At SDAO (Student Development and Activities Office), we are committed to enriching the student experience by managing</p> 
+                   <p>a wide range of student activities and development programs.</p>
+                    <p>Working hand-in-hand with student councils and organizations, we strive to create a dynamic and engaging environment that</p> 
+                  <p>fosters leadership, teamwork, and personal growth. Our goal is to support and empower students in making the most of their academic journey through meaningful opportunities and initiatives that promote holistic development.</p>
               </div>
             </div>
           </Parallax>

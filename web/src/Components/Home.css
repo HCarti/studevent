@@ -47,10 +47,10 @@ body {
     padding: 10px; /* Adjust padding for smaller screens */
   }
  
-  .input-container {
-    padding: 8px; /* Adjust input container padding */
+  /* .input-container {
+    padding: 8px; 
   }
- 
+  */
   .parallax-section {
     padding: 50px 20px;
   }
@@ -103,6 +103,27 @@ body {
   font-size: 25px;
   font-weight: bold;
 }
+
+.inputPass{
+  border: 1px solid black !important;
+  height: 30px !important;
+  border-radius: 10px !important;
+  flex-grow: 1;
+  padding-left: 10px;
+  font-size: 16px;
+  
+}
+
+.inputEmail{
+  border: 1px solid black !important;
+  height: 10px !important;
+  flex-grow: 1;
+  padding-left: 10px;
+  font-size: 16px;
+  border-radius: 10px !important;
+
+}
+ 
  
 .input-container {
   display: flex;
@@ -110,15 +131,9 @@ body {
   background-color: #fff;
   margin-bottom: 15px;
   padding: 10px;
-  border-radius: 17px;
+  border-radius: 10px !important;
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
- 
-.input-container input {
-  flex-grow: 1;
-  padding-left: 10px;
-  font-size: 16px;
 }
  
 .input-focused {
@@ -242,7 +257,7 @@ body {
 .content-section h2 {
   color: #1a3ab5;
   font-weight: bold;
-  font-size: 25px;
+  font-size: 20px;
 }
  
 .content-section{

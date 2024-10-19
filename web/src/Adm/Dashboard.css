@@ -9,8 +9,8 @@
 .dashboard-heading {
   color: #343a40;
   text-align: center;
-  font-weight: bold;
-  margin-bottom: 25px;
+  font-weight:bold !important;
+  padding-bottom: 25px;
 }
   
 /* Top Stats Section */

@@ -4,6 +4,7 @@ import { Box, Typography, Grid, Paper } from '@mui/material';
 import { Pie } from 'react-chartjs-2';
 import { Icon } from '@iconify/react';
 import fileDocumentIcon from '@iconify/icons-mdi/file-document';
+import bankIcon from '@iconify/icons-mdi/bank';
 import cashIcon from '@iconify/icons-mdi/cash';
 import {
   Chart as ChartJS,
@@ -52,6 +53,7 @@ const Dashboard = () => {
     ],
   };
 
+  // Line chart data (Proposals over time)
   const lineData = {
     labels: ['January', 'February', 'March', 'April', 'May', 'June'],
     datasets: [
@@ -94,7 +96,7 @@ const Dashboard = () => {
           </Grid>
           <Grid item xs={12} sm={4}>
             <Paper className="stat-box" elevation={3} onClick={handleAdminLiquidationClick}>
-              <Icon icon={cashIcon} className="stat-icon" />
+              <Icon icon={bankIcon} className="stat-icon" />
               <Typography className="stat-number">Liquidations</Typography>
               <Typography className="stat-text">Completed: 20+</Typography>
             </Paper>

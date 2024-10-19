@@ -1,99 +1,122 @@
-.fs-box {
+/* Overall Layout */
+.fs-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px;
-  height: 83vh;
+  padding: 40px;
+  background-image: url(../Images/Nu_building2.png);
+  background-color: #ffffff; /* Fallback color */
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-position: center;
+  background-size: cover;
+  overflow-x: hidden; 
+  height:100%;
 }
 
 .fs-title {
-  text-align: center;
-  color: #0055a2;
-  margin-bottom: 20px;
-  font-size: 1.5em;
-  font-weight: bold;
+  color: #003366;
+  font-size: 2.2em;
+  font-weight: 700;
+  margin-bottom: 30px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
 }
 
+/* Steps Styling */
 .steps {
   display: flex;
-  flex-direction: row;
-  gap: 20px;
+  width: 1000px !important;
+  gap: 30px;
   justify-content: center;
-  flex-wrap: wrap;
+  flex-direction: row;
 }
 
 .step {
-  border: 1px solid #ddd;
-  width: 250px;
-  padding: 20px;
-  height: 42vh;
-  border-radius: 20px;
-  background-color: white;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  padding: 40px 25px; /* Adjusted padding for better spacing */
+  width: 280px;
   text-align: center;
-  position: relative; /* Important for absolute positioning inside */
-  overflow: hidden; /* To hide overflow of the icon */
+  transition: transform 0.3s;
+  position: relative; /* Allows for the absolute positioning of the icon */
 }
 
+/* .step:hover {
+  transform: translateY(-10px);
+} */
+
+/* Adjusting Icon for better visibility */
 .step-icon {
-  font-size: 6em;
-  color: #e0e0e0;
+  font-size: 150px !important; /* Increased size */
+  color: #b0b0b0; /* Slightly darker gray for better contrast */
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 0;
-  pointer-events: none; /* To make the icon non-interactive */
+  transform: translate(-50%, -50%); /* Centering */
+  z-index: 0; /* Behind the text */
+  opacity: 0.3; /* Slightly less transparent */
 }
 
 .step h2, .step p {
   position: relative;
-  z-index: 1; /* Ensures text is above the icon */
+  z-index: 1; /* Text above the icon */
 }
 
 .step h2 {
-  color: #0055a2;
-  font-size: 1.2em;
-  margin-bottom: 10px;
+  font-size: 1.4em;
+  color: #003366;
+  margin-bottom: 15px;
 }
 
 .step p {
-
-  font-size: 0.9em;
-  line-height: 1.4;
+  font-size: 1em;
+  line-height: 1.6;
+  color: #555;
 }
 
+/* Bottom Links */
 .bottom-links {
   display: flex;
-  justify-content: center;
-  gap: 30vh;
-  width: 100%;
-  margin-top: 30px;
+  gap: 60px;
+  margin-top: 40px;
 }
 
 .link {
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  padding: 15px;
+  background-color: #1a3ab5;;
+  color: white;
+  border-radius: 8px;
+  padding: 15px 25px;
   text-align: center;
-  background-color: white;
-  width: 20%;
-  font-size: 0.9em;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  width: 200px;
+  font-weight: bold;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   cursor: pointer;
-  transition: background-color 0.3s, color 0.3s; /* Smooth transition for the color change */
+  transition: transform 0.3s;
+  /* transition: background-color 0.3s ease; */
+
 }
 
-.link:hover {
-  color: white; /* Change text color to white on hover */
-  background-color: #0055a2; /* Change background color to blue on hover */
-  border-color: #0055a2; /* Change border color to blue to match the background */
+.forms-link:hover {
+  background-color: #003366;
+  transform: translateY(-5px);
 }
 
-.forms-link {
-  color: #0055a2;
+.proposal-link:hover {
+  background-color: #003366;
+  transform: translateY(-5px);
 }
 
-.proposal-link {
-  color: #0055a2;
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .steps {
+    flex-direction: column;
+  }
+  
+  .bottom-links {
+    flex-direction: column;
+    gap: 20px;
+  }
 }

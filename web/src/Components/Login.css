@@ -1,22 +1,22 @@
 /* src/Login.css */
 
-.login-container {
+/* .login-container {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100%;
-}
+} */
 
-.login-card {
+/* .login-card {
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.16);
   padding: 20px;
   width: 100%;
   max-width: 400px;
-}
+} */
 
-.login-form {
+/* .login-form {
   display: flex;
   flex-direction: column;
 }
@@ -27,12 +27,12 @@
   font-size: 1rem;
   border: 1px solid #ccc;
   border-radius: 4px;
-}
+} */
 
-.login-form button {
+/* .login-form button {
   padding: 0.75rem;
   font-size: 1rem;
-  background-color: #1976d2; /* Blue background */
+  background-color: #1976d2; 
   color: white;
   border: none;
   border-radius: 4px;
@@ -40,7 +40,7 @@
 }
 
 .login-form button:hover {
-  background-color: #1565c0; /* Darker blue on hover */
+  background-color: #1565c0; 
 }
 
 .login-alert {
@@ -55,10 +55,10 @@
 }
 
 .options a {
-  color: #1976d2; /* Blue color for links */
+  color: #1976d2; 
   text-decoration: none;
 }
 
 .options a:hover {
-  text-decoration: underline; /* Underline links on hover */
-}
+  text-decoration: underline; 
+} */
