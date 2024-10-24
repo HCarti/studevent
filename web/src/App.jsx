@@ -43,7 +43,7 @@ const App = () => {
 
   const handleLogin = (userData) => {
     localStorage.setItem("user", JSON.stringify(userData));
-    setUser(userData);  // Update state and trigger re-render
+    setUser(userData); // This triggers the Navbar re-render
   };
 
   const handleLogout = () => {

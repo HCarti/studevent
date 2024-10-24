@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './Navbar.css';
 import StudeventLogo from '../Images/Studevent.png';
@@ -10,6 +10,10 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+
+  useEffect(() => {
+    // This effect will trigger when `user` is updated
+  }, [user]);
 
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
@@ -27,13 +31,18 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
     navigate('/');
   };
 
+  const handleLogoutClick = () => {
+    handleLogout();  
+    navigate('/');   
+  };
+
   const renderMenuItems = () => (
     <>
       <li>
         <Link
           to="/"
           className={`navbar-menu-item ${location.pathname === '/' ? 'active' : ''}`}
-          onClick={() => setDrawerOpen(false)} // Close drawer on click
+          onClick={() => setDrawerOpen(false)}
         >
           Home
         </Link>
@@ -42,7 +51,7 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
         <Link
           to="/organizations"
           className={`navbar-menu-item ${location.pathname === '/organizations' ? 'active' : ''}`}
-          onClick={() => setDrawerOpen(false)} // Close drawer on click
+          onClick={() => setDrawerOpen(false)}
         >
           Organizations
         </Link>
@@ -50,17 +59,17 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
       {isLoggedIn && user && (
         <li className="navbar-menu-item account-dropdown" onClick={toggleAccountMenu}>
           {user.logo ? (
-                <img
-                  src={`http://localhost:8000/uploads/${user.logo}`} // Full URL for the logo or profile picture
-                  alt="Profile" 
-                  className="navbar-profile-pic"
-                />
-              ) : (
-                <span>Account</span>
-              )}
+            <img
+              src={`http://localhost:8000/uploads/${user.logo}`} 
+              alt="Profile" 
+              className="navbar-profile-pic"
+            />
+          ) : (
+            <span>Account</span>
+          )}
           {accountMenuOpen && (
             <div className="account-dropdown-menu">
-              <div className="dropdown-item" onClick={handleLogout}>Logout</div>
+              <div className="dropdown-item" onClick={handleLogoutClick}>Logout</div>
             </div>
           )}
         </li>
@@ -93,19 +102,19 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
         </ul>
       </div>
       <div className="mobile-menu-icon" onClick={toggleDrawer}>
-        &#9776; {/* Hamburger icon */}
+        &#9776;
       </div>
       <div className={`drawer ${drawerOpen ? 'open' : ''}`}>
         <div className="drawer-header">
           <div className="drawer-title">Menu</div>
           <div className="drawer-close-icon" onClick={toggleDrawer}>
-            &times; {/* Close icon */}
+            &times;
           </div>
         </div>
         <ul className="drawer-list">
           {renderMenuItems()}
           {isLoggedIn && (
-            <li className="drawer-list-item" onClick={handleLogout}>Logout</li>
+            <li className="drawer-list-item" onClick={handleLogoutClick}>Logout</li>
           )}
         </ul>
       </div>
