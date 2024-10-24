@@ -9,7 +9,7 @@ const SuperAdminUserCounter = () => {
     useEffect(() => {
         const fetchUserCount = async () => {
             try {
-                const response = await axios.get('http://localhost:5000/api/users/count');
+                const response = await axios.get('https://studevent-server.vercel.app/api/users/count');
                 setUserCount(response.data.count);
             } catch (error) {
                 console.error('Error fetching user count:', error);

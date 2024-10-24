@@ -9,7 +9,7 @@ const AdminFormView = () => {
   useEffect(() => {
     const fetchSubmittedForms = async () => {
       try {
-        const response = await fetch("http://localhost:8000/api/forms/submitted");
+        const response = await fetch("https://studevent-server.vercel.app/api/forms/submitted");
         const data = await response.json();
         setSubmittedForms(data);
       } catch (error) {

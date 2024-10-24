@@ -59,7 +59,7 @@ const Home = ({ handleLogin }) => {
     const data = { email, password };
 
     try {
-      const response = await axios.post('http://localhost:8000/api/auth/login', data);
+      const response = await axios.post('https://studevent-server.vercel.app/api/auth/login', data);
       const { token, data: userData } = response.data;
 
       // Store user data and token

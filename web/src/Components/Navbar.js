@@ -60,7 +60,7 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
         <li className="navbar-menu-item account-dropdown" onClick={toggleAccountMenu}>
           {user.logo ? (
             <img
-              src={`http://localhost:8000/uploads/${user.logo}`} 
+              src={`https://studevent-server.vercel.app/uploads/${user.logo}`} 
               alt="Profile" 
               className="navbar-profile-pic"
             />

@@ -10,7 +10,7 @@ const AdminTab = () => {
     useEffect(() => {
         const fetchAdmins = async () => {
             try {
-                const response = await axios.get('http://localhost:8000/api/users');
+                const response = await axios.get('https://studevent-server.vercel.app/api/users');
                 const filteredAdmins = response.data.filter(user => user.role === 'Admin');
                 setAdmins(filteredAdmins);
             } catch (error) {
@@ -23,7 +23,7 @@ const AdminTab = () => {
 
     const deleteUser = async (userId) => {
         try {
-            await axios.delete(`http://localhost:8000/api/users/${userId}`);
+            await axios.delete(`https://studevent-server.vercel.app/api/users/${userId}`);
             setAdmins(admins.filter((user) => user._id !== userId)); // Update the UI by removing the user
         } catch (error) {
             console.error('Error deleting admin:', error);
@@ -52,7 +52,7 @@ const AdminTab = () => {
     const handleEditSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.put(`http://localhost:8000/api/users/${editingAdmin}`, editFormData);
+            await axios.put(`https://studevent-server.vercel.app/api/users/${editingAdmin}`, editFormData);
             setAdmins(admins.map((admin) =>
                 admin._id === editingAdmin ? { ...admin, ...editFormData } : admin
             ));
@@ -82,7 +82,7 @@ const AdminTab = () => {
                             <td>
                                 {admin.logo ? (
                                     <img
-                                        src={`http://localhost:8000/uploads/${admin.logo}`}
+                                        src={`https://studevent-server.vercel.app/uploads/${admin.logo}`}
                                         alt="Admin Logo"
                                         width="50"
                                         height="50"

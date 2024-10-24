@@ -148,7 +148,7 @@ const SuperAdminAddUser = () => {
 
     try {
         setLoading(true);
-        const response = await axios.post('http://localhost:8000/api/users', data, {
+        const response = await axios.post('https://studevent-server.vercel.app/api/users', data, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },

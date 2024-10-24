@@ -12,7 +12,7 @@ const AdminControlPanel = () => {
   useEffect(() => {
     const fetchOrganizations = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/users');
+        const response = await axios.get('https://studevent-server.vercel.app/api/users');
         console.log('API Response:', response.data); // Log the entire response data
         const filteredOrganizations = response.data.filter(user => user.role === 'Organization');
         console.log('Filtered Organizations:', filteredOrganizations); // Log filtered organizations
@@ -30,7 +30,7 @@ const AdminControlPanel = () => {
   useEffect(() => {
     const fetchTotalUsers = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/users');
+        const response = await axios.get('https://studevent-server.vercel.app/api/users');
         console.log('Total Users Response:', response.data); // Log the user data
         setTotalUsers(response.data.length); // Set total users to the length of the fetched data
       } catch (error) {

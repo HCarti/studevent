@@ -46,7 +46,7 @@ const quotes = [
   useEffect(() => {
     const fetchAuthorities = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/users');
+        const response = await axios.get('https://studevent-server.vercel.app/api/users');
         const filteredAuthorities = response.data.filter(user => user.role === 'Authority');
         setAuthories(filteredAuthorities);
         if (filteredAuthorities.length > 0) {
@@ -71,7 +71,7 @@ const quotes = [
         }
   
         // Fetch the logged-in user's data
-        const response = await axios.get(`http://localhost:8000/api/users/${loggedInUserId}`);
+        const response = await axios.get(`https://studevent-server.vercel.app/api/users/${loggedInUserId}`);
         console.log('Logged-in User Data:', response.data); // Debugging step
   
         // If the user is an authority, set them as currentAuthorities

@@ -10,7 +10,7 @@ const SuperAdminAuthorities = () => {
     useEffect(() => {
         const fetchAuthorities = async () => {
             try {
-                const response = await axios.get('http://localhost:8000/api/users');
+                const response = await axios.get('https://studevent-server.vercel.app/api/users');
                 const filteredAuthorities = response.data.filter(user => user.role === 'Authority');
                 setAuthorities(filteredAuthorities);
             } catch (error) {
@@ -23,7 +23,7 @@ const SuperAdminAuthorities = () => {
 
     const deleteUser = async (userId) => {
         try {
-            await axios.delete(`http://localhost:8000/api/users/${userId}`);
+            await axios.delete(`https://studevent-server.vercel.app/api/users/${userId}`);
             setAuthorities(authorities.filter((user) => user._id !== userId)); // Update the UI by removing the user
         } catch (error) {
             console.error('Error deleting user:', error);
@@ -52,7 +52,7 @@ const SuperAdminAuthorities = () => {
     const handleEditSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.put(`http://localhost:8000/api/users/${editingAuth}`, editFormData);
+            await axios.put(`https://studevent-server.vercel.app/api/users/${editingAuth}`, editFormData);
             setAuthorities(authorities.map((auth) =>
                 auth._id === editingAuth ? { ...auth, ...editFormData } : auth
             ));
@@ -82,7 +82,7 @@ const SuperAdminAuthorities = () => {
                             <td>
                                 {authority.logo ? (
                                     <img
-                                        src={`http://localhost:8000/uploads/${authority.logo}`}
+                                        src={`https://studevent-server.vercel.app/uploads/${authority.logo}`}
                                         alt="Authority Logo"
                                         width="50"
                                         height="50"

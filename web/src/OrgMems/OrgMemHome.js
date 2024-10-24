@@ -38,7 +38,7 @@ const OrgMemHome = () => {
   useEffect(() => {
     const fetchOrganizations = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/users');
+        const response = await axios.get('https://studevent-server.vercel.app/api/users');
         const filteredOrganizations = response.data.filter(user => user.role === 'Organization');
         setOrganizations(filteredOrganizations);
         if (filteredOrganizations.length > 0) {

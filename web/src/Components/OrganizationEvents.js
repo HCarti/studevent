@@ -29,7 +29,7 @@ const OrganizationEvents = () => {
   // Fetch events from the backend
   const fetchEvents = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/events');
+      const response = await axios.get('https://studevent-server.vercel.app/api/events');
       const formattedEvents = response.data.map(event => ({
         ...event,
         start: moment(event.start).toDate(),
@@ -45,7 +45,7 @@ const OrganizationEvents = () => {
   // Handle deleting an event from the backend
   const handleDeleteEvent = async (id) => {
     try {
-      await axios.delete(`http://localhost:8000/api/events/${id}`);
+      await axios.delete(`https://studevent-server.vercel.app/api/events/${id}`);
       setEvents(events.filter(event => event._id !== id));
       alert('Event deleted successfully!');
     } catch (error) {
@@ -74,7 +74,7 @@ const OrganizationEvents = () => {
         end: newEvent.end
       };
 
-      await axios.put(`http://localhost:8000/api/events/${editingEventId}`, updatedEvent);
+      await axios.put(`https://studevent-server.vercel.app/api/events/${editingEventId}`, updatedEvent);
       setEvents(events.map(event => event._id === editingEventId ? { ...event, ...updatedEvent } : event));
       setIsEditing(false);
       setEditingEventId(null);

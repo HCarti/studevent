@@ -11,7 +11,7 @@ const SuperAdminUsers = () => {
     useEffect(() => {
         const fetchOrganizations = async () => {
     try {
-        const response = await axios.get('http://localhost:8000/api/users');
+        const response = await axios.get('https://studevent-server.vercel.app/api/users');
         console.log('API Response:', response.data); // Log the entire response data
         const filteredOrganizations = response.data.filter(user => user.role === 'Organization');
         console.log('Filtered Organizations:', filteredOrganizations); // Log filtered organizations
@@ -29,7 +29,7 @@ const SuperAdminUsers = () => {
 
     const deleteUser = async (userId) => {
         try {
-            await axios.delete(`http://localhost:8000/api/users/${userId}`);
+            await axios.delete(`https://studevent-server.vercel.app/api/users/${userId}`);
             setOrganizations(organizations.filter((user) => user._id !== userId)); // Update the UI by removing the user
         } catch (error) {
             console.error('Error deleting user:', error);
@@ -56,7 +56,7 @@ const SuperAdminUsers = () => {
     const handleEditSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.put(`http://localhost:8000/api/users/${editingOrg}`, editFormData);
+            await axios.put(`https://studevent-server.vercel.app/api/users/${editingOrg}`, editFormData);
             setOrganizations(organizations.map((org) =>
                 org._id === editingOrg ? { ...org, ...editFormData } : org
             ));
@@ -91,7 +91,7 @@ const SuperAdminUsers = () => {
                                     <td>
                                         {organization.logo ? (
                                             <img
-                                                src={`http://localhost:8000/uploads/${organization.logo}`}
+                                                src={`https://studevent-server.vercel.app/uploads/${organization.logo}`}
                                                 alt="Organization Logo"
                                                 width="50"
                                                 height="50"
