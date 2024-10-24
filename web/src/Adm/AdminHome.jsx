@@ -11,12 +11,15 @@ import twitterIcon from '../Images/twitter.png';
 import instagramIcon from '../Images/instagram.png';
 import EmailIcon from '@mui/icons-material/Email';  
 import PhoneIcon from '@mui/icons-material/Phone'; 
+import axios from 'axios';
 
 const AdminHome = () => {
   const navigate = useNavigate();
   const [clickedButton, setClickedButton] = useState(null);
   const [quote, setQuote] = useState('');
-
+  const [authorities, setAuthories] = useState([]);
+  const [currentAuthorities, setCurrentAuthoritiy] = useState(null);
+  
   // Array of longer life quotes
  // Array of longer motivational daily quotes from real people
 const quotes = [
@@ -39,6 +42,53 @@ const quotes = [
     setQuote(randomQuote);
   }, []);
 
+
+  useEffect(() => {
+    const fetchAuthorities = async () => {
+      try {
+        const response = await axios.get('http://localhost:8000/api/users');
+        const filteredAuthorities = response.data.filter(user => user.role === 'Authority');
+        setAuthories(filteredAuthorities);
+        if (filteredAuthorities.length > 0) {
+          setCurrentAuthoritiy(filteredAuthorities[0]);
+        }
+      } catch (error) {
+        console.error('Error fetching authorities:', error);
+      }
+    };
+
+    fetchAuthorities();
+  }, []);
+
+  useEffect(() => {
+    const fetchLoggedInUser = async () => {
+      try {
+        // Get the logged-in user's ID or token from localStorage
+        const loggedInUserId = localStorage.getItem('userId'); // Adjust based on your logic
+        if (!loggedInUserId) {
+          console.error('No logged-in user found');
+          return;
+        }
+  
+        // Fetch the logged-in user's data
+        const response = await axios.get(`http://localhost:8000/api/users/${loggedInUserId}`);
+        console.log('Logged-in User Data:', response.data); // Debugging step
+  
+        // If the user is an authority, set them as currentAuthorities
+        if (response.data.role.toLowerCase() === 'authority') {
+          setCurrentAuthoritiy(response.data);
+        } else {
+          console.error('Logged-in user is not an authority');
+        }
+      } catch (error) {
+        console.error('Error fetching logged-in user data:', error);
+      }
+    };
+  
+    fetchLoggedInUser();
+  }, []);
+
+
   const handleButtonClick = (button) => {
     setClickedButton(button);
   };
@@ -50,7 +100,7 @@ const quotes = [
 
   const handleEventsClick = () => {
     handleButtonClick('events');
-    navigate('/orgcalendar');
+    navigate('/calendar');
   };
 
   const handleProfileClick = () => {
@@ -63,17 +113,12 @@ const quotes = [
     navigate('/dashboard');
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    navigate("/");
-  };
-
   return (
  <ParallaxProvider> 
     <div className="admin-home">
       <header className="header-admin">
         <img src={StudeventLogo} alt="Studevent Logo" className="logo" />
-        <h2>Welcome, Admin!</h2>
+        <h2>Welcome, {currentAuthorities ? currentAuthorities.faculty : 'Loading...'}</h2>
       </header>
       
       <div className="menu-container">
@@ -94,8 +139,6 @@ const quotes = [
           <h3>Dashboard</h3>
         </div>
       </div>
-
-      <button onClick={handleLogout} className="logout-bt">Logout</button>
 
       {/* Display the random quote with animation */}
       <div className="quote-container">

@@ -78,6 +78,7 @@ const SuperAdminUsers = () => {
                         <thead>
                             <tr>
                                 <th>Logo</th>
+                                <th>Organization</th>
                                 <th>Email</th>
                                 <th>Organization Type</th>
                                 <th>Status</th>
@@ -99,6 +100,7 @@ const SuperAdminUsers = () => {
                                             'No Logo'
                                         )}
                                     </td>
+                                    <td>{organization.organizationName}</td>
                                     <td>{organization.email}</td>
                                     <td>{organization.organizationType !== undefined ? organization.organizationType : 'Not Provided'}</td>
                                     <td>{organization.status}</td>

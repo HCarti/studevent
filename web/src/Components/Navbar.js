@@ -3,22 +3,13 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './Navbar.css';
 import StudeventLogo from '../Images/Studevent.png';
 
-const Navbar = ({ isLoggedIn }) => {
+const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
-  const navigate = useNavigate();
-
-  let user = null;
-  try {
-    const userJSON = localStorage.getItem("user");
-    if (userJSON) {
-      user = JSON.parse(userJSON);
-    }
-  } catch (error) {
-    console.error("Error retrieving user from localStorage", error);
-  }
 
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
@@ -34,11 +25,6 @@ const Navbar = ({ isLoggedIn }) => {
 
   const handleNavbarClick = () => {
     navigate('/');
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    navigate("/");
   };
 
   const renderMenuItems = () => (
@@ -62,18 +48,18 @@ const Navbar = ({ isLoggedIn }) => {
         </Link>
       </li>
       {isLoggedIn && user && (
-        <li className="navbar-menu-item" onClick={toggleAccountMenu}>
-          {user.profilePicture ? (
-            <img
-              src={user.profilePicture}
-              alt="Profile"
-              className="navbar-profile-pic"
-            />
-          ) : (
-            <span>Account</span>
-          )}
+        <li className="navbar-menu-item account-dropdown" onClick={toggleAccountMenu}>
+          {user.logo ? (
+                <img
+                  src={`http://localhost:8000/uploads/${user.logo}`} // Full URL for the logo or profile picture
+                  alt="Profile" 
+                  className="navbar-profile-pic"
+                />
+              ) : (
+                <span>Account</span>
+              )}
           {accountMenuOpen && (
-            <div className="account-dropdown">
+            <div className="account-dropdown-menu">
               <div className="dropdown-item" onClick={handleLogout}>Logout</div>
             </div>
           )}

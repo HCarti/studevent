@@ -69,7 +69,7 @@ const OrgMemHome = () => {
 
   const handleEventsClick = () => {
     handleButtonClick('events');
-    navigate('/orgcalendar');
+    navigate('/calendar');
   };
 
   const handleProfileClick = () => {

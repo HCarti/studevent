@@ -167,6 +167,32 @@
   .menu-item:hover {
     background-color: #f1f1f1;
   }
+
+  .account-dropdown {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .account-dropdown-menu {
+    display: block;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: white;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    padding: 10px;
+  }
+  
+  .account-dropdown-menu .dropdown-item {
+    padding: 10px;
+    cursor: pointer;
+  }
+  
+  .account-dropdown-menu .dropdown-item:hover {
+    background-color: #f1f1f1;
+  }
+  
  
   /* Mobile Menu Icon */
   .mobile-menu-icon {

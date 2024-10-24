@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import './FormsandSig.css';
 import FileCopyIcon from '@mui/icons-material/FileCopy';
 import EditIcon from '@mui/icons-material/Edit';
@@ -8,6 +8,14 @@ import { useNavigate } from 'react-router-dom';
 
 const FormsandSig = () => {
   const navigate = useNavigate();
+  const [userRole, setUserRole] = useState(null);
+
+  useEffect(() => {
+    const storedUserRole = localStorage.getItem('role');
+    console.log('User role:', storedUserRole); // Debugging log
+    setUserRole(storedUserRole);
+  }, []);
+  
 
   const handleForms = () => {
     navigate('/forms');
@@ -42,13 +50,16 @@ const FormsandSig = () => {
           <p>Track your proposal status through the "Proposal Tracker" to see updates from the Adviser.</p>
         </div>
       </div>
+      
       <div className="bottom-links">
         <div className="link forms-link" onClick={handleForms}>FORMS<br />All forms are located here.</div>
-        <div className="link proposal-link" onClick={handleSig}>PROPOSAL TRACKER<br />Monitor all proposals here.</div>
+        {/* Only show Proposal Tracker if the user is not Admin or Authority */}
+        {(userRole !== 'Admin' && userRole !== 'Authority') && (
+          <div className="link proposal-link" onClick={handleSig}>PROPOSAL TRACKER<br />Monitor all proposals here.</div>
+        )}
       </div>
     </div>
   );
 }
 
 export default FormsandSig;
- 
