@@ -146,8 +146,8 @@ const Home = ({ handleLogin }) => {
                 <h2>About Us</h2>
                  <p> At SDAO (Student Development and Activities Office), we are committed to enriching the student experience by managing</p> 
                    <p>a wide range of student activities and development programs.</p>
-                    <p>Working hand-in-hand with student councils and organizations, we strive to create a dynamic and engaging environment that</p> 
-                  <p>fosters leadership, teamwork, and personal growth. Our goal is to support and empower students in making the most of their academic journey through meaningful opportunities and initiatives that promote holistic development.</p>
+                    <p>Working hand-in-hand with student councils and organizations, we strive to create a dynamic and engaging environment that fosters leadership, teamwork, and personal growth.</p> 
+                  <p>Our goal is to support and empower students in making the most of their academic journey through meaningful opportunities and initiatives that promote holistic development.</p>
               </div>
             </div>
           </Parallax>
@@ -162,7 +162,7 @@ const Home = ({ handleLogin }) => {
                     <div className="contact-item">
                       <EmailIcon />
                       <span>SDAO@students.nu-moa.edu.ph</span>
-                    </div>
+                    </div>  
                     <div className="contact-item">
                       <PhoneIcon />
                       <span>09-xxxxxxxxx</span>
