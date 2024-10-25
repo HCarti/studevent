@@ -24,13 +24,8 @@ router.post('/', upload.single('logo'), async (req, res) => {
     // Upload file to Vercel Blob
     const fileBuffer = req.file.buffer;
     const fileName = req.file.originalname;
-
-    // Log details for debugging
-    console.log('Uploading file:', fileName);
-
     const blob = await put(fileName, fileBuffer, { access: 'public' });
 
-    // Ensure blob URL exists
     if (!blob || !blob.url) {
       throw new Error('Failed to upload to Vercel Blob');
     }
@@ -38,16 +33,13 @@ router.post('/', upload.single('logo'), async (req, res) => {
     const blobUrl = blob.url;
     console.log('File uploaded to Vercel Blob:', blobUrl);
 
-    // Pass the blob URL to your controller (or save it to the database)
-    await addUser(req.body, blobUrl); // Assuming addUser handles the user data and blob URL
+    // Pass the request body and blob URL to addUser function
+    const newUser = await addUser(req.body, blobUrl);
 
-    res.status(200).json({ message: 'User added successfully', blobUrl });
+    res.status(200).json({ message: 'User added successfully', user: newUser });
   } catch (error) {
-    // Detailed error logging
-    console.error('Error during file upload:', error.message, error.stack);
-    
-    // Respond with a 500 error and the error message
-    res.status(500).json({ message: 'Error uploading file to Vercel Blob', error: error.message });
+    console.error('Error during user creation:', error.message);
+    res.status(500).json({ message: 'Error adding user', error: error.message });
   }
 });
 
