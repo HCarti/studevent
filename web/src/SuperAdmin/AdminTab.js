@@ -71,7 +71,6 @@ const AdminTab = () => {
                         <th>Picture</th>
                         <th>Name</th>
                         <th>Email</th>
-                        <th>Faculty</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -93,7 +92,6 @@ const AdminTab = () => {
                             </td>
                             <td>{admin.firstName} {admin.lastName}</td>
                             <td>{admin.email}</td>
-                            <td>{admin.faculty}</td>
                             <td>{admin.status}</td>
                             <td>
                                 <button onClick={() => deleteUser(admin._id)}>Delete</button>
