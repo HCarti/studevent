@@ -13,12 +13,13 @@ import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone'; 
 import axios from 'axios';
 
-const AdminHome = () => {
+const AdminHome = () => { 
   const navigate = useNavigate();
   const [clickedButton, setClickedButton] = useState(null);
   const [quote, setQuote] = useState('');
   const [authorities, setAuthories] = useState([]);
   const [currentAuthorities, setCurrentAuthoritiy] = useState(null);
+  const [currentAdmin, setCurrentAdmin] = useState(false); // Define a state for admin check
   
   // Array of longer life quotes
  // Array of longer motivational daily quotes from real people
@@ -60,33 +61,36 @@ const quotes = [
     fetchAuthorities();
   }, []);
 
+  // Fetch the logged-in user
   useEffect(() => {
     const fetchLoggedInUser = async () => {
       try {
-        // Get the logged-in user's ID or token from localStorage
-        const loggedInUserId = localStorage.getItem('userId'); // Adjust based on your logic
+        const loggedInUserId = localStorage.getItem('userId');
         if (!loggedInUserId) {
           console.error('No logged-in user found');
           return;
         }
-  
+
         // Fetch the logged-in user's data
         const response = await axios.get(`https://studevent-server.vercel.app/api/users/${loggedInUserId}`);
-        console.log('Logged-in User Data:', response.data); // Debugging step
-  
-        // If the user is an authority, set them as currentAuthorities
-        if (response.data.role.toLowerCase() === 'authority') {
-          setCurrentAuthoritiy(response.data);
+        const userData = response.data;
+
+        // Check role and set authority or admin accordingly
+        if (userData.role.toLowerCase() === 'authority') {
+          setCurrentAuthoritiy(userData);  // For authorities, this will include faculty
+        } else if (userData.role.toLowerCase() === 'admin') {
+          setCurrentAdmin(true);  // Set currentAdmin to true if role is Admin
         } else {
-          console.error('Logged-in user is not an authority');
+          console.error('Logged-in user is not an authority or admin');
         }
       } catch (error) {
         console.error('Error fetching logged-in user data:', error);
       }
     };
-  
+
     fetchLoggedInUser();
   }, []);
+  
 
 
   const handleButtonClick = (button) => {
@@ -118,7 +122,10 @@ const quotes = [
     <div className="admin-home">
       <header className="header-admin">
         <img src={StudeventLogo} alt="Studevent Logo" className="logo" />
-        <h2>Welcome, {currentAuthorities ? currentAuthorities.faculty : 'Loading...'}</h2>
+        <h2>
+        Welcome, {currentAuthorities ? currentAuthorities.faculty || 'Faculty not set' : currentAdmin ? 'Admin' : 'Loading...'}
+          </h2>
+
       </header>
       
       <div className="menu-container">

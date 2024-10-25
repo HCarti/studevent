@@ -73,7 +73,6 @@ const SuperAdminUsers = () => {
                 <p>Loading organizations...</p>
             ) : (
                 <>
-                    <h3>Total Organizations: {organizations.length}</h3>
                     <table>
                         <thead>
                             <tr>
