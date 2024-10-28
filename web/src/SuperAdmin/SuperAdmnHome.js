@@ -7,11 +7,7 @@ import { IoCalendarOutline, IoPersonCircleOutline } from "react-icons/io5";
 import { IoSpeedometerOutline } from "react-icons/io5";
 import { MdDisplaySettings } from "react-icons/md";
 import { ParallaxProvider, Parallax } from 'react-scroll-parallax';
-import facebookIcon from '../Images/facebook.png';
-import twitterIcon from '../Images/twitter.png';
-import instagramIcon from '../Images/instagram.png';
-import EmailIcon from '@mui/icons-material/Email';  
-import PhoneIcon from '@mui/icons-material/Phone'; 
+import Footer from '../Components/footer';
 
 const SuperAdminHome = () => {
   const navigate = useNavigate();
@@ -72,6 +68,7 @@ const SuperAdminHome = () => {
 
   return (
     <ParallaxProvider>
+      <React.Fragment>
       <div className="superadmin-home">
         <header className="header-superadmin">
           <img src={StudeventLogo} alt="Studevent Logo" className="logo-superadmin" />
@@ -99,46 +96,10 @@ const SuperAdminHome = () => {
 
         <div className="quote-superadmin-container">
           <p className="quote-superadmin animated-fade">{quote}</p>
-        </div>
-
-        <Parallax>
-          <div className="parallax-sections-superadmin">
-            <footer className="footer-superadmin">
-              <div className="footer-superadmin-container">
-                <div className="footer-superadmin-section contact-info-superadmin">
-                  <h4>Contact Us</h4>
-                  <div className="contact-item-superadmin">
-                    <EmailIcon />
-                    <span>SDAO@students.nu-moa.edu.ph</span>
-                  </div>
-                  <div className="contact-item-superadmin">
-                    <PhoneIcon />
-                    <span>09-xxxxxxxxx</span>
-                  </div>
-                </div>
-                <div className="footer-superadmin-section social-icons-container-superadmin">
-                  <h4>Follow Us:</h4>
-                  <div>
-                    <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
-                      <img src={facebookIcon} alt="Facebook" className="social-superadmin-icon" />
-                    </a>
-                    <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">
-                      <img src={twitterIcon} alt="Twitter" className="social-superadmin-icon" />
-                    </a>
-                    <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
-                      <img src={instagramIcon} alt="Instagram" className="social-superadmin-icon" />
-                    </a>
-                  </div>
-                </div>
-                <div className="footer-superadmin-section copyright-info-superadmin">
-                  <h4>&copy; 2024 NU MOA - SDAO System</h4>
-                  <p>All rights reserved.</p>
-                </div>
-              </div>
-            </footer>
-          </div>
-        </Parallax>
+        </div>      
       </div>
+       </React.Fragment>
+      <Footer></Footer>
     </ParallaxProvider>
   );
 };

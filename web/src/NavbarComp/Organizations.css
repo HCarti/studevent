@@ -141,7 +141,7 @@
   .cards-info h2 {
     font-size: 1.2em;
   }
- 
+     
   .cards-info p {
     font-size: 0.9em;
   }
@@ -241,7 +241,7 @@ footer {
 }
 
 .view-all-btn {
-  background-color: #333;
+  background-color: #1b1b1f;
   color: white;
   border: none;
   padding: 10px 20px;
@@ -249,7 +249,7 @@ footer {
   cursor: pointer;
   transition: background-color 0.3s ease;
   border-radius: 5px;
-  border: 2px solid black;
+  
 }
 
 .view-all-btn:hover {
