@@ -2,6 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate for navigation
 import './ViewAllOrganizations.css'; // A new CSS file for this page
+import Footer from '../Components/footer';
 
 // Import images
 import nuOrg1 from '../Images/Orgs/JPCS.png';
@@ -66,6 +67,7 @@ const ViewAllOrganizations = () => {
   const navigate = useNavigate(); // Initialize useNavigate hook
 
   return (
+  <React.Fragment>
     <div className="view-all-organizations-page">
       <h1>All Organizations</h1>
       <div className="organizations-list">
@@ -81,6 +83,9 @@ const ViewAllOrganizations = () => {
         Back
       </button>
     </div>
+   <Footer></Footer>
+  </React.Fragment>
+  
   );
 };
 
