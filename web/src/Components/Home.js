@@ -8,11 +8,7 @@ import LockIcon from '@mui/icons-material/Lock';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import NU_logo from '../Images/NU_logo.png';
-import facebookIcon from '../Images/facebook.png';
-import twitterIcon from '../Images/twitter.png';
-import instagramIcon from '../Images/instagram.png';
-import EmailIcon from '@mui/icons-material/Email';
-import PhoneIcon from '@mui/icons-material/Phone';
+import Footer from './footer';
 
 const Home = ({ handleLogin }) => {
   const [email, setEmail] = useState('');
@@ -113,13 +109,7 @@ const Home = ({ handleLogin }) => {
                         onBlur={() => setPasswordFocused(false)}
                         required
                       />
-                      {/* <button
-                        type="button"
-                        className="toggle-password-btn"
-                        onClick={togglePasswordVisibility}
-                      >
-                        {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                      </button> */}
+
                     </div>
 
                     <button type="submit" className="login-button">Log in</button>
@@ -147,54 +137,15 @@ const Home = ({ handleLogin }) => {
                 <h2>About Us</h2>
                  <p> At SDAO (Student Development and Activities Office), we are committed to enriching the student experience by managing</p> 
                    <p>a wide range of student activities and development programs.</p>
-                    <p>Working hand-in-hand with student councils and organizations, we strive to create a dynamic and engaging environment that</p> 
-                  <p>fosters leadership, teamwork, and personal growth. Our goal is to support and empower students in making the most of their academic journey through meaningful opportunities and initiatives that promote holistic development.</p>
+                    <p>Working hand-in-hand with student councils and organizations, we strive to create a dynamic and engaging environment that fosters leadership, teamwork, and personal growth.</p> 
+                  <p>Our goal is to support and empower students in making the most of their academic journey through meaningful opportunities and initiatives that promote holistic development.</p>
               </div>
             </div>
           </Parallax>
-
-          {/* Parallax Section 3 - Footer */}
-          <Parallax>
-            <div className="parallax-sectionz">
-              <footer className="footer">
-                <div className="footer-container">
-                  <div className="footer-section contact-info">
-                    <h4 style={{ fontSize: '15px' }}>Contact Us</h4>
-                    <div className="contact-item">
-                      <EmailIcon />
-                      <span>SDAO@students.nu-moa.edu.ph</span>
-                    </div>
-                    <div className="contact-item">
-                      <PhoneIcon />
-                      <span>09-xxxxxxxxx</span>
-                    </div>
-                  </div>
-
-                  <div className="footer-section social-icons-container">
-                    <h4>Follow Us:</h4>
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                      <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
-                        <img src={facebookIcon} alt="Facebook" className="social-icon" />
-                      </a>
-                      <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">
-                        <img src={twitterIcon} alt="Twitter" className="social-icon" />
-                      </a>
-                      <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
-                        <img src={instagramIcon} alt="Instagram" className="social-icon" />
-                      </a>
-                    </div>
-                  </div>
-
-                  <div className="footer-section copyright-info">
-                    <h4 style={{ fontSize: '15px' }}>&copy; 2024 NU MOA - SDAO System</h4>
-                    <p style={{ fontSize: '17px' }}>All rights reserved.</p>
-                  </div>
-                </div>
-              </footer>
-            </div>
-          </Parallax>
+          
         </div>
       </React.Fragment>
+     <Footer></Footer>
     </ParallaxProvider>
   );
 };

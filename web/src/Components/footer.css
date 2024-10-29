@@ -1,0 +1,121 @@
+.section__padding {
+    padding: 4rem 2rem;
+}
+
+.footer {
+    background-color: #1b1b1f;
+    color: #d1d1d6;
+    font-family: 'Arial', sans-serif;
+}
+
+.sb__footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.sb__footer-links {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 1200px;
+    margin-bottom: 2rem;
+    text-align: left;
+}
+
+.sb__footer-links_div {
+    flex: 1;
+    min-width: 150px;
+    margin: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.sb__footer-links_div h4 {
+    font-size: 16px;
+    color: #f8f8f8;
+    margin-bottom: 1rem;
+    transition: color 0.3s ease;
+}
+
+.sb__footer-links_div p {
+    font-size: 14px;
+    margin: 0.5rem 0;
+    cursor: pointer;
+    color: #a3a3a8;
+    transition: color 0.3s ease;
+}
+
+.sb__footer-links_div p:hover {
+    color: #f8f8f8;
+}
+
+.socialmedia {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.socialmedia img {
+    width: 24px;
+    height: 24px;
+    transition: transform 0.3s ease;
+}
+
+.socialmedia img:hover {
+    transform: scale(1.2);
+}
+
+.divider {
+    width: 100%;
+    border: none;
+    height: 1px;
+    background: #3c3c43;
+    margin: 1.5rem 0;
+}
+
+.sb__footer-below {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 1200px;
+    flex-wrap: wrap;
+    text-align: center;
+}
+
+.sb__footer-below-links {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.sb__footer-below-links p {
+    font-size: 14px;
+    color: #a3a3a8;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.sb__footer-below-links p:hover {
+    color: #f8f8f8;
+}
+
+@media screen and (max-width: 850px) {
+    .sb__footer-links {
+        flex-direction: column;
+        align-items: center;
+    }
+    .sb__footer-below {
+        flex-direction: column;
+    }
+    .sb__footer-below-links {
+        margin-top: 1rem;
+    }
+}
+
+@media screen and (max-width: 550px) {
+    .sb__footer-links_div {
+        align-items: center;
+    }
+}

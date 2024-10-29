@@ -6,6 +6,7 @@ import 'slick-carousel/slick/slick-theme.css';
 import './Organizations.css';
 import Modal from './Modal'; // Import Link from react-router-dom
 import { Link } from 'react-router-dom'; // Ensure Link is imported
+import Footer from '../Components/footer';
 
 // Import images
 import nuOrg1 from '../Images/Orgs/JPCS.png';
@@ -102,6 +103,7 @@ const Organizations = () => {
   };
 
   return (
+  <React.Fragment>
     <div className="organizations-page">
       <h1>ORGANIZATIONS</h1>
       <Slider {...settings}>
@@ -132,7 +134,7 @@ const Organizations = () => {
           closeModal={closeModal} 
         />
       )}
-
+  
       {/* Add mission and vision below the slider */}
       <div className="mission-vision">
         <p>School organizations bring students together to pursue shared interests, build community, and develop leadership skills.
@@ -141,6 +143,8 @@ const Organizations = () => {
         </p>
       </div>
     </div>
+    <Footer></Footer>
+  </React.Fragment>
   );
 };
 

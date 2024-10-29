@@ -12,6 +12,7 @@ import instagramIcon from '../Images/instagram.png';
 import EmailIcon from '@mui/icons-material/Email';  
 import PhoneIcon from '@mui/icons-material/Phone'; 
 import axios from 'axios';
+import Footer from '../Components/footer';
 
 const AdminHome = () => { 
   const navigate = useNavigate();
@@ -119,6 +120,7 @@ const quotes = [
 
   return (
  <ParallaxProvider> 
+   <React.Fragment>
     <div className="admin-home">
       <header className="header-admin">
         <img src={StudeventLogo} alt="Studevent Logo" className="logo" />
@@ -151,50 +153,11 @@ const quotes = [
       <div className="quote-container">
         <p className="quote animated-fade">{quote}</p>
       </div>
-
-      {/* Footer Section */}
-      <Parallax>
-        <div className="parallax-sections">
-          <footer className="footer2">
-            <div className="footer-container">
-              <div className="footer-section contact-info">
-                <h4 style={{ fontSize: '15px',marginTop:50 }}>Contact Us</h4>
-                <div className="contact-item">
-                  <EmailIcon />
-                  <span>SDAO@students.nu-moa.edu.ph</span>
-                </div>
-                <div className="contact-item">
-                  <PhoneIcon />
-                  <span>09-xxxxxxxxx</span>
-                </div>
-              </div>
-
-              {/* Follow Us Section - Centered */}
-              <div className="footer-section social-icons-container">
-                <h4 style={{fontWeight: 'bold',fontSize:20}}>Follow Us:</h4>
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                  <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
-                    <img src={facebookIcon} alt="Facebook" className="social-icon" />
-                  </a>
-                  <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">
-                    <img src={twitterIcon} alt="Twitter" className="social-icon" />
-                  </a>
-                  <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
-                    <img src={instagramIcon} alt="Instagram" className="social-icon" />
-                  </a>
-                </div>
-              </div>
-
-              <div className="footer-section copyright-info">
-                <h4 style={{ fontSize: '15px' }}>&copy; 2024 NU MOA - SDAO System</h4>
-                <p style={{ fontSize: '17px' }}>All rights reserved.</p>
-              </div>
-            </div>
-          </footer>
-        </div>
-      </Parallax>
-    </div>
-   </ParallaxProvider>
+      
+       </div>
+       </React.Fragment>
+      <Footer></Footer>
+    </ParallaxProvider>
   );
 };
 
