@@ -50,7 +50,20 @@ const userSchema = new Schema({
   status: {
     type: String,
     default: 'Active'
-  }
+  },
+  // New fields for login attempt and OTP functionality
+  // loginAttempts: {
+  //   type: Number,
+  //   default: 0, // Track failed login attempts
+  // },
+  // otp: {
+  //   type: String, // Store OTP for email verification
+  //   default: null,
+  // },
+  // otpExpiry: {
+  //   type: Date, // Store OTP expiration time (e.g., valid for 10 minutes)
+  //   default: null,
+  // }
 });
 
 const User = mongoose.model('User', userSchema);

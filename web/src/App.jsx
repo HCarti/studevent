@@ -30,6 +30,7 @@ import SuperAdminAuthorities from './SuperAdmin/SuperAdminAuthorities';
 import SuperAdminUsers from './SuperAdmin/SuperAdminUsers';
 import SuperAdminAddUser from './SuperAdmin/SuperAdminAddUser';
 import AdminFormView from './Adm/AdminFormView';
+import OTPVerification from './Components/OTPVerification';
 
 const App = () => {
    // Initialize state with user and role
@@ -59,6 +60,7 @@ const App = () => {
         <Routes>
           <Route path="/" element={isSignedIn ? <Navigate to={role === 'Authority' ? '/admin' : role === 'superadmin' ? '/superadmin' : role === 'Organization' ? '/member' : '/'} /> : <Home />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
+          {/* <Route path="/verification" element={<OTPVerification />} /> */}
 
           {/* SuperAdmin Routes */}
           <Route path="/superadmin" element={<SuperAdminHome />} />

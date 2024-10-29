@@ -21,6 +21,7 @@ const Home = ({ handleLogin }) => {
   const [error, setError] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
+  const [organizationName, setOrganizationName] = useState('');
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
@@ -55,16 +56,16 @@ const Home = ({ handleLogin }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const data = { email, password };
-
+  
     try {
       const response = await axios.post('https://studevent-server.vercel.app/api/auth/login', data);
       const { token, data: userData } = response.data;
-
-      // Store user data and token
+  
+      // Store the user ID or relevant organization data in localStorage
       localStorage.setItem('user', JSON.stringify(userData));
       localStorage.setItem('token', token);
+      localStorage.setItem('organizationId', userData._id); // assuming `userData._id` represents the unique ID
       setUser(userData);
     } catch (error) {
       setError('Invalid email or password.');

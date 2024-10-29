@@ -82,7 +82,7 @@ const SuperAdminAuthorities = () => {
                             <td>
                                 {authority.logo ? (
                                     <img
-                                        src={`https://studevent-server.vercel.app/uploads/${authority.logo}`}
+                                        src="authority.logo"
                                         alt="Authority Logo"
                                         width="50"
                                         height="50"
