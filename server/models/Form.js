@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const formSchema = new mongoose.Schema({
     eventLocation: { type: String,  required: true },
     applicationDate: { type: Date, required: true },
-    studentOrganization: { type: String,  ref: 'User', required: true },
+    studentOrganization: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     contactPerson: { type: String, required: true },
     contactNo: { type: Number, required: true },
     emailAddress: { type: String, required: true },

@@ -55,6 +55,8 @@ const Home = ({ handleLogin }) => {
     const data = { email, password };
   
     try {
+      // Clear old session data before logging in
+      localStorage.removeItem('user');
       const response = await axios.post('https://studevent-server.vercel.app/api/auth/login', data);
       const { data: userData } = response.data;
   
@@ -65,6 +67,11 @@ const Home = ({ handleLogin }) => {
     }
   };
   
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+    navigate('/'); // Redirect to login or home page
+  };
   
   
   const togglePasswordVisibility = () => {
