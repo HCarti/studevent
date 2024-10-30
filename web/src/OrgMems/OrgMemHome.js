@@ -87,7 +87,7 @@ const OrgMemHome = () => {
       <div className="orgmem-home">
         <header className="header-admin">
           <img src={StudeventLogo} alt="Studevent Logo" className="logo" />
-          <h2>Welcome, {currentOrganization ? currentOrganization.organizationName : 'Loading...'}</h2>
+          <h2>Welcome, {currentOrganization?.organizationName}</h2> 
         </header>
 
         <div className="menu-container">
