@@ -48,7 +48,10 @@ const quotes = [
   useEffect(() => {
     const fetchAuthorities = async () => {
       try {
-        const response = await axios.get('https://studevent-server.vercel.app/api/users');
+        const token = localStorage.getItem('token'); // Retrieve token from localStorage
+        const response = await axios.get('https://studevent-server.vercel.app/api/users', {
+          headers: { Authorization: `Bearer ${token}` }, // Attach token to headers
+        });
         const filteredAuthorities = response.data.filter(user => user.role === 'Authority');
         setAuthories(filteredAuthorities);
         if (filteredAuthorities.length > 0) {
@@ -58,7 +61,7 @@ const quotes = [
         console.error('Error fetching authorities:', error);
       }
     };
-
+  
     fetchAuthorities();
   }, []);
 
@@ -71,16 +74,18 @@ const quotes = [
           console.error('No logged-in user found');
           return;
         }
-
-        // Fetch the logged-in user's data
-        const response = await axios.get(`https://studevent-server.vercel.app/api/users/${loggedInUserId}`);
+  
+        const token = localStorage.getItem('token'); // Retrieve token from localStorage
+        const response = await axios.get(`https://studevent-server.vercel.app/api/users/${loggedInUserId}`, {
+          headers: { Authorization: `Bearer ${token}` }, // Attach token to headers
+        });
         const userData = response.data;
-
+  
         // Check role and set authority or admin accordingly
         if (userData.role.toLowerCase() === 'authority') {
-          setCurrentAuthoritiy(userData);  // For authorities, this will include faculty
+          setCurrentAuthoritiy(userData);
         } else if (userData.role.toLowerCase() === 'admin') {
-          setCurrentAdmin(true);  // Set currentAdmin to true if role is Admin
+          setCurrentAdmin(true);
         } else {
           console.error('Logged-in user is not an authority or admin');
         }
@@ -88,10 +93,9 @@ const quotes = [
         console.error('Error fetching logged-in user data:', error);
       }
     };
-
+  
     fetchLoggedInUser();
   }, []);
-  
 
 
   const handleButtonClick = (button) => {
