@@ -1,13 +1,29 @@
 /* FormDetails.css */
 
 .form-details-container {
-    max-width: 600px;
+    max-width: 80%;
     margin: 0 auto;
     padding: 20px;
     border: 1px solid #ddd;
     border-radius: 8px;
     background-color: #f9f9f9;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .form-details-container input{
+    display: block;
+    margin: 10px 0;
+    padding: 8px;
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    cursor: not-allowed; /* Shows that these inputs are read-only */
+  }
+
+  .form-details-container label{
+    font-size: 20px;
+    font-weight: bold;
   }
   
   .form-details-content p {
