@@ -46,44 +46,36 @@ const quotes = [
 
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchAuthorities = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const loggedInUserId = JSON.parse(localStorage.getItem('user'))._id;
-        if (!token || !loggedInUserId) {
-          console.error('No token found in localStorage');
-          return;
-        }
-          
-  
-        // Fetch all users
-        const allUsersResponse = await axios.get('https://studevent-server.vercel.app/api/users', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        
-        const authorityUsers = allUsersResponse.data.filter(user => user.role === 'Authority');
-        setAuthories(authorityUsers);
-  
-        // Fetch specific user data
-        const userResponse = await axios.get(`https://studevent-server.vercel.app/api/users/${loggedInUserId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const userData = userResponse.data;
-  
-        if (userData.role === 'Authority') {
-          setCurrentAuthoritiy(userData);
-        } else if (userData.role === 'Admin') {
-          setCurrentAdmin(true);
-        } else {
-          console.error('Logged-in user is not an authority or admin');
+        const response = await axios.get('https://studevent-server.vercel.app/api/users');
+        const filteredAuthorities = response.data.filter(user => user.role === 'Authority');
+        setAuthories(filteredAuthorities);
+        if (filteredAuthorities.length > 0) {
+          setCurrentAuthoritiy(filteredAuthorities[0]);
         }
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error('Error fetching authorities:', error);
       }
     };
-    fetchData();
+  
+    fetchAuthorities();
   }, []);
   
+  // Fetch the logged-in user
+  useEffect(() => {
+    const loggedInUser = JSON.parse(localStorage.getItem('user'));
+    if (!loggedInUser) {
+      console.error('No logged-in user found');
+      return;
+    }
+    // Set role accordingly
+    if (loggedInUser.role === 'Authority') {
+      setCurrentAuthoritiy(loggedInUser);
+    } else if (loggedInUser.role === 'Admin') {
+      setCurrentAdmin(true);
+    }
+  }, []);
 
 
   const handleButtonClick = (button) => {
@@ -116,7 +108,7 @@ const quotes = [
     <div className="admin-home">
       <header className="header-admin">
         <img src={StudeventLogo} alt="Studevent Logo" className="logo" />
-        <h2>Welcome, {currentAuthorities?.firstName || (currentAdmin ? "Admin" : "Loading...")}</h2>
+        <h2>Welcome, {currentAuthorities?.faculty || (currentAdmin ? "Admin" : "Loading...")}</h2>
 
       </header>
       

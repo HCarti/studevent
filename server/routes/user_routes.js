@@ -4,19 +4,18 @@ const multer = require('multer');
 const { put } = require('@vercel/blob');
 const { addUser, getUsers, getUserById, deleteUserById, updateUser, loginUser } = require('../controllers/usersController');
 
-// Use memoryStorage for multer to handle file buffer
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Login route
 router.post('/login', loginUser);
 
-// Get all users (protected)
+// Get all users
 router.get('/', getUsers);
 
-// Get user by ID (protected)
+// Get user by ID
 router.get('/:id', getUserById);
 
-// Add new user with file upload to Vercel Blob (protected)
+// Add new user with file upload
 router.post('/', upload.single('logo'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
@@ -34,6 +33,7 @@ router.post('/', upload.single('logo'), async (req, res) => {
     res.status(500).json({ message: 'Error adding user', error: error.message });
   }
 });
+
 // Update user by ID
 router.patch('/:id', updateUser);
 
