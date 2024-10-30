@@ -9,6 +9,7 @@ const formRoutes = require('./routes/formRoutes');
 const trackerRoutes = require('./routes/trackerRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const Form = require('./models/Form');
+const { authenticateToken } = require('./middlewares/jwtMiddleware');
 
 const app = express();
 
@@ -25,29 +26,17 @@ mongoose.connect("mongodb+srv://StudEvent:StudEvent2024@studevent.nvsci.mongodb.
   .then(() => console.log('MongoDB Connected'))
   .catch((err) => console.error('MongoDB Connection Error:', err));
 
-// JWT Middleware to protect routes
-const authenticateToken = (req, res, next) => {
-  const token = req.headers['authorization'];
-  if (!token) return res.status(403).json({ message: 'No token provided' });
-
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ message: 'Failed to authenticate token' });
-    req.user = user; // Set the decoded user info in the request
-    next();
-  });
-};
-
 // Serve static files from the 'uploads' folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes); // Login route that returns JWT
-app.use('/api/users',  userRoutes); // Protect /users routes with JWT
-app.use('/api/forms', formRoutes);
-app.use('/api/trackers', trackerRoutes);
-app.use('/api', eventRoutes);
+app.use('/api/users', authenticateToken, userRoutes); // Protect /users routes with JWT
+app.use('/api/forms', authenticateToken, formRoutes);
+app.use('/api/trackers', authenticateToken, trackerRoutes);
+app.use('/api', authenticateToken, eventRoutes);
 
-// Fetch all submitted forms
+// Example protected route
 app.get('/api/forms/submitted', authenticateToken, async (req, res) => {
   try {
     const forms = await Form.find();

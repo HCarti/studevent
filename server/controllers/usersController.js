@@ -1,6 +1,5 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
-require('dotenv').config(); // Ensure you have access to your secret key in .env
 
 // Login and generate JWT
 const loginUser = async (req, res) => {
@@ -11,7 +10,7 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Create token with user ID and role
+    // Create JWT token with user ID and role
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.status(200).json({ message: 'Login successful', token });
   } catch (error) {
@@ -104,4 +103,4 @@ const deleteUserById = async (req, res) => {
   }
 };
 
-module.exports = { getUsers, getUserById, updateUser, deleteUserById, addUser };
+module.exports = { getUsers, getUserById, updateUser, deleteUserById, addUser, loginUser };
