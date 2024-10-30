@@ -46,56 +46,44 @@ const quotes = [
 
 
   useEffect(() => {
-    const fetchAuthorities = async () => {
+    const fetchData = async () => {
       try {
-        const token = localStorage.getItem('token'); // Retrieve token from localStorage
-        const response = await axios.get('https://studevent-server.vercel.app/api/users', {
-          headers: { Authorization: `Bearer ${token}` }, // Attach token to headers
-        });
-        const filteredAuthorities = response.data.filter(user => user.role === 'Authority');
-        setAuthories(filteredAuthorities);
-        if (filteredAuthorities.length > 0) {
-          setCurrentAuthoritiy(filteredAuthorities[0]);
-        }
-      } catch (error) {
-        console.error('Error fetching authorities:', error);
-      }
-    };
-  
-    fetchAuthorities();
-  }, []);
-
-  // Fetch the logged-in user
-  useEffect(() => {
-    const fetchLoggedInUser = async () => {
-      try {
+        const token = localStorage.getItem('token');
         const loggedInUserId = JSON.parse(localStorage.getItem('user'))._id;
-        if (!loggedInUserId) {
-          console.error('No logged-in user found');
+        if (!token || !loggedInUserId) {
+          console.error('No token found in localStorage');
           return;
         }
+          
   
-        const token = localStorage.getItem('token'); // Retrieve token from localStorage
-        const response = await axios.get(`https://studevent-server.vercel.app/api/users/${loggedInUserId}`, {
-          headers: { Authorization: `Bearer ${token}` }, // Attach token to headers
+        // Fetch all users
+        const allUsersResponse = await axios.get('https://studevent-server.vercel.app/api/users', {
+          headers: { Authorization: `Bearer ${token}` },
         });
-        const userData = response.data;
+        
+        const authorityUsers = allUsersResponse.data.filter(user => user.role === 'Authority');
+        setAuthories(authorityUsers);
   
-        // Check role and set authority or admin accordingly
-        if (userData.role.toLowerCase() === 'authority') {
+        // Fetch specific user data
+        const userResponse = await axios.get(`https://studevent-server.vercel.app/api/users/${loggedInUserId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const userData = userResponse.data;
+  
+        if (userData.role === 'Authority') {
           setCurrentAuthoritiy(userData);
-        } else if (userData.role.toLowerCase() === 'admin') {
+        } else if (userData.role === 'Admin') {
           setCurrentAdmin(true);
         } else {
           console.error('Logged-in user is not an authority or admin');
         }
       } catch (error) {
-        console.error('Error fetching logged-in user data:', error);
+        console.error('Error fetching user data:', error);
       }
     };
-  
-    fetchLoggedInUser();
+    fetchData();
   }, []);
+  
 
 
   const handleButtonClick = (button) => {
@@ -128,7 +116,7 @@ const quotes = [
     <div className="admin-home">
       <header className="header-admin">
         <img src={StudeventLogo} alt="Studevent Logo" className="logo" />
-        <h2>Welcome, {currentAuthorities?.faculty || (currentAdmin ? "Admin" : "Loading...")}</h2>
+        <h2>Welcome, {currentAuthorities?.firstName || (currentAdmin ? "Admin" : "Loading...")}</h2>
 
       </header>
       
