@@ -7,8 +7,6 @@ const { addUser, getUsers, getUserById, deleteUserById, updateUser, loginUser } 
 // Use memoryStorage for multer to handle file buffer
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Login route
-router.post('/login', loginUser);
 
 // Get all users (protected)
 router.get('/', getUsers);
