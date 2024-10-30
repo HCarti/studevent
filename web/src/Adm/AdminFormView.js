@@ -43,7 +43,7 @@ const AdminFormView = () => {
       <div className="form-list">
         <h2>Forms List</h2>
         {error && <p className="error-message">{error}</p>}
-        {Array.isArray(submittedForms) && submittedForms.length === 0 ? (
+        {(submittedForms) && submittedForms.length === 0 ? (
           <p>No forms have been submitted yet.</p>
         ) : (
           <ul>
@@ -65,7 +65,7 @@ const AdminFormView = () => {
                   }}
                 >
                   {/* Check if organizationName is defined before accessing */}
-                  {form.studentOrganization ? form.studentOrganization.organizationName : "Unknown Organization"} - {form.eventTitle} ({new Date(form.applicationDate).toLocaleDateString()})
+                  {form.studentOrganization ? form.studentOrganization.organizationName : 'Unknown Organization'} - {form.eventTitle} ({new Date(form.applicationDate).toLocaleDateString()})
                 </button>
               </li>
             ))}

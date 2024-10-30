@@ -13,9 +13,10 @@ const FormDetails = () => {
     const fetchFormData = async () => {
       if (formId) {
         try {
-          const response = await axios.get(`/api/forms/${formId}`);
+          const response = await axios.get(`https://studevent-server.vercel.app/api/forms/${formId}`);
           setFormData(response.data);
         } catch (err) {
+          console.error(err); // Log the error details
           setError('Failed to load form data');
         } finally {
           setLoading(false);
@@ -25,21 +26,24 @@ const FormDetails = () => {
 
     fetchFormData();
   }, [formId]);
+
   if (loading) return <p>Loading form details...</p>;
   if (error) return <p>{error}</p>;
+
+  console.log("Form Data:", formData); // Log the form data
 
   return (
     <div>
       <h1>Form Details</h1>
       {formData ? (
         <div>
-          <h2>Event Title: {formData.eventTitle}</h2>
+          <h2>Event Title: {formData.eventTitle || 'Not specified'}</h2>
           <p>Application Date: {new Date(formData.applicationDate).toLocaleDateString()}</p>
           <p>Event Location: {formData.eventLocation}</p>
           <p>Contact Person: {formData.contactPerson}</p>
           <p>Contact Number: {formData.contactNo}</p>
           <p>Email Address: {formData.emailAddress}</p>
-          <p>Event Type: {formData.eventType}</p>
+          <p>Event Type: {formData.eventType || 'Not specified'}</p>
           <p>Venue Address: {formData.venueAddress}</p>
           <p>Event Start Date: {new Date(formData.eventStartDate).toLocaleDateString()}</p>
           <p>Event End Date: {new Date(formData.eventEndDate).toLocaleDateString()}</p>

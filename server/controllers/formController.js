@@ -3,18 +3,27 @@ const Form = require('../models/Form');
 
 // Controller to get all submitted forms
 exports.getAllForms = async (req, res) => {
-  console.log("Fetching all forms..."); // Add this line
+  console.log("Fetching all forms...");
   try {
-      const forms = await Form.find({}).populate('studentOrganization', 'organizationName');
-      res.status(200).json(forms);
+      const forms = await Form.find({});
+      console.log("Forms retrieved:", forms); // Log the retrieved forms
+      try {
+          const populatedForms = await Form.populate(forms, { path: 'studentOrganization', select: 'organizationName' });
+          res.status(200).json(populatedForms);
+      } catch (populateError) {
+          console.error("Error populating forms:", populateError);
+          res.status(500).json({ error: "Internal Server Error during population", details: populateError.message });
+      }
   } catch (error) {
-      console.error("Error fetching forms:", error);
+      console.error("Error fetching forms:", error); // Log full error
       res.status(500).json({ 
           error: "Internal Server Error", 
-          details: error.message 
+          details: error.message // More detailed error response
       });
   }
 };
+
+
 
 
 
