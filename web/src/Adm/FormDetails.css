@@ -1,0 +1,32 @@
+/* FormDetails.css */
+
+.form-details-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .form-details-content p {
+    margin: 10px 0;
+    font-size: 1rem;
+  }
+  
+  .form-details-content strong {
+    font-weight: bold;
+  }
+  
+  .deets {
+    text-align: center;
+    color: #333;
+  }
+  
+.details-btn {
+    display: block;
+    width: 100%;
+    margin-top: 20px;
+  }
+  

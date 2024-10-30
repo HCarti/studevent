@@ -66,7 +66,7 @@ const quotes = [
   useEffect(() => {
     const fetchLoggedInUser = async () => {
       try {
-        const loggedInUserId = localStorage.getItem('userId');
+        const loggedInUserId = JSON.parse(localStorage.getItem('user'))._id;
         if (!loggedInUserId) {
           console.error('No logged-in user found');
           return;
@@ -124,9 +124,7 @@ const quotes = [
     <div className="admin-home">
       <header className="header-admin">
         <img src={StudeventLogo} alt="Studevent Logo" className="logo" />
-        <h2>
-        Welcome, {currentAuthorities ? currentAuthorities.faculty || 'Faculty not set' : currentAdmin ? 'Admin' : 'Loading...'}
-          </h2>
+        <h2>Welcome, {currentAuthorities?.faculty || (currentAdmin ? "Admin" : "Loading...")}</h2>
 
       </header>
       

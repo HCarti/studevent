@@ -1,12 +1,30 @@
 const User = require('../models/User');
+const jwt = require('jsonwebtoken');
+require('dotenv').config(); // Ensure you have access to your secret key in .env
+
+// Login and generate JWT
+const loginUser = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user || user.password !== password) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // Create token with user ID and role
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.status(200).json({ message: 'Login successful', token });
+  } catch (error) {
+    res.status(500).json({ message: 'Login error', error: error.message });
+  }
+};
 
 // Get all users
 const getUsers = async (req, res) => {
   try {
-    const users = await User.find(); // Retrieve all users from the database
-    res.status(200).json(users); // Return the list of users
+    const users = await User.find();
+    res.status(200).json(users);
   } catch (error) {
-    console.error('Error fetching users:', error);
     res.status(500).json({ message: `Error fetching users: ${error.message}` });
   }
 };
@@ -14,31 +32,22 @@ const getUsers = async (req, res) => {
 // Add user
 const addUser = async (userData, blobUrl) => {
   try {
-    // Log the incoming data for debugging
     console.log('User Data:', userData);
     console.log('Blob URL:', blobUrl);
 
-    // Validate email and password in userData
-    if (!userData.email || !userData.password) {
-      throw new Error('Email and password are required');
-    }
+    if (!userData.email || !userData.password) throw new Error('Email and password are required');
 
-    // Check if the email already exists
     const existingUser = await User.findOne({ email: userData.email });
-    if (existingUser) {
-      throw new Error('Email already exists');
-    }
+    if (existingUser) throw new Error('Email already exists');
 
-    // Create the new user object
     const newUser = new User({
       email: userData.email,
       password: userData.password,
       role: userData.role,
       status: 'Active',
-      logo: blobUrl, // Use the blob URL from Vercel Blob
+      logo: blobUrl,
     });
 
-    // Assign additional fields based on user role
     if (userData.role === 'Authority') {
       newUser.firstName = userData.firstName;
       newUser.lastName = userData.lastName || '';
@@ -51,11 +60,9 @@ const addUser = async (userData, blobUrl) => {
       newUser.organizationName = userData.organizationName || null;
     }
 
-    // Save the new user to the database
     await newUser.save();
     return newUser;
   } catch (error) {
-    console.error('Error adding user:', error);
     throw error;
   }
 };

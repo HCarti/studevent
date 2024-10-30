@@ -11,11 +11,11 @@ const FormsandSig = () => {
   const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
-    const storedUserRole = localStorage.getItem('role');
+    // Retrieve the user role from localStorage
+    const storedUserRole = localStorage.getItem("role");
     console.log('User role:', storedUserRole); // Debugging log
     setUserRole(storedUserRole);
   }, []);
-  
 
   const handleForms = () => {
     navigate('/forms');
@@ -50,16 +50,16 @@ const FormsandSig = () => {
           <p>Track your proposal status through the "Proposal Tracker" to see updates from the Adviser.</p>
         </div>
       </div>
-      
+
       <div className="bottom-links">
         <div className="link forms-link" onClick={handleForms}>FORMS<br />All forms are located here.</div>
-        {/* Only show Proposal Tracker if the user is not Admin or Authority */}
-        {(userRole !== 'Admin' && userRole !== 'Authority') && (
+        {/* Only show Proposal Tracker if the user is an Organization */}
+        {(userRole === 'Organization') && (
           <div className="link proposal-link" onClick={handleSig}>PROPOSAL TRACKER<br />Monitor all proposals here.</div>
         )}
       </div>
     </div>
   );
-}
+};
 
 export default FormsandSig;

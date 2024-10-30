@@ -58,16 +58,17 @@ const Home = ({ handleLogin }) => {
       const response = await axios.post('https://studevent-server.vercel.app/api/auth/login', data);
       const { token, data: userData } = response.data;
   
-      // Store the user ID or relevant organization data in localStorage
+      localStorage.clear(); // Clear previous data in localStorage
       localStorage.setItem('user', JSON.stringify(userData));
       localStorage.setItem('token', token);
-      localStorage.setItem('organizationId', userData._id); // assuming `userData._id` represents the unique ID
+      localStorage.setItem('role', userData.role); // Store the role explicitly
+      localStorage.setItem('organizationId', userData._id);
       setUser(userData);
     } catch (error) {
       setError('Invalid email or password.');
     }
   };
-
+  
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };

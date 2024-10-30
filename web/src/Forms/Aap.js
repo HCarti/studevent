@@ -248,17 +248,17 @@ const Aap = () => {
   const handleSubmit = async () => {
     // Validate required fields
     const requiredFields = [
-        'eventLocation', 'applicationDate', 'studentOrganization', 
-        'contactPerson', 'contactNo', 'emailAddress', 'eventTitle', 
-        'eventType', 'venueAddress', 'eventStartDate', 'eventEndDate', 
-        'organizer', 'budgetAmount', 'budgetFrom', 
-        'coreValuesIntegration', 'objectives', 'marketingCollaterals', 
-        'pressRelease', 'others', 'eventFacilities', 
-        'holdingArea', 'toilets', 'transportationandParking', 'more', 
-        'licensesRequired', 'houseKeeping', 'wasteManagement',
-        'eventManagementHead', 'eventCommitteesandMembers', 'health', 
-        'safetyAttendees', 'emergencyFirstAid', 'fireSafety', 'weather'
-    ];
+      'eventLocation', 'applicationDate', 'studentOrganization', 
+      'contactPerson', 'contactNo', 'emailAddress', 'eventTitle', 
+      'eventType', 'venueAddress', 'eventStartDate', 'eventEndDate', 
+      'organizer', 'budgetAmount', 'budgetFrom', 
+      'coreValuesIntegration', 'objectives', 'marketingCollaterals', 
+      'pressRelease', 'others', 'eventFacilities', 
+      'holdingArea', 'toilets', 'transportationandParking', 'more', 
+      'licensesRequired', 'houseKeeping', 'wasteManagement',
+      'eventManagementHead', 'eventCommitteesandMembers', 'health', 
+      'safetyAttendees', 'emergencyFirstAid', 'fireSafety', 'weather'
+  ];
 
     for (const field of requiredFields) {
         if (!formData[field]) {
@@ -280,18 +280,15 @@ const Aap = () => {
         return;
     }
 
-    const eventLength = eventEnd.diff(eventStart, 'hours'); // Calculate event length in hours
-
+    // Include all formData fields in the request payload
     const eventData = {
-        title: formData.eventTitle,
-        start: formData.eventStartDate,
-        end: formData.eventEndDate,
-        length: eventLength
+        ...formData,
+        length: eventEnd.diff(eventStart, 'hours') // Add calculated event length
     };
 
     try {
-        // Send form data to the API
-        const response = await fetch('https://studevent-server.vercel.app/api/events', {
+        // Send form data to the correct API endpoint
+        const response = await fetch('https://studevent-server.vercel.app/api/forms', { // Updated endpoint to match the forms backend
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -301,25 +298,27 @@ const Aap = () => {
 
         if (!response.ok) {
             const errorData = await response.json();
-            console.error('Error submitting event:', errorData);
+            console.error('Error submitting form:', errorData);
             alert(`Error: ${errorData.error || 'Submission failed'}`);
             return;
         }
 
         const result = await response.json();
-        console.log('Event submitted successfully:', result);
+        console.log('Form submitted successfully:', result);
         
-        // Get the event Object ID
-        const eventId = result._id; // Assuming the response contains an ID
-        setEventId(eventId); // Set the event ID
-        console.log('Event Object ID:', eventId);
+        // Get the form Object ID
+        const formId = result._id; // Assuming the response contains an ID
+        setEventId(formId); // Set the form ID
+        console.log('Form Object ID:', formId);
         alert('Form submitted successfully!');
+        setFormSent(true); // Update form submission state
 
     } catch (error) {
         console.error('Error:', error);
         alert('An error occurred while submitting the form.');
     }
 };
+
 
   
   

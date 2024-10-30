@@ -31,6 +31,7 @@ import SuperAdminUsers from './SuperAdmin/SuperAdminUsers';
 import SuperAdminAddUser from './SuperAdmin/SuperAdminAddUser';
 import AdminFormView from './Adm/AdminFormView';
 import OTPVerification from './Components/OTPVerification';
+import FormDetails from './Adm/FormDetails';
 
 const App = () => {
    // Initialize state with user and role
@@ -76,6 +77,7 @@ const App = () => {
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminHome />} />
           <Route path="/calendar" element={<OrganizationEvents />} />
+          <Route path="/formdetails/:formId" element={<FormDetails />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/adminprofile" element={<AdminProfile />} />
           <Route path="/adminproposal" element={<Proposal />} />
@@ -91,7 +93,7 @@ const App = () => {
           <Route path="/member" element={<OrgMemHome />} />
           <Route path="/calendar" element={<OrganizationEvents />} />
           <Route path="/orgprof" element={<OrgProf />} />
-          <Route path="/progtrack" element={<ProgressTracker />} />
+          <Route path="/progtrack/:formId" element={<ProgressTracker />} /> {/* Route with formId */}
           <Route path="/formss" element={<FormsandSig />} />
           <Route path="/forms" element={<Forms />} />
           <Route path="/activity" element={<Aap />} />

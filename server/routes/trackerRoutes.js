@@ -1,6 +1,6 @@
     // routes/trackerRoutes.js
 const express = require('express');
-const Tracker = require('../models/Tracker');
+const Tracker = require('../models/EventProgress');
 const router = express.Router();
 
 // Get the current progress tracker for an event

@@ -1,13 +1,17 @@
-// routes/eventRoutes.js
 const express = require('express');
-const { createEvent, getAllEvents } = require('../controllers/eventController');
-
 const router = express.Router();
+const eventProgressController = require('../controllers/eventController');
 
-// Route to create a new event
-router.post('/events', createEvent); // This should match with your Axios POST request
+// Create new event progress entry
+router.post('/', eventProgressController.createEventProgress);
 
-// Route to get all events
-router.get('/events', getAllEvents);
+// Get all event progress entries
+router.get('/', eventProgressController.getAllEventProgress);
+
+// Update event progress entry
+router.patch('/:id', eventProgressController.updateEventProgress);
+
+// Send to next reviewer
+router.post('/send', eventProgressController.sendToNextReviewer);
 
 module.exports = router;
