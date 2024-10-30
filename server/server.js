@@ -42,9 +42,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes); // Login route that returns JWT
-app.use('/api/users', authenticateToken, userRoutes); // Protect /users routes with JWT
-app.use('/api/forms', authenticateToken, formRoutes);
-app.use('/api/trackers', authenticateToken, trackerRoutes);
+app.use('/api/users',  userRoutes); // Protect /users routes with JWT
+app.use('/api/forms', formRoutes);
+app.use('/api/trackers', trackerRoutes);
 app.use('/api', eventRoutes);
 
 // Fetch all submitted forms
