@@ -323,8 +323,8 @@ const Aap = () => {
   
   
   return (
-    <div className="form-ubox">
-      <div className="inner-forms">
+    <div className="form-ubox-1">
+      <div className="inner-forms-1">
         <h1>Activity Application Form</h1>
 
           {/* Event Location and Date */}

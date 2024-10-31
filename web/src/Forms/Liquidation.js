@@ -195,7 +195,7 @@ const AapPDF = ({ formData }) => (
   </Document>
 );
 
-const Waiver = () => {
+const Liquidation = () => {
   const [formData, setFormData] = useState({
     eventLocation: "",
     applicationDate: "",
@@ -325,7 +325,7 @@ const Waiver = () => {
   return (
     <div className="form-ubox">
       <div className="inner-forms">
-        <h1>Waiver for Outside School</h1>
+        <h1>Liquidationa</h1>
 
           {/* Event Location and Date */}
             <div className="top-event">
@@ -790,4 +790,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Waiver; 
+export default Liquidation; 

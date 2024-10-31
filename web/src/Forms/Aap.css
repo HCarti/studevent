@@ -1,5 +1,5 @@
 /* Form Container */
-.form-ubox {
+.form-ubox-1 {
   display: flex;
   justify-content: center;
   padding: 40px;
@@ -17,7 +17,7 @@
 }
 
 /* Form Inner Section */
-.inner-forms {
+.inner-forms-1 {
   background-color: #fff;
   padding: 40px;
   border-radius: 12px;

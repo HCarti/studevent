@@ -32,6 +32,9 @@ import SuperAdminAddUser from './SuperAdmin/SuperAdminAddUser';
 import AdminFormView from './Adm/AdminFormView';
 import OTPVerification from './Components/OTPVerification';
 import FormDetails from './Adm/FormDetails';
+import Liquidation from './Forms/Liquidation';
+import Waiver from './Forms/Waiver';
+import LocalOffCampus from './Forms/LocalOffCampus';
 
 const App = () => {
    // Initialize state with user and role
@@ -97,8 +100,11 @@ const App = () => {
           <Route path="/formss" element={<FormsandSig />} />
           <Route path="/forms" element={<Forms />} />
           <Route path="/activity" element={<Aap />} />
-          <Route path="/budget" element={<Budget />} />
+          <Route path="/liquidation" element={<Liquidation />} />
           <Route path="/project" element={<Project />} />
+          <Route path="/waiver" element={<Waiver />} />
+          <Route path="/budget" element={<Budget />} />
+          <Route path="/localoffcampus" element={<LocalOffCampus />} />
 
           <Route path="*" element={<PageNotFound />} />
         </Routes>

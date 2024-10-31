@@ -105,8 +105,6 @@ const OrgMemHome = () => {
           </div>
         </div>
 
-        <button onClick={handleLogout} className="logout-btn">Logout</button>
-
         {/* Quote Section */}
         <div className="quote-container">
           <p className="quote animated-fade">{quote}</p>

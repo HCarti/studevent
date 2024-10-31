@@ -40,7 +40,7 @@ const Forms = () => {
       name: 'Local Off-Campus Form',
       description: 'For events outside the campus.',
       icon: <FaMapMarkedAlt />,
-      path: '/local',
+      path: '/localoffcampus',
     },
     {
       name: 'Liquidation',
