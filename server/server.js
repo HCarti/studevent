@@ -5,7 +5,7 @@ const path = require('path');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/user_routes');
 const formRoutes = require('./routes/formRoutes');
-const trackerRoutes = require('./routes/trackerRoutes');
+const trackerRoutes = require('./routes/progressTrackerRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const Form = require('./models/Form');
 
@@ -14,7 +14,16 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+
+// CORS Configuration
+app.use(cors({
+  origin: 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Enable preflight for all routes
+app.options('*', cors());
 
 // MongoDB connection
 mongoose.connect("mongodb+srv://StudEvent:StudEvent2024@studevent.nvsci.mongodb.net/", {
