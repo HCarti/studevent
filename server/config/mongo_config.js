@@ -5,9 +5,12 @@ const mongoose = require('mongoose');
 //     useUnifiedTopology: true
 // })
 
-mongoose.connect('mongodb+srv://StudEvent:StudEvent2024@studevent.nvsci.mongodb.net/', {
+mongoose.connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-})
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => console.error('Error connecting to MongoDB: ', err));
+  }).then(() => {
+    console.log("Connected to MongoDB");
+  }).catch((error) => {
+    console.error("MongoDB connection error:", error);
+  });
+  
