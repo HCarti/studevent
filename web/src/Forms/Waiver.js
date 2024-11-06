@@ -1,6 +1,7 @@
 import React, {useState} from "react";
 import axios from 'axios';
 import moment from 'moment';
+import './Waiver.css';
 import { Document, Page, Text, View, StyleSheet, Image, PDFDownloadLink } from "@react-pdf/renderer";
 import NU_logo from "../Images/NU_logo.png";
 import { useNavigate } from 'react-router-dom';
@@ -323,8 +324,8 @@ const Waiver = () => {
   
   
   return (
-    <div className="form-ubox">
-      <div className="inner-forms">
+    <div className="form-ubox-2">
+      <div className="inner-forms-2">
         <h1>Waiver for Outside School</h1>
 
           {/* Event Location and Date */}

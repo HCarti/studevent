@@ -1,5 +1,6 @@
 import React, {useState} from "react";
 import axios from 'axios';
+import './LocalOff.css';
 import moment from 'moment';
 import { Document, Page, Text, View, StyleSheet, Image, PDFDownloadLink } from "@react-pdf/renderer";
 import NU_logo from "../Images/NU_logo.png";
@@ -323,8 +324,8 @@ const LocalOffCampus = () => {
   
   
   return (
-    <div className="form-ubox">
-      <div className="inner-forms">
+    <div className="form-ubox-4">
+      <div className="inner-forms-4">
         <h1>Local Off-Campus Form</h1>
 
           {/* Event Location and Date */}

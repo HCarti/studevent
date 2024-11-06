@@ -1,4 +1,4 @@
-import React, { useState } from 'react'; 
+import React, { useState, useEffect } from 'react'; 
 import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from 'react-router-dom';
 import Navbar from './Components/Navbar';
 import Home from './Components/Home';
@@ -38,31 +38,43 @@ import LocalOffCampus from './Forms/LocalOffCampus';
 
 const App = () => {
    // Initialize state with user and role
-   const [user, setUser] = useState(() => {
+   const [user, setUser] = useState(null);
+
+   useEffect(() => {
     const savedUser = localStorage.getItem("user");
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
-
-  const isSignedIn = !!user;
-  const role = user?.role || '';
-
-  const handleLogin = (userData) => {
-    localStorage.setItem("user", JSON.stringify(userData));
-    setUser(userData); // This triggers the Navbar re-render
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    setUser(null);  // Update state and trigger re-render
-  };
-
+    console.log("Retrieved user from localStorage:", savedUser); // Debugging line
+    if (savedUser && savedUser !== "undefined") {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
+  }, []);
+  
+    
+    const handleLogin = (userData) => {
+      localStorage.setItem("user", JSON.stringify(userData));
+      setUser(userData); // This triggers the Navbar re-render
+    };
+    
+    const handleLogout = () => {
+      localStorage.removeItem("user");
+      setUser(null);  // Update state and trigger re-render
+    };
+    
+    const isSignedIn = !!user;
+    const role = user?.role || '';
   
   return (
     <Router>
       <Navbar isLoggedIn={isSignedIn} user={user} handleLogout={handleLogout} />
       <div className="main-content">
         <Routes>
-          <Route path="/" element={isSignedIn ? <Navigate to={role === 'Authority' ? '/admin' : role === 'superadmin' ? '/superadmin' : role === 'Organization' ? '/member' : '/'} /> : <Home />} />
+        <Route 
+             path="/" 
+             element={isSignedIn ? <Navigate to={role === 'Organization' ? '/member' : role === 'Authority' || role === 'Admin' ? '/admin' : role === 'SuperAdmin' ? '/superadmin' : '/unauthorized'} /> : <Home handleLogin={handleLogin} />} 
+           />
           <Route path="/unauthorized" element={<Unauthorized />} />
           {/* <Route path="/verification" element={<OTPVerification />} /> */}
 

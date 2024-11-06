@@ -8,6 +8,7 @@ const formRoutes = require('./routes/formRoutes');
 const progressTrackerRoutes = require('./routes/progressTrackerRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const Form = require('./models/Form');
+const authenticateToken = require('./middleware/authenticateToken');
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use('/api/users', userRoutes); // Remove authenticateToken middleware
 app.use('/api/forms', formRoutes);
 app.use('/api/trackers', progressTrackerRoutes);
 app.use('/api', eventRoutes);
+app.use('/api/users', authenticateToken, userRoutes); // Protects all user routes
 
 // Example route without JWT protection
 // app.get('/api/forms/submitted', async (req, res) => {

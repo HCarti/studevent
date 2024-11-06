@@ -32,8 +32,9 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   };
 
   const handleLogoutClick = () => {
-    handleLogout();  
-    navigate('/');   
+  localStorage.clear();
+  handleLogout(); // Call parent-provided logout function to reset state in the parent component
+  navigate('/'); // Redirect to login or home page
   };
 
   const renderMenuItems = () => (

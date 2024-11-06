@@ -1,5 +1,6 @@
 import React, {useState} from "react";
 import axios from 'axios';
+import './Aap.css';
 import moment from 'moment';
 import { Document, Page, Text, View, StyleSheet, Image, PDFDownloadLink } from "@react-pdf/renderer";
 import NU_logo from "../Images/NU_logo.png";

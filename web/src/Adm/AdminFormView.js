@@ -39,7 +39,7 @@ const AdminFormView = () => {
 
   return (
     <div className="admin-form-view">
-      <h1>Submitted Forms</h1>
+
       <div className="form-list">
         <h2>Forms List</h2>
         {error && <p className="error-message">{error}</p>}
@@ -59,7 +59,7 @@ const AdminFormView = () => {
                     border: 'none',
                     cursor: 'pointer',
                     display: 'block',
-                    width: '50%',
+                    width: '60%',
                     marginBottom: '10px',
                     textAlign: 'left'
                   }}

@@ -2,18 +2,20 @@
   const jwt = require('jsonwebtoken');
 
   // Login and generate JWT
-  const loginUser = async (req, res) => {
+  const login = async (req, res) => {
     const { email, password } = req.body;
-    try {
-      const user = await User.findOne({ email });
-      if (!user || user.password !== password) {
-        return res.status(401).json({ message: 'Invalid credentials' });
-      }
-      // Just return user data
-      res.status(200).json({ message: 'Login successful', data: user });
-    } catch (error) {
-      res.status(500).json({ message: 'Login error', error: error.message });
+  
+    // Find the user and verify password (assume this part is already working)
+    const user = await User.findOne({ email });
+    if (!user || !await bcrypt.compare(password, user.password)) {
+      return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
+  
+    // Generate JWT token
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  
+    // Send the response with the token and user details
+    res.json({ success: true, token, user: { _id: user._id, email: user.email } });
   };
   
   // Get all users
@@ -101,4 +103,4 @@
     }
   };
 
-  module.exports = { getUsers, getUserById, updateUser, deleteUserById, addUser, loginUser };
+  module.exports = { getUsers, getUserById, updateUser, deleteUserById, addUser, login };
