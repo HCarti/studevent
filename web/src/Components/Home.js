@@ -53,38 +53,40 @@ const Home = ({ handleLogin }) => {
   }, [user, navigate]);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    const data = { email, password };
-  
-    try {
-      console.log("Attempting to log in with data:", data); // Log the data being sent to the backend
-  
-      const response = await axios.post('https://studevent-server.vercel.app/api/auth/login', data);
-      console.log("Response received:", response.data); // Log the full response from the backend
-  
-      const { token, user } = response.data;
-  
-      // Check if token and user data are present in the response
-      if (!token || !user) {
-        console.error("Token or user data is missing in the response");
-        setError("Login failed. Please check your credentials."); 
-        return;
-      }
-  
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      setUser(user); // Update user state
-      handleLogin(user); // Pass user data up to App.js
-  
-      console.log("Token and user stored in localStorage:", {
-        token: localStorage.getItem('token'),
-        user: localStorage.getItem('user')
-      });
-    } catch (error) {
-      console.error("Login error:", error.response ? error.response.data : error.message);
-      setError('Invalid email or password.');
+  e.preventDefault();
+  const data = { email, password };
+
+  try {
+    console.log("Attempting to log in with data:", data); // Log the data being sent to the backend
+
+    const response = await axios.post('https://studevent-server.vercel.app/api/auth/login', data);
+    console.log("Response received:", response.data); // Log the full response from the backend
+
+    const token = response.data?.token || null;
+    const user = response.data?.data || null;
+
+    // Check if token and user data are present in the response
+    if (!token || !user) {
+      console.error("Token or user data is missing in the response");
+      setError("Login failed. Please check your credentials."); 
+      return;
     }
-  };
+
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+    setUser(user); // Update user state
+    handleLogin(user); // Pass user data up to App.js
+
+    console.log("Token and user stored in localStorage:", {
+      token: localStorage.getItem('token'),
+      user: localStorage.getItem('user')
+    });
+  } catch (error) {
+    console.error("Login error:", error.response ? error.response.data : error.message);
+    setError('Invalid email or password.');
+  }
+};
+
   
   
   
