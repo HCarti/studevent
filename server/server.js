@@ -25,16 +25,17 @@ mongoose.connect("mongodb+srv://StudEvent:StudEvent2024@studevent.nvsci.mongodb.
   .then(() => console.log('MongoDB Connected'))
   .catch((err) => console.error('MongoDB Connection Error:', err));
 
+ 
+
 // Serve static files from the 'uploads' folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes); // Login route
-app.use('/api/users', userRoutes); // Remove authenticateToken middleware
+app.use('/api/users', userRoutes, authenticateToken); // Remove authenticateToken middleware
 app.use('/api/forms', formRoutes);
 app.use('/api/trackers', progressTrackerRoutes);
 app.use('/api', eventRoutes);
-app.use('/api/users', authenticateToken, userRoutes); // Protects all user routes
 
 // Example route without JWT protection
 // app.get('/api/forms/submitted', async (req, res) => {
