@@ -62,6 +62,8 @@ const Home = ({ handleLogin }) => {
       const response = await axios.post('https://studevent-server.vercel.app/api/auth/login', data);
       console.log("Response received:", response.data); // Log the full response from the backend
   
+      // Check if JWT_SECRET is being accessed on the backend by inspecting console logs from backend logs (server code logs this in usersController.js)
+    
       const token = response.data?.token || null;
       const user = response.data?.data || null;
   
@@ -71,6 +73,10 @@ const Home = ({ handleLogin }) => {
         setError("Login failed. Please check your credentials."); 
         return;
       }
+  
+      // Log token and user data to confirm they are correctly received
+      console.log("Token received:", token);
+      console.log("User data received:", user);
   
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
@@ -86,6 +92,7 @@ const Home = ({ handleLogin }) => {
       setError('Invalid email or password.');
     }
   };
+  
     
   
   const handleLogout = () => {

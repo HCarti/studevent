@@ -1,32 +1,47 @@
   const User = require('../models/User');
   const jwt = require('jsonwebtoken');
+  
+
+  const createToken = (_id) => {
+    return jwt.sign({_id}, process.env.SECRET, { expiresIn: '3d' })
+}
 
   // Login and generate JWT
   const login = async (req, res) => {
     const { email, password } = req.body;
+    console.log('JWT_SECRET:', process.env.JWT_SECRET); // Check if JWT_SECRET is accessible
   
-    // Find the user and verify password (assume this part is already working)
-    const user = await User.findOne({ email });
-    if (!user || !await bcrypt.compare(password, user.password)) {
-      return res.status(401).json({ success: false, message: "Invalid credentials" });
-    }
-  
-    // Generate JWT token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-  
-    // Send the response with the token and user details
-    res.json({ success: true, token, user: { _id: user._id, email: user.email } });
-  };
-  
-  // Get all users
-  const getUsers = async (req, res) => {
     try {
-      const users = await User.find();
-      res.status(200).json(users);
+      const user = await User.findOne({ email: email });
+      if (!user) {
+        return res.status(401).json({ message: 'Invalid email or password.' });
+      }
+  
+      if (password === user.password) {
+        // Generate JWT token
+        // const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        // console.log("Generated token:", token); // Log token for debugging  
+        const token = createToken(user._id)
+        // Send token and user data in the response
+        res.status(200).json({
+          success: true,
+          token, // include token here
+          data: {
+            _id: user._id,
+            email: user.email,
+            role: user.role,
+            password: user.password
+          }
+        });
+      } else {
+        res.status(401).json({ message: 'Invalid email or password.' });
+      }
     } catch (error) {
-      res.status(500).json({ message: `Error fetching users: ${error.message}` });
+      console.error('Error logging in:', error.message);
+      res.status(500).json({ message: 'Error logging in' });
     }
   };
+  
 
   // Add user
   const addUser = async (userData, blobUrl) => {

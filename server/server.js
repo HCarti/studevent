@@ -2,12 +2,11 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
-const authRoutes = require('./routes/authRoutes');
+// const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/user_routes');
 const formRoutes = require('./routes/formRoutes');
 const progressTrackerRoutes = require('./routes/progressTrackerRoutes');
 const eventRoutes = require('./routes/eventRoutes');
-const Form = require('./models/Form');
 const authenticateToken = require('./middleware/authenticateToken');
 
 const app = express();
@@ -31,7 +30,7 @@ mongoose.connect("mongodb+srv://StudEvent:StudEvent2024@studevent.nvsci.mongodb.
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
-app.use('/api/auth', authRoutes); // Login route
+// app.use('/api/auth', authRoutes); // Login route
 app.use('/api/users', userRoutes, authenticateToken); // Remove authenticateToken middleware
 app.use('/api/forms', formRoutes);
 app.use('/api/trackers', progressTrackerRoutes);
