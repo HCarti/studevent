@@ -59,7 +59,7 @@ const Home = ({ handleLogin }) => {
     try {
       console.log("Attempting to log in with data:", data); // Log the data being sent to the backend
   
-      const response = await axios.post('https://studevent-server.vercel.app/api/auth/login', data);
+      const response = await axios.post('https://studevent-server.vercel.app/api/users/login', data);
       console.log("Response received:", response.data); // Log the full response from the backend
   
       // Check if JWT_SECRET is being accessed on the backend by inspecting console logs from backend logs (server code logs this in usersController.js)
