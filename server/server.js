@@ -7,6 +7,7 @@ const userRoutes = require('./routes/user_routes');
 const formRoutes = require('./routes/formRoutes');
 const progressTrackerRoutes = require('./routes/progressTrackerRoutes');
 const eventRoutes = require('./routes/eventRoutes');
+const Form = require('./models/Form');
 const authenticateToken = require('./middleware/authenticateToken');
 
 const app = express();

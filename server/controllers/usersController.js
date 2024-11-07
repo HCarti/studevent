@@ -118,4 +118,4 @@
     }
   };
 
-  module.exports = { getUsers, getUserById, updateUser, deleteUserById, addUser, login };
+  module.exports = { getUserById, updateUser, deleteUserById, addUser, login };

@@ -2,15 +2,12 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const { put } = require('@vercel/blob');
-const { addUser, getUsers, getUserById, deleteUserById, updateUser, login } = require('../controllers/usersController');
+const { addUser, getUserById, deleteUserById, updateUser, login } = require('../controllers/usersController');
 
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Login route
 router.post('/login', login);
-
-// Get all users
-router.get('/', getUsers);
 
 // Get user by ID
 router.get('/:id', getUserById);
