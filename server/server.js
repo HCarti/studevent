@@ -15,7 +15,7 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({ origin: 'https://www.studevent.org' })); // Update if frontend is deployed elsewhere
+app.use(cors({ origin: 'https://www.studevent.org', 'http://localhost:3000' })); // Update if frontend is deployed elsewhere
 
 // MongoDB connection
 mongoose.connect("mongodb+srv://StudEvent:StudEvent2024@studevent.nvsci.mongodb.net/", {

@@ -93,8 +93,6 @@ const Home = ({ handleLogin }) => {
     }
 };
   
-  
-  
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
