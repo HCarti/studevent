@@ -1,4 +1,4 @@
-/* Form Container */
+/* Overall Form Container */
 .form-ubox-1 {
   display: flex;
   justify-content: center;
@@ -16,7 +16,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* Form Inner Section */
+/* Inner Form Section */
 .inner-forms-1 {
   background-color: #fff; 
   padding: 40px;
@@ -25,9 +25,49 @@
   width: 100%;
   align-items: center;
   justify-content: center;
-  max-width: 800px;
+  max-width: 60%;
+  max-height: 73vh; /* Set maximum height for the form container */
+  overflow-y: auto; /* Enable vertical scrolling */
 }
 
+/* Sidebar Styles */
+.sidebar {
+  width: 250px;
+  background-color: #f4f4f4;
+  padding: 20px;
+  border-right: 1px solid #ddd;
+  border-radius: 12px 0 0 12px;
+  max-height: 78vh;
+}
+
+.sidebar ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.sidebar li {
+  padding: 10px;
+  cursor: pointer;
+  color: #555;
+  font-weight: 500;
+}
+
+.sidebar li.active {
+  font-weight: bold;
+  color: #2c3e50;
+  background-color: #e0e0e0;
+  border-radius: 8px;
+}
+
+/* Form Content Styles */
+.form-content {
+  flex-grow: 1;
+  padding: 40px;
+  background-color: #fff;
+  border-radius: 0 12px 12px 0;
+}
+
+/* Form Title */
 h1 {
   font-size: 28px;
   font-weight: bold;
@@ -50,7 +90,7 @@ h1 {
 }
 
 /* Input Labels */
-.inner-forms label {
+.inner-forms-1 label {
   font-size: 16px;
   font-weight: 500;
   color: #495057;
@@ -65,7 +105,7 @@ input[type="email"],
 input[type="date"],
 textarea,
 select {
-  width: 95%;
+  width: 70%;
   padding: 12px 15px;
   margin-bottom: 5px;
   border-radius: 8px;
@@ -74,6 +114,33 @@ select {
   font-size: 16px;
   color: #495057;
   transition: border-color 0.2s ease-in-out;
+}
+
+.form-ubox-1 textarea{
+  font-size: 14px;
+  font-family: inherit;
+  color: #202124;
+  padding: 10px;
+  border: none;
+  border-bottom: 2px solid #dadce0;
+  border-radius: 4px;
+  outline: none;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 40px;
+  overflow-y: hidden; /* Hide scrollbar */
+  resize: none; /* Disable manual resizing */
+  background-color: #fff;
+  transition: border-color 0.2s ease-in-out;
+}
+
+.form-ubox-1 textarea:focus {
+  border-color: #4285f4; /* Google Forms focus color */
+}
+
+/* Placeholder Styling */
+.form-ubox-1 textarea::placeholder {
+  color: #5f6368;
 }
 
 input[type="text"]:focus,
@@ -120,6 +187,34 @@ textarea {
 
 .pdf-container button:hover {
   background-color: #0056b3;
+}
+
+/* Form Navigation Buttons */
+.form-navigation {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.form-navigation button {
+  margin-left: 10px;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.form-navigation button:hover {
+  background-color: #0056b3;
+}
+
+.form-navigation button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
 }
 
 /* Download Link */
@@ -202,9 +297,13 @@ textarea {
   }
 }
 
-.event-dates{
+/* Event Dates */
+.event-dates {
   display: flex;
-  
   justify-content: center;
   gap: 400px;
+}
+
+.communications{
+  font-size: 20px;
 }

@@ -8,40 +8,54 @@ const mongoose = require('mongoose');
 // });
 
 const formSchema = new mongoose.Schema({
-    eventLocation: { type: String,  required: true },
-    applicationDate: { type: Date, required: true },
-    studentOrganization: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    contactPerson: { type: String, required: true },
-    contactNo: { type: Number, required: true },
-    emailAddress: { type: String, required: true },
-    eventTitle: { type: String, required: true },
-    eventType: { type: String, required: true },
-    venueAddress: { type: String, required: true },
-    eventStartDate: { type: Date, required: true },
-    eventEndDate: { type: Date, required: true },
-    organizer: { type: String, required: true },
-    budgetAmount: { type: Number, required: true },
-    budgetFrom: { type: String, required: true },
-    coreValuesIntegration: { type: String, required: true },
-    objectives: { type: String, required: true },
-    marketingCollaterals: { type: String, required: true },
-    pressRelease: { type: String, required: true },
-    others: { type: String, required: true },
-    eventFacilities: { type: String, required: true },
-    holdingArea: { type: String, required: true },
-    toilets: { type: String, required: true },
-    transportationandParking: { type: String, required: true },
-    more: { type: String, required: true },
-    licensesRequired: { type: String, required: true },
-    houseKeeping: { type: String, required: true },
-    wasteManagement: { type: String, required: true },
-    eventManagementHead: { type: String, required: true },
-    eventCommitteesandMembers: { type: String, required: true },
-    health: { type: String, required: true },
-    safetyAttendees: { type: String, required: true },
-    emergencyFirstAid: { type: String, required: true },
-    fireSafety: { type: String, required: true },
-    weather: { type: String, required: true },
+     // Event Details
+  eventLocation: { type: String, required: true },
+  applicationDate: { type: Date, required: true }, // Store as Date for better validation and querying
+  studentOrganization: { type: mongoose.Schema.Types.ObjectId, ref: 'studentOrganization', required: true }, // Assuming a reference to a collection
+
+  // Contact Information
+  contactPerson: { type: String, required: true },
+  contactNo: { type: Number, required: true }, // Number type for consistency in validation
+  emailAddress: { type: String, required: true },
+
+  // Event Information
+  eventTitle: { type: String, required: true },
+  eventType: { type: String, required: true },
+  venueAddress: { type: String, required: true },
+  eventStartDate: { type: Date, required: true },
+  eventEndDate: { type: Date, required: true },
+  organizer: { type: String, required: true },
+  budgetAmount: { type: Number, required: true }, // Numeric value for easier calculations
+  budgetFrom: { type: String, required: true },
+  coreValuesIntegration: { type: String, required: true },
+  objectives: { type: String, required: true },
+  marketingCollaterals: { type: String },
+  pressRelease: { type: String },
+  others: { type: String },
+
+  // Event Facilities
+  eventFacilities: { type: String },
+  holdingArea: { type: String },
+  toilets: { type: String },
+  transportationandParking: { type: String },
+  more: { type: String },
+
+  // Licenses and Compliance
+  licensesRequired: { type: String },
+  houseKeeping: { type: String },
+  wasteManagement: { type: String },
+
+  // Event Management Team
+  eventManagementHead: { type: String, required: true },
+  eventCommitteesandMembers: { type: String, required: true },
+
+  // Risk Assessments
+  health: { type: String },
+  safetyAttendees: { type: String },
+  emergencyFirstAid: { type: String },
+  fireSafety: { type: String },
+  weather: { type: String },
+
     // currentStep: { type: Number, default: 0 }, // Tracks the current stage index
     // reviewStages: [reviewStageSchema], // Holds details of each reviewer's status
     // finalStatus: { type: String, enum: ['pending', 'approved', 'declined'], default: 'pending' } // Overall status of the form

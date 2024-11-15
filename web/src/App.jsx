@@ -41,40 +41,41 @@ const App = () => {
    const [user, setUser] = useState(null);
 
    useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    console.log("Retrieved user from localStorage:", savedUser); // Debugging line
-    if (savedUser && savedUser !== "undefined") {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (error) {
-        console.error("Error parsing user data:", error);
-      }
-    }
-  }, []);
-  
-    
-    const handleLogin = (userData) => {
-      localStorage.setItem("user", JSON.stringify(userData));
-      setUser(userData); // This triggers the Navbar re-render
-    };
-    
-    const handleLogout = () => {
-      localStorage.removeItem("user");
-      setUser(null);  // Update state and trigger re-render
-    };
-    
-    const isSignedIn = !!user;
-    const role = user?.role || '';
-  
+     const savedUser = localStorage.getItem("user");
+     if (savedUser && savedUser !== "undefined") {
+       try {
+         setUser(JSON.parse(savedUser));
+       } catch (error) {
+         console.error("Error parsing user data:", error);
+       }
+     }
+   }, []);
+ 
+   const handleLogin = (userData) => {
+     localStorage.setItem("user", JSON.stringify(userData));
+     setUser(userData);
+   };
+ 
+   const handleLogout = () => {
+     localStorage.removeItem("user");
+     setUser(null);
+   };
+ 
+   const isSignedIn = !!user;
+   const role = user?.role || '';
+ 
   return (
     <Router>
       <Navbar isLoggedIn={isSignedIn} user={user} handleLogout={handleLogout} />
       <div className="main-content">
         <Routes>
         <Route 
-             path="/" 
-             element={isSignedIn ? <Navigate to={role === 'Organization' ? '/member' : role === 'Authority' || role === 'Admin' ? '/admin' : role === 'SuperAdmin' ? '/superadmin' : '/unauthorized'} /> : <Home handleLogin={handleLogin} />} 
-           />
+            path="/" 
+            element={isSignedIn ? 
+              <Navigate to={role === 'Organization' ? '/member' : role === 'Authority' || role === 'Admin' ? '/admin' : role === 'SuperAdmin' ? '/superadmin' : '/unauthorized'} /> 
+              : <Home handleLogin={handleLogin} />
+            } 
+          />
           <Route path="/unauthorized" element={<Unauthorized />} />
           {/* <Route path="/verification" element={<OTPVerification />} /> */}
 
@@ -110,7 +111,7 @@ const App = () => {
           <Route path="/orgprof" element={<OrgProf />} />
           <Route path="/progtrack/:formId" element={<ProgressTracker />} /> {/* Route with formId */}
           <Route path="/formss" element={<FormsandSig />} />
-          <Route path="/forms" element={<Forms />} />
+          <Route path="/forms" element={<Forms role={role} />} />
           <Route path="/activity" element={<Aap />} />
           <Route path="/liquidation" element={<Liquidation />} />
           <Route path="/project" element={<Project />} />

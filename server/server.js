@@ -15,7 +15,7 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({ origin: 'http://localhost:3000' }));
+app.use(cors({ origin: 'http://localhost:3000' })); // Update if frontend is deployed elsewhere
 
 // MongoDB connection
 mongoose.connect("mongodb+srv://StudEvent:StudEvent2024@studevent.nvsci.mongodb.net/", {
@@ -25,14 +25,12 @@ mongoose.connect("mongodb+srv://StudEvent:StudEvent2024@studevent.nvsci.mongodb.
   .then(() => console.log('MongoDB Connected'))
   .catch((err) => console.error('MongoDB Connection Error:', err));
 
- 
-
 // Serve static files from the 'uploads' folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
-// app.use('/api/auth', authRoutes); // Login route
-app.use('/api/users', userRoutes, authenticateToken); // Remove authenticateToken middleware
+// app.use('/api/auth', authRoutes); // Login route (removed)
+app.use('/api/users', authenticateToken, userRoutes); // Protect userRoutes with JWT
 app.use('/api/forms', formRoutes);
 app.use('/api/trackers', progressTrackerRoutes);
 app.use('/api', eventRoutes);

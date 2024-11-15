@@ -11,10 +11,11 @@ const FormsandSig = () => {
   const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
-    // Retrieve the user role from localStorage
-    const storedUserRole = localStorage.getItem("role");
-    console.log('User role:', storedUserRole); // Debugging log
-    setUserRole(storedUserRole);
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      setUserRole(parsedUser.role);
+    }
   }, []);
 
   const handleForms = () => {

@@ -1,5 +1,6 @@
 // controllers/formController.js
 const Form = require('../models/Form');
+// const ProjectProposalForm = require('../models/projectProposalForm'); // Import your new schema
 
 // Controller to get all submitted forms
 exports.getAllForms = async (req, res) => {
@@ -31,11 +32,23 @@ exports.getAllForms = async (req, res) => {
 // Add a new form (when the user submits)
 exports.createForm = async (req, res) => {
   try {
-    const newForm = new Form(req.body);  // Create a new form with the user input
-    await newForm.save();  // Save the form to MongoDB
-    res.status(201).json(newForm);  // Return the saved form as JSON
+    // Find the organization by name and get its ObjectId
+    const organization = await Organization.findOne({ name: req.body.studentOrganization });
+    
+    if (!organization) {
+      return res.status(400).json({ error: "Organization not found" });
+    }
+
+    // Replace the studentOrganization field with the ObjectId
+    req.body.studentOrganization = organization._id;
+
+    // Now create the form with the ObjectId in place
+    const form = new Form(req.body);
+    await form.save();
+
+    res.status(201).json(form);
   } catch (error) {
     console.error(error);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: "Server error" });
   }
 };

@@ -34,23 +34,41 @@ const OrgMemHome = () => {
     "Hardships often prepare ordinary people for an extraordinary destiny. – C.S. Lewis"
   ];
 
-  // Fetch organizations on component mount
-  useEffect(() => {
+   // Fetch organizations on component mount
+   useEffect(() => {
     const fetchOrganizations = async () => {
       try {
-        const response = await axios.get('https://studevent-server.vercel.app/api/users');
-        const filteredOrganizations = response.data.filter(user => user.role === 'Organization');
-        setOrganizations(filteredOrganizations);
-        if (filteredOrganizations.length > 0) {
-          setCurrentOrganization(filteredOrganizations[0]);
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.error('No token found, redirecting to login.');
+          navigate('/');
+          return;
+        }
+  
+        const response = await axios.get('https://studevent-server.vercel.app/api/users/organizations', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        console.log("Organizations response:", response.data);
+  
+        // Check and set organizations from response
+        setOrganizations(response.data.organizations);
+        if (response.data.organizations.length > 0) {
+          setCurrentOrganization(response.data.organizations[0]);
         }
       } catch (error) {
-        console.error('Error fetching organizations:', error);
+        console.error('Error fetching organizations:', error.response ? error.response.data : error.message);
+        if (error.response && error.response.status === 401) {
+          navigate('/');
+        }
       }
     };
-
+  
     fetchOrganizations();
-  }, []);
+  }, [navigate]);
+  
+  
 
   // Select a random quote on component mount
   useEffect(() => {
@@ -77,10 +95,6 @@ const OrgMemHome = () => {
     navigate('/orgprof');
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    navigate("/");
-  };
 
   return (
     <ParallaxProvider>

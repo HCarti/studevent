@@ -3,12 +3,16 @@ import './Forms.css';
 import { useNavigate } from 'react-router-dom';
 import { FaFileContract, FaMoneyCheckAlt, FaProjectDiagram, FaClipboardList, FaMapMarkedAlt, FaMoneyBillWave } from 'react-icons/fa';
 
-const Forms = () => {
+const Forms = ({ role }) => {
   const navigate = useNavigate();
 
   const handleNavigation = (path, formName) => {
     console.log(`${formName} has been clicked`);
-    navigate(path);
+    if (role === 'Admin' || role === 'Authority') {
+      navigate('/adminformview');
+    } else {
+      navigate(path);
+    }
   };
 
   const formsData = [

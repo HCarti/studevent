@@ -17,17 +17,18 @@ const Home = ({ handleLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isFocused, setIsFocused] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
-  const [organizationName, setOrganizationName] = useState('');
+  const [passwordFocused, setPasswordFocused] = useState(false)
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
+    console.log('Retrieved user from localStorage:', storedUser); // Add this line for debugging
     if (storedUser && storedUser !== "undefined") {
       setUser(JSON.parse(storedUser));
     }
   }, []);
+  
   
 
   useEffect(() => {
@@ -54,52 +55,44 @@ const Home = ({ handleLogin }) => {
   
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(''); // Clear any previous errors
+    
     const data = { email, password };
-  
     try {
-      console.log("Attempting to log in with data:", data); // Log the data being sent to the backend
-  
-      const response = await axios.post('https://studevent-server.vercel.app/api/users/login', data);
-      console.log("Response received:", response.data); // Log the full response from the backend
-  
-      // Check if JWT_SECRET is being accessed on the backend by inspecting console logs from backend logs (server code logs this in usersController.js)
-    
-      const token = response.data?.token || null;
-      const user = response.data?.data || null;
-  
-      // Check if token and user data are present in the response
-      if (!token || !user) {
-        console.error("Token or user data is missing in the response");
-        setError("Login failed. Please check your credentials."); 
-        return;
-      }
-  
-      // Log token and user data to confirm they are correctly received
-      console.log("Token received:", token);
-      console.log("User data received:", user);
-  
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      setUser(user); // Update user state
-      handleLogin(user); // Pass user data up to App.js
-  
-      console.log("Token and user stored in localStorage:", {
-        token: localStorage.getItem('token'),
-        user: localStorage.getItem('user')
-      });
+        const response = await axios.post('https://studevent-server.vercel.app/api/users/login', data);
+        const token = response.data?.token || null;
+        const user = response.data?.data || null;
+
+        if (!token || !user) {
+            setError("Login failed. Please check your credentials.");
+            return;
+        }
+
+        // Log the user data to verify its structure
+        console.log("User  data received:", user);
+
+        // Store the new token and user data in localStorage
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+
+        // Check if organizationName and organizationType are present
+        const storedUser  = JSON.parse(localStorage.getItem('user'));
+        console.log("Stored User Data:", storedUser );
+        if (storedUser .organizationName && storedUser .organizationType) {
+            console.log("Organization Name:", storedUser .organizationName);
+            console.log("Organization Type:", storedUser .organizationType);
+        } else {
+            console.error("Organization data is missing in the stored user object.");
+        }
+
+        setUser (user);
+        handleLogin(user);
     } catch (error) {
-      console.error("Login error:", error.response ? error.response.data : error.message);
-      setError('Invalid email or password.');
+        console.error("Login error:", error.response ? error.response.data : error.message);
+        setError('Invalid email or password.');
     }
-  };
+};
   
-    
-  
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    setUser(null);
-    navigate('/'); // Redirect to login or home page
-  };
   
   
   const togglePasswordVisibility = () => {

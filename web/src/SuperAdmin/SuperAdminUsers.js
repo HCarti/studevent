@@ -12,7 +12,7 @@ const SuperAdminUsers = () => {
     const fetchOrganizations = async () => {
       try {
         const response = await axios.get(
-          "https://studevent-server.vercel.app/api/users"
+          "https://studevent-server.vercel.app/api/users/organizations"
         );
         console.log("API Response:", response.data); // Log the entire response data
         const filteredOrganizations = response.data.filter(
