@@ -32,6 +32,7 @@ const login = async (req, res) => {
     const userData = {
       _id: user._id,
       email: user.email,
+      password: user.password,
       role: user.role,
       logo: user.logo,
     };

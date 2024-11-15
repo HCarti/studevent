@@ -11,6 +11,31 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
+  //notifications
+  const notifyUser = async () => {
+    try {
+      const response = await fetch('https://studevent-server.vercel.app/api/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userEmail: user.email,  // Use logged-in user's email
+          eventDetails: 'Some important activity',
+        }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        console.log('Notification email sent:', data.message);
+      } else {
+        console.error('Failed to send notification email:', data.message);
+      }
+    } catch (error) {
+      console.error('Error sending notification:', error);
+    }
+  };
+  
+
   useEffect(() => {
     // This effect will trigger when `user` is updated
   }, [user]);
@@ -21,6 +46,9 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
 
   const toggleNotificationMenu = () => {
     setNotificationMenuOpen(!notificationMenuOpen);
+    if (!notificationMenuOpen) {
+      notifyUser(); // Trigger notification email when menu is opened
+    }
   };
 
   const toggleAccountMenu = () => {

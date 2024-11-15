@@ -8,6 +8,7 @@ const formRoutes = require('./routes/formRoutes');
 const progressTrackerRoutes = require('./routes/progressTrackerRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const Form = require('./models/Form');
+const emailRoutes = require('./routes/emailroutes'); // Import the email routes
 const authenticateToken = require('./middleware/authenticateToken');
 
 const app = express();
@@ -34,6 +35,7 @@ app.use('/api/users', authenticateToken, userRoutes); // Protect userRoutes with
 app.use('/api/forms', formRoutes);
 app.use('/api/trackers', progressTrackerRoutes);
 app.use('/api', eventRoutes);
+app.use('/api', emailRoutes);
 
 // Example route without JWT protection
 // app.get('/api/forms/submitted', async (req, res) => {
