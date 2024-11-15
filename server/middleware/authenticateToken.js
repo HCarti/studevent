@@ -4,6 +4,7 @@ const authenticateToken = (req, res, next) => {
   // Extract the token from the Authorization header
   const authHeader = req.header('Authorization');
 
+  console.log('Request Headers:', req.headers);
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(403).json({ message: 'Access denied. Token missing or malformed.' });
   }
