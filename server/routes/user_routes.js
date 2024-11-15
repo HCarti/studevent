@@ -8,7 +8,7 @@ const authenticateToken = require('../middleware/authenticateToken');
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Login route (unprotected)
-router.post('/login', login, authenticateToken);
+router.post('/login', login);
 
 // Protected routes with `authenticateToken`
 router.get('/organizations', authenticateToken, getOrganizations);  
