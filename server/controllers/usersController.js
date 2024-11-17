@@ -30,7 +30,8 @@ const login = async (req, res) => {
           _id: user._id,
           email: user.email,
           role: user.role,
-          password: user.password
+          password: user.password,
+          logo: user.logo
         }
       });
     } else {
