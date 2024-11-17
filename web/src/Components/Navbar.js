@@ -86,14 +86,15 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
         </Link>
       </li>
       {isLoggedIn && user && (
-        <li className="navbar-menu-item account-dropdown" onClick={toggleAccountMenu}>
-          {user.logo ? (
-            <img
-              src={`https://studevent-server.vercel.app/uploads/${user.logo}`} 
-              alt="Profile" 
-              className="navbar-profile-pic"
-            />
-          ) : (
+          <li className="navbar-menu-item account-dropdown" onClick={toggleAccountMenu}>
+            {user.logo ? (
+              <img
+                src={`https://studevent-server.vercel.app/uploads/${user.logo}`} 
+                alt="Profile" 
+                className="navbar-profile-pic"
+                onError={(e) => { e.target.onerror = null; e.target.src = '/path/to/default/profile-pic.png'; }} // Fallback image
+              />
+            ) : (
             <span>Account</span>
           )}
           {accountMenuOpen && (

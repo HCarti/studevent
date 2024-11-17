@@ -44,17 +44,21 @@ const AdminHome = () => {
     const fetchAuthorities = async () => {
       try {
         const response = await axios.get('https://studevent-server.vercel.app/api/current');
+        console.log('Response data:', response.data); // Debug line
         const filteredAuthorities = response.data.filter(user => user.role === 'Authority');
         if (filteredAuthorities.length > 0) {
           setCurrentAuthority(filteredAuthorities[0]);
+        } else {
+          console.warn('No authority users found');
         }
       } catch (error) {
-        console.error('Error fetching authorities:', error);
+        console.error('Error fetching authorities:', error.message);
       }
     };
-
+  
     fetchAuthorities();
   }, []);
+  
 
   useEffect(() => {
     const loggedInUser = JSON.parse(localStorage.getItem('user'));
