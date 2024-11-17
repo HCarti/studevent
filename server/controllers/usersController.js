@@ -12,7 +12,7 @@ const createToken = (_id) => {
 const login = async (req, res) => {
   const { email, password } = req.body;
   console.log('JWT_SECRET:', process.env.JWT_SECRET); // Check if JWT_SECRET is accessible
-  
+
   try {
     const user = await User.findOne({ email: email });
     if (!user) {
@@ -20,8 +20,26 @@ const login = async (req, res) => {
     }
 
     if (password === user.password) {
-      const token = createToken(user._id); // Use the createToken function
-      console.log("Generated token:", token); // Log token for debugging  
+      // Validate role-specific fields
+      if (user.role === 'Admin' || user.role === 'Authority') {
+        if (!user.firstName || !user.lastName) {
+          return res.status(400).json({ message: 'First name and last name are required for Admin and Authority roles.' });
+        }
+      }
+
+      if (user.role === 'Authority' && !user.faculty) {
+        return res.status(400).json({ message: 'Faculty is required for Authority roles.' });
+      }
+
+      if (user.role === 'Organization') {
+        if (!user.organizationType || !user.organizationName) {
+          return res.status(400).json({ message: 'Organization type and name are required for Organization roles.' });
+        }
+      }
+
+      // Generate JWT token
+      const token = createToken(user._id);
+      console.log("Generated token:", token); // Log token for debugging
 
       res.status(200).json({
         success: true,
@@ -30,8 +48,12 @@ const login = async (req, res) => {
           _id: user._id,
           email: user.email,
           role: user.role,
-          password: user.password,
-          logo: user.logo
+          firstName: user.firstName,
+          lastName: user.lastName,
+          organizationType: user.organizationType,
+          organizationName: user.organizationName,
+          faculty: user.faculty,
+          status: user.status
         }
       });
     } else {
@@ -42,6 +64,7 @@ const login = async (req, res) => {
     res.status(500).json({ message: 'Error logging in' });
   }
 };
+
 
 
 
