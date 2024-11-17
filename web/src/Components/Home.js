@@ -75,6 +75,7 @@ const Home = ({ handleLogin }) => {
         // Store both token and user data in localStorage as a single object
         const userData = { token, user };
         localStorage.setItem('userData', JSON.stringify(userData));
+        localStorage.setItem('token', token);
 
         console.log('User data successfully stored in localStorage:', userData);
 
