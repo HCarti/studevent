@@ -36,6 +36,7 @@ const OrgMemHome = () => {
     const fetchUserData = async () => {
       try {
         const token = localStorage.getItem('token');
+        console.log('Token retrieved from localStorage:', token);
         if (!token) {
           console.error('No token found, redirecting to login.');
           navigate('/');
