@@ -43,7 +43,8 @@ const OrgMemHome = () => {
           return;
         }
 
-        const response = await axios.get('https://studevent-server.vercel.app/api/users/me', {
+        // Updated API route
+        const response = await axios.get('https://studevent-server.vercel.app/api/users/current', {
           headers: {
             Authorization: `Bearer ${token}`
           }

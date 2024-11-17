@@ -66,6 +66,31 @@ const login = async (req, res) => {
 };
 
 
+const getCurrentUser = async (req, res) => {
+  try {
+    // Extract the token from the authorization header
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+    // Verify the token and get the user ID from it
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded._id;
+
+    // Find the user by ID
+    const user = await User.findById(userId).select('-password'); // Exclude password for security
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.error('Error getting current user:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 
 
 // Add user
@@ -143,4 +168,4 @@ const deleteUserById = async (req, res) => {
   }
 };
 
-module.exports = { getUserById, updateUser, deleteUserById, addUser, login };
+module.exports = { getUserById, updateUser, deleteUserById, addUser, login, getCurrentUser };
