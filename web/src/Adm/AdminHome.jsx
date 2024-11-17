@@ -43,7 +43,11 @@ const AdminHome = () => {
   useEffect(() => {
     const fetchAuthorities = async () => {
       try {
-        const response = await axios.get('https://studevent-server.vercel.app/api/current');
+        const response = await axios.get('https://studevent-server.vercel.app/api/current', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`, // Assuming the token is stored in localStorage
+          }
+        });        
         console.log('Response data:', response.data); // Debug line
         const filteredAuthorities = response.data.filter(user => user.role === 'Authority');
         if (filteredAuthorities.length > 0) {
