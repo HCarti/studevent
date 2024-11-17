@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const { put } = require('@vercel/blob');
-const { addUser, getUserById, deleteUserById, updateUser, login, getUsers, getOrganizations } = require('../controllers/usersController');
+const { addUser, getUserById, deleteUserById, updateUser, login} = require('../controllers/usersController');
 const authenticateToken = require('../middleware/authenticateToken');
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -11,8 +11,8 @@ const upload = multer({ storage: multer.memoryStorage() });
 router.post('/login', login);
 
 // Protected routes with `authenticateToken`
-router.get('/organizations', authenticateToken, getOrganizations);  
-router.get('/', authenticateToken, getUsers);
+router.get('/organizations', authenticateToken);  
+router.get('/', authenticateToken);
 router.get('/:id', authenticateToken, getUserById);
 router.patch('/:id', authenticateToken, updateUser);
 router.delete('/:id', authenticateToken, deleteUserById);

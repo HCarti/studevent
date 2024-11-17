@@ -56,42 +56,44 @@ const Home = ({ handleLogin }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(''); // Clear any previous errors
-    
+
     const data = { email, password };
     try {
+        console.log("Attempting to log in with data:", data);
         const response = await axios.post('https://studevent-server.vercel.app/api/users/login', data);
-        const token = response.data?.token || null;
-        const user = response.data?.data || null;
+        console.log("Full response data:", response.data);
 
+        const { token, data: user } = response.data;
+
+        // Check if token or user data is missing
         if (!token || !user) {
+            console.error("Token or user data is missing in the response");
             setError("Login failed. Please check your credentials.");
             return;
         }
 
-        // Log the user data to verify its structure
-        console.log("User  data received:", user);
+        // Store both token and user data in localStorage as a single object
+        const userData = { token, user };
+        localStorage.setItem('userData', JSON.stringify(userData));
 
-        // Store the new token and user data in localStorage
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
+        console.log('User data successfully stored in localStorage:', userData);
 
-        // Check if organizationName and organizationType are present
-        const storedUser  = JSON.parse(localStorage.getItem('user'));
-        console.log("Stored User Data:", storedUser );
-        if (storedUser .organizationName && storedUser .organizationType) {
-            console.log("Organization Name:", storedUser .organizationName);
-            console.log("Organization Type:", storedUser .organizationType);
-        } else {
-            console.error("Organization data is missing in the stored user object.");
-        }
-
-        setUser (user);
+        // Update the local state with the user data and handle login
+        setUser(user);
         handleLogin(user);
+
+        // Set default authorization header for future axios requests
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
     } catch (error) {
         console.error("Login error:", error.response ? error.response.data : error.message);
         setError('Invalid email or password.');
     }
 };
+
+  
+  
+
   
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);

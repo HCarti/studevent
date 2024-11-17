@@ -11,77 +11,38 @@ const createToken = (_id) => {
 
 const login = async (req, res) => {
   const { email, password } = req.body;
-
+  console.log('JWT_SECRET:', process.env.JWT_SECRET); // Check if JWT_SECRET is accessible
+  
   try {
-    const user = await User.findOne({ email: email }).lean();
-
+    const user = await User.findOne({ email: email });
     if (!user) {
-      return res.status(401).json({ message: 'Invalid email or password.' }); 
-    }
-
-    console.log("Raw user data from MongoDB:", user);
-
-    // Compare plain password (insecure)
-    if (password !== user.password) {
       return res.status(401).json({ message: 'Invalid email or password.' });
     }
 
-    const token = createToken(user._id);
-    console.log("Generated token:", token);
+    if (password === user.password) {
+      const token = createToken(user._id); // Use the createToken function
+      console.log("Generated token:", token); // Log token for debugging  
 
-    const userData = {
-      _id: user._id,
-      email: user.email,
-      password: user.password,
-      role: user.role,
-      logo: user.logo,
-    };
-
-    if (user.role === 'Organization') {
-      userData.organizationName = user.organizationName || null;
-      userData.organizationType = user.organizationType || null;
-    } else if (user.role === 'Authority') {
-      userData.firstName = user.firstName || null;
-      userData.lastName = user.lastName || null;
-      userData.faculty = user.faculty || null;
-    } else if (user.role === 'Admin') {
-      userData.firstName = user.firstName || null;
-      userData.lastName = user.lastName || null;
+      res.status(200).json({
+        success: true,
+        token,
+        data: {
+          _id: user._id,
+          email: user.email,
+          role: user.role,
+          password: user.password
+        }
+      });
+    } else {
+      res.status(401).json({ message: 'Invalid email or password.' });
     }
-
-    res.status(200).json({
-      success: true,
-      token,
-      data: userData,
-    });
-    console.log("Structured userData sent to frontend:", userData);
   } catch (error) {
     console.error('Error logging in:', error.message);
     res.status(500).json({ message: 'Error logging in' });
   }
 };
 
-// Get all organizations (protected route)
-const getOrganizations = async (req, res) => {
-  try {
-    const organizations = await User.find({ role: 'Organization' });
-    res.status(200).json({ organizations });
-  } catch (error) {
-    console.error('Error fetching organizations:', error.message);
-    res.status(500).json({ message: 'Error fetching organizations' });
-  }
-};
 
-// Get users
-const getUsers = async (req, res) => {
-  try {
-    const users = await User.find().select('-password');
-    res.status(200).json(users);
-  } catch (error) {
-    console.error('Error fetching users:', error.message);
-    res.status(500).json({ message: 'Error fetching users' });
-  }
-};
 
 // Add user
 const addUser = async (userData, blobUrl) => {
@@ -158,4 +119,4 @@ const deleteUserById = async (req, res) => {
   }
 };
 
-module.exports = { getUserById, updateUser, deleteUserById, addUser, login, getUsers, getOrganizations };
+module.exports = { getUserById, updateUser, deleteUserById, addUser, login };
