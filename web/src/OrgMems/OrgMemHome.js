@@ -3,9 +3,8 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './OrgMemHome.css';
 import StudeventLogo from '../Images/NU_logo.png';
-import { FaWpforms } from "react-icons/fa";
-import { FaRegCalendarAlt } from "react-icons/fa";
-import { IoPersonCircleOutline, IoSpeedometerOutline } from "react-icons/io5";
+import { FaWpforms, FaRegCalendarAlt } from "react-icons/fa";
+import { IoPersonCircleOutline } from "react-icons/io5";
 import { ParallaxProvider, Parallax } from 'react-scroll-parallax'; 
 import facebookIcon from '../Images/facebook.png';
 import twitterIcon from '../Images/twitter.png';
@@ -16,8 +15,7 @@ import PhoneIcon from '@mui/icons-material/Phone';
 const OrgMemHome = () => {
   const navigate = useNavigate();
   const [clickedButton, setClickedButton] = useState(null);
-  const [organizations, setOrganizations] = useState([]);
-  const [currentOrganization, setCurrentOrganization] = useState(null);
+  const [organizationName, setOrganizationName] = useState('');
   const [quote, setQuote] = useState('');
 
   // Array of motivational quotes
@@ -34,9 +32,8 @@ const OrgMemHome = () => {
     "Hardships often prepare ordinary people for an extraordinary destiny. – C.S. Lewis"
   ];
 
-   // Fetch organizations on component mount
-   useEffect(() => {
-    const fetchOrganizations = async () => {
+  useEffect(() => {
+    const fetchUserData = async () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -44,31 +41,30 @@ const OrgMemHome = () => {
           navigate('/');
           return;
         }
-  
-        const response = await axios.get('https://studevent-server.vercel.app/api/users/organizations', {
+
+        const response = await axios.get('https://studevent-server.vercel.app/api/users/me', {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
-        console.log("Organizations response:", response.data);
-  
-        // Check and set organizations from response
-        setOrganizations(response.data.organizations);
-        if (response.data.organizations.length > 0) {
-          setCurrentOrganization(response.data.organizations[0]);
+        console.log("User data response:", response.data);
+
+        const user = response.data;
+        if (user.role === 'Organization') {
+          setOrganizationName(user.organizationName);
+        } else {
+          console.warn('User is not an organization member.');
         }
       } catch (error) {
-        console.error('Error fetching organizations:', error.response ? error.response.data : error.message);
+        console.error('Error fetching user data:', error.response ? error.response.data : error.message);
         if (error.response && error.response.status === 401) {
           navigate('/');
         }
       }
     };
-  
-    fetchOrganizations();
+
+    fetchUserData();
   }, [navigate]);
-  
-  
 
   // Select a random quote on component mount
   useEffect(() => {
@@ -95,13 +91,12 @@ const OrgMemHome = () => {
     navigate('/orgprof');
   };
 
-
   return (
     <ParallaxProvider>
       <div className="orgmem-home">
         <header className="header-admin">
           <img src={StudeventLogo} alt="Studevent Logo" className="logo" />
-          <h2>Welcome, {currentOrganization?.organizationName}</h2> 
+          <h2>Welcome, {organizationName || 'Guest'}</h2> 
         </header>
 
         <div className="menu-container">
