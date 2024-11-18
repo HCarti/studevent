@@ -52,7 +52,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/users', userRoutes); // Do not apply authenticateToken here
-app.use('/api/forms', formRoutes);
+app.use('/api/forms', authenticateToken, formRoutes);
 app.use('/api/trackers', authenticateToken, progressTrackerRoutes); // Protect specific routes
 app.use('/api', authenticateToken, eventRoutes); // Protect specific routes
 app.use('/api', authenticateToken, emailRoutes); // Protect specific routes

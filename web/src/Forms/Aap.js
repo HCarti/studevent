@@ -255,6 +255,7 @@ const Aap = () => {
     }
   };
 
+  
   const isSectionComplete = () => {
     const requiredFields = getFieldsForStep(currentStep);
     for (const field of requiredFields) {
@@ -325,6 +326,16 @@ const Aap = () => {
       return;
     }
 
+    const token = localStorage.getItem('token'); // Ensure you have previously set this during login
+
+    if (!token) {
+      alert('Authentication token not found. Please log in again.');
+      return;
+    }
+
+    console.log('Token:', token); // Check if token is defined
+
+
     // Convert fields to expected data types for the backend schema
     const eventData = {
       ...formData,
@@ -371,6 +382,7 @@ const Aap = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`, // Uncomment if needed
         },
         body: JSON.stringify(eventData),
       });
