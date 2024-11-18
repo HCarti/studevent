@@ -341,7 +341,7 @@ const Aap = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // 'Authorization': `Bearer ${token}`, // Uncomment if needed
+          'Authorization': `Bearer ${token}`, // Uncomment if needed
         },
         body: JSON.stringify(eventData),
       });
