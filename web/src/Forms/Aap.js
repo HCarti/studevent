@@ -282,7 +282,7 @@ const Aap = () => {
    // Fetch the logged-in user's organization name on component mount
     // Pre-fill `studentOrganization` with `organizationName` if logged in user is an organization
     useEffect(() => {
-      const userData = JSON.parse(localStorage.getItem('userData'));
+      const userData = JSON.parse(localStorage.getItem('user'));
       if (userData) {
         setFormData(prevData => ({
           ...prevData,
