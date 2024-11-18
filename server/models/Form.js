@@ -10,7 +10,7 @@ const mongoose = require('mongoose');
 const formSchema = new mongoose.Schema({
      // Event Details
   eventLocation: { type: String, required: true },
-  applicationDate: { type: Date, required: true }, // Store as Date for better validation and querying
+  applicationDate: { type: Date, default: Date.now, required: true },
   studentOrganization: { type: mongoose.Schema.Types.ObjectId, ref: 'studentOrganization', required: true }, // Assuming a reference to a collection
 
   // Contact Information

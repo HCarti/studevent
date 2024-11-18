@@ -32,9 +32,19 @@ exports.getAllForms = async (req, res) => {
 // Add a new form (when the user submits)
 exports.createForm = async (req, res) => {
   try {
+    // Automatically set the applicationDate to the current date if not provided
+    if (!req.body.applicationDate) {
+      req.body.applicationDate = new Date();
+    }
+
+    // Assume `req.user` contains authenticated user information
+    if (!req.body.emailAddress && req.user && req.user.email) {
+      req.body.emailAddress = req.user.email;
+    }
+
     // Find the organization by name and get its ObjectId
-    const organization = await Organization.findOne({ name: req.body.studentOrganization });
-    
+    const organization = await organization.findOne({ name: req.body.studentOrganization });
+
     if (!organization) {
       return res.status(400).json({ error: "Organization not found" });
     }
@@ -42,7 +52,7 @@ exports.createForm = async (req, res) => {
     // Replace the studentOrganization field with the ObjectId
     req.body.studentOrganization = organization._id;
 
-    // Now create the form with the ObjectId in place
+    // Create the form with the processed body
     const form = new Form(req.body);
     await form.save();
 

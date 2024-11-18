@@ -200,7 +200,7 @@ const AapPDF = ({ formData }) => (
 const Aap = () => {
   const [formData, setFormData] = useState({
     eventLocation: "",
-    applicationDate: "",
+    applicationDate: new Date().toISOString().split('T')[0], // Sets today's date in YYYY-MM-DD format
     studentOrganization: "", // Ensure this is an ObjectId or can be handled as one
     contactPerson: "",
     contactNo: "", // Contact number as string to prevent issues with leading zeros
@@ -281,15 +281,19 @@ const Aap = () => {
 
    // Fetch the logged-in user's organization name on component mount
     // Pre-fill `studentOrganization` with `organizationName` if logged in user is an organization
-  useEffect(() => {
-    const userData = JSON.parse(localStorage.getItem('userData'));
-    if (userData && userData.role === 'Organization') {
-      setFormData(prevData => ({
-        ...prevData,
-        studentOrganization: userData.organizationName || ""
-      }));
-    }
-  }, []);
+    useEffect(() => {
+      const userData = JSON.parse(localStorage.getItem('userData'));
+      if (userData) {
+        setFormData(prevData => ({
+          ...prevData,
+          studentOrganization: userData.role === 'Organization' ? userData.organizationName || "" : "",
+          emailAddress: userData.email || "",
+          applicationDate: new Date().toISOString().split('T')[0] // Always sets today's date
+        }));
+      }
+    }, []);
+    
+    
 
   const handleSubmit = async () => {
     const requiredFields = [
@@ -421,7 +425,12 @@ const Aap = () => {
             </select>
 
             <label>Date of Application:</label>
-            <input type="date" name="applicationDate" value={formData.applicationDate} onChange={handleChange} />
+            <input
+            type="date"
+            name="applicationDate"
+            value={formData.applicationDate}
+            readOnly
+          />
           </div>
         );
 
@@ -433,15 +442,20 @@ const Aap = () => {
               type="text"
               name="studentOrganization"
               value={formData.studentOrganization}
-              onChange={handleChange}
               readOnly
             />
+
             <label>Contact Person:</label>
             <input type="text" name="contactPerson" value={formData.contactPerson} onChange={handleChange} />
             <label>Contact No:</label>
             <input type="text" name="contactNo" value={formData.contactNo} onChange={handleChange} />
             <label>Email Address:</label>
-            <input type="email" name="emailAddress" value={formData.emailAddress} onChange={handleChange} />
+            <input
+              type="email"
+              name="emailAddress"
+              value={formData.emailAddress}
+              readOnly
+            />
           </div>
         );
 
