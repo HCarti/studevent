@@ -328,13 +328,43 @@ const Aap = () => {
     // Convert fields to expected data types for the backend schema
     const eventData = {
       ...formData,
-      contactNo: Number(formData.contactNo),
-      budgetAmount: Number(formData.budgetAmount),
-      eventStartDate: new Date(formData.eventStartDate),
-      eventEndDate: new Date(formData.eventEndDate),
+      eventLocation: formData.eventLocation,
       applicationDate: new Date(formData.applicationDate),
-      length: eventEnd.diff(eventStart, 'hours')
+      studentOrganization: formData.studentOrganization, // Ensure this field is properly formatted as an ObjectId or handled by the backend
+      contactPerson: formData.contactPerson,
+      contactNo: Number(formData.contactNo), // Ensure it's converted to a number if necessary
+      emailAddress: formData.emailAddress,
+      eventTitle: formData.eventTitle,
+      eventType: formData.eventType,
+      venueAddress: formData.venueAddress,
+      eventStartDate: new Date(formData.eventStartDate), // Convert to Date object
+      eventEndDate: new Date(formData.eventEndDate), // Convert to Date object
+      organizer: formData.organizer,
+      budgetAmount: Number(formData.budgetAmount), // Convert to number
+      budgetFrom: formData.budgetFrom,
+      coreValuesIntegration: formData.coreValuesIntegration,
+      objectives: formData.objectives,
+      marketingCollaterals: formData.marketingCollaterals,
+      pressRelease: formData.pressRelease,
+      others: formData.others,
+      eventFacilities: formData.eventFacilities,
+      holdingArea: formData.holdingArea,
+      toilets: formData.toilets,
+      transportationandParking: formData.transportationandParking,
+      more: formData.more,
+      licensesRequired: formData.licensesRequired,
+      houseKeeping: formData.houseKeeping,
+      wasteManagement: formData.wasteManagement,
+      eventManagementHead: formData.eventManagementHead,
+      eventCommitteesandMembers: formData.eventCommitteesandMembers,
+      health: formData.health,
+      safetyAttendees: formData.safetyAttendees,
+      emergencyFirstAid: formData.emergencyFirstAid,
+      fireSafety: formData.fireSafety,
+      weather: formData.weather,
+      length: moment(formData.eventEndDate).diff(moment(formData.eventStartDate), 'hours') // Calculate event length in hours
     };
+    
 
     try {
       const response = await fetch('https://studevent-server.vercel.app/api/forms', {
