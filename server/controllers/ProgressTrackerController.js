@@ -76,7 +76,7 @@ exports.updateReviewStage = async (req, res) => {
 exports.getFormDetails = async (req, res) => {
     try {
         const { formId } = req.params;
-        const form = await Form.findById(formId).populate('studentOrganization', 'organizationName emailAddress');
+        const form = await Form.findById(formId).populate('studentOrganization', 'organizationName', 'emailAddress');
 
         if (!form) return res.status(404).json({ message: 'Form not found' });
 

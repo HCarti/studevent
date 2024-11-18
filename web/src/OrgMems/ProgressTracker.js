@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import './ProgressTracker.css';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
@@ -15,7 +16,6 @@ const ProgressTracker = ({ currentUser }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [trackerData, setTrackerData] = useState({
     steps: [
-      { label: 'Submitted to Adviser', color: 'yellow', timestamp: Date.now() },
       { label: 'Reviewed and Signed by Adviser', color: 'yellow', timestamp: Date.now() },
       { label: 'Reviewed and Signed by College Dean', color: 'yellow', timestamp: Date.now() },
       { label: 'Reviewed and Signed by Academic Services', color: 'yellow', timestamp: Date.now() },
@@ -23,39 +23,77 @@ const ProgressTracker = ({ currentUser }) => {
     ]
   });
   const [remarks, setRemarks] = useState('');
+  const [forms, setForms] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [isApprovedChecked, setIsApprovedChecked] = useState(false);
   const [isDeclinedChecked, setIsDeclinedChecked] = useState(false);
+
+  useEffect(() => {
+    const fetchForms = async () => {
+      try {
+        const response = await axios.get('/api/progress-tracker', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        });
+        setForms(response.data);
+      } catch (error) {
+        console.error('Error fetching forms:', error);
+      }
+    };
+  
+    if (currentUser.role === 'Authority') {
+      fetchForms();
+    }
+  }, [currentUser.role]); // Dependency on `currentUser.role`
+  
 
   // Toggle edit mode
   const handleEditClick = () => setIsEditing(true);
 
   // Save the current step's approval or decline action
-  const handleSaveClick = () => {
+  const handleSaveClick = async () => {
     const status = isApprovedChecked ? 'approved' : 'declined';
-
-    setTrackerData(prevData => {
+  
+    setTrackerData((prevData) => {
       const updatedSteps = [...prevData.steps];
       updatedSteps[currentStep] = {
         ...updatedSteps[currentStep],
         status,
         remarks,
         color: status === 'approved' ? 'green' : 'red',
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
-
+  
       return { ...prevData, steps: updatedSteps };
     });
-
-    // Move to next step if approved, or stop if declined
+  
+    // Prepare the next authority
+    let nextAuthority = null;
     if (status === 'approved' && currentStep < trackerData.steps.length - 1) {
+      nextAuthority = trackerData.steps[currentStep + 1].label.split(' ')[3]; // Example: Extract "College Dean"
       setCurrentStep(currentStep + 1);
     }
-
+  
+    try {
+      // Send updated data to the backend
+      await fetch(`/api/forms/${form._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status,
+          remarks,
+          currentAuthority: nextAuthority,
+        }),
+      });
+      console.log('Progress tracker updated successfully');
+    } catch (error) {
+      console.error('Error updating progress tracker:', error);
+    }
+  
     setIsEditing(false);
     setIsApprovedChecked(false);
     setIsDeclinedChecked(false);
   };
+  
 
   const handleCheckboxChange = (checkbox) => {
     setIsApprovedChecked(checkbox === 'approved');

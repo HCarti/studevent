@@ -1,11 +1,11 @@
 const mongoose = require('mongoose');
 
-// const reviewStageSchema = new mongoose.Schema({
-//     role: { type: String, enum: ['Adviser', 'Dean', 'AcademicServices', 'AcademicDirector'], required: true },
-//     status: { type: String, enum: ['pending', 'approved', 'declined'], default: 'pending' },
-//     remarks: { type: String },
-//     timestamp: { type: Date }
-// });
+const reviewStageSchema = new mongoose.Schema({
+    role: { type: String, enum: ['Adviser', 'Dean', 'AcademicServices', 'AcademicDirector'], required: true },
+    status: { type: String, enum: ['pending', 'approved', 'declined'], default: 'pending' },
+    remarks: { type: String },
+    timestamp: { type: Date }
+});
 
 const formSchema = new mongoose.Schema({
      // Event Details
@@ -56,9 +56,9 @@ const formSchema = new mongoose.Schema({
   fireSafety: { type: String },
   weather: { type: String },
 
-    // currentStep: { type: Number, default: 0 }, // Tracks the current stage index
-    // reviewStages: [reviewStageSchema], // Holds details of each reviewer's status
-    // finalStatus: { type: String, enum: ['pending', 'approved', 'declined'], default: 'pending' } // Overall status of the form
+    currentStep: { type: Number, default: 0 }, // Tracks the current stage index
+    reviewStages: [reviewStageSchema], // Holds details of each reviewer's status
+    finalStatus: { type: String, enum: ['pending', 'approved', 'declined'], default: 'pending' } // Overall status of the form
 });
 
 const Form = mongoose.model('Form', formSchema);
