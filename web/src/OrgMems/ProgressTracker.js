@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import './ProgressTracker.css';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
@@ -23,27 +22,9 @@ const ProgressTracker = ({ currentUser }) => {
     ]
   });
   const [remarks, setRemarks] = useState('');
-  const [forms, setForms] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [isApprovedChecked, setIsApprovedChecked] = useState(false);
   const [isDeclinedChecked, setIsDeclinedChecked] = useState(false);
-
-  useEffect(() => {
-    const fetchForms = async () => {
-      try {
-        const response = await axios.get('/api/progress-tracker', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        });
-        setForms(response.data);
-      } catch (error) {
-        console.error('Error fetching forms:', error);
-      }
-    };
-  
-    if (currentUser.role === 'Authority') {
-      fetchForms();
-    }
-  }, [currentUser.role]); // Dependency on `currentUser.role`
   
 
   // Toggle edit mode
