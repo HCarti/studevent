@@ -1,22 +1,24 @@
-// emailHelper.js
 const nodemailer = require('nodemailer');
 
-const transporter = nodemailer.createTransport({
-    service: 'gmail', // or your email provider
-    auth: {
-        user: "gadonchristian01@gmail.com", // Email address you’ll send from
-        pass:  "cgg"  // Email password or app password
-    }
-});
+exports.sendEmail = async (to, subject, text) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'Gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
 
-const sendEmail = async (to, subject, text) => {
-    const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to,
-        subject,
-        text
-    };
-    await transporter.sendMail(mailOptions);
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to,
+      subject,
+      text,
+    });
+
+    console.log(`Email sent to ${to}`);
+  } catch (error) {
+    console.error('Failed to send email:', error);
+  }
 };
-
-module.exports = { sendEmail };

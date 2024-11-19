@@ -45,4 +45,7 @@ router.post('/submit', async (req, res) => {
 // Route to submit a new form
 router.post('/', formController.createForm);
 
+router.get('/submissions', getUserSubmissions);
+
+
 module.exports = router;

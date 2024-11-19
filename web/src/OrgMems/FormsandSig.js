@@ -23,7 +23,7 @@ const FormsandSig = () => {
   };
 
   const handleSig = () => {
-    navigate('/progtrack');
+    navigate('/my-submissions');
   };
 
   return (
