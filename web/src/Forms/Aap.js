@@ -523,7 +523,13 @@ const Aap = () => {
             <label>Organizer:</label>
             <input type="text" name="organizer" value={formData.organizer} onChange={handleChange} />
             <label>Budget Amount:</label>
-            <input type="text" name="budgetAmount" value={formData.budgetAmount} onChange={handleChange} />
+            <input 
+            type="number" 
+            name="budgetAmount" 
+            value={formData.budgetAmount} 
+            onChange={handleChange} 
+            required
+          />
             <label>Budget From:</label>
             <select name="budgetFrom" value={formData.budgetFrom} onChange={handleChange}>
               <option value="">Select An Option...</option>
