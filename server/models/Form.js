@@ -11,7 +11,7 @@ const formSchema = new mongoose.Schema({
      // Event Details
   eventLocation: { type: String, required: true },
   applicationDate: { type: Date, default: Date.now, required: true },
-  studentOrganization: { type: mongoose.Schema.Types.ObjectId, ref: 'studentOrganization', required: true }, // Assuming a reference to a collection
+  studentOrganization: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Assuming a reference to a collection
 
   // Contact Information
   contactPerson: { type: String, required: true },
