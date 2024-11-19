@@ -26,30 +26,30 @@ exports.getAllForms = async (req, res) => {
 };
 
 
-exports.getUserSubmissions = async (req, res) => {
-  try {
-    const { userId } = req.query; // Get the userId from query params
+// exports.getUserSubmissions = async (req, res) => {
+//   try {
+//     const { userId } = req.query; // Get the userId from query params
 
-    // If userId is not provided, return an error
-    if (!userId) {
-      return res.status(400).json({ message: 'User ID is required' });
-    }
+//     // If userId is not provided, return an error
+//     if (!userId) {
+//       return res.status(400).json({ message: 'User ID is required' });
+//     }
 
-    // Find the submissions for this user
-    const submissions = await Form.find({ userId: userId }).populate('eventId'); // Assuming eventId is referenced in the Form model
+//     // Find the submissions for this user
+//     const submissions = await Form.find({ userId: userId }).populate('eventId'); // Assuming eventId is referenced in the Form model
 
-    // If no submissions found, return an empty array
-    if (!submissions.length) {
-      return res.status(404).json({ message: 'No submissions found for this user' });
-    }
+//     // If no submissions found, return an empty array
+//     if (!submissions.length) {
+//       return res.status(404).json({ message: 'No submissions found for this user' });
+//     }
 
-    // Return the submissions
-    res.status(200).json(submissions);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
-};  
+//     // Return the submissions
+//     res.status(200).json(submissions);
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: 'Internal Server Error' });
+//   }
+// };  
 
 
 
