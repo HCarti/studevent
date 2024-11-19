@@ -41,6 +41,26 @@ router.post('/submit', async (req, res) => {
     }
 });
 
+router.get('/occupied-dates', async (req, res) => {
+    try {
+      const forms = await Form.find({}, 'eventStartDate eventEndDate'); // Only fetch start and end dates
+      const occupiedDates = [];
+  
+      forms.forEach(form => {
+        let current = new Date(form.eventStartDate);
+        const end = new Date(form.eventEndDate);
+  
+        while (current <= end) {
+          occupiedDates.push(current.toISOString().split('T')[0]); // Add dates in YYYY-MM-DD format
+          current.setDate(current.getDate() + 1);
+        }
+      });
+  
+      res.json({ occupiedDates });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch occupied dates.' });
+    }
+  });
 
 // Route to submit a new form
 router.post('/', formController.createForm);

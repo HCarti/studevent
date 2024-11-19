@@ -307,3 +307,24 @@ textarea {
 .communications{
   font-size: 20px;
 }
+
+.occupied {
+  background-color: red !important;
+}
+
+.available {
+  background-color: green !important;
+}
+
+.check-icon {
+  margin-left: 10px;
+  color: gray;
+}
+
+.check-icon.green {
+  color: green;
+}
+
+.sidebar li.active {
+  font-weight: bold;
+}

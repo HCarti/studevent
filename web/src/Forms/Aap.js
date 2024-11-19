@@ -2,7 +2,10 @@ import React, {useState, useEffect} from "react";
 import axios from 'axios';
 import './Aap.css';
 import moment from 'moment';
+import { FaCheck } from 'react-icons/fa'; // Import check icon from react-icons
 import { Document, Page, Text, View, StyleSheet, Image, PDFDownloadLink } from "@react-pdf/renderer";
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
 import NU_logo from "../Images/NU_logo.png";
 import { useNavigate } from 'react-router-dom';
 import { MdOutlineContactPage } from "react-icons/md";
@@ -247,6 +250,40 @@ const Aap = () => {
     });
   };
 
+  const [occupiedDates, setOccupiedDates] = useState([]);
+
+  const handleDateChange = (date, field) => {
+    setFormData(prevData => ({
+      ...prevData,
+      [field]: date.toISOString(), // Store as ISO string for backend compatibility
+    }));
+  };
+
+  useEffect(() => {
+    // Fetch occupied dates from backend
+    const fetchOccupiedDates = async () => {
+      try {
+        const response = await fetch('https://your-backend-url/api/occupied-dates');
+        const data = await response.json();
+        setOccupiedDates(data);
+      } catch (error) {
+        console.error('Error fetching occupied dates:', error);
+      }
+    };
+
+    fetchOccupiedDates();
+  }, []);
+
+  const isOccupied = (date) => {
+    const formattedDate = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+    return occupiedDates.some(d => d.startDate === formattedDate || d.endDate === formattedDate);
+  };
+
+  // Adjust highlighting logic
+  const getHighlightedDates = () => {
+    return occupiedDates.map(d => new Date(d.startDate));
+  };
+
   const handleNext = () => {
     if (isSectionComplete()) {
       setCurrentStep(currentStep + 1);
@@ -256,14 +293,14 @@ const Aap = () => {
   };
 
   
-  const isSectionComplete = () => {
-    const requiredFields = getFieldsForStep(currentStep);
+  const isSectionComplete = (step) => {
+    const requiredFields = getFieldsForStep(step);
     for (const field of requiredFields) {
       if (!formData[field]) return false;
     }
     return true;
   };
-
+  
   const getFieldsForStep = (step) => {
     const sections = [
       ['eventLocation', 'applicationDate'],
@@ -453,6 +490,7 @@ const Aap = () => {
     }
   };    
 
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 0:
@@ -517,9 +555,25 @@ const Aap = () => {
             <label>Venue Address:</label>
             <input type="text" name="venueAddress" value={formData.venueAddress} onChange={handleChange} />
             <label>Event Start Date:</label>
-            <input type="datetime-local" name="eventStartDate" value={formData.eventStartDate} onChange={handleChange} />
+            <DatePicker
+              selected={formData.eventStartDate ? new Date(formData.eventStartDate) : null}
+              onChange={(date) => handleDateChange(date, 'eventStartDate')}
+              minDate={new Date()}
+              highlightDates={getHighlightedDates()}
+              dayClassName={date => isOccupied(date) ? 'occupied' : 'available'}
+              dateFormat="yyyy-MM-dd HH:mm"
+              showTimeSelect
+            />
             <label>Event End Date:</label>
-            <input type="datetime-local" name="eventEndDate" value={formData.eventEndDate} onChange={handleChange} />
+            <DatePicker
+              selected={formData.eventEndDate ? new Date(formData.eventEndDate) : null}
+              onChange={(date) => handleDateChange(date, 'eventEndDate')}
+              minDate={new Date()}
+              highlightDates={getHighlightedDates()}
+              dayClassName={date => isOccupied(date) ? 'occupied' : 'available'}
+              dateFormat="yyyy-MM-dd HH:mm"
+              showTimeSelect
+            />
             <label>Organizer:</label>
             <input type="text" name="organizer" value={formData.organizer} onChange={handleChange} />
             <label>Budget Amount:</label>
@@ -602,35 +656,50 @@ const Aap = () => {
     }
   };
 
-  return (
-    <div className="form-ubox-1">
-      <div className="sidebar">
-        <ul>
-          <li className={currentStep === 0 ? 'active' : ''}>Event Specifics </li>
-          <li className={currentStep === 1 ? 'active' : ''}>Contact Information</li>
-          <li className={currentStep === 2 ? 'active' : ''}>Event Details</li>
-          <li className={currentStep === 3 ? 'active' : ''}>Event Management Team</li>
-          <li className={currentStep === 4 ? 'active' : ''}>Risk Assessments</li>
-        </ul>
-      </div>
-      <div className="inner-forms-1">
-        <h1>Activity Application Form</h1>
-        <p>This Event Proposal/Plan should be submitted at least 1 to 3 months before the event to allow time for preparation and purchasing process.</p>
-        {renderStepContent()}
-        <div className="form-navigation">
-          {currentStep > 0 && (
-            <button onClick={() => setCurrentStep(currentStep - 1)}>Back</button>
-          )}
-          {currentStep < 4 ? (
-            <button onClick={handleNext}>Next</button>
-          ) : (
-            <button onClick={handleSubmit}>Submit</button>
-          )}
+    return (
+      <div className="form-ubox-1">
+        <div className="sidebar">
+          <ul>
+            <li className={currentStep === 0 ? 'active' : ''}>
+              {isSectionComplete(0) ? <FaCheck className="check-icon green" /> : null}
+              Event Specifics
+            </li>
+            <li className={currentStep === 1 ? 'active' : ''}>
+              {isSectionComplete(1) ? <FaCheck className="check-icon green" /> : null}
+              Organization Info
+            </li>
+            <li className={currentStep === 2 ? 'active' : ''}>
+              {isSectionComplete(2) ? <FaCheck className="check-icon green" /> : null}
+              Event Details
+            </li>
+            <li className={currentStep === 3 ? 'active' : ''}>
+              {isSectionComplete(3) ? <FaCheck className="check-icon green" /> : null}
+              Event Management Team
+            </li>
+            <li className={currentStep === 4 ? 'active' : ''}>
+              {isSectionComplete(4) ? <FaCheck className="check-icon green" /> : null}
+              Risk Assessments
+            </li>
+          </ul>
         </div>
-        {formSent && <p>Form successfully sent!</p>}
+        <div className="inner-forms-1">
+          <h1>Activity Application Form</h1>
+          <p>This Event Proposal/Plan should be submitted at least 1 to 3 months before the event to allow time for preparation and purchasing process.</p>
+          {renderStepContent()}
+          <div className="form-navigation">
+            {currentStep > 0 && (
+              <button onClick={() => setCurrentStep(currentStep - 1)}>Back</button>
+            )}
+            {currentStep < 4 ? (
+              <button onClick={handleNext}>Next</button>
+            ) : (
+              <button onClick={handleSubmit}>Submit</button>
+            )}
+          </div>
+          {formSent && <p>Form successfully sent!</p>}
+        </div>
       </div>
-    </div>
-  );
+    );
 };
 
 const styles = StyleSheet.create({
