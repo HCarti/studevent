@@ -241,6 +241,13 @@ const Aap = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [formSent, setFormSent] = useState(false);
   const [eventId, setEventId] = useState(null);
+  const [notificationVisible, setNotificationVisible] = useState(false); // State to control notification visibility
+
+  const Notification = ({ message }) => (
+    <div className="notification">
+      {message}
+    </div>
+  );
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -438,13 +445,17 @@ const Aap = () => {
       }
     
       const result = await response.json();
-      console.log('Form submitted successfully:', result);
     
       if (result._id) {
         setEventId(result._id);
       }
-      alert('Form submitted successfully!');
       setFormSent(true);
+
+      setFormSent(true); // Mark form as submitted
+      setNotificationVisible(true); // Show notification
+      setTimeout(() => {
+        setNotificationVisible(false); // Hide notification after 3 seconds
+      }, 3000);
     
       // Reset form data
       setFormData({
@@ -658,6 +669,7 @@ const Aap = () => {
 
     return (
       <div className="form-ubox-1">
+         {notificationVisible && <Notification message="Form submitted successfully!" />}
         <div className="sidebar">
           <ul>
             <li className={currentStep === 0 ? 'active' : ''}>
@@ -696,7 +708,6 @@ const Aap = () => {
               <button onClick={handleSubmit}>Submit</button>
             )}
           </div>
-          {formSent && <p>Form successfully sent!</p>}
         </div>
       </div>
     );
