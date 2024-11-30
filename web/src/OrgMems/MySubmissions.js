@@ -5,10 +5,10 @@ const MySubmissions = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetching the submissions on page load
   useEffect(() => {
     const token = localStorage.getItem('token');
     const userData = JSON.parse(localStorage.getItem('user'));
+
     if (!token || !userData) {
       setError('User not authenticated');
       setLoading(false);
@@ -17,12 +17,14 @@ const MySubmissions = () => {
 
     const fetchSubmissions = async () => {
       try {
-        // Assuming your backend provides an API to get user submissions
-        const response = await fetch(`https://studevent-server.vercel.app/api/forms/submissions?userId=${userData._id}`, {
+        // Backend expects organizationId for organization role or userId for individuals
+        const queryParam = userData.role === 'Organization' ? `organizationId=${userData.organizationId}` : `userId=${userData._id}`;
+
+        const response = await fetch(`https://studevent-server.vercel.app/api/forms/submissions?${queryParam}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
-          }
+          },
         });
 
         if (!response.ok) {

@@ -270,7 +270,7 @@ const Aap = () => {
     // Fetch occupied dates from backend
     const fetchOccupiedDates = async () => {
       try {
-        const response = await fetch('https://your-backend-url/api/occupied-dates');
+        const response = await fetch('https://studevent-server.vercel.app/api/occupied-dates');
         const data = await response.json();
         setOccupiedDates(data);
       } catch (error) {

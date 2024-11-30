@@ -60,7 +60,7 @@ router.get('/occupied-dates', async (req, res) => {
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch occupied dates.' });
     }
-  });
+  }); 
 
 // Route to submit a new form
 router.post('/', formController.createForm);
