@@ -145,7 +145,7 @@ const fetchForms = async () => {
               <ul>
                 {selectedEvents.map((event, index) => (
                   <li key={index}>
-                    <strong>{event.title}</strong>
+                    <strong>{event.eventTitle}</strong>
                     <br />
                     <span>Duration: {event.duration}</span>
                     <br />

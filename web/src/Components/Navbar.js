@@ -88,15 +88,18 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
       {isLoggedIn && user && (
           <li className="navbar-menu-item account-dropdown" onClick={toggleAccountMenu}>
             {user.logo ? (
-              <img
-                src={`https://studevent-server.vercel.app/uploads/${user.logo}`} 
-                alt="Profile" 
-                className="navbar-profile-pic"
-                onError={(e) => { e.target.onerror = null; e.target.src = '/path/to/default/profile-pic.png'; }} // Fallback image
-              />
-            ) : (
-            <span>Account</span>
-          )}
+                <img
+                  src={user.logo} // Use the full URL stored in the database
+                  alt="Profile"
+                  className="navbar-profile-pic"
+                  onError={(e) => { 
+                    e.target.onerror = null; 
+                    e.target.src = '/path/to/default/profile-pic.png'; // Fallback image
+                  }}
+                />
+              ) : (
+                <span>Account</span>
+              )}
           {accountMenuOpen && (
             <div className="account-dropdown-menu">
               <div className="dropdown-item" onClick={handleLogoutClick}>Logout</div>
