@@ -90,6 +90,10 @@
     gap: 1.5rem;
 }
 
+.sb__footer-below-links a {
+    text-decoration: none;
+}
+
 .sb__footer-below-links p {
     font-size: 14px;
     color: #a3a3a8;

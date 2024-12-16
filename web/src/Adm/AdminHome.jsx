@@ -6,13 +6,7 @@ import { FaWpforms, FaPaperPlane } from "react-icons/fa";
 import { IoCalendarOutline, IoPersonCircleOutline } from "react-icons/io5";
 import { IoSpeedometerOutline } from "react-icons/io5";
 import { ParallaxProvider } from 'react-scroll-parallax';
-import facebookIcon from '../Images/facebook.png';
-import twitterIcon from '../Images/twitter.png';
-import instagramIcon from '../Images/instagram.png';
-import EmailIcon from '@mui/icons-material/Email';  
-import PhoneIcon from '@mui/icons-material/Phone'; 
 import axios from 'axios';
-import Footer from '../Components/footer';
 
 const AdminHome = () => { 
   const navigate = useNavigate();
@@ -94,7 +88,7 @@ const AdminHome = () => {
 
   const handleProfileClick = () => {
     handleButtonClick('profile');
-    navigate('/adminprofile');
+    navigate('/orgprof');
   };
 
   const handleDashboardClick = () => {
@@ -134,7 +128,6 @@ const AdminHome = () => {
             <p className="quote animated-fade">{quote}</p>
           </div>
         </div>
-        <Footer />
       </React.Fragment>
     </ParallaxProvider>
   );

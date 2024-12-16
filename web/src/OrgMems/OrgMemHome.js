@@ -106,13 +106,13 @@ const OrgMemHome = () => {
             <FaRegCalendarAlt className="menu-icon" />
             <h3>Calendar</h3>
           </div>
-          <div className={`menu-item ${clickedButton === 'forms' ? 'active' : ''}`} onClick={handleFormsClick}>
-            <FaWpforms className="menu-icon" />
-            <h3>Forms/Signature</h3>
-          </div>
           <div className={`menu-item ${clickedButton === 'profile' ? 'active' : ''}`} onClick={handleProfileClick}>
             <IoPersonCircleOutline className="menu-icon" />
             <h3>Profile</h3>
+          </div>
+          <div className={`menu-item ${clickedButton === 'forms' ? 'active' : ''}`} onClick={handleFormsClick}>
+            <FaWpforms className="menu-icon" />
+            <h3>Forms/Signature</h3>
           </div>
         </div>
 
@@ -120,45 +120,6 @@ const OrgMemHome = () => {
         <div className="quote-container">
           <p className="quote animated-fade">{quote}</p>
         </div>
-
-        {/* Footer Section */}
-        <Parallax>
-          <footer className="footer3">
-            <div className="footer3-container">
-              <div className="footer3-section contact-info">
-                <h4>Contact Us</h4>
-                <div className="contact-item">
-                  <EmailIcon />
-                  <span>SDAO@students.nu-moa.edu.ph</span>
-                </div>
-                <div className="contact-item">
-                  <PhoneIcon />
-                  <span>09-xxxxxxxxx</span>
-                </div>
-              </div>
-
-              <div className="footer3-section social-icons-container">
-                <h4>Follow Us:</h4>
-                <div className="social-icons">
-                  <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
-                    <img src={facebookIcon} alt="Facebook" className="social-icon" />
-                  </a>
-                  <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">
-                    <img src={twitterIcon} alt="Twitter" className="social-icon" />
-                  </a>
-                  <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
-                    <img src={instagramIcon} alt="Instagram" className="social-icon" />
-                  </a>
-                </div>
-              </div>
-
-              <div className="footer3-section copyright-info">
-                <h4>&copy; 2024 NU MOA - SDAO System</h4>
-                <p>All rights reserved.</p>
-              </div>
-            </div>
-          </footer>
-        </Parallax>
       </div>
     </ParallaxProvider>
   );

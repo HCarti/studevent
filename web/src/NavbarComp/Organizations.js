@@ -143,7 +143,6 @@ const Organizations = () => {
         </p>
       </div>
     </div>
-    <Footer></Footer>
   </React.Fragment>
   );
 };

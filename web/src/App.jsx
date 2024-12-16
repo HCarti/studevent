@@ -36,6 +36,7 @@ import Liquidation from './Forms/Liquidation';
 import Waiver from './Forms/Waiver';
 import LocalOffCampus from './Forms/LocalOffCampus';
 import MySubmissions from './OrgMems/MySubmissions'; // Import the new page
+import Footer from './Components/footer';
 
 const App = () => {
    // Initialize state with user and role
@@ -124,6 +125,7 @@ const App = () => {
           <Route path="*" element={<PageNotFound />} />
         </Routes>
       </div>
+      <Footer/>
     </Router>
   );
 };

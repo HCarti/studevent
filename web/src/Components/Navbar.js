@@ -65,6 +65,10 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   navigate('/'); // Redirect to login or home page
   };
 
+  const handleProfileClick = () => {
+    navigate('/orgprof'); // Redirect to login or home page
+    };
+
   const renderMenuItems = () => (
     <>
       <li>
@@ -147,6 +151,7 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
         <ul className="drawer-list">
           {renderMenuItems()}
           {isLoggedIn && (
+            
             <li className="drawer-list-item" onClick={handleLogoutClick}>Logout</li>
           )}
         </ul>
