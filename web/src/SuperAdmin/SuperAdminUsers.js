@@ -11,21 +11,23 @@ const SuperAdminUsers = () => {
   useEffect(() => {
     const fetchOrganizations = async () => {
       try {
+        const token = localStorage.getItem('token'); // Get the token from localStorage
         const response = await axios.get(
-          "https://studevent-server.vercel.app/api/users/organizations"
+          "https://studevent-server.vercel.app/api/users/organizations",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`, // Include the token in the request
+            },
+          }
         );
-        console.log("API Response:", response.data); // Log the entire response data
-        const filteredOrganizations = response.data.filter(
-          (user) => user.role === "Organization"
-        );
-        console.log("Filtered Organizations:", filteredOrganizations); // Log filtered organizations
-        setOrganizations(filteredOrganizations);
+        console.log("API Response:", response.data);
+        setOrganizations(response.data);
       } catch (error) {
         console.error("Error fetching organizations:", error);
       } finally {
         setLoading(false);
       }
-    };
+    };    
 
     fetchOrganizations();
   }, []);
