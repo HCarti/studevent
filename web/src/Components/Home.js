@@ -114,7 +114,7 @@ const Home = ({ handleLogin }) => {
                     <div className={`input-container ${isFocused ? 'input-focused' : ''}`}>
                       <Person2Icon />
                       <input
-                        className="inputEmail"
+                        className="homeinputEmail"
                         type="email"
                         placeholder="Email"
                         value={email}
@@ -128,7 +128,7 @@ const Home = ({ handleLogin }) => {
                     <div className={`input-container password-container ${passwordFocused ? 'input-focused' : ''}`}>
                       <LockIcon />
                       <input
-                        className="inputPass"
+                        className="homeinputPass"
                         type={showPassword ? 'text' : 'password'}
                         placeholder="Password"
                         value={password}
@@ -173,7 +173,6 @@ const Home = ({ handleLogin }) => {
           
         </div>
       </React.Fragment>
-     <Footer></Footer>
     </ParallaxProvider>
   );
 };
