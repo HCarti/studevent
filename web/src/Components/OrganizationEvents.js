@@ -170,7 +170,6 @@ const fetchForms = async () => {
           </Slider>
         </div>
       </div>
-      <Footer />
     </React.Fragment>
   );
 };

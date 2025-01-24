@@ -272,24 +272,32 @@ const Aap = () => {
       try {
         const response = await fetch('https://studevent-server.vercel.app/api/occupied-dates');
         const data = await response.json();
-        setOccupiedDates(data);
+        if (data && data.occupiedDates) {
+          setOccupiedDates(data.occupiedDates); // Ensure `occupiedDates` exists
+        } else {
+          console.error("Occupied dates data is undefined or malformed:", data);
+        }
       } catch (error) {
         console.error('Error fetching occupied dates:', error);
       }
     };
-
+    
+  
     fetchOccupiedDates();
   }, []);
+  
 
   const isOccupied = (date) => {
     const formattedDate = date.toISOString().split('T')[0]; // YYYY-MM-DD format
-    return occupiedDates.some(d => d.startDate === formattedDate || d.endDate === formattedDate);
+    return occupiedDates.includes(formattedDate); // Directly check if the formatted date is in the array
   };
+  
 
   // Adjust highlighting logic
   const getHighlightedDates = () => {
-    return occupiedDates.map(d => new Date(d.startDate));
+    return occupiedDates.map(d => new Date(d));
   };
+  
 
   const handleNext = () => {
     if (isSectionComplete()) {
