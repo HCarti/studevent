@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './Navbar.css';
 import StudeventLogo from '../Images/Studevent.png';
+import { FiLogOut } from "react-icons/fi";
+import { CgProfile } from "react-icons/cg";
 
 const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   const location = useLocation();
@@ -106,7 +108,8 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
               )}
           {accountMenuOpen && (
             <div className="account-dropdown-menu">
-              <div className="dropdown-item" onClick={handleLogoutClick}>Logout</div>
+              <div className="dropdown-item" onClick={handleProfileClick}> Profile <CgProfile className="navbar-icon" /></div>
+              <div className="dropdown-item" onClick={handleLogoutClick}> Log Out <FiLogOut className="navbar-icon1" /> </div>
             </div>
           )}
         </li>

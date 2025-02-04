@@ -59,14 +59,8 @@
  
   /* Hover effect */
   .navbar-menu-item:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+  
     color: #ffd900;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Add shadow on hover */
-  }
- 
-  /* Active state for current page */
-  .navbar-menu-item.active {  
-    color: #ffd900; /* Change text color for active state */
   }
  
   /* Profile Picture */
@@ -137,9 +131,6 @@
     color: black;
   }
  
-  .drawer-list-item:hover {
-    background-color: #f9f9f9;
-  }
  
   /* Account Dropdown Menu */
   .menu {
@@ -171,28 +162,53 @@
 
   .account-dropdown {
     position: relative;
-    display: inline-block;
-  }
+    display: flex; /* Ensures better alignment */
+    align-items: center;
+    justify-content: center;
+}
   
   .account-dropdown-menu {
-    display: block;
+    display: flex; /* Hidden by default */
     position: absolute;
-    right: 0;
-    top: 100%;
+    flex-direction: column;
+    width: 180px;
+    align-items: center;
+    right: 20px; /* Align properly under the profile pic */
+    top: 60px; /* Increased from 45px to 55px to avoid overlap */
     background-color: white;
-    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
-    z-index: 2;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 2000;
     padding: 10px;
-  }
+    border-radius: 8px; /* Keep it clean */
+}
   
-  .account-dropdown-menu .dropdown-item {
-    padding: 10px;
-    cursor: pointer;
-  }
-  
-  .account-dropdown-menu .dropdown-item:hover {
-    background-color: #f1f1f1;
-  }
+.account-dropdown-menu.open {
+  display: block;
+}
+
+.account-dropdown-menu .dropdown-item {
+  padding: 6px 12px; /* Reduced padding */
+  cursor: pointer;
+  font-weight: 500;
+  color: #333; /* Ensuring text is dark */
+  display: flex;
+  align-items: center;
+  gap: 76px;
+}
+
+.account-dropdown-menu .dropdown-item:hover {
+  background-color: #f1f1f1;
+  border-radius: 10px;
+}
+
+.navbar-icon{
+  font-size: 24px !important; /* Adjust size as needed */
+  margin-left: 8px;
+}
+
+.navbar-icon1{
+  font-size: 24px !important; /* Adjust size as needed */
+}
   
  
   /* Mobile Menu Icon */

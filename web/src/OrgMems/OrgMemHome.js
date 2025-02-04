@@ -88,10 +88,6 @@ const OrgMemHome = () => {
     navigate('/calendar');
   };
 
-  const handleProfileClick = () => {
-    handleButtonClick('profile');
-    navigate('/orgprof');
-  };
 
   return (
     <ParallaxProvider>
@@ -105,10 +101,6 @@ const OrgMemHome = () => {
           <div className={`menu-item ${clickedButton === 'events' ? 'active' : ''}`} onClick={handleEventsClick}>
             <FaRegCalendarAlt className="menu-icon" />
             <h3>Calendar</h3>
-          </div>
-          <div className={`menu-item ${clickedButton === 'profile' ? 'active' : ''}`} onClick={handleProfileClick}>
-            <IoPersonCircleOutline className="menu-icon" />
-            <h3>Profile</h3>
           </div>
           <div className={`menu-item ${clickedButton === 'forms' ? 'active' : ''}`} onClick={handleFormsClick}>
             <FaWpforms className="menu-icon" />

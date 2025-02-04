@@ -114,10 +114,6 @@ const AdminHome = () => {
               <FaWpforms className="menu-icon" />
               <h3>Forms/Signature</h3>
             </div>
-            <div className={`menu-item ${clickedButton === 'profile' ? 'active' : ''}`} onClick={handleProfileClick}>
-              <IoPersonCircleOutline className="menu-icon" />
-              <h3>Profile</h3>
-            </div>
             <div className={`menu-item ${clickedButton === 'dashboard' ? 'active' : ''}`} onClick={handleDashboardClick}>
               <IoSpeedometerOutline className="menu-icon" />
               <h3>Dashboard</h3>

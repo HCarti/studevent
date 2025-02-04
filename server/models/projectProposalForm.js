@@ -8,9 +8,18 @@ const mongoose = require('mongoose');
 // });
 
 const projectProposalSchema = new mongoose.Schema({
+
+//Event Details
     projectTitle: { type: String,  required: true },
     projectDescription: { type: String,  required: true },
-    objectives: { type: String,  required: true },
+    projectObjectives: { type: String,  required: true },
+    Date: { type: Date, required: true },
+    Time: {type: Number , required: true},
+    Platform: {type: String, required: true},
+    targetParticipants: {type: String, required: true},
+
+//Project Guidelines
+    
 
     // currentStep: { type: Number, default: 0 }, // Tracks the current stage index
     // reviewStages: [reviewStageSchema], // Holds details of each reviewer's status

@@ -1,12 +1,16 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import axios from 'axios';
 import './Liquidation.css';
 import moment from 'moment';
+import { FaCheck } from 'react-icons/fa'; // Import check icon from react-icons
 import { Document, Page, Text, View, StyleSheet, Image, PDFDownloadLink } from "@react-pdf/renderer";
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
 import NU_logo from "../Images/NU_logo.png";
 import { useNavigate } from 'react-router-dom';
+import { MdOutlineContactPage } from "react-icons/md";
 
-const AapPDF = ({ formData }) => (
+const LiquidationPDF = ({ formData }) => (
   <Document>
     <Page style={styles.body}>
       {/* Logo and Header */}
@@ -199,10 +203,10 @@ const AapPDF = ({ formData }) => (
 const Liquidation = () => {
   const [formData, setFormData] = useState({
     eventLocation: "",
-    applicationDate: "",
-    studentOrganization: "",
+    applicationDate: new Date().toISOString().split('T')[0], // Sets today's date in YYYY-MM-DD format
+    studentOrganization: "", // Ensure this is an ObjectId or can be handled as one
     contactPerson: "",
-    contactNo: "",
+    contactNo: "", // Contact number as string to prevent issues with leading zeros
     emailAddress: "",
     eventTitle: "",
     eventType: "",
@@ -210,18 +214,17 @@ const Liquidation = () => {
     eventStartDate: "",
     eventEndDate: "",
     organizer: "",
-    budgetAmount: "",
+    budgetAmount: "", // Use a number input, but store as string and convert when submitting
     budgetFrom: "",
     coreValuesIntegration: "",
     objectives: "",
-    marketing: false,
-    collaterals: false,
-    pressRelease: false,
+    marketingCollaterals: "",
+    pressRelease: "",
     others: "",
-    eventFacilities: false,
-    holdingArea: false,
-    toilets: false,
-    transportation: false,
+    eventFacilities: "",
+    holdingArea: "",
+    toilets: "",
+    transportationandParking: "",
     more: "",
     licensesRequired: "",
     houseKeeping: "",
@@ -235,8 +238,16 @@ const Liquidation = () => {
     weather: ""
   });
 
-  const [formSent, setFormSent] = useState(false); 
+  const [currentStep, setCurrentStep] = useState(0);
+  const [formSent, setFormSent] = useState(false);
   const [eventId, setEventId] = useState(null);
+  const [notificationVisible, setNotificationVisible] = useState(false); // State to control notification visibility
+
+  const Notification = ({ message }) => (
+    <div className="notification">
+      {message}
+    </div>
+  );
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -246,487 +257,467 @@ const Liquidation = () => {
     });
   };
 
+  const [occupiedDates, setOccupiedDates] = useState([]);
+
+  const handleDateChange = (date, field) => {
+    setFormData(prevData => ({
+      ...prevData,
+      [field]: date.toISOString(), // Store as ISO string for backend compatibility
+    }));
+  };
+
+  useEffect(() => {
+    // Fetch occupied dates from backend
+    const fetchOccupiedDates = async () => {
+      try {
+        const response = await fetch('https://studevent-server.vercel.app/api/occupied-dates');
+        const data = await response.json();
+        if (data && data.occupiedDates) {
+          setOccupiedDates(data.occupiedDates); // Ensure `occupiedDates` exists
+        } else {
+          console.error("Occupied dates data is undefined or malformed:", data);
+        }
+      } catch (error) {
+        console.error('Error fetching occupied dates:', error);
+      }
+    };
+    
+  
+    fetchOccupiedDates();
+  }, []);
+  
+
+  const isOccupied = (date) => {
+    const formattedDate = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+    return occupiedDates.includes(formattedDate); // Directly check if the formatted date is in the array
+  };
+  
+
+  // Adjust highlighting logic
+  const getHighlightedDates = () => {
+    return occupiedDates.map(d => new Date(d));
+  };
+  
+
+  const handleNext = () => {
+    if (isSectionComplete()) {
+      setCurrentStep(currentStep + 1);
+    } else {
+      alert("Please complete all required fields in this section before proceeding.");
+    }
+  };
+
+  
+  const isSectionComplete = (step) => {
+    const requiredFields = getFieldsForStep(step);
+    for (const field of requiredFields) {
+      if (!formData[field]) return false;
+    }
+    return true;
+  };
+  
+  const getFieldsForStep = (step) => {
+    const sections = [
+      ['eventLocation', 'applicationDate'],
+      ['studentOrganization', 'contactPerson', 'contactNo', 'emailAddress'],
+      [
+        'eventTitle', 'eventType', 'venueAddress', 'eventStartDate', 'eventEndDate', 'organizer',
+        'budgetAmount', 'budgetFrom', 'coreValuesIntegration', 'objectives', 'marketingCollaterals',
+        'pressRelease', 'others', 'eventFacilities', 'holdingArea', 'toilets', 'transportationandParking',
+        'more', 'licensesRequired', 'houseKeeping', 'wasteManagement'
+      ],
+      ['eventManagementHead', 'eventCommitteesandMembers'],
+      ['health', 'safetyAttendees', 'emergencyFirstAid', 'fireSafety', 'weather']
+    ];
+    return sections[step] || [];
+  };
+
+   // Fetch the logged-in user's organization name on component mount
+    // Pre-fill `studentOrganization` with `organizationName` if logged in user is an organization
+    useEffect(() => {
+      const userData = JSON.parse(localStorage.getItem('user'));
+      if (userData) {
+        setFormData(prevData => ({
+          ...prevData,
+          studentOrganization: userData.role === 'Organization' ? userData.organizationName || "" : "",
+          emailAddress: userData.email || "",
+          applicationDate: new Date().toISOString().split('T')[0] // Always sets today's date
+        }));
+      }
+    }, []);
+    
+    
+
   const handleSubmit = async () => {
-    // Validate required fields
     const requiredFields = [
-      'eventLocation', 'applicationDate', 'studentOrganization', 
-      'contactPerson', 'contactNo', 'emailAddress', 'eventTitle', 
-      'eventType', 'venueAddress', 'eventStartDate', 'eventEndDate', 
-      'organizer', 'budgetAmount', 'budgetFrom', 
-      'coreValuesIntegration', 'objectives', 'marketingCollaterals', 
-      'pressRelease', 'others', 'eventFacilities', 
-      'holdingArea', 'toilets', 'transportationandParking', 'more', 
-      'licensesRequired', 'houseKeeping', 'wasteManagement',
-      'eventManagementHead', 'eventCommitteesandMembers', 'health', 
-      'safetyAttendees', 'emergencyFirstAid', 'fireSafety', 'weather'
-  ];
+      'eventLocation', 'applicationDate', 'studentOrganization', 'contactPerson', 'contactNo', 'emailAddress', 
+      'eventTitle', 'eventType', 'venueAddress', 'eventStartDate', 'eventEndDate', 'organizer', 'budgetAmount', 
+      'budgetFrom', 'coreValuesIntegration', 'objectives', 'marketingCollaterals', 'pressRelease', 'others', 'eventFacilities', 
+      'holdingArea', 'toilets', 'transportationandParking', 'more', 'licensesRequired', 'houseKeeping', 'wasteManagement', 
+      'eventManagementHead', 'eventCommitteesandMembers', 'health', 'safetyAttendees', 'emergencyFirstAid', 
+      'fireSafety', 'weather'
+    ];
 
     for (const field of requiredFields) {
-        if (!formData[field]) {
-            alert(`${field} is required.`);
-            return; // Stop submission if any field is empty
-        }
+      if (!formData[field]) {
+        alert(`${field} is required.`);
+        return;
+      }
     }
 
-    // Ensure valid dates and calculate event length
     const eventStart = moment(formData.eventStartDate);
     const eventEnd = moment(formData.eventEndDate);
+
     if (!eventStart.isValid() || !eventEnd.isValid()) {
-        alert("Invalid event start or end date.");
-        return;
+      alert("Invalid event start or end date.");
+      return;
     }
 
     if (eventEnd.isBefore(eventStart)) {
-        alert("End date must be after the start date.");
-        return;
+      alert("End date must be after the start date.");
+      return;
     }
 
-    // Include all formData fields in the request payload
+    const token = localStorage.getItem('token'); // Ensure you have previously set this during login
+
+    if (!token) {
+      alert('Authentication token not found. Please log in again.');
+      return;
+    }
+
+    console.log('Token:', token); // Check if token is defined
+
+
+    // Convert fields to expected data types for the backend schema
     const eventData = {
-        ...formData,
-        length: eventEnd.diff(eventStart, 'hours') // Add calculated event length
+      ...formData,
+      eventLocation: formData.eventLocation,
+      applicationDate: new Date(formData.applicationDate),
+      studentOrganization: formData.studentOrganization, // Ensure this field is properly formatted as an ObjectId or handled by the backend
+      contactPerson: formData.contactPerson,
+      contactNo: Number(formData.contactNo), // Ensure it's converted to a number if necessary
+      emailAddress: formData.emailAddress,
+      eventTitle: formData.eventTitle,
+      eventType: formData.eventType,
+      venueAddress: formData.venueAddress,
+      eventStartDate: new Date(formData.eventStartDate), // Convert to Date object
+      eventEndDate: new Date(formData.eventEndDate), // Convert to Date object
+      organizer: formData.organizer,
+      budgetAmount: Number(formData.budgetAmount), // Convert to number
+      budgetFrom: formData.budgetFrom,
+      coreValuesIntegration: formData.coreValuesIntegration,
+      objectives: formData.objectives,
+      marketingCollaterals: formData.marketingCollaterals,
+      pressRelease: formData.pressRelease,
+      others: formData.others,
+      eventFacilities: formData.eventFacilities,
+      holdingArea: formData.holdingArea,
+      toilets: formData.toilets,
+      transportationandParking: formData.transportationandParking,
+      more: formData.more,
+      licensesRequired: formData.licensesRequired,
+      houseKeeping: formData.houseKeeping,
+      wasteManagement: formData.wasteManagement,
+      eventManagementHead: formData.eventManagementHead,
+      eventCommitteesandMembers: formData.eventCommitteesandMembers,
+      health: formData.health,
+      safetyAttendees: formData.safetyAttendees,
+      emergencyFirstAid: formData.emergencyFirstAid,
+      fireSafety: formData.fireSafety,
+      weather: formData.weather,
+      length: moment(formData.eventEndDate).diff(moment(formData.eventStartDate), 'hours') // Calculate event length in hours
     };
+    
 
     try {
-        // Send form data to the correct API endpoint
-        const response = await fetch('https://studevent-server.vercel.app/api/forms', { // Updated endpoint to match the forms backend
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(eventData),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error('Error submitting form:', errorData);
-            alert(`Error: ${errorData.error || 'Submission failed'}`);
-            return;
+      const response = await fetch('https://studevent-server.vercel.app/api/forms', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`, // Uncomment if needed
+        },
+        body: JSON.stringify(eventData),
+      });
+    
+      if (!response.ok) {
+        // Check if the response is JSON before trying to parse it
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          alert(`Error: ${errorData.error || 'Submission failed'}`);
+        } else {
+          const text = await response.text();
+          alert(`Error: ${text}`);
         }
+        return;
+      }
+    
+      const result = await response.json();
+    
+      if (result._id) {
+        setEventId(result._id);
+      }
+      setFormSent(true);
 
-        const result = await response.json();
-        console.log('Form submitted successfully:', result);
-        
-        // Get the form Object ID
-        const formId = result._id; // Assuming the response contains an ID
-        setEventId(formId); // Set the form ID
-        console.log('Form Object ID:', formId);
-        alert('Form submitted successfully!');
-        setFormSent(true); // Update form submission state
-
+      setFormSent(true); // Mark form as submitted
+      setNotificationVisible(true); // Show notification
+      setTimeout(() => {
+        setNotificationVisible(false); // Hide notification after 3 seconds
+      }, 3000);
+    
+      // Reset form data
+      setFormData({
+        eventLocation: "",
+        applicationDate: "",
+        studentOrganization: "",
+        contactPerson: "",
+        contactNo: "",
+        emailAddress: "",
+        eventTitle: "",
+        eventType: "",
+        venueAddress: "",
+        eventStartDate: "",
+        eventEndDate: "",
+        organizer: "",
+        budgetAmount: "",
+        budgetFrom: "",
+        coreValuesIntegration: "",
+        objectives: "",
+        marketingCollaterals: "",
+        pressRelease: "",
+        others: "",
+        eventFacilities: "",
+        holdingArea: "",
+        toilets: "",
+        transportationandParking: "",
+        more: "",
+        licensesRequired: "",
+        houseKeeping: "",
+        wasteManagement: "",
+        eventManagementHead: "",
+        eventCommitteesandMembers: "",
+        health: "",
+        safetyAttendees: "",
+        emergencyFirstAid: "",
+        fireSafety: "",
+        weather: ""
+      });
+    
     } catch (error) {
-        console.error('Error:', error);
-        alert('An error occurred while submitting the form.');
+      console.error('Error:', error);
+      alert('An error occurred while submitting the form.');
     }
-};
+  };    
 
 
-  
-  
-  return (
-    <div className="form-ubox-5">
-      <div className="inner-forms-5">
-        <h1>Liquidationa</h1>
-
-          {/* Event Location and Date */}
-            <div className="top-event">
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 0:
+        return (
           <div>
             <label>Event Location:</label>
-              <select
-               name="eventLocation"
-               value={formData.eventLocation}
-               onChange={handleChange}>
-              <option value="selectoption">Select An Option...</option>
+            <select name="eventLocation" value={formData.eventLocation} onChange={handleChange}>
+              <option value="">Select An Option...</option>
               <option value="On Campus">On Campus</option>
               <option value="Off Campus">Off Campus</option>
-              
-                </select>
-              </div>
-          <div>
+            </select>
+
             <label>Date of Application:</label>
             <input
-              type="date"
-              name="applicationDate"
-              value={formData.applicationDate}
-              onChange={handleChange}
-              />
+            type="date"
+            name="applicationDate"
+            value={formData.applicationDate}
+            readOnly
+          />
           </div>
-            </div>
+        );
 
-          {/* Contact Information */}
-        <div className="form-group-activity">Contact Information</div>
+      case 1:
+        return (
           <div>
             <label>Student Organization:</label>
             <input
               type="text"
               name="studentOrganization"
               value={formData.studentOrganization}
-              onChange={handleChange}
+              readOnly
             />
-          </div>
 
-          <div>
             <label>Contact Person:</label>
-            <input
-              type="text"
-              name="contactPerson"
-              value={formData.contactPerson}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div>
+            <input type="text" name="contactPerson" value={formData.contactPerson} onChange={handleChange} />
             <label>Contact No:</label>
-            <input
-              type="text"
-              name="contactNo"
-              value={formData.contactNo}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
+            <input type="text" name="contactNo" value={formData.contactNo} onChange={handleChange} />
             <label>Email Address:</label>
             <input
               type="email"
               name="emailAddress"
               value={formData.emailAddress}
-              onChange={handleChange}
+              readOnly
             />
           </div>
+        );
 
-          {/* Event Details */}
-          <div className="form-group-activity">Event Details</div>
+      case 2:
+        return (
           <div>
             <label>Event Title:</label>
-            <input
-              type="text"
-              name="eventTitle"
-              value={formData.eventTitle}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
+            <input type="text" name="eventTitle" value={formData.eventTitle} onChange={handleChange} />
             <label>Event Type:</label>
-              <select
-               name="eventType"
-               value={formData.eventType}
-               onChange={handleChange}>
-              <option value="Selectoption">Select An Option...</option>
+            <select name="eventType" value={formData.eventType} onChange={handleChange}>
+              <option value="">Select An Option...</option>
               <option value="Student Organization Activity">Student Organization Activity</option>
               <option value="Special Event">Special Event</option>
               <option value="University/School Activity">University/School Activity</option>
               <option value="Other">Other</option>
-                </select>
-              </div>
+            </select>
 
-          <div>
             <label>Venue Address:</label>
-            <input
-              type="text"
-              name="venueAddress"
-              value={formData.venueAddress}
-              onChange={handleChange}
+            <input type="text" name="venueAddress" value={formData.venueAddress} onChange={handleChange} />
+            <label>Event Start Date:</label>
+            <DatePicker
+              selected={formData.eventStartDate ? new Date(formData.eventStartDate) : null}
+              onChange={(date) => handleDateChange(date, 'eventStartDate')}
+              minDate={new Date()}
+              highlightDates={getHighlightedDates()}
+              dayClassName={date => isOccupied(date) ? 'occupied' : 'available'}
+              dateFormat="yyyy-MM-dd HH:mm"
+              showTimeSelect
             />
-          </div>
-          <div className="event-dates">
-              <div>
-                <label>Event Start Date:</label>
-                <input
-                  type="datetime-local"  // Changed to datetime-local to capture both date and time
-                  name="eventStartDate"
-                  value={formData.eventStartDate}
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div>
-                <label>Event End Date:</label>
-                <input
-                  type="datetime-local"  // Changed to datetime-local for end date as well
-                  name="eventEndDate"
-                  value={formData.eventEndDate}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-
-
-          <div>
+            <label>Event End Date:</label>
+            <DatePicker
+              selected={formData.eventEndDate ? new Date(formData.eventEndDate) : null}
+              onChange={(date) => handleDateChange(date, 'eventEndDate')}
+              minDate={new Date()}
+              highlightDates={getHighlightedDates()}
+              dayClassName={date => isOccupied(date) ? 'occupied' : 'available'}
+              dateFormat="yyyy-MM-dd HH:mm"
+              showTimeSelect
+            />
             <label>Organizer:</label>
-            <input
-              type="text"
-              name="organizer"
-              value={formData.organizer}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
+            <input type="text" name="organizer" value={formData.organizer} onChange={handleChange} />
             <label>Budget Amount:</label>
-            <input
-              type="text"
-              name="budgetAmount"
-              value={formData.budgetAmount}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
+            <input 
+            type="number" 
+            name="budgetAmount" 
+            value={formData.budgetAmount} 
+            onChange={handleChange} 
+            required
+          />
             <label>Budget From:</label>
-              <select
-               name="budgetFrom"
-               value={formData.budgetFrom}
-               onChange={handleChange}>
-              <option value="Selectoption">Select An Option...</option>
+            <select name="budgetFrom" value={formData.budgetFrom} onChange={handleChange}>
+              <option value="">Select An Option...</option>
               <option value="College/Department">College/Department</option>
-              <option value="Org">Org</option>
+              <option value="Org">Organization</option>
               <option value="SDAO">SDAO</option>
-                </select>
-              </div>
+            </select>
 
-          {/* Core Values Integration */}
-          <div>
             <label>Core Values Integration:</label>
-            <textarea
-            style={{resize:'none',
-              overflow:'hidden'
-            }}
-              name="coreValuesIntegration"
-              value={formData.coreValuesIntegration}
-              onChange={handleChange}
-            />
-          </div>
-
-          {/* Objectives */}
-          <div>
+            <textarea name="coreValuesIntegration" value={formData.coreValuesIntegration} onChange={handleChange} />
             <label>Objectives:</label>
-            <textarea
-              style={{resize:'none'
-                ,overflow:'hidden'
-              }} 
-              name="objectives"
-              value={formData.objectives}
-              onChange={handleChange}
-            />
-          </div>
+            <textarea name="objectives" value={formData.objectives} onChange={handleChange} />
 
-          {/* Communications and Promotions */}
-          <div>
+            <h3 className="communications">COMMUNICATIONS AND PROMOTIONS REQUIRED</h3>
             <label>Marketing Collaterals:</label>
-            <input
-              type="text"
-              name="marketingCollaterals"
-              checked={formData.marketingCollaterals}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
+            <input type="text" name="marketingCollaterals" value={formData.marketingCollaterals} onChange={handleChange} />
             <label>Press Release:</label>
-            <input
-              type="text"
-              name="pressRelease"
-              checked={formData.pressRelease}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
+            <input type="text" name="pressRelease" value={formData.pressRelease} onChange={handleChange} />
             <label>Others:</label>
-            <input
-              type="text"
-              name="others"
-              value={formData.others}
-              onChange={handleChange}
-            />
-          </div>
+            <input type="text" name="others" value={formData.others} onChange={handleChange} />
 
-          {/* Facilities Considerations */}
-          <div>
+            <h3>Facilities Considerations</h3>
             <label>Event Facilities:</label>
-            <input
-              type="text"
-              name="eventFacilities"
-              checked={formData.eventFacilities}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
+            <input type="text" name="eventFacilities" value={formData.eventFacilities} onChange={handleChange} />
             <label>Holding Area:</label>
-            <input
-              type="text"
-              name="holdingArea"
-              checked={formData.holdingArea}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
+            <input type="text" name="holdingArea" value={formData.holdingArea} onChange={handleChange} />
             <label>Toilets:</label>
-            <input
-              type="text"
-              name="toilets"
-              checked={formData.toilets}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
+            <input type="text" name="toilets" value={formData.toilets} onChange={handleChange} />
             <label>Transportation & Parking:</label>
-            <input
-              type="text"
-              name="transportationandParking"
-              checked={formData.transportationandParking}
-              onChange={handleChange}
-            />
-          </div>
-          <div>
-            <label>Others:</label>
-            <input
-              type="text"
-              name="more" 
-              value={formData.more}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
+            <input type="text" name="transportationandParking" value={formData.transportationandParking} onChange={handleChange} />
+            <label>Other Facilities:</label>
+            <input type="text" name="more" value={formData.more} onChange={handleChange} />
             <label>Licenses Required:</label>
-            <input
-              type="text"
-              name="licensesRequired"
-              checked={formData.licensesRequired}
-              onChange={handleChange}
-            />
-          </div>
-          <div>
-            <label>HouseKeeping:</label>
-            <input
-              type="text"
-              name="houseKeeping"
-              checked={formData.houseKeeping}
-              onChange={handleChange}
-            />
-          </div>
-          <div>
+            <input type="text" name="licensesRequired" value={formData.licensesRequired} onChange={handleChange} />
+            <label>Housekeeping:</label>
+            <input type="text" name="houseKeeping" value={formData.houseKeeping} onChange={handleChange} />
             <label>Waste Management:</label>
-            <input
-              type="text"
-              name="wasteManagement"
-              checked={formData.wasteManagement}
-              onChange={handleChange}
-            />
+            <input type="text" name="wasteManagement" value={formData.wasteManagement} onChange={handleChange} />
           </div>
+        );
 
-          {/* Event Management Team */}
-          <div className="form-group-activity">Event Management Team</div>
+      case 3:
+        return (
           <div>
             <label>Event Management Head:</label>
-            <input
-              type="text"
-              name="eventManagementHead"
-              value={formData.eventManagementHead}
-              onChange={handleChange}
-            />
+            <input type="text" name="eventManagementHead" value={formData.eventManagementHead} onChange={handleChange} />
+            <label>Event Committees & Members:</label>
+            <input type="text" name="eventCommitteesandMembers" value={formData.eventCommitteesandMembers} onChange={handleChange} />
           </div>
+        );
 
-          <div>
-  <label>Event Committees & Members:</label>
-  <input
-    type="text"
-    name="eventCommitteesandMembers"  // Use uppercase 'M' to match the PDF
-    value={formData.eventCommitteesandMembers}
-    onChange={handleChange}
-  />
-</div>
-
-          {/* Risk Assessments */}
+      case 4:
+        return (
           <div>
             <label>Health:</label>
-            <textarea
-              style={{resize:'none',
-                overflow:'hidden'
-              }}
-              name="health"
-              value={formData.health}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
+            <textarea name="health" value={formData.health} onChange={handleChange} />
             <label>Safety of Attendees:</label>
-            <textarea
-              style={{resize:'none',
-                overflow:'hidden'
-              }}
-              name="safetyAttendees"
-              value={formData.safetyAttendees}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
+            <textarea name="safetyAttendees" value={formData.safetyAttendees} onChange={handleChange} />
             <label>Emergency/First Aid:</label>
-            <textarea
-              style={{resize:'none',
-                overflow:'hidden'
-              }}
-              name="emergencyFirstAid"
-              value={formData.emergencyFirstAid}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
+            <textarea name="emergencyFirstAid" value={formData.emergencyFirstAid} onChange={handleChange} />
             <label>Fire Safety:</label>
-            <textarea
-              style={{resize:'none'
-                ,overflow:'hidden'
-              }}
-              name="fireSafety"
-              value={formData.fireSafety}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
+            <textarea name="fireSafety" value={formData.fireSafety} onChange={handleChange} />
             <label>Weather:</label>
-            <textarea
-              style={{resize:'none'
-                ,overflow:'hidden'
-              }}
-              name="weather"
-              value={formData.weather}
-              onChange={handleChange}
-            />
+            <textarea name="weather" value={formData.weather} onChange={handleChange} />
           </div>
+        );
 
+      default:
+        return <div>Unknown step</div>;
+    }
+  };
 
-          {/* Send to SDAO button */}
-          <div className="pdf-container">
-            <button
-            onClick={handleSubmit}
-            style={{
-              padding: '10px 15px',
-              backgroundColor: '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
-            Send to SDAO
-          </button>
+    return (
+      <div className="form-ubox-1">
+         {notificationVisible && <Notification message="Form submitted successfully!" />}
+        <div className="sidebar">
+          <ul>
+            <li className={currentStep === 0 ? 'active' : ''}>
+              {isSectionComplete(0) ? <FaCheck className="check-icon green" /> : null}
+              Event Specifics
+            </li>
+            <li className={currentStep === 1 ? 'active' : ''}>
+              {isSectionComplete(1) ? <FaCheck className="check-icon green" /> : null}
+              Organization Info
+            </li>
+            <li className={currentStep === 2 ? 'active' : ''}>
+              {isSectionComplete(2) ? <FaCheck className="check-icon green" /> : null}
+              Event Details
+            </li>
+            <li className={currentStep === 3 ? 'active' : ''}>
+              {isSectionComplete(3) ? <FaCheck className="check-icon green" /> : null}
+              Event Management Team
+            </li>
+            <li className={currentStep === 4 ? 'active' : ''}>
+              {isSectionComplete(4) ? <FaCheck className="check-icon green" /> : null}
+              Risk Assessments
+            </li>
+          </ul>
         </div>
-        {/* Show a notification when the form is sent */}
-        {formSent && <p>Form successfully sent to the SDAO!</p>}  {/* <-- Add this */}
+        <div className="inner-forms-1">
+          <h1>Liquidation</h1>
+          {renderStepContent()}
+          <div className="form-navigation">
+            {currentStep > 0 && (
+              <button onClick={() => setCurrentStep(currentStep - 1)}>Back</button>
+            )}
+            {currentStep < 4 ? (
+              <button onClick={handleNext}>Next</button>
+            ) : (
+              <button onClick={handleSubmit}>Submit</button>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
 };
 
 const styles = StyleSheet.create({
