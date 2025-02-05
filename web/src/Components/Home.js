@@ -8,8 +8,6 @@ import LockIcon from '@mui/icons-material/Lock';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import NU_logo from '../Images/NU_logo.png';
-import Footer from './footer';
-
 
 const Home = ({ handleLogin }) => {
   const [email, setEmail] = useState('');
@@ -20,6 +18,9 @@ const Home = ({ handleLogin }) => {
   const [passwordFocused, setPasswordFocused] = useState(false)
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -55,7 +56,8 @@ const Home = ({ handleLogin }) => {
   
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(''); // Clear any previous errors
+    setSuccessMessage(''); // Clear previous success messages
+    setErrorMessage(''); // Clear previous error messages
 
     const data = { email, password };
     try {
@@ -65,32 +67,32 @@ const Home = ({ handleLogin }) => {
 
         const { token, data: user } = response.data;
 
-        // Check if token or user data is missing
         if (!token || !user) {
             console.error("Token or user data is missing in the response");
-            setError("Login failed. Please check your credentials.");
+            setErrorMessage("Login failed. Please check your credentials.");
             return;
         }
 
-        // Store both token and user data in localStorage as a single object
         const userData = { token, user };
         localStorage.setItem('userData', JSON.stringify(userData));
         localStorage.setItem('token', token);
 
         console.log('User data successfully stored in localStorage:', userData);
 
-        // Update the local state with the user data and handle login
         setUser(user);
         handleLogin(user);
 
-        // Set default authorization header for future axios requests
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        // Set success message
+        setSuccessMessage("Login successful! Redirecting...");
 
     } catch (error) {
         console.error("Login error:", error.response ? error.response.data : error.message);
-        setError('Invalid email or password.');
+        setErrorMessage('Invalid email or password.');
     }
 };
+
 
   
   
@@ -104,6 +106,7 @@ const Home = ({ handleLogin }) => {
     <ParallaxProvider>
       <React.Fragment>
         <div className="parallax-container">
+          
           {/* Parallax Section 1 */}
           <Parallax className="parallax-bg" y={[-20, 20]} tagOuter="div">
             <div className="parallax-section one">
@@ -111,38 +114,36 @@ const Home = ({ handleLogin }) => {
                 <div id="loginBox" className="login-box">
                   <h2>LOG IN TO YOUR ACCOUNT</h2>
                   <form onSubmit={handleSubmit}>
-                    <div className={`input-container ${isFocused ? 'input-focused' : ''}`}>
-                      <Person2Icon />
-                      <input
-                        className="homeinputEmail"
-                        type="email"
-                        placeholder="Email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        onFocus={() => setIsFocused(true)}
-                        onBlur={() => setIsFocused(false)}
-                        required
-                      />
-                    </div>
+                           <div className={`input-container ${isFocused ? 'input-focused' : ''}`}>
+                            <Person2Icon />
+                            <input
+                                className="homeinputEmail"
+                                type="email"
+                                placeholder="Email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                onFocus={() => setIsFocused(true)}
+                                onBlur={() => setIsFocused(false)}
+                                required
+                            />
+                        </div>
 
-                    <div className={`input-container password-container ${passwordFocused ? 'input-focused' : ''}`}>
-                      <LockIcon />
-                      <input
-                        className="homeinputPass"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        onFocus={() => setPasswordFocused(true)}
-                        onBlur={() => setPasswordFocused(false)}
-                        required
-                      />
-
-                    </div>
-
-                    <button type="submit" className="login-button">Log in</button>
-                    {error && <p className="error-message">{error}</p>}
-                  </form>
+              <div className={`input-container password-container ${passwordFocused ? 'input-focused' : ''}`}>
+                  <LockIcon />
+                  <input
+                      className="homeinputPass"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      onFocus={() => setPasswordFocused(true)}
+                      onBlur={() => setPasswordFocused(false)}
+                      required/>
+                        </div>
+                        <button type="submit" className="login-button">Log in</button>
+                        {successMessage && <p className="success-message">{successMessage}</p>}
+                        {errorMessage && <p className="error-message">{errorMessage}</p>}
+                    </form>
                 </div>
 
                 <div className="logo-container">

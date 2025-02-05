@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import './OrgProf.css';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -7,59 +7,47 @@ const OrgProf = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
-  const handlePassword = () => {
-    console.log("Password has been clicked");
-    navigate('/pass');
-  };
+  const handlePassword = () => navigate('/pass');
+
+  const fetchUserData = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/');
+        return;
+      }
+
+      const response = await axios.get('https://studevent-server.vercel.app/api/users/current', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setUser(response.data);
+    } catch (error) {
+      if (error.response?.status === 401) navigate('/');
+    }
+  }, [navigate]);
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        console.log('Token retrieved from localStorage:', token);
-        if (!token) {
-          console.error('No token found, redirecting to login.');
-          navigate('/');
-          return;
-        }
-
-        const response = await axios.get('https://studevent-server.vercel.app/api/users/current', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        console.log("User data response:", response.data);
-        setUser(response.data);
-      } catch (error) {
-        console.error('Error fetching user data:', error.response ? error.response.data : error.message);
-        if (error.response && error.response.status === 401) {
-          navigate('/');
-        }
-      }
-    };
-
     fetchUserData();
-  }, [navigate]);
+  }, [fetchUserData]);
 
   return (
     <div className="m-container">
-      <h2 style={{ color: '#3246a8' }}>PROFILE</h2>
       <div className="profile-container">
         <div className="profile-left">
-          <div 
+          <div
             className="profile-pic"
-            style={{ 
+            style={{
               backgroundImage: `url(${user?.logo || user?.image || '/default-profile.png'})`,
               backgroundSize: 'cover',
-              backgroundPosition: 'center' 
+              backgroundPosition: 'center'
             }}
-          ></div>
+          />
           <h2>{user?.role === 'Organization' ? user.organizationName : `${user?.firstName} ${user?.lastName}`}</h2>
           <p>{`Joined ${user?.joinedDate || "June 6, 2023"}`}</p>
         </div>
         <div className="profile-right">
           <h2>Account Information</h2>
-          <br />
           <form>
             {user?.role === 'Organization' ? (
               <>
