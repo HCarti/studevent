@@ -334,10 +334,17 @@ textarea {
   top: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: green;
   color: white;
   padding: 10px 20px;
   border-radius: 5px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   z-index: 1000;
+}
+
+.notification.success {
+  background-color: green;
+}
+
+.notification.error {
+  background-color: red;
 }

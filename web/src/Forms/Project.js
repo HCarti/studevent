@@ -318,33 +318,37 @@ const Project = () => {
   
   const getFieldsForStep = (step) => {
     const sections = [
-      ['eventLocation', 'applicationDate'],
-      ['studentOrganization', 'contactPerson', 'contactNo', 'emailAddress'],
+      ['projectTitle', 'projectDescription','objectives', 'date', 'time', 'venue', 'targetParticipants'],
       [
         'eventTitle', 'eventType', 'venueAddress', 'eventStartDate', 'eventEndDate', 'organizer',
         'budgetAmount', 'budgetFrom', 'coreValuesIntegration', 'objectives', 'marketingCollaterals',
         'pressRelease', 'others', 'eventFacilities', 'holdingArea', 'toilets', 'transportationandParking',
         'more', 'licensesRequired', 'houseKeeping', 'wasteManagement'
       ],
-      ['eventManagementHead', 'eventCommitteesandMembers'],
-      ['health', 'safetyAttendees', 'emergencyFirstAid', 'fireSafety', 'weather']
+      ['nameOfEvent', 'time2', 'segment'],
+      ['nameTL', 'desingatedOfficeTL', 'nameWC', 'designatedOfficeWC'],
+      ['taskList', 'designatedOfficeTD', 'deadline'],
+      ['pubicationMaterials', 'schedule'],
+      ['equipments', 'estimatedQuantity' ],
+      ['items', 'estimatedQuantity2', 'estimatedPerUnit', 'estimatedAmount'],
     ];
     return sections[step] || [];
   };
 
    // Fetch the logged-in user's organization name on component mount
+
     // Pre-fill `studentOrganization` with `organizationName` if logged in user is an organization
-    useEffect(() => {
-      const userData = JSON.parse(localStorage.getItem('user'));
-      if (userData) {
-        setFormData(prevData => ({
-          ...prevData,
-          studentOrganization: userData.role === 'Organization' ? userData.organizationName || "" : "",
-          emailAddress: userData.email || "",
-          applicationDate: new Date().toISOString().split('T')[0] // Always sets today's date
-        }));
-      }
-    }, []);
+    // useEffect(() => {
+    //   const userData = JSON.parse(localStorage.getItem('user'));
+    //   if (userData) {
+    //     setFormData(prevData => ({
+    //       ...prevData,
+    //       studentOrganization: userData.role === 'Organization' ? userData.organizationName || "" : "",
+    //       emailAddress: userData.email || "",
+    //       applicationDate: new Date().toISOString().split('T')[0] // Always sets today's date
+    //     }));
+    //   }
+    // }, []);
     
     
 
@@ -467,15 +471,15 @@ const Project = () => {
     
       // Reset form data
       setFormData({
-        eventLocation: "",
-        applicationDate: "",
-        studentOrganization: "",
-        contactPerson: "",
-        contactNo: "",
-        emailAddress: "",
-        eventTitle: "",
-        eventType: "",
-        venueAddress: "",
+        projectTitle: "",
+        projectDescription: "",
+        objectives: "",
+        date: "",
+        time: "",
+        venue: "",
+        targetParticipants: "",
+        projectGuidelines: "",
+        nameofEvent: "",
         eventStartDate: "",
         eventEndDate: "",
         organizer: "",
@@ -510,24 +514,100 @@ const Project = () => {
   };    
 
 
+  //case 2-7 handling
+  const [rows, setRows] = useState([{ id: 1, name: "", email: "" }]);
+
+    // Handle input change
+    const handleInputChange = (id, event) => {
+      const { name, value } = event.target;
+      setRows((prevRows) =>
+        prevRows.map((row) => (row.id === id ? { ...row, [name]: value } : row))
+      );
+    };
+  
+    // Add new row
+    const addRow = () => {
+      setRows([...rows, { id: Date.now(), name: "", email: "" }]);
+    };
+  
+    // Remove Name field
+    const removeName = (id) => {
+      setRows((prevRows) =>
+        prevRows.map((row) => {
+          if (row.id === id) {
+            const { name, ...rest } = row; // Remove 'name' field
+            return rest;
+          }
+          return row;
+        })
+      );
+    };
+  
+    // Remove Email field
+    const removeEmail = (id) => {
+      setRows((prevRows) =>
+        prevRows.map((row) => {
+          if (row.id === id) {
+            const { email, ...rest } = row; // Remove 'email' field
+            return rest;
+          }
+          return row;
+        })
+      );
+    };
+  
+    // Remove entire row
+    const removeRow = (id) => {
+      setRows(rows.filter((row) => row.id !== id));
+    };
+
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 0:
         return (
           <div>
-            <label>Event Location:</label>
-            <select name="eventLocation" value={formData.eventLocation} onChange={handleChange}>
-              <option value="">Select An Option...</option>
-              <option value="On Campus">On Campus</option>
-              <option value="Off Campus">Off Campus</option>
-            </select>
+            <label>Project Title:</label>
+            <input
+            type="text"
+            name="projectTitle"
+            value={formData.projectTitle}/>
 
-            <label>Date of Application:</label>
+            <label>Project Description:</label>
+            <input
+            type="text"
+            name="projectDescription"
+            value={formData.projectDescription}
+          />
+          <label>Objectives:</label>
+            <input
+            type="text"
+            name="objectives"
+            value={formData.objectives}
+          />
+          <label>Date:</label>
             <input
             type="date"
-            name="applicationDate"
-            value={formData.applicationDate}
-            readOnly
+            name="date"
+            value={formData.date}
+          />
+          <label>Time:</label>
+            <input
+            type="time"
+            name="time"
+            value={formData.time}
+          />
+          <label>Venue:</label>
+            <input
+            type="text"
+            name="venue"
+            value={formData.venue}
+          />
+          <label>Target Participants:</label>
+            <input
+            type="text"
+            name="targetParticipants"
+            value={formData.targetParticipants}
           />
           </div>
         );
@@ -535,24 +615,11 @@ const Project = () => {
       case 1:
         return (
           <div>
-            <label>Student Organization:</label>
+            <label>Project Guidelines:</label>
             <input
               type="text"
-              name="studentOrganization"
-              value={formData.studentOrganization}
-              readOnly
-            />
-
-            <label>Contact Person:</label>
-            <input type="text" name="contactPerson" value={formData.contactPerson} onChange={handleChange} />
-            <label>Contact No:</label>
-            <input type="text" name="contactNo" value={formData.contactNo} onChange={handleChange} />
-            <label>Email Address:</label>
-            <input
-              type="email"
-              name="emailAddress"
-              value={formData.emailAddress}
-              readOnly
+              name="projectGuidelines"
+              value={formData.projectGuidelines}
             />
           </div>
         );
@@ -560,115 +627,402 @@ const Project = () => {
       case 2:
         return (
           <div>
-            <label>Event Title:</label>
-            <input type="text" name="eventTitle" value={formData.eventTitle} onChange={handleChange} />
-            <label>Event Type:</label>
-            <select name="eventType" value={formData.eventType} onChange={handleChange}>
-              <option value="">Select An Option...</option>
-              <option value="Student Organization Activity">Student Organization Activity</option>
-              <option value="Special Event">Special Event</option>
-              <option value="University/School Activity">University/School Activity</option>
-              <option value="Other">Other</option>
-            </select>
+             <label>Name of Event:</label>
+                  <input 
+                    type="text" 
+                    name="nameofEvent" 
+                    value={formData.nameofEvent} 
+                    onChange={handleChange} 
+                  />
 
-            <label>Venue Address:</label>
-            <input type="text" name="venueAddress" value={formData.venueAddress} onChange={handleChange} />
-            <label>Event Start Date:</label>
-            <DatePicker
-              selected={formData.eventStartDate ? new Date(formData.eventStartDate) : null}
-              onChange={(date) => handleDateChange(date, 'eventStartDate')}
-              minDate={new Date()}
-              highlightDates={getHighlightedDates()}
-              dayClassName={date => isOccupied(date) ? 'occupied' : 'available'}
-              dateFormat="yyyy-MM-dd HH:mm"
-              showTimeSelect
-            />
-            <label>Event End Date:</label>
-            <DatePicker
-              selected={formData.eventEndDate ? new Date(formData.eventEndDate) : null}
-              onChange={(date) => handleDateChange(date, 'eventEndDate')}
-              minDate={new Date()}
-              highlightDates={getHighlightedDates()}
-              dayClassName={date => isOccupied(date) ? 'occupied' : 'available'}
-              dateFormat="yyyy-MM-dd HH:mm"
-              showTimeSelect
-            />
-            <label>Organizer:</label>
-            <input type="text" name="organizer" value={formData.organizer} onChange={handleChange} />
-            <label>Budget Amount:</label>
-            <input 
-            type="number" 
-            name="budgetAmount" 
-            value={formData.budgetAmount} 
-            onChange={handleChange} 
-            required
-          />
-            <label>Budget From:</label>
-            <select name="budgetFrom" value={formData.budgetFrom} onChange={handleChange}>
-              <option value="">Select An Option...</option>
-              <option value="College/Department">College/Department</option>
-              <option value="Org">Organization</option>
-              <option value="SDAO">SDAO</option>
-            </select>
-
-            <label>Core Values Integration:</label>
-            <textarea name="coreValuesIntegration" value={formData.coreValuesIntegration} onChange={handleChange} />
-            <label>Objectives:</label>
-            <textarea name="objectives" value={formData.objectives} onChange={handleChange} />
-
-            <h3 className="communications">COMMUNICATIONS AND PROMOTIONS REQUIRED</h3>
-            <label>Marketing Collaterals:</label>
-            <input type="text" name="marketingCollaterals" value={formData.marketingCollaterals} onChange={handleChange} />
-            <label>Press Release:</label>
-            <input type="text" name="pressRelease" value={formData.pressRelease} onChange={handleChange} />
-            <label>Others:</label>
-            <input type="text" name="others" value={formData.others} onChange={handleChange} />
-
-            <h3>Facilities Considerations</h3>
-            <label>Event Facilities:</label>
-            <input type="text" name="eventFacilities" value={formData.eventFacilities} onChange={handleChange} />
-            <label>Holding Area:</label>
-            <input type="text" name="holdingArea" value={formData.holdingArea} onChange={handleChange} />
-            <label>Toilets:</label>
-            <input type="text" name="toilets" value={formData.toilets} onChange={handleChange} />
-            <label>Transportation & Parking:</label>
-            <input type="text" name="transportationandParking" value={formData.transportationandParking} onChange={handleChange} />
-            <label>Other Facilities:</label>
-            <input type="text" name="more" value={formData.more} onChange={handleChange} />
-            <label>Licenses Required:</label>
-            <input type="text" name="licensesRequired" value={formData.licensesRequired} onChange={handleChange} />
-            <label>Housekeeping:</label>
-            <input type="text" name="houseKeeping" value={formData.houseKeeping} onChange={handleChange} />
-            <label>Waste Management:</label>
-            <input type="text" name="wasteManagement" value={formData.wasteManagement} onChange={handleChange} />
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Time</th>
+                        <th>Segment</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((row, index) => (
+                        <tr key={row.id}>
+                          <td>
+                            {row.name !== undefined && (
+                              <div className="input-container">
+                                <input
+                                  type="text"
+                                  name="name"
+                                  value={row.name}
+                                  onChange={(e) => handleInputChange(row.id, e)}
+                                />
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            {row.email !== undefined && (
+                              <div className="input-container">
+                                <input
+                                  type="email"
+                                  name="email"
+                                  value={row.email}
+                                  onChange={(e) => handleInputChange(row.id, e)}
+                                />
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            <div className="btn-group">
+                              <button className="icon-btn delete-btn" onClick={() => removeRow(row.id)}>
+                                ❌
+                              </button>
+                              {index === rows.length - 1 && (
+                                <button className="icon-btn add-btn" onClick={addRow}>
+                                  ➕
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
           </div>
         );
 
       case 3:
         return (
           <div>
-            <label>Event Management Head:</label>
-            <input type="text" name="eventManagementHead" value={formData.eventManagementHead} onChange={handleChange} />
-            <label>Event Committees & Members:</label>
-            <input type="text" name="eventCommitteesandMembers" value={formData.eventCommitteesandMembers} onChange={handleChange} />
+            <table>
+              <thead>
+                <tr>
+                <th>Name</th>
+                <th>Designated Office</th>
+                </tr>
+              </thead>
+              <tbody>
+                      {rows.map((row, index) => (
+                        <tr key={row.id}>
+                          <td>
+                            {row.name !== undefined && (
+                              <div className="input-container">
+                                <input
+                                  type="text"
+                                  name="name"
+                                  value={row.name}
+                                  onChange={(e) => handleInputChange(row.id, e)}
+                                />
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            {row.email !== undefined && (
+                              <div className="input-container">
+                                <input
+                                  type="email"
+                                  name="email"
+                                  value={row.email}
+                                  onChange={(e) => handleInputChange(row.id, e)}
+                                />
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            <div className="btn-group">
+                              <button className="icon-btn delete-btn" onClick={() => removeRow(row.id)}>
+                                ❌
+                              </button>
+                              {index === rows.length - 1 && (
+                                <button className="icon-btn add-btn" onClick={addRow}>
+                                  ➕
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+            </table>
+            <table>
+              Working Committees
+              <thead>
+                <tr>
+                <th>Name</th>
+                <th>Designated Office</th>
+                </tr>
+              </thead>
+              <tbody>
+                      {rows.map((row, index) => (
+                        <tr key={row.id}>
+                          <td>
+                            {row.name !== undefined && (
+                              <div className="input-container">
+                                <input
+                                  type="text"
+                                  name="name"
+                                  value={row.name}
+                                  onChange={(e) => handleInputChange(row.id, e)}
+                                />
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            {row.email !== undefined && (
+                              <div className="input-container">
+                                <input
+                                  type="email"
+                                  name="email"
+                                  value={row.email}
+                                  onChange={(e) => handleInputChange(row.id, e)}
+                                />
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            <div className="btn-group">
+                              <button className="icon-btn delete-btn" onClick={() => removeRow(row.id)}>
+                                ❌
+                              </button>
+                              {index === rows.length - 1 && (
+                                <button className="icon-btn add-btn" onClick={addRow}>
+                                  ➕
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+            </table>
           </div>
         );
 
       case 4:
         return (
           <div>
-            <label>Health:</label>
-            <textarea name="health" value={formData.health} onChange={handleChange} />
-            <label>Safety of Attendees:</label>
-            <textarea name="safetyAttendees" value={formData.safetyAttendees} onChange={handleChange} />
-            <label>Emergency/First Aid:</label>
-            <textarea name="emergencyFirstAid" value={formData.emergencyFirstAid} onChange={handleChange} />
-            <label>Fire Safety:</label>
-            <textarea name="fireSafety" value={formData.fireSafety} onChange={handleChange} />
-            <label>Weather:</label>
-            <textarea name="weather" value={formData.weather} onChange={handleChange} />
+            <table>
+              <thead>
+                <tr>
+                  <th>Task List</th>
+                  <th>Designated Office</th>
+                  <th>Deadline</th>
+                </tr>
+              </thead>
+              <tbody>
+                      {rows.map((row, index) => (
+                        <tr key={row.id}>
+                          <td>
+                            {row.name !== undefined && (
+                              <div className="input-container">
+                                <input
+                                  type="text"
+                                  name="name"
+                                  value={row.name}
+                                  onChange={(e) => handleInputChange(row.id, e)}
+                                />
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            {row.email !== undefined && (
+                              <div className="input-container">
+                                <input
+                                  type="email"
+                                  name="email"
+                                  value={row.email}
+                                  onChange={(e) => handleInputChange(row.id, e)}
+                                />
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            <div className="btn-group">
+                              <button className="icon-btn delete-btn" onClick={() => removeRow(row.id)}>
+                                ❌
+                              </button>
+                              {index === rows.length - 1 && (
+                                <button className="icon-btn add-btn" onClick={addRow}>
+                                  ➕
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+            </table>
+          </div>
+
+        );
+        case 5:
+          return (
+            <div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Publication Materials</th>
+                    <th>Schedule </th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                      {rows.map((row, index) => (
+                        <tr key={row.id}>
+                          <td>
+                            {row.name !== undefined && (
+                              <div className="input-container">
+                                <input
+                                  type="text"
+                                  name="name"
+                                  value={row.name}
+                                  onChange={(e) => handleInputChange(row.id, e)}
+                                />
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            {row.email !== undefined && (
+                              <div className="input-container">
+                                <input
+                                  type="email"
+                                  name="email"
+                                  value={row.email}
+                                  onChange={(e) => handleInputChange(row.id, e)}
+                                />
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            <div className="btn-group">
+                              <button className="icon-btn delete-btn" onClick={() => removeRow(row.id)}>
+                                ❌
+                              </button>
+                              {index === rows.length - 1 && (
+                                <button className="icon-btn add-btn" onClick={addRow}>
+                                  ➕
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+              </table>
+            </div>
+          );
+          case 6:
+        return (
+          <div>
+            <table>
+              <thead>
+                <tr>
+                    <th>Equipments</th>
+                    <th>Estimated Quantity </th>
+                    <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                      {rows.map((row, index) => (
+                        <tr key={row.id}>
+                          <td>
+                            {row.name !== undefined && (
+                              <div className="input-container">
+                                <input
+                                  type="text"
+                                  name="name"
+                                  value={row.name}
+                                  onChange={(e) => handleInputChange(row.id, e)}
+                                />
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            {row.email !== undefined && (
+                              <div className="input-container">
+                                <input
+                                  type="email"
+                                  name="email"
+                                  value={row.email}
+                                  onChange={(e) => handleInputChange(row.id, e)}
+                                />
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            <div className="btn-group">
+                              <button className="icon-btn delete-btn" onClick={() => removeRow(row.id)}>
+                                ❌
+                              </button>
+                              {index === rows.length - 1 && (
+                                <button className="icon-btn add-btn" onClick={addRow}>
+                                  ➕
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+            </table>
           </div>
         );
+       case 7:
+        return (
+          <div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Items</th>
+                  <th>Estimated Quantity</th>
+                  <th>Estimated Per Unit</th>
+                  <th>Estimated Total/Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                      {rows.map((row, index) => (
+                        <tr key={row.id}>
+                          <td>
+                            {row.name !== undefined && (
+                              <div className="input-container">
+                                <input
+                                  type="text"
+                                  name="name"
+                                  value={row.name}
+                                  onChange={(e) => handleInputChange(row.id, e)}
+                                />
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            {row.email !== undefined && (
+                              <div className="input-container">
+                                <input
+                                  type="email"
+                                  name="email"
+                                  value={row.email}
+                                  onChange={(e) => handleInputChange(row.id, e)}
+                                />
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            <div className="btn-group">
+                              <button className="icon-btn delete-btn" onClick={() => removeRow(row.id)}>
+                                ❌
+                              </button>
+                              {index === rows.length - 1 && (
+                                <button className="icon-btn add-btn" onClick={addRow}>
+                                  ➕
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+            </table>
+          </div>
+        );
+      
 
       default:
         return <div>Unknown step</div>;
@@ -682,23 +1036,35 @@ const Project = () => {
           <ul>
             <li className={currentStep === 0 ? 'active' : ''}>
               {isSectionComplete(0) ? <FaCheck className="check-icon green" /> : null}
-              Event Specifics
+              Project Overview
             </li>
             <li className={currentStep === 1 ? 'active' : ''}>
               {isSectionComplete(1) ? <FaCheck className="check-icon green" /> : null}
-              Organization Info
+              Project Guidelines
             </li>
             <li className={currentStep === 2 ? 'active' : ''}>
               {isSectionComplete(2) ? <FaCheck className="check-icon green" /> : null}
-              Event Details
+              Program Flow
             </li>
             <li className={currentStep === 3 ? 'active' : ''}>
               {isSectionComplete(3) ? <FaCheck className="check-icon green" /> : null}
-              Event Management Team
+              Officers in Charge
             </li>
             <li className={currentStep === 4 ? 'active' : ''}>
               {isSectionComplete(4) ? <FaCheck className="check-icon green" /> : null}
-              Risk Assessments
+              Task Deligation
+            </li>
+            <li className={currentStep === 5 ? 'active' : ''}>
+              {isSectionComplete(5) ? <FaCheck className="check-icon green" /> : null}
+              Timeline/Posting Schedules
+            </li>
+            <li className={currentStep === 6 ? 'active' : ''}>
+              {isSectionComplete(6) ? <FaCheck className="check-icon green" /> : null}
+              School Facilities & Equipments
+            </li>
+            <li className={currentStep === 7 ? 'active' : ''}>
+              {isSectionComplete(7) ? <FaCheck className="check-icon green" /> : null}
+              Budget Proposal
             </li>
           </ul>
         </div>
@@ -709,7 +1075,7 @@ const Project = () => {
             {currentStep > 0 && (
               <button onClick={() => setCurrentStep(currentStep - 1)}>Back</button>
             )}
-            {currentStep < 4 ? (
+            {currentStep < 7 ? (
               <button onClick={handleNext}>Next</button>
             ) : (
               <button onClick={handleSubmit}>Submit</button>

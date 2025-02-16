@@ -8,6 +8,7 @@ const progressTrackerRoutes = require('./routes/progressTrackerRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const emailRoutes = require('./routes/emailroutes'); // Import the email routes
 const authenticateToken = require('./middleware/authenticateToken');
+const notificationRoutes = require("./routes/notificationRoutes"); // Import the route
 
 const app = express();
 
@@ -18,6 +19,8 @@ const allowedOrigins = [
 ];
 
 console.log('JWT_SECRET:', process.env.JWT_SECRET);
+
+console.log(" - /api/notifications"); // Make sure this is present
 
 
 // Middleware
@@ -52,6 +55,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/users', userRoutes); // Do not apply authenticateToken here
+app.use("/api", authenticateToken, notificationRoutes); // Apply it
 app.use('/api/forms', formRoutes);
 app.use('/api/trackers', authenticateToken, progressTrackerRoutes); // Protect specific routes
 app.use('/api', authenticateToken, eventRoutes); // Protect specific routes

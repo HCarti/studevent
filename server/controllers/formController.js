@@ -2,6 +2,7 @@
 const Form = require('../models/Form');
 const User = require('../models/User');
 // const ProjectProposalForm = require('../models/projectProposalForm'); // Import your new schema
+const { createNotification } = require('./notificationController');
 
 // Controller to get all submitted forms
 exports.getAllForms = async (req, res) => {
@@ -83,6 +84,7 @@ exports.createForm = async (req, res) => {
     // Create the form with the processed body
     const form = new Form(req.body);
     await form.save();
+    await createNotification(req.body.userId, 'Your form has been submitted successfully.');
 
     res.status(201).json(form);
   } catch (error) {

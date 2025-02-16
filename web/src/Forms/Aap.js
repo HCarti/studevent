@@ -300,21 +300,23 @@ const Aap = () => {
   
 
   const handleNext = () => {
-    if (isSectionComplete()) {
+    if (isSectionComplete(currentStep)) { // Pass currentStep to check completion
       setCurrentStep(currentStep + 1);
     } else {
       alert("Please complete all required fields in this section before proceeding.");
     }
   };
-
   
-  const isSectionComplete = (step) => {
-    const requiredFields = getFieldsForStep(step);
-    for (const field of requiredFields) {
-      if (!formData[field]) return false;
-    }
-    return true;
-  };
+  
+    const isSectionComplete = (step) => {
+      const requiredFields = getFieldsForStep(step);
+      for (const field of requiredFields) {
+        if (!formData[field].trim()) { // Ensure non-empty values
+          return false;
+        }
+      }
+      return true;
+    };
   
   const getFieldsForStep = (step) => {
     const sections = [

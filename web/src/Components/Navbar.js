@@ -4,40 +4,65 @@ import './Navbar.css';
 import StudeventLogo from '../Images/Studevent.png';
 import { FiLogOut } from "react-icons/fi";
 import { CgProfile } from "react-icons/cg";
+import { FiBell } from "react-icons/fi"; // Import bell icon
 
 const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   const location = useLocation();
   const navigate = useNavigate();
   
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   //notifications
-  const notifyUser = async () => {
+  useEffect(() => {
+    if (isLoggedIn && user) {
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [isLoggedIn, user]);
+  
+  const fetchNotifications = async () => {
     try {
-      const response = await fetch('https://studevent-server.vercel.app/api/events', {
-        method: 'POST',
+      const token = localStorage.getItem('token'); // Get JWT from localStorage
+      if (!token) {
+        console.error("No token found in localStorage!");
+        return;
+      }
+      const response = await fetch(`https://studevent-server.vercel.app/api/notifications?userEmail=${user.email}`, {
+        method: 'GET',
         headers: {
+          'Authorization': `Bearer ${token}`, 
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          userEmail: user.email,  // Use logged-in user's email
-          eventDetails: 'Some important activity',
-        }),
       });
-      const data = await response.json();
-      if (response.ok) {
-        console.log('Notification email sent:', data.message);
-      } else {
-        console.error('Failed to send notification email:', data.message);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
       }
+      const data = await response.json();
+      console.log('Notifications:', data);
     } catch (error) {
-      console.error('Error sending notification:', error);
+      console.error('Error fetching notifications:', error);
     }
   };
   
 
+  // const markNotificationsAsRead = async () => {
+  //   try {
+  //     await fetch("https://studevent-server.vercel.app/api/notifications/mark-read", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ userEmail: user.email }),
+  //     });
+  //     setUnreadCount(0);
+  //   } catch (error) {
+  //     console.error("Error marking notifications as read:", error);
+  //   }
+  // };
+  
   useEffect(() => {
     // This effect will trigger when `user` is updated
   }, [user]);
@@ -46,12 +71,25 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
     setDrawerOpen(!drawerOpen);
   };
 
-  const toggleNotificationMenu = () => {
+  const toggleNotificationMenu = async () => {
     setNotificationMenuOpen(!notificationMenuOpen);
+    
     if (!notificationMenuOpen) {
-      notifyUser(); // Trigger notification email when menu is opened
+      try {
+        await fetch("https://studevent-server.vercel.app/api/notifications/mark-read", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userEmail: user.email }),
+        });
+        setUnreadCount(0);
+      } catch (error) {
+        console.error("Error marking notifications as read:", error);
+      }
     }
   };
+  
+  
+  
 
   const toggleAccountMenu = () => {
     setAccountMenuOpen(!accountMenuOpen);
@@ -91,29 +129,6 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
           Organizations
         </Link>
       </li>
-      {isLoggedIn && user && (
-          <li className="navbar-menu-item account-dropdown" onClick={toggleAccountMenu}>
-            {user.logo ? (
-                <img
-                  src={user.logo} // Use the full URL stored in the database
-                  alt="Profile"
-                  className="navbar-profile-pic"
-                  onError={(e) => { 
-                    e.target.onerror = null; 
-                    e.target.src = '/path/to/default/profile-pic.png'; // Fallback image
-                  }}
-                />
-              ) : (
-                <span>Account</span>
-              )}
-          {accountMenuOpen && (
-            <div className="account-dropdown-menu">
-              <div className="dropdown-item" onClick={handleProfileClick}> Profile <CgProfile className="navbar-icon" /></div>
-              <div className="dropdown-item" onClick={handleLogoutClick}> Log Out <FiLogOut className="navbar-icon1" /> </div>
-            </div>
-          )}
-        </li>
-      )}
     </>
   );
 
@@ -124,22 +139,56 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
         <div className="navbar-title">StudEvent</div>
       </div>
       <div className="navbar-menu">
-        {user && user.role === 'member' && (
-          <div className="navbar-notifications" onClick={toggleNotificationMenu}>
-            <span className="navbar-notification-icon">🔔</span>
-            <span className="badge">4</span>
-            {notificationMenuOpen && (
-              <div className="menu">
-                <div className="menu-item">Notification 1</div>
-                <div className="menu-item">Notification 2</div>
-                <div className="menu-item">Notification 3</div>
-              </div>
-            )}
-          </div>
-        )}
-        <ul>
+      <ul>
           {renderMenuItems()}
         </ul>
+      {isLoggedIn && user && (
+           <div className="navbar-icons-container">
+           <div className="navbar-notifications" onClick={toggleNotificationMenu}>
+             <FiBell className="navbar-notification-icon" />
+             {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
+             {notificationMenuOpen && (
+               <div className="notification-dropdown">
+                 {notifications.length > 0 ? (
+                   notifications.map((notification, index) => (
+                     <div key={index} className="notification-item">
+                       {notification.message}
+                     </div>
+                   ))
+                 ) : (
+                   <div className="notification-item no-notifications">No new notifications</div>
+                 )}
+               </div>
+             )}
+           </div>      
+
+  <div className="account-dropdown" onClick={toggleAccountMenu}>
+    {user.logo ? (
+      <img
+        src={user.logo}
+        alt="Profile"
+        className="navbar-profile-pic"
+        onError={(e) => { 
+          e.target.onerror = null; 
+          e.target.src = '/path/to/default/profile-pic.png'; 
+        }}
+      />
+    ) : (
+      <span>Account</span>
+    )}
+    {accountMenuOpen && (
+      <div className="account-dropdown-menu">
+        <div className="dropdown-item" onClick={handleProfileClick}>
+          Profile <CgProfile className="navbar-icon" />
+        </div>
+        <div className="dropdown-item" onClick={handleLogoutClick}>
+          Log Out <FiLogOut className="navbar-icon1" />
+        </div>
+      </div>
+    )}
+  </div>
+</div>       
+        )}
       </div>
       <div className="mobile-menu-icon" onClick={toggleDrawer}>
         &#9776;
