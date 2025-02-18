@@ -2,7 +2,6 @@
 const Form = require('../models/Form');
 const User = require('../models/User');
 // const ProjectProposalForm = require('../models/projectProposalForm'); // Import your new schema
-const { createNotification } = require('./notificationController');
 const Notification = require("../models/Notification"); // Import the Notification model
 
 
