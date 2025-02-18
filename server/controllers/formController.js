@@ -3,6 +3,8 @@ const Form = require('../models/Form');
 const User = require('../models/User');
 // const ProjectProposalForm = require('../models/projectProposalForm'); // Import your new schema
 const { createNotification } = require('./notificationController');
+const Notification = require("../models/Notification"); // Import the Notification model
+
 
 // Controller to get all submitted forms
 exports.getAllForms = async (req, res) => {
@@ -84,7 +86,18 @@ exports.createForm = async (req, res) => {
     // Create the form with the processed body
     const form = new Form(req.body);
     await form.save();
-    await createNotification(req.body.userId, 'Your form has been submitted successfully.');
+    
+    // ✅ Fix: Make sure `req.body.emailAddress` exists before creating a notification
+    if (req.body.emailAddress) {
+      await Notification.create({
+        userEmail: req.body.emailAddress,  // Use req.body.emailAddress
+        message: `Your form has been submitted successfully!`,
+        read: false,
+        timestamp: new Date(),
+      });
+    } else {
+      console.error("Error: Email address is missing in the request body!");
+    }
 
     res.status(201).json(form);
   } catch (error) {

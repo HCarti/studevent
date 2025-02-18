@@ -9,11 +9,20 @@ exports.getNotifications = async (req, res) => {
     }
 };
 
-exports.createNotification = async (userId, message) => {
+exports.createNotification = async (userEmail, message) => {
     try {
-        const notification = new Notification({ userId, message });
-        await notification.save();
+      console.log("🔹 Attempting to create notification for:", userEmail); // Debug log
+
+      const notification = new Notification({
+        userEmail,
+        message,
+        timestamp: new Date(),
+      });
+      await notification.save();
+      console.log("Notification saved successfully:", notification);
     } catch (error) {
-        console.error('Error creating notification:', error);
+      console.error("Error saving notification:", error);
     }
-};
+  };
+
+  

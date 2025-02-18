@@ -328,6 +328,7 @@
   border-bottom: 1px solid #ddd;
   font-size: 14px;
   cursor: pointer;
+  color: black;
 }
 
 .notification-item:hover {

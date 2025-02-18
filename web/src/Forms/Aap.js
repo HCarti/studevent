@@ -430,7 +430,7 @@ const Aap = () => {
       length: moment(formData.eventEndDate).diff(moment(formData.eventStartDate), 'hours') // Calculate event length in hours
     };
     
-
+    
     try {
       const response = await fetch('https://studevent-server.vercel.app/api/forms', {
         method: 'POST',

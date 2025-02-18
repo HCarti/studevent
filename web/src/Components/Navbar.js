@@ -26,42 +26,65 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   }, [isLoggedIn, user]);
   
   const fetchNotifications = async () => {
+    if (!user || !user.email) return; // Prevent making API calls if user is not available
     try {
-      const token = localStorage.getItem('token'); // Get JWT from localStorage
-      if (!token) {
-        console.error("No token found in localStorage!");
-        return;
-      }
-      const response = await fetch(`https://studevent-server.vercel.app/api/notifications?userEmail=${user.email}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`, 
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
+      const token = localStorage.getItem("token");     
+      const response = await fetch(
+        `https://studevent-server.vercel.app/api/notifications?userEmail=${user.email}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+  
       const data = await response.json();
-      console.log('Notifications:', data);
+      console.log("Fetched notifications:", data); // Debugging log
+  
+      if (!data.length) {
+        console.log("No notifications available");
+      } else {
+        setNotifications(data);
+        setUnreadCount(data.filter(n => !n.read).length); // Count unread notifications
+      }
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error("Error fetching notifications:", error);
     }
   };
   
+  
 
-  // const markNotificationsAsRead = async () => {
-  //   try {
-  //     await fetch("https://studevent-server.vercel.app/api/notifications/mark-read", {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({ userEmail: user.email }),
-  //     });
-  //     setUnreadCount(0);
-  //   } catch (error) {
-  //     console.error("Error marking notifications as read:", error);
-  //   }
-  // };
+  const markNotificationAsRead = async (notificationId) => {
+    try {
+      const token = localStorage.getItem("token");
+  
+      const response = await fetch(`https://studevent-server.vercel.app/api/notifications/mark-read`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ notificationId })
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Failed to mark notification as read: ${response.status}`);
+      }
+  
+      // Update state to mark notification as read locally
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((notification) =>
+          notification._id === notificationId ? { ...notification, read: true } : notification
+        )
+      );
+  
+      setUnreadCount((prevCount) => Math.max(prevCount - 1, 0));
+  
+      console.log("Notification marked as read successfully");
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+  
+  
   
   useEffect(() => {
     // This effect will trigger when `user` is updated
@@ -73,20 +96,26 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
 
   const toggleNotificationMenu = async () => {
     setNotificationMenuOpen(!notificationMenuOpen);
-    
-    if (!notificationMenuOpen) {
+  
+    if (!notificationMenuOpen && notifications.length > 0) {
       try {
-        await fetch("https://studevent-server.vercel.app/api/notifications/mark-read", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userEmail: user.email }),
-        });
+        const token = localStorage.getItem("token");
+        
+        // Mark all unread notifications as read
+        await Promise.all(
+          notifications.map((notification) => 
+            markNotificationAsRead(notification._id)
+          )
+        );
+  
+        // Clear unread count after marking notifications as read
         setUnreadCount(0);
       } catch (error) {
         console.error("Error marking notifications as read:", error);
       }
     }
   };
+  
   
   
   
