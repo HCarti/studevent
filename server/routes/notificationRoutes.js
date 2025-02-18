@@ -15,7 +15,7 @@ router.get("/notifications", authenticateToken, async (req, res) => {
   console.log("🔹 Fetching notifications for:", req.user.email);
 
   try {
-      const notifications = await Notification.find({ userEmail: req.user.email }).sort({ timestamp: -1 });
+    const notifications = await Notification.find({ userEmail: req.user.email }).sort({ createdAt: -1 });
 
       console.log("✅ Notifications found:", notifications.length);
 
