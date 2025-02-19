@@ -18,6 +18,7 @@ const ProgressTracker = ({ currentUser }) => {
       { label: 'Reviewed and Signed by Adviser', color: 'yellow', timestamp: Date.now() },
       { label: 'Reviewed and Signed by College Dean', color: 'yellow', timestamp: Date.now() },
       { label: 'Reviewed and Signed by Academic Services', color: 'yellow', timestamp: Date.now() },
+      { label: 'Reviewed and Signed by Academic Director', color: 'yellow', timestamp: Date.now() },
       { label: 'Reviewed and Signed by Executive Director', color: 'yellow', timestamp: Date.now() }
     ]
   });

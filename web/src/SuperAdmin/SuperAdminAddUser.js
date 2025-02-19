@@ -22,7 +22,7 @@ const SuperAdminAddUser = () => {
     const [success, setSuccess] = useState('');
     const [validationErrors, setValidationErrors] = useState({});
 
-    const faculties = ['Adviser', 'Dean', 'Academic Services', 'Academic Director'];
+    const faculties = ['Adviser', 'Dean', 'Academic Services', 'Academic Director', 'Executive Director'];
     const typeorganizations = [
         'Recognized Student Organization - Special Interest',
         'Recognized Student Organization - Academic',

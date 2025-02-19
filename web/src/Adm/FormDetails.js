@@ -13,10 +13,20 @@ const FormDetails = () => {
     const fetchFormData = async () => {
       if (formId) {
         try {
-          const response = await axios.get(`https://studevent-server.vercel.app/api/forms/${formId}`);
+          const token = localStorage.getItem('token'); // Retrieve token from localStorage
+    
+          const response = await axios.get(
+            `https://studevent-server.vercel.app/api/forms/${formId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`, // Send token in the request
+              },
+            }
+          );
+    
           setFormData(response.data);
         } catch (err) {
-          console.error(err); // Log the error details
+          console.error(err);
           setError('Failed to load form data');
         } finally {
           setLoading(false);

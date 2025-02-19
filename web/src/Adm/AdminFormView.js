@@ -10,15 +10,26 @@ const AdminFormView = () => {
   useEffect(() => {
     const fetchSubmittedForms = async () => {
       try {
-        const response = await fetch("https://studevent-server.vercel.app/api/forms/all");
-    
+        const token = localStorage.getItem("token"); // Get token from localStorage
+        if (!token) {
+          throw new Error("Token is missing!");
+        }
+  
+        const response = await fetch("https://studevent-server.vercel.app/api/forms/all", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`, // Send token in Authorization header
+          },
+        });
+  
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}, message: ${await response.text()}`);
         }
-    
+  
         const data = await response.json();
         console.log("Fetched data:", data);
-    
+  
         if (Array.isArray(data)) {
           setSubmittedForms(data);
         } else {
@@ -26,12 +37,13 @@ const AdminFormView = () => {
         }
       } catch (error) {
         console.error("Error fetching forms:", error);
+        setError(error.message);
       }
     };
-    
-    
+  
     fetchSubmittedForms();
   }, []);
+  
 
   const handleRedirectToProgressTracker = (form) => {
     navigate(`/progtrack/${form._id}`, { state: { form } }); // Pass the whole form object

@@ -4,10 +4,7 @@ const Form = require('../models/Form');
 const formController = require('../controllers/formController');
 
 // Route to get all forms (admin view) - move this above the formId route
-router.get('/all', (req, res, next) => {
-    console.log("Received request for all forms"); // Log the request
-    next(); // Call the next middleware
-}, formController.getAllForms);
+router.get("/all", authMiddleware, getAllForms); // Protect route with middleware
 
 // Route to get specific form details
 router.get('/:formId', async (req, res) => {
