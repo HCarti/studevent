@@ -1,4 +1,4 @@
-const EventTracker = require('../models/eventTracker');
+const EventTracker = require('../models/EventTracker');
 
 // Get event tracker by form ID
 const getEventTracker = async (req, res) => {
