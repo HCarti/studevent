@@ -4,7 +4,6 @@ const cors = require('cors');
 const path = require('path');
 const userRoutes = require('./routes/user_routes');
 const formRoutes = require('./routes/formRoutes');
-const eventRoutes = require('./routes/eventRoutes');
 const emailRoutes = require('./routes/emailroutes'); // Import the email routes
 const authenticateToken = require('./middleware/authenticateToken');
 const notificationRoutes = require("./routes/notificationRoutes"); // Import the route
@@ -57,7 +56,6 @@ app.use('/api/users', userRoutes); // Do not apply authenticateToken here
 app.use("/api", authenticateToken, notificationRoutes); // Apply it
 app.use('/api', eventTrackerRoutes);
 app.use('/api/forms', formRoutes);
-app.use('/api', authenticateToken, eventRoutes); // Protect specific routes
 app.use('/api', authenticateToken, emailRoutes); // Protect specific routes
 
 const PORT = process.env.PORT || 8000;
