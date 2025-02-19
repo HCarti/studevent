@@ -2,24 +2,11 @@ const express = require('express');
 const router = express.Router();
 const Form = require('../models/Form');
 const formController = require('../controllers/formController');
-const authMiddleware = require('../middleware/authenticateToken');
 
-// Route to get all forms (admin view) - move this above the formId route
-router.get("/all", authMiddleware, formController); // Protect route with middleware
+router.get('/all', formController.getAllForms); // ✅ Correct
 
 // Route to get specific form details
-router.get('/:formId', async (req, res) => {
-    try {
-        const form = await Form.findById(req.params.formId);
-        if (!form) {
-            return res.status(404).json({ error: 'Form not found' });
-        }
-        res.status(200).json(form);
-    } catch (error) {
-        console.error("Error fetching form details:", error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
+router.get('/:formId', formController.getFormById); // ✅ Correct
 
 // POST route to handle form submission
 router.post('/submit', async (req, res) => {
