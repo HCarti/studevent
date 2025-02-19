@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const Form = require('../models/Form');
 const formController = require('../controllers/formController');
+const authMiddleware = require('../middleware/authenticateToken');
 
 // Route to get all forms (admin view) - move this above the formId route
-router.get("/all", authMiddleware, getAllForms); // Protect route with middleware
+router.get("/all", authMiddleware, formController); // Protect route with middleware
 
 // Route to get specific form details
 router.get('/:formId', async (req, res) => {
