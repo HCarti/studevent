@@ -17,6 +17,7 @@ const ProgressTracker = ({ currentUser }) => {
     steps: [
       { label: 'Reviewed and Signed by Adviser', color: 'yellow', timestamp: Date.now() },
       { label: 'Reviewed and Signed by College Dean', color: 'yellow', timestamp: Date.now() },
+      { label: 'Reviewed and Signed by SDAO', color: 'yellow', timestamp: Date.now() },
       { label: 'Reviewed and Signed by Academic Services', color: 'yellow', timestamp: Date.now() },
       { label: 'Reviewed and Signed by Academic Director', color: 'yellow', timestamp: Date.now() },
       { label: 'Reviewed and Signed by Executive Director', color: 'yellow', timestamp: Date.now() }
@@ -27,14 +28,36 @@ const ProgressTracker = ({ currentUser }) => {
   const [isApprovedChecked, setIsApprovedChecked] = useState(false);
   const [isDeclinedChecked, setIsDeclinedChecked] = useState(false);
   
+  useEffect(() => {
+    if (!form?._id) return;
+
+    // Fetch tracker data from backend
+    const fetchTrackerData = async () => {
+      try {
+        const response = await fetch(`https://studevent-server.vercel.app/api/tracker/${form._id}`);
+        const data = await response.json();
+        if (response.ok) {
+          setTrackerData(data);
+          setCurrentStep(data.currentStep || 0);
+        } else {
+          console.error('Error fetching tracker data:', data.message);
+        }
+      } catch (error) {
+        console.error('Error fetching tracker data:', error);
+      }
+    };
+
+    fetchTrackerData();
+  }, [form]);
 
   // Toggle edit mode
   const handleEditClick = () => setIsEditing(true);
 
   // Save the current step's approval or decline action
+  
   const handleSaveClick = async () => {
     const status = isApprovedChecked ? 'approved' : 'declined';
-  
+
     setTrackerData((prevData) => {
       const updatedSteps = [...prevData.steps];
       updatedSteps[currentStep] = {
@@ -44,33 +67,37 @@ const ProgressTracker = ({ currentUser }) => {
         color: status === 'approved' ? 'green' : 'red',
         timestamp: Date.now(),
       };
-  
+
       return { ...prevData, steps: updatedSteps };
     });
-  
-    // Prepare the next authority
+
     let nextAuthority = null;
     if (status === 'approved' && currentStep < trackerData.steps.length - 1) {
-      nextAuthority = trackerData.steps[currentStep + 1].label.split(' ')[3]; // Example: Extract "College Dean"
+      nextAuthority = trackerData.steps[currentStep + 1].label.split(' ')[3];
       setCurrentStep(currentStep + 1);
     }
-  
+
     try {
-      // Send updated data to the backend
-      await fetch(`/api/forms/${form._id}`, {
+      // Update tracker data in backend
+      const response = await fetch(`https://studevent-server.vercel.app/api/tracker/${form._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          currentStep: currentStep + 1,
           status,
           remarks,
           currentAuthority: nextAuthority,
         }),
       });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message);
+
       console.log('Progress tracker updated successfully');
     } catch (error) {
       console.error('Error updating progress tracker:', error);
     }
-  
+
     setIsEditing(false);
     setIsApprovedChecked(false);
     setIsDeclinedChecked(false);

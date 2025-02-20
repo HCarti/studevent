@@ -6,7 +6,7 @@ const formController = require('../controllers/formController');
 router.get('/all', formController.getAllForms); // ✅ Correct
 
 // Route to get specific form details
-router.get('/:formId', formController.getFormById); // ✅ Correct
+router.get('/:formId', formController.getFormById); // ✅ Correctrouter.get('/:formId', formController.getFormById); // ✅ Correct
 
 // POST route to handle form submission
 router.post('/submit', async (req, res) => {

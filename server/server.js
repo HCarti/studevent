@@ -51,11 +51,11 @@ mongoose
 // Serve static files from the 'uploads' folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Routes
+// Routes 
 app.use('/api/users', userRoutes); // Do not apply authenticateToken here
 app.use("/api", authenticateToken, notificationRoutes); // Apply it
-app.use('/api', eventTrackerRoutes);
-app.use('/api/forms', formRoutes);
+app.use('/api/tracker', authenticateToken, eventTrackerRoutes);
+app.use('/api/forms', authenticateToken, formRoutes);
 app.use('/api', authenticateToken, emailRoutes); // Protect specific routes
 
 const PORT = process.env.PORT || 8000;

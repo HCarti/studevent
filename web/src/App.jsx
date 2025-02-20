@@ -35,8 +35,10 @@ import FormDetails from './Adm/FormDetails';
 import Liquidation from './Forms/Liquidation';
 import Waiver from './Forms/Waiver';
 import LocalOffCampus from './Forms/LocalOffCampus';
-import MySubmissions from './OrgMems/MySubmissions'; // Import the new page
+// import MySubmissions from './OrgMems/MySubmissions'; // Import the new page
 import Footer from './Components/footer';
+import EventTrackerList from './Components/EventTrackerList';
+
 
 const App = () => {
    // Initialize state with user and role
@@ -84,6 +86,7 @@ const App = () => {
           {/* SuperAdmin Routes */}
           <Route path="/superadmin" element={<SuperAdminHome />} />
           <Route path="/calendar" element={<OrganizationEvents />} />
+          <Route path="/trackerlist" element={<EventTrackerList />} />
           <Route element={<SuperAdminLayout />}>
             <Route path="/controlpanel" element={<AdminControlPanel />} />
             <Route path="/authorities" element={<SuperAdminAuthorities />} />
@@ -100,6 +103,7 @@ const App = () => {
           <Route path="/adminprofile" element={<AdminProfile />} />
           <Route path="/adminproposal" element={<Proposal />} />
           <Route path="/adminliquidation" element={<DashLiquidation />} />
+          <Route path="/trackerlist" element={<EventTrackerList />} />
           <Route path="/budget" element={<Budget />} />
           <Route path="/adminformview" element={<AdminFormView />} />
           <Route path="/activity" element={<Aap />} />
@@ -114,7 +118,7 @@ const App = () => {
           <Route path="/progtrack/:formId" element={<ProgressTracker />} /> {/* Route with formId */}
           <Route path="/formss" element={<FormsandSig />} />
           <Route path="/forms" element={<Forms role={role} />} />
-          <Route path="/my-submissions" element={<MySubmissions/>} />
+          {/* <Route path="/my-submissions" element={<MySubmissions/>} /> */}
           <Route path="/activity" element={<Aap />} />
           <Route path="/liquidation" element={<Liquidation />} />
           <Route path="/project" element={<Project />} />

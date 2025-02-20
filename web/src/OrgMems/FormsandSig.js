@@ -19,7 +19,13 @@ const FormsandSig = () => {
   }, []);
 
   const handleForms = () => {
-    navigate('/forms');
+    if (userRole === 'Organization') {
+      navigate('/forms'); // Organization users go to Forms page
+    } else if (userRole === 'Admin' || userRole === 'Authority') {
+      navigate('/trackerlist'); // Admins & Authorities go to EventTrackerList
+    } else {
+      alert("Unauthorized access"); // Optional: Handle unexpected roles
+    }
   };
 
   const handleSig = () => {
@@ -53,10 +59,16 @@ const FormsandSig = () => {
       </div>
 
       <div className="bottom-links">
-        <div className="link forms-link" onClick={handleForms}>FORMS<br />All forms are located here.</div>
+        {/* FORMS button with role-based redirection */}
+        <div className="link forms-link" onClick={handleForms}>
+          FORMS<br />All forms are located here.
+        </div>
+
         {/* Only show Proposal Tracker if the user is an Organization */}
-        {(userRole === 'Organization') && (
-          <div className="link proposal-link" onClick={handleSig}>PROPOSAL TRACKER<br />Monitor all proposals here.</div>
+        {userRole === 'Organization' && (
+          <div className="link proposal-link" onClick={handleSig}>
+            PROPOSAL TRACKER<br />Monitor all proposals here.
+          </div>
         )}
       </div>
     </div>
