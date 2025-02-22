@@ -1,11 +1,7 @@
 const mongoose = require('mongoose');
 
 const eventTrackerSchema = new mongoose.Schema({
-  formId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Form',
-    required: true
-  },
+  formId: { type: mongoose.Schema.Types.ObjectId, ref: "Form", required: true },
   steps: [
     {
       label: String,

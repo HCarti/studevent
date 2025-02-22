@@ -3,6 +3,7 @@ const Form = require('../models/Form');
 const User = require('../models/User');
 // const ProjectProposalForm = require('../models/projectProposalForm'); // Import your new schema
 const Notification = require("../models/Notification"); // Import the Notification model
+const EventTracker = require("../models/EventTracker");
 
 
 // Controller to get all submitted forms
@@ -98,6 +99,40 @@ exports.createForm = async (req, res) => {
     // Create the form with the processed body
     const form = new Form(req.body);
     await form.save();
+
+    console.log("✅ Form Created:", form); // ✅ Debug log
+    console.log("✅ Form Created:", form); // ✅ Debug log
+
+      // 🔥 Check if form._id exists before creating tracker
+      if (!form._id) {
+        console.error("❌ Form ID is missing! Tracker cannot be created.");
+        return res.status(500).json({ error: "Form ID is missing, tracker creation failed." });
+      }
+      console.log("🛠 Creating tracker for form ID:", form._id);
+
+     // ✅ Step 2: Create a tracker for this form
+     try {
+      console.log("🛠 Creating tracker for form ID:", form._id);
+    
+      const tracker = new EventTracker({
+        formId: form._id,
+        steps: [
+          { label: "Adviser", status: "pending" },
+          { label: "Dean", status: "pending" },
+          { label: "Academic Services", status: "pending" },
+          { label: "Academic Director", status: "pending" },
+          { label: "Executive Director", status: "pending" },
+        ],
+        currentStep: 0, 
+      });
+    
+      await tracker.save();
+      console.log("✅ Tracker created successfully!");
+    } catch (error) {
+      console.error("❌ Error saving tracker:", error);
+    }
+    
+    
     
     // ✅ Fix: Make sure `req.body.emailAddress` exists before creating a notification
     if (req.body.emailAddress) {
@@ -111,7 +146,7 @@ exports.createForm = async (req, res) => {
       console.error("Error: Email address is missing in the request body!");
     }
 
-    res.status(201).json(form);
+    res.status(201).json({form, tracker});
   } catch (error) {
     console.error('Error in createForm:', error);
     res.status(500).json({ error: 'Server error' });

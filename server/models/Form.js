@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const reviewStageSchema = new mongoose.Schema({
-    role: { type: String, enum: ['Adviser', 'Dean', 'AcademicServices', 'AcademicDirector'], required: true },
+    role: { type: String, enum: ['Adviser', 'Dean', 'AcademicServices', 'AcademicDirector', 'Executive Director'], required: true },
     status: { type: String, enum: ['pending', 'approved', 'declined'], default: 'pending' },
     remarks: { type: String },
     timestamp: { type: Date }

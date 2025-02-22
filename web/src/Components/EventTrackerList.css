@@ -1,107 +1,87 @@
-/* EventTrackerList.css */
-
-.event-tracker-list {
-    max-width: 1000px;
+.admin-form-view {
+    max-width: 800px;
     margin: 20px auto;
     padding: 20px;
     background-color: #ffffff;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    text-align: center;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    font-family: Arial, sans-serif;
   }
   
   h2 {
-    font-size: 24px;
+    text-align: center;
     color: #333;
-    font-weight: bold;
     margin-bottom: 20px;
   }
   
-  .event-tracker-sections {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 20px;
-  }
-  
-  .event-section {
-    flex: 1;
-    min-width: 300px;
-    background: #f8f8f8;
+  .form-section {
+    margin-bottom: 20px;
     padding: 15px;
+    background-color: #f8f9fa;
     border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
   }
   
-  .event-section h3 {
-    font-size: 18px;
-    font-weight: bold;
+  h3 {
     color: #444;
     margin-bottom: 10px;
     border-bottom: 2px solid #ddd;
     padding-bottom: 5px;
-    text-align: center;
   }
   
-  .event-item {
-    background: white;
+  ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  li {
+    margin-bottom: 10px;
+  }
+  
+  .admin-button {
+    width: 100%;
     padding: 12px;
-    border-radius: 6px;
-    margin: 10px 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  
-  .event-item p {
-    font-size: 16px;
-    color: #222;
-    font-weight: 500;
-    margin: 0;
-  }
-  
-  .event-item button {
-    background-color: #007bff;
-    color: white;
-    padding: 8px 12px;
+    font-size: 14px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: all 0.3s ease-in-out;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
   
-  .event-item button:hover {
-    background-color: #0056b3;
+  .admin-button:hover {
+    opacity: 0.8;
   }
   
-  /* Status Colors */
-  .approved {
-    background-color: #d4edda;
-    border-left: 5px solid #28a745;
+  /* Status-specific button styles */
+  .admin-button.pending {
+    background-color: #ffcc00;
+    color: #333;
   }
   
-  .declined {
-    background-color: #f8d7da;
-    border-left: 5px solid #dc3545;
+  .admin-button.approved {
+    background-color: #4CAF50;
+    color: white;
   }
   
-  /* Hover effect */
-  .event-item:hover {
-    transform: scale(1.02);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  .admin-button.rejected {
+    background-color: #D9534F;
+    color: white;
   }
   
-  /* Responsive */
-  @media (max-width: 768px) {
-    .event-tracker-sections {
-      flex-direction: column;
-      align-items: center;
+  /* Mobile responsive adjustments */
+  @media (max-width: 600px) {
+    .admin-form-view {
+      width: 90%;
+      padding: 15px;
     }
   
-    .event-section {
-      width: 100%;
-      max-width: 400px;
+    .admin-button {
+      font-size: 12px;
+      padding: 10px;
     }
   }
   

@@ -12,7 +12,7 @@ const AdminFormView = () => {
       try {
         const token = localStorage.getItem("token"); // Get token from localStorage
         if (!token) {
-          throw new Error("Token is missing!");
+          throw new Error("Token is missing!"); 
         }
   
         const response = await fetch("https://studevent-server.vercel.app/api/forms/all", {

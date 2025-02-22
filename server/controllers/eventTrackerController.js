@@ -3,17 +3,23 @@ const User = require('../models/User'); // Import User model to fetch reviewer I
 
 // Get event tracker by form ID
 const getEventTracker = async (req, res) => {
+  console.log("🔍 Fetching tracker for formId:", req.params.formId); // ✅ Debug log
+
   try {
-    const tracker = await EventTracker.findOne({ formId: req.params.formId }).populate('steps.reviewedBy');
+    const tracker = await ProgressTracker.findOne({ formId: req.params.formId });
+
     if (!tracker) {
-      return res.status(404).json({ message: 'Event tracker not found' });
+      console.log("❌ Tracker Not Found for formId:", req.params.formId); // ✅ Debug log
+      return res.status(404).json({ message: "Tracker not found" });
     }
+
+    console.log("✅ Tracker Found:", tracker); // ✅ Debug log
     res.status(200).json(tracker);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("❌ Error fetching tracker data:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
-
 // Function to create a new event tracker
 const createEventTracker = async (req, res) => {
   try {
