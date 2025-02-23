@@ -92,7 +92,10 @@ const ProgressTracker = ({ currentUser }) => {
     try {
       const response = await fetch(`https://studevent-server.vercel.app/api/tracker/${form._id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem("token")}` // Include token
+        },
         body: JSON.stringify({
           currentStep: nextStep,
           status,
@@ -100,11 +103,17 @@ const ProgressTracker = ({ currentUser }) => {
           steps: updatedSteps,
           currentAuthority: nextAuthority,
         }),
-      });
+      });      
 
       if (!response.ok) throw new Error('Failed to update progress tracker');
 
-      setTrackerData({ ...trackerData, steps: updatedSteps });
+      setTrackerData(prevData => ({
+        ...prevData,
+        currentStep: nextStep,
+        steps: updatedSteps,
+        currentAuthority: nextAuthority,
+      }));
+      
       setCurrentStep(nextStep);
     } catch (error) {
       console.error('Error updating progress tracker:', error);
@@ -161,6 +170,7 @@ const ProgressTracker = ({ currentUser }) => {
                   type="checkbox"
                   checked={isApprovedChecked}
                   onChange={() => handleCheckboxChange('approved')}
+                  disabled={isDeclinedChecked} // Disable if declined is checked
                 /> Reviewed and Approved
               </label>
               <label className="checkbox-container">
@@ -168,6 +178,7 @@ const ProgressTracker = ({ currentUser }) => {
                   type="checkbox"
                   checked={isDeclinedChecked}
                   onChange={() => handleCheckboxChange('declined')}
+                  disabled={isApprovedChecked} // Disable if approved is checked
                 /> Declined
               </label>
             </div>
