@@ -36,7 +36,7 @@ const EventTrackerList = () => {
         console.log("Fetched Forms:", data); // Debugging log
 
         if (Array.isArray(data)) {
-          setForms(data);
+          setForms([...data]);
         } else {
           console.error("Expected an array but received:", data);
           setError("Unexpected data format from server.");
@@ -55,9 +55,11 @@ const EventTrackerList = () => {
   };
 
   // Ensure status is properly checked
-  const pendingForms = forms.filter(form => form.status?.trim().toLowerCase() === "pending");
-  const approvedForms = forms.filter(form => form.status?.trim().toLowerCase() === "approved");
-  const rejectedForms = forms.filter(form => form.status?.trim().toLowerCase() === "rejected");
+  const pendingForms = forms.filter(form => form.status && form.status.trim().toLowerCase() === "pending");
+  console.log("Pending Forms:", pendingForms);  
+  const approvedForms = forms.filter(form => form.status && form.status.trim().toLowerCase() === "approved");
+  const rejectedForms = forms.filter(form => form.status && form.status.trim().toLowerCase() === "rejected");
+
 
   return (
     <div className="admin-form-view">
