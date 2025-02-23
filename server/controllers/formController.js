@@ -11,23 +11,23 @@ const EventTracker = require("../models/EventTracker"); // ✅ Check this path
 exports.getAllForms = async (req, res) => {
   console.log("Fetching all forms...");
   try {
-      const forms = await Form.find({});
-      console.log("Forms retrieved:", forms); // Log the retrieved forms
-      try {
-          const populatedForms = await Form.populate(forms, { path: 'studentOrganization', select: 'organizationName' });
-          res.status(200).json(populatedForms);
-      } catch (populateError) {
-          console.error("Error populating forms:", populateError);
-          res.status(500).json({ error: "Internal Server Error during population", details: populateError.message });
-      }
+    // ✅ Find and populate in one step
+    const forms = await Form.find({})
+      .populate({ path: "studentOrganization", select: "organizationName" });
+
+    console.log("Forms retrieved:", forms); // Debug log
+
+    if (!forms || forms.length === 0) {
+      return res.status(404).json({ message: "No forms found" });
+    }
+
+    res.status(200).json(forms);
   } catch (error) {
-      console.error("Error fetching forms:", error); // Log full error
-      res.status(500).json({ 
-          error: "Internal Server Error", 
-          details: error.message // More detailed error response
-      });
+    console.error("Error fetching forms:", error);
+    res.status(500).json({ error: "Internal Server Error", details: error.message });
   }
 };
+
 
 exports.getFormById = async (req, res) => {
   try {

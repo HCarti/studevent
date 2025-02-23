@@ -37,6 +37,7 @@ const EventTrackerList = () => {
 
         if (Array.isArray(data)) {
           setForms([...data]);
+          
         } else {
           console.error("Expected an array but received:", data);
           setError("Unexpected data format from server.");
@@ -50,15 +51,25 @@ const EventTrackerList = () => {
     fetchForms();
   }, []);
 
+  useEffect(() => {
+    console.log("🔄 Updated Forms State:", forms);
+  }, [forms]); // This runs every time `forms` is updated
+  
+
   const handleRedirectToProgressTracker = (form) => {
     navigate(`/progtrack/${form._id}`, { state: { form } });
   };
 
   // Ensure status is properly checked
-  const pendingForms = forms.filter(form => form.status && form.status.trim().toLowerCase() === "pending");
-  console.log("Pending Forms:", pendingForms);  
-  const approvedForms = forms.filter(form => form.status && form.status.trim().toLowerCase() === "approved");
-  const rejectedForms = forms.filter(form => form.status && form.status.trim().toLowerCase() === "rejected");
+  const pendingForms = forms.filter(form => 
+    form.finalStatus?.trim().toLowerCase() === "pending"
+  );
+  console.log("✅ Pending Forms After Filtering:", pendingForms);  
+  const approvedForms = forms.filter(form => form.finalStatus && form.finalStatus.trim().toLowerCase() === "approved");
+  const rejectedForms = forms.filter(form => form.finalStatus && form.finalStatus.trim().toLowerCase() === "rejected");
+
+  console.log("🔍 Forms Data:", forms.map(f => ({ id: f._id, status: f.status })));
+
 
 
   return (
@@ -78,7 +89,7 @@ const EventTrackerList = () => {
                   onClick={() => handleRedirectToProgressTracker(form)}
                 >
                   {form.studentOrganization?.organizationName || 'Unknown Organization'}
-                  - {form.eventTitle} ({form.status || "No Status"}) - 
+                  - {form.eventTitle} ({form.finalStatus || "No Status"}) - 
                   ({form.applicationDate ? new Date(form.applicationDate).toLocaleDateString() : "No Date"})
                 </button>
               </li>
