@@ -3,7 +3,8 @@ const Form = require('../models/Form');
 const User = require('../models/User');
 // const ProjectProposalForm = require('../models/projectProposalForm'); // Import your new schema
 const Notification = require("../models/Notification"); // Import the Notification model
-const EventTracker = require("../models/EventTracker");
+const EventTracker = require("../models/EventTracker"); // ✅ Check this path
+
 
 
 // Controller to get all submitted forms
@@ -73,71 +74,56 @@ exports.getFormById = async (req, res) => {
 
 exports.createForm = async (req, res) => {
   try {
-    // Automatically set the applicationDate to the current date if not provided
     if (!req.body.applicationDate) {
       req.body.applicationDate = new Date();
     }
 
-    // Ensure emailAddress is set from req.user if available
     if (!req.body.emailAddress && req.user && req.user.email) {
       req.body.emailAddress = req.user.email;
     }
 
-    // Find the organization by name and role
     const organization = await User.findOne({
       organizationName: req.body.studentOrganization,
-      role: 'Organization', // Restrict to Organization role
+      role: "Organization",
     });
 
     if (!organization) {
-      return res.status(400).json({ error: 'Organization not found with the provided name' });
+      return res.status(400).json({ error: "Organization not found with the provided name" });
     }
 
-    // Replace the studentOrganization field with the ObjectId
     req.body.studentOrganization = organization._id;
 
-    // Create the form with the processed body
     const form = new Form(req.body);
     await form.save();
 
     console.log("✅ Form Created:", form); // ✅ Debug log
-    console.log("✅ Form Created:", form); // ✅ Debug log
 
-      // 🔥 Check if form._id exists before creating tracker
-      if (!form._id) {
-        console.error("❌ Form ID is missing! Tracker cannot be created.");
-        return res.status(500).json({ error: "Form ID is missing, tracker creation failed." });
-      }
-      console.log("🛠 Creating tracker for form ID:", form._id);
+    // ✅ Fix: Declare `tracker` outside of the try-catch
 
-     // ✅ Step 2: Create a tracker for this form
-     try {
-      console.log("🛠 Creating tracker for form ID:", form._id);
-    
-      const tracker = new EventTracker({
-        formId: form._id,
-        steps: [
-          { label: "Adviser", status: "pending" },
-          { label: "Dean", status: "pending" },
-          { label: "Academic Services", status: "pending" },
-          { label: "Academic Director", status: "pending" },
-          { label: "Executive Director", status: "pending" },
-        ],
-        currentStep: 0, 
-      });
-    
-      await tracker.save();
-      console.log("✅ Tracker created successfully!");
-    } catch (error) {
-      console.error("❌ Error saving tracker:", error);
-    }
-    
-    
-    
-    // ✅ Fix: Make sure `req.body.emailAddress` exists before creating a notification
+    console.log("🛠 Creating tracker for form ID:", form._id);
+
+    const tracker = new EventTracker({
+      formId: form._id,
+      steps: [
+        { label: "Adviser", status: "pending" },
+        { label: "Dean", status: "pending" },
+        { label: "Academic Services", status: "pending" },
+        { label: "Academic Director", status: "pending" },
+        { label: "Executive Director", status: "pending" },
+      ],
+      currentStep: 0,
+    });
+
+    console.log("🔄 Saving tracker...");
+    await tracker.save().catch(err => {
+        console.error("❌ Tracker Save Error:", err);
+        throw err; // Re-throw the error to be caught in the catch block
+    });
+
+
     if (req.body.emailAddress) {
       await Notification.create({
-        userEmail: req.body.emailAddress,  // Use req.body.emailAddress
+        userEmail: req.body.emailAddress,
         message: `Your form has been submitted successfully!`,
         read: false,
         timestamp: new Date(),
@@ -146,9 +132,12 @@ exports.createForm = async (req, res) => {
       console.error("Error: Email address is missing in the request body!");
     }
 
-    res.status(201).json({form, tracker});
+    // ✅ Fix: Ensure `tracker` is defined before sending response
+    res.status(201).json({ form, tracker: tracker || {} });
+
   } catch (error) {
-    console.error('Error in createForm:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
+    console.error("❌ Full Error Details:", error); // Log full error details
+    res.status(500).json({ error: "Server error", details: error.message });
+}
 };
+

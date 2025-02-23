@@ -6,7 +6,7 @@ const getEventTracker = async (req, res) => {
   console.log("🔍 Fetching tracker for formId:", req.params.formId); // ✅ Debug log
 
   try {
-    const tracker = await ProgressTracker.findOne({ formId: req.params.formId });
+    const tracker = await EventTracker.findOne({ formId: req.params.formId });
 
     if (!tracker) {
       console.log("❌ Tracker Not Found for formId:", req.params.formId); // ✅ Debug log
