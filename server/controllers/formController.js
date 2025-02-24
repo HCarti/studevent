@@ -104,14 +104,16 @@ exports.createForm = async (req, res) => {
 
     const tracker = new EventTracker({
       formId: form._id,
+      currentStep: "Adviser",
+      currentAuthority: "Adviser",
       steps: [
-        { label: "Adviser", status: "pending" },
-        { label: "Dean", status: "pending" },
-        { label: "Academic Services", status: "pending" },
-        { label: "Academic Director", status: "pending" },
-        { label: "Executive Director", status: "pending" },
-      ],
-      currentStep: 0,
+        { stepName: "Adviser", reviewerRole: "Adviser", reviewedBy: null, reviewedByRole: null, status: "pending", remarks: "", timestamp: null },
+        { stepName: "Dean", reviewerRole: "Dean", reviewedBy: null, reviewedByRole: null, status: "pending", remarks: "", timestamp: null },
+        { stepName: "SDAO", reviewerRole: "Dean", reviewedBy: null, reviewedByRole: null, status: "pending", remarks: "", timestamp: null },
+        { stepName: "Academic Services", reviewerRole: "Academic Services", reviewedBy: null, reviewedByRole: null, status: "pending", remarks: "", timestamp: null },
+        { stepName: "Academic Director", reviewerRole: "Academic Director", reviewedBy: null, reviewedByRole: null, status: "pending", remarks: "", timestamp: null },
+        { stepName: "Executive Director", reviewerRole: "Executive Director", reviewedBy: null, reviewedByRole: null, status: "pending", remarks: "", timestamp: null },
+      ]
     });
 
     console.log("🔄 Saving tracker...");

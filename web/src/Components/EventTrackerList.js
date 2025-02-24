@@ -33,7 +33,7 @@ const EventTrackerList = () => {
         }
 
         const data = await response.json();
-        console.log("Fetched Forms:", data); // Debugging log
+        
 
         if (Array.isArray(data)) {
           setForms([...data]);
@@ -61,14 +61,9 @@ const EventTrackerList = () => {
   };
 
   // Ensure status is properly checked
-  const pendingForms = forms.filter(form => 
-    form.finalStatus?.trim().toLowerCase() === "pending"
-  );
-  console.log("✅ Pending Forms After Filtering:", pendingForms);  
+  const pendingForms = forms.filter(form => form.finalStatus?.trim().toLowerCase() === "pending");
   const approvedForms = forms.filter(form => form.finalStatus && form.finalStatus.trim().toLowerCase() === "approved");
   const rejectedForms = forms.filter(form => form.finalStatus && form.finalStatus.trim().toLowerCase() === "rejected");
-
-  console.log("🔍 Forms Data:", forms.map(f => ({ id: f._id, status: f.status })));
 
 
 

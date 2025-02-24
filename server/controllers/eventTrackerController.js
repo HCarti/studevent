@@ -1,5 +1,6 @@
 const EventTracker = require('../models/EventTracker');
 const User = require('../models/User'); // Import User model to fetch reviewer IDs
+const Form = require("../models/Form");
 
 // Get event tracker by form ID
 const getEventTracker = async (req, res) => {
@@ -72,86 +73,66 @@ const createEventTracker = async (req, res) => {
 const updateEventTracker = async (req, res) => {
   try {
     const { formId } = req.params;
-    const { status, reviewerId, remarks } = req.body;
+    const { reviewerId, status, remarks } = req.body; // Reviewer ID, status, and remarks from frontend
 
-    let tracker = await EventTracker.findOne({ formId });
+    const tracker = await EventTracker.findOne({ formId }).populate("steps.reviewedBy");
+
     if (!tracker) {
-      return res.status(404).json({ message: 'Event tracker not found' });
+      return res.status(404).json({ error: "Event tracker not found." });
     }
 
-    // Validate reviewerId
-    if (!reviewerId) {
-      return res.status(400).json({ message: 'Reviewer ID is required' });
-    }
-
-    // Get the reviewer's role
     const reviewer = await User.findById(reviewerId);
     if (!reviewer) {
-      return res.status(404).json({ message: 'Reviewer not found' });
+      return res.status(400).json({ error: "Reviewer not found." });
     }
 
-    const roleSequence = [
-      'Adviser',
-      'College Dean',
-      'SDAO',
-      'Academic Services',
-      'Academic Director',
-      'Executive Director'
-    ];
-
-    const stepIndex = tracker.currentStep;
-    const currentStepRole = roleSequence[stepIndex];
-
-    if (reviewer.role !== currentStepRole) {
-      return res.status(403).json({ message: 'You are not authorized to review this form at this step.' });
+    // Find the current step
+    const stepIndex = tracker.steps.findIndex(step => step.stepName === tracker.currentStep);
+    if (stepIndex === -1) {
+      return res.status(400).json({ error: "Current step not found in tracker." });
     }
 
-    tracker.steps[stepIndex].status = status;
-    tracker.steps[stepIndex].reviewedBy = reviewerId;
-    tracker.steps[stepIndex].timestamp = Date.now();
-    tracker.steps[stepIndex].remarks = remarks;
+    const currentStep = tracker.steps[stepIndex];
 
-    if (status === 'approved') {
+    // Ensure the reviewer matches the expected role
+    if (reviewer.role !== currentStep.reviewerRole) {
+      return res.status(403).json({ error: `You are not authorized to review this step.` });
+    }
+
+    // Update current step
+    currentStep.status = status;
+    currentStep.reviewedBy = reviewer._id;
+    currentStep.reviewedByRole = reviewer.role;
+    currentStep.remarks = remarks;
+    currentStep.timestamp = new Date();
+
+    // If approved, move to the next step
+    if (status === "approved") {
       if (stepIndex < tracker.steps.length - 1) {
-        tracker.currentStep += 1; // Move to the next step
+        tracker.currentStep = tracker.steps[stepIndex + 1].stepName;
+        tracker.currentAuthority = tracker.steps[stepIndex + 1].reviewerRole;
       } else {
-        tracker.isCompleted = true; // Mark tracker as completed
+        // If last step is approved, mark the form as fully approved
+        await Form.findByIdAndUpdate(formId, { status: "approved" });
       }
-    } else if (status === 'declined') {
-      tracker.steps[stepIndex].status = 'declined';
-      tracker.steps[stepIndex].reviewedBy = null;
-      tracker.steps[stepIndex].timestamp = null;
-      tracker.steps[stepIndex].remarks = remarks || 'Requires Revision';
-      tracker.currentStep = stepIndex; // Stay on the same step
+    } else if (status === "declined") {
+      // If declined, return to the previous step
+      if (stepIndex > 0) {
+        tracker.currentStep = tracker.steps[stepIndex - 1].stepName;
+        tracker.currentAuthority = tracker.steps[stepIndex - 1].reviewerRole;
+      } else {
+        // If the first step is declined, form is fully rejected
+        await Form.findByIdAndUpdate(formId, { status: "declined" });
+      }
     }
 
     await tracker.save();
-    res.status(200).json({ message: 'Tracker updated successfully', tracker });
+
+    res.status(200).json({ message: "Tracker updated successfully", tracker });
+
   } catch (error) {
-    console.error('Error updating tracker:', error);
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
-};
-
-// Function to fetch event trackers for the logged-in reviewer
-const getTrackersForReviewer = async (req, res) => {
-  try {
-    const { reviewerId } = req.params;
-
-    // Find the reviewer's role
-    const reviewer = await User.findById(reviewerId);
-    if (!reviewer) {
-      return res.status(404).json({ message: "Reviewer not found" });
-    }
-
-    const trackers = await EventTracker.find({
-      'steps.step': reviewer.role, // Check if the role matches
-      currentStep: { $gte: 0 },
-    });
-
-    res.status(200).json(trackers);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error updating event tracker:", error);
+    res.status(500).json({ error: "Server error", details: error.message });
   }
 };
 

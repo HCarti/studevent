@@ -1,20 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import './ProgressTracker.css';
-import Stepper from '@mui/material/Stepper';
-import Step from '@mui/material/Step';
-import StepLabel from '@mui/material/StepLabel';
-import Button from '@mui/material/Button';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
-import { useNavigate, useLocation } from 'react-router-dom';
+import Button from '@mui/material/Button';
 
 const ProgressTracker = ({ currentUser }) => {
   const navigate = useNavigate();
   const { state } = useLocation();
   const form = state?.form;
-  const { formId } = useParams(); // Get formId from the URL
+  const { formId } = useParams();
 
+  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("currentUser")) || null);
   const [currentStep, setCurrentStep] = useState(0);
   const [trackerData, setTrackerData] = useState(null);
   const [remarks, setRemarks] = useState('');
@@ -23,22 +20,13 @@ const ProgressTracker = ({ currentUser }) => {
   const [isDeclinedChecked, setIsDeclinedChecked] = useState(false);
 
   useEffect(() => {
-    if (!form?._id) return;
+    if (!formId) return;
 
-    // Fetch tracker data from backend
     const fetchTrackerData = async () => {
       try {
-        console.log("Form ID before fetch:", formId); // Debugging
-    
-        if (!formId) {
-          throw new Error("Form ID is missing. Unable to fetch tracker data.");
-        }
-    
         const token = localStorage.getItem("token");
-        if (!token) {
-          throw new Error("No token found. Please log in again.");
-        }
-    
+        if (!token) throw new Error("No token found. Please log in again.");
+
         const response = await fetch(`https://studevent-server.vercel.app/api/tracker/${formId}`, {
           method: "GET",
           headers: {
@@ -46,93 +34,107 @@ const ProgressTracker = ({ currentUser }) => {
             "Content-Type": "application/json",
           },
         });
-    
-        if (!response.ok) {
-          throw new Error(`Error fetching tracker data: ${response.statusText}`);
-        }
-    
+
+        if (!response.ok) throw new Error(`Error fetching tracker data: ${response.statusText}`);
+
         const data = await response.json();
-        console.log("Fetched tracker data:", data); // Debugging
         setTrackerData(data);
       } catch (error) {
         console.error("Error fetching tracker data:", error.message);
       }
     };
-    
+
     fetchTrackerData();
-  }, [form]);
+  }, [formId]);
 
   if (!trackerData) return <p>Loading...</p>;
 
-  // Toggle edit mode
   const handleEditClick = () => setIsEditing(true);
 
-  // Save progress tracker
   const handleSaveClick = async () => {
     if (!trackerData) return;
 
-    const status = isApprovedChecked ? 'approved' : 'declined';
-    const updatedSteps = [...trackerData.steps];
-    updatedSteps[currentStep] = {
-      ...updatedSteps[currentStep],
-      status,
-      remarks,
-      color: status === 'approved' ? 'green' : 'red',
-      timestamp: Date.now(),
-    };
+    if (!user || !user.id || !user.facultyRole) {
+      console.error("Error: User is undefined or missing required fields (ID, facultyRole)");
+      return;
+  }
+  
 
+    const status = isApprovedChecked ? 'approved' : 'declined';
     let nextStep = currentStep;
     let nextAuthority = null;
 
+    console.log("Updating tracker for formId:", formId);
+
+    const updatedSteps = [...trackerData.steps];
+
     if (status === 'approved' && currentStep < updatedSteps.length - 1) {
-      nextStep += 1;
-      nextAuthority = updatedSteps[nextStep].label;
+        nextStep += 1;
+        nextAuthority = updatedSteps[nextStep].label;
     }
 
-    try {
-      const response = await fetch(`https://studevent-server.vercel.app/api/tracker/${form._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem("token")}` // Include token
-        },
-        body: JSON.stringify({
-          currentStep: nextStep,
-          status,
-          remarks,
-          steps: updatedSteps,
-          currentAuthority: nextAuthority,
-        }),
-      });      
+    updatedSteps[nextStep] = {
+        ...updatedSteps[nextStep],
+        reviewedBy: currentUser.id,
+        reviewedByRole: currentUser.facultyRole, // Ensuring faculty role is included
+        status, 
+        remarks,
+        color: status === 'approved' ? 'green' : 'red',
+        timestamp: Date.now(),
+    };
 
-      if (!response.ok) throw new Error('Failed to update progress tracker');
-
-      setTrackerData(prevData => ({
-        ...prevData,
+    const requestBody = {
         currentStep: nextStep,
+        status,
+        remarks,
+        reviewerId: currentUser.id,
+        reviewerRole: currentUser.facultyRole, // Sending faculty role
         steps: updatedSteps,
         currentAuthority: nextAuthority,
-      }));
-      
-      setCurrentStep(nextStep);
+    };
+
+    console.log("Sending data:", JSON.stringify(requestBody, null, 2));
+    console.log("Authorization Token:", localStorage.getItem("token"));
+    console.log("Retrieved user from localStorage:", JSON.parse(localStorage.getItem("currentUser")));
+
+
+    try {
+        const response = await fetch(`https://studevent-server.vercel.app/api/tracker/${formId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem("token")}`
+            },
+            body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to update progress tracker: ${errorText}`);
+        }
+
+        setCurrentStep(nextStep);
+        setTrackerData(prevData => ({
+            ...prevData,
+            currentStep: nextStep,
+            steps: updatedSteps
+        }));
+
+        setIsEditing(false);
+        setIsApprovedChecked(false);
+        setIsDeclinedChecked(false);
     } catch (error) {
-      console.error('Error updating progress tracker:', error);
+        console.error('Error updating progress tracker:', error);
     }
+};
 
-    setIsEditing(false);
-    setIsApprovedChecked(false);
-    setIsDeclinedChecked(false);
-  };
-
-  // Toggle checkboxes logic
   const handleCheckboxChange = (checkbox) => {
     setIsApprovedChecked(checkbox === 'approved');
     setIsDeclinedChecked(checkbox === 'declined');
   };
 
-  // Navigate to form details
   const handleViewForms = () => {
-    navigate(`/formdetails/${form._id}`, { state: { form } });
+    navigate(`/formdetails/${form.id}`, { state: { form } });
   };
 
   return (
@@ -170,7 +172,7 @@ const ProgressTracker = ({ currentUser }) => {
                   type="checkbox"
                   checked={isApprovedChecked}
                   onChange={() => handleCheckboxChange('approved')}
-                  disabled={isDeclinedChecked} // Disable if declined is checked
+                  disabled={isDeclinedChecked}
                 /> Reviewed and Approved
               </label>
               <label className="checkbox-container">
@@ -178,12 +180,12 @@ const ProgressTracker = ({ currentUser }) => {
                   type="checkbox"
                   checked={isDeclinedChecked}
                   onChange={() => handleCheckboxChange('declined')}
-                  disabled={isApprovedChecked} // Disable if approved is checked
+                  disabled={isApprovedChecked}
                 /> Declined
               </label>
             </div>
             <textarea
-              style={{ fontFamily: 'Arial', overflow: 'hidden', width: '100%' }}
+              style={{ fontFamily: 'Arial', width: '100%' }}
               placeholder='Remarks'
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
@@ -197,9 +199,12 @@ const ProgressTracker = ({ currentUser }) => {
             <Button variant="contained" className="action-button" onClick={handleViewForms}>
               VIEW FORMS
             </Button>
+            {trackerData.currentAuthority === user?.facultyRole && (
             <Button variant="contained" className="action-button" onClick={handleEditClick}>
               EDIT TRACKER
             </Button>
+          )}
+
           </div>
         )}
       </div>
