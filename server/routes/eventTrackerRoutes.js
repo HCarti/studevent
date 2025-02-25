@@ -18,17 +18,19 @@ router.put("/update-step/:trackerId/:stepId", authenticate, async (req, res) => 
     try {
         const { trackerId, stepId } = req.params;
         const { status, remarks } = req.body;
-        const userId = req.user._id; // Get the logged-in user's ObjectId
-        const userRole = req.user.facultyRole; // Ensure this is stored in JWT
+        const userId = req.user._id; // Logged-in user ID
+        const userRole = req.user.role; // Admin or Faculty
+        const facultyRole = req.user.facultyRole; // Faculty-specific role
 
-        const validRoles = ["Adviser", "Dean", "Academic Services", "Academic Director", "Executive Director"];
+        // List of allowed faculty roles
+        const facultyRoles = ["Adviser", "Dean", "Academic Services", "Academic Director", "Executive Director"];
 
-        // Check if user has a valid faculty role
-        if (!validRoles.includes(userRole)) {
-            return res.status(403).json({ message: "Unauthorized: Only faculty roles can update the tracker." });
+        // Ensure user is an Admin or Faculty with a valid facultyRole
+        if (userRole !== "Admin" && (!facultyRole || !facultyRoles.includes(facultyRole))) {
+            return res.status(403).json({ message: "Unauthorized: Only Admins or Faculty reviewers can update the tracker." });
         }
 
-        // Find the tracker
+        // Fetch the tracker
         const tracker = await EventTracker.findById(trackerId);
         if (!tracker) {
             return res.status(404).json({ message: "Tracker not found" });
@@ -43,20 +45,37 @@ router.put("/update-step/:trackerId/:stepId", authenticate, async (req, res) => 
         // Find the first "pending" step (must be updated in order)
         const firstPendingStep = tracker.steps.find(step => step.status === "pending");
 
-        // Ensure only the correct step is updated
+        // Ensure the correct step is being updated in order
         if (!firstPendingStep || firstPendingStep._id.toString() !== stepId) {
-            return res.status(403).json({ message: "You are not allowed to update this step yet." });
+            return res.status(403).json({ message: "You cannot skip steps. Approve them in order." });
         }
 
-        // Ensure the logged-in user is assigned to this step
-        if (firstPendingStep.reviewedBy && firstPendingStep.reviewedBy.toString() !== userId) {
-            return res.status(403).json({ message: "Unauthorized: You are not assigned to review this step." });
+        // Prevent users from modifying completed steps
+        if (step.status !== "pending") {
+            return res.status(400).json({ message: "This step has already been reviewed." });
+        }
+
+        // Ensure the logged-in user is the correct reviewer
+        if (firstPendingStep.step === "Adviser" && facultyRole !== "Adviser") {
+            return res.status(403).json({ message: "Unauthorized: Only the Adviser can review the first step." });
+        }
+        if (firstPendingStep.step === "Dean" && facultyRole !== "Dean") {
+            return res.status(403).json({ message: "Unauthorized: Only the Dean can review this step." });
+        }
+        if (firstPendingStep.step === "Academic Services" && facultyRole !== "Academic Services") {
+            return res.status(403).json({ message: "Unauthorized: Only Academic Services can review this step." });
+        }
+        if (firstPendingStep.step === "Academic Director" && facultyRole !== "Academic Director") {
+            return res.status(403).json({ message: "Unauthorized: Only the Academic Director can review this step." });
+        }
+        if (firstPendingStep.step === "Executive Director" && facultyRole !== "Executive Director") {
+            return res.status(403).json({ message: "Unauthorized: Only the Executive Director can review this step." });
         }
 
         // Assign the logged-in user if `reviewedBy` is null
         if (!firstPendingStep.reviewedBy) {
             firstPendingStep.reviewedBy = userId;
-            firstPendingStep.reviewedByRole = userRole;
+            firstPendingStep.reviewedByRole = facultyRole || userRole; // Use facultyRole if available, otherwise role
         }
 
         // Update step status and timestamp
@@ -68,8 +87,8 @@ router.put("/update-step/:trackerId/:stepId", authenticate, async (req, res) => 
         if (status === "approved") {
             const nextStepIndex = tracker.steps.findIndex(s => s._id.toString() === stepId) + 1;
             if (nextStepIndex < tracker.steps.length) {
-                tracker.currentStep = tracker.steps[nextStepIndex].stepName;
-                tracker.currentAuthority = tracker.steps[nextStepIndex].reviewerRole;
+                tracker.currentStep = tracker.steps[nextStepIndex].step;
+                tracker.currentAuthority = tracker.steps[nextStepIndex].reviewedByRole;
             } else {
                 tracker.currentStep = "Completed";
                 tracker.currentAuthority = "None";
@@ -84,5 +103,7 @@ router.put("/update-step/:trackerId/:stepId", authenticate, async (req, res) => 
         return res.status(500).json({ message: "Server error" });
     }
 });
+
+
 
 module.exports = router;
