@@ -85,14 +85,26 @@ const ProgressTracker = ({ currentUser }) => {
         }
     
         const status = isApprovedChecked ? 'approved' : 'declined';
-        let nextStep = currentStep;
+        let nextStep = currentStep; 
         let nextAuthority = null;
     
         console.log("Updating tracker for formId:", formId);
     
-        // Clone steps array to avoid mutating state directly
+        // **Ensure nextStep is calculated first**
+        if (status === 'approved' && currentStep < trackerData.steps.length - 1) {
+            nextStep += 1;
+        } else if (status === 'declined' && currentStep > 0) {
+            nextStep -= 1;
+        }
+    
+        // **Check if nextStep is valid before accessing `updatedSteps[nextStep]`**
+        if (nextStep >= 0 && nextStep < trackerData.steps.length) {
+            nextAuthority = trackerData.steps[nextStep].reviewerRole;
+        }
+    
+        // Clone and update steps
         const updatedSteps = trackerData.steps.map((step, index) =>
-            index === nextStep
+            index === currentStep
                 ? {
                       ...step,
                       reviewedBy: user._id,
@@ -104,14 +116,6 @@ const ProgressTracker = ({ currentUser }) => {
                   }
                 : step
         );
-    
-        if (status === 'approved' && currentStep < updatedSteps.length - 1) {
-            nextStep += 1;
-            nextAuthority = updatedSteps[nextStep].reviewerRole;
-        } else if (status === 'declined' && currentStep > 0) {
-            nextStep -= 1;
-            nextAuthority = updatedSteps[nextStep].reviewerRole;
-        }
     
         const requestBody = {
             currentStep: nextStep,
@@ -153,6 +157,8 @@ const ProgressTracker = ({ currentUser }) => {
             console.error('Error updating progress tracker:', error);
         }
     };
+    
+    
     
     const handleCheckboxChange = (checkbox) => {
         setIsApprovedChecked(checkbox === 'approved');

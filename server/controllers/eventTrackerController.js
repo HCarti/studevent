@@ -75,7 +75,7 @@ const createEventTracker = async (req, res) => {
 const updateEventTracker = async (req, res) => {
   try {
     const { formId } = req.params;
-    const { reviewerId, status, remarks } = req.body; // Reviewer ID, status, and remarks from frontend
+    const { reviewerId, status, remarks } = req.body; // Extract values from request body
 
     const tracker = await EventTracker.findOne({ formId }).populate({
       path: "steps.reviewedBy",
@@ -86,47 +86,58 @@ const updateEventTracker = async (req, res) => {
       return res.status(404).json({ error: "Event tracker not found." });
     }
 
-    // Find the current step
-    const stepIndex = tracker.currentStep;
-    if (stepIndex === -1 || !tracker.steps[stepIndex]) {
-      return res.status(400).json({ error: "Invalid current step." });
+    // Validate currentStep exists
+    if (!tracker.steps || tracker.steps.length === 0) {
+      return res.status(400).json({ error: "Invalid steps data." });
     }
+
+    const stepIndex = tracker.currentStep;
+    if (typeof stepIndex !== "number" || stepIndex < 0 || !tracker.steps || !tracker.steps[stepIndex]) {
+      return res.status(400).json({ error: "Invalid current step." });
+  }
+  
+  console.log("Tracker Data:", tracker);
+  console.log("Current Step:", tracker.currentStep);
+  console.log("Steps Array:", tracker.steps);
+  console.log("Step Index:", stepIndex);
+
 
     const currentStep = tracker.steps[stepIndex];
 
-    // Retrieve the reviewer's details from the database
+    // Retrieve reviewer's details
     const reviewer = await User.findById(reviewerId);
     if (!reviewer) {
       return res.status(404).json({ error: "Reviewer not found." });
     }
 
-    // Ensure the reviewer is authorized
+    // Validate if reviewer is authorized for this step
     const isAuthorizedReviewer =
-      reviewer.role === currentStep.reviewerRole || reviewer.faculty === currentStep.reviewerRole;
-      
+      reviewer.role === currentStep.reviewerRole ||
+      reviewer.facultyRole === currentStep.reviewerRole;
+
     if (!isAuthorizedReviewer) {
       return res.status(403).json({ error: "You are not authorized to review this step." });
     }
 
-    // Update current step
+    // Update the current step
     currentStep.status = status;
     currentStep.reviewedBy = reviewer._id;
-    currentStep.reviewedByRole = reviewer.role || reviewer.faculty;
+    currentStep.reviewedByRole = reviewer.role || reviewer.facultyRole || "Unknown Role";
     currentStep.remarks = remarks;
     currentStep.timestamp = new Date();
 
-    // If approved, move to the next step
+    // Logic for moving to the next step
     if (status === "approved") {
       if (stepIndex < tracker.steps.length - 1) {
         tracker.currentStep = stepIndex + 1;
-        tracker.currentAuthority = tracker.steps[stepIndex + 1].reviewerRole;
+        tracker.currentAuthority = tracker.steps[tracker.currentStep].reviewerRole;
       } else {
         await Form.findByIdAndUpdate(formId, { status: "approved" });
       }
     } else if (status === "declined") {
       if (stepIndex > 0) {
         tracker.currentStep = stepIndex - 1;
-        tracker.currentAuthority = tracker.steps[stepIndex - 1].reviewerRole;
+        tracker.currentAuthority = tracker.steps[tracker.currentStep].reviewerRole;
       } else {
         await Form.findByIdAndUpdate(formId, { status: "rejected", message: "Please revise and resubmit." });
       }
@@ -140,6 +151,8 @@ const updateEventTracker = async (req, res) => {
     res.status(500).json({ error: "Server error", details: error.message });
   }
 };
+
+
 
 
 
