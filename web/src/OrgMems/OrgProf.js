@@ -7,8 +7,6 @@ const OrgProf = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
-  const handlePassword = () => navigate('/pass');
-
   const fetchUserData = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');

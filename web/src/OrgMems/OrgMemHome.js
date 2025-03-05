@@ -6,11 +6,6 @@ import StudeventLogo from '../Images/NU_logo.png';
 import { FaWpforms, FaRegCalendarAlt } from "react-icons/fa";
 import { IoPersonCircleOutline } from "react-icons/io5";
 import { ParallaxProvider, Parallax } from 'react-scroll-parallax'; 
-import facebookIcon from '../Images/facebook.png';
-import twitterIcon from '../Images/twitter.png';
-import instagramIcon from '../Images/instagram.png';
-import EmailIcon from '@mui/icons-material/Email';
-import PhoneIcon from '@mui/icons-material/Phone';
 
 const OrgMemHome = () => {
   const navigate = useNavigate();
