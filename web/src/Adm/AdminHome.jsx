@@ -7,6 +7,11 @@ import { IoCalendarOutline, IoPersonCircleOutline } from "react-icons/io5";
 import { IoSpeedometerOutline } from "react-icons/io5";
 import { ParallaxProvider } from 'react-scroll-parallax';
 import axios from 'axios';
+import image1 from '../Images/NU_moa_event2.jpg';
+import image2 from '../Images/NU_moa_event6.jpg';
+import image3 from '../Images/NU_moa_event3.jpg';
+import image4 from '../Images/NU_moa_event4.jpg';
+import Slider from 'react-slick';
 
 const AdminHome = () => { 
   const navigate = useNavigate();
@@ -96,6 +101,27 @@ const AdminHome = () => {
     navigate('/dashboard');
   };
 
+  const sliderSettings = {
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 4000,
+    pauseOnHover: true,
+    arrows: true,
+    fade: true,
+    cssEase: 'linear',
+    dotsClass: 'slick-dots custom-dots',
+    responsive: [
+      { breakpoint: 1024, settings: { slidesToShow: 2 } },
+      { breakpoint: 600, settings: { slidesToShow: 1 } },
+    ],
+  };
+  
+  const images = [image1, image2, image3, image4];
+
   return (
     <ParallaxProvider> 
       <React.Fragment>
@@ -123,6 +149,17 @@ const AdminHome = () => {
           <div className="quote-container">
             <p className="quote animated-fade">{quote}</p>
           </div>
+
+          <div className="img-slide">
+          <Slider {...sliderSettings}>
+            {images.map((img, index) => (
+              <div key={index} className="slide">
+                <img src={img} alt={`Event ${index + 1}`} className="slider-image" />
+              </div>
+            ))}
+          </Slider>
+        </div>
+        
         </div>
       </React.Fragment>
     </ParallaxProvider>

@@ -160,7 +160,7 @@ const fetchForms = async () => {
             
           </div>
 
-        <div className="img-slide">
+        {/* <div className="img-slide">
           <Slider {...sliderSettings}>
             {images.map((img, index) => (
               <div key={index} className="slide">
@@ -168,7 +168,8 @@ const fetchForms = async () => {
               </div>
             ))}
           </Slider>
-        </div>
+        </div> */}
+        
       </div>
     </React.Fragment>
   );
