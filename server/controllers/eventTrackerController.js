@@ -39,17 +39,19 @@ const createEventTracker = async (req, res) => {
     // Fetch the corresponding reviewer IDs based on roles
     const reviewers = await Promise.all(
       roles.map(async (role) => {
-        const user = await User.findOne({ role, organizationId }); // Ensure same organization
-        return user ? user._id : null;
+        const users = await User.find({ role, organizationId }); // Fetch all users with this role
+        return users.map(user => user._id); // Store multiple IDs if needed
       })
     );
 
     // Filter out null values (in case some roles are unassigned)
-    const steps = reviewers
-      .filter((id) => id !== null)
+    
+      const steps = reviewers
+      .flat() // Flatten array in case of multiple users per role
       .map((id, index) => ({
-        step: roles[index],
-        status: index === 0 ? 'pending' : 'pending',
+        stepName: roles[index],  // Make sure your `stepName` field exists
+        reviewerRole: roles[index],  // Store role explicitly
+        status: 'pending',
         reviewedBy: null,
         timestamp: null,
         remarks: '',
@@ -73,68 +75,86 @@ const createEventTracker = async (req, res) => {
 const updateEventTracker = async (req, res) => {
   try {
     const { formId } = req.params;
-    const { reviewerId, status, remarks } = req.body; // Reviewer ID, status, and remarks from frontend
+    const { reviewerId, status, remarks } = req.body; // Extract values from request body
 
-    const tracker = await EventTracker.findOne({ formId }).populate("steps.reviewedBy");
+    const tracker = await EventTracker.findOne({ formId }).populate({
+      path: "steps.reviewedBy",
+      select: "name role",
+    });
 
     if (!tracker) {
       return res.status(404).json({ error: "Event tracker not found." });
     }
 
-    const reviewer = await User.findById(reviewerId);
-    if (!reviewer) {
-      return res.status(400).json({ error: "Reviewer not found." });
+    // Validate currentStep exists
+    if (!tracker.steps || tracker.steps.length === 0) {
+      return res.status(400).json({ error: "Invalid steps data." });
     }
 
-    // Find the current step
-    const stepIndex = tracker.steps.findIndex(step => step.stepName === tracker.currentStep);
-    if (stepIndex === -1) {
-      return res.status(400).json({ error: "Current step not found in tracker." });
-    }
+    const stepIndex = tracker.currentStep;
+    if (typeof stepIndex !== "number" || stepIndex < 0 || !tracker.steps || !tracker.steps[stepIndex]) {
+      return res.status(400).json({ error: "Invalid current step." });
+  }
+  
+  console.log("Tracker Data:", tracker);
+  console.log("Current Step:", tracker.currentStep);
+  console.log("Steps Array:", tracker.steps);
+  console.log("Step Index:", stepIndex);
+
 
     const currentStep = tracker.steps[stepIndex];
 
-    // Ensure the reviewer matches the expected role
-    if (reviewer.role !== currentStep.reviewerRole) {
-      return res.status(403).json({ error: `You are not authorized to review this step.` });
+    // Retrieve reviewer's details
+    const reviewer = await User.findById(reviewerId);
+    if (!reviewer) {
+      return res.status(404).json({ error: "Reviewer not found." });
     }
 
-    // Update current step
+    // Validate if reviewer is authorized for this step
+    const isAuthorizedReviewer =
+      reviewer.role === currentStep.reviewerRole ||
+      reviewer.facultyRole === currentStep.reviewerRole;
+
+    if (!isAuthorizedReviewer) {
+      return res.status(403).json({ error: "You are not authorized to review this step." });
+    }
+
+    // Update the current step
     currentStep.status = status;
     currentStep.reviewedBy = reviewer._id;
-    currentStep.reviewedByRole = reviewer.role;
+    currentStep.reviewedByRole = reviewer.role || reviewer.facultyRole || "Unknown Role";
     currentStep.remarks = remarks;
     currentStep.timestamp = new Date();
 
-    // If approved, move to the next step
+    // Logic for moving to the next step
     if (status === "approved") {
       if (stepIndex < tracker.steps.length - 1) {
-        tracker.currentStep = tracker.steps[stepIndex + 1].stepName;
-        tracker.currentAuthority = tracker.steps[stepIndex + 1].reviewerRole;
+        tracker.currentStep = stepIndex + 1;
+        tracker.currentAuthority = tracker.steps[tracker.currentStep].reviewerRole;
       } else {
-        // If last step is approved, mark the form as fully approved
         await Form.findByIdAndUpdate(formId, { status: "approved" });
       }
     } else if (status === "declined") {
-      // If declined, return to the previous step
       if (stepIndex > 0) {
-        tracker.currentStep = tracker.steps[stepIndex - 1].stepName;
-        tracker.currentAuthority = tracker.steps[stepIndex - 1].reviewerRole;
+        tracker.currentStep = stepIndex - 1;
+        tracker.currentAuthority = tracker.steps[tracker.currentStep].reviewerRole;
       } else {
-        // If the first step is declined, form is fully rejected
-        await Form.findByIdAndUpdate(formId, { status: "declined" });
+        await Form.findByIdAndUpdate(formId, { status: "rejected", message: "Please revise and resubmit." });
       }
     }
 
     await tracker.save();
 
     res.status(200).json({ message: "Tracker updated successfully", tracker });
-
   } catch (error) {
     console.error("Error updating event tracker:", error);
     res.status(500).json({ error: "Server error", details: error.message });
   }
 };
+
+
+
+
 
 
 const getEventTrackerByFormId = async (req, res) => {

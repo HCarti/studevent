@@ -11,7 +11,26 @@ const ProgressTracker = ({ currentUser }) => {
     const form = state?.form;
     const { formId } = useParams();
 
-    const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("currentUser")) || null);
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        console.log("Retrieving user data from localStorage...");
+        const storedUser = localStorage.getItem("user");
+
+        if (storedUser) {
+            try {
+                const parsedUser = JSON.parse(storedUser);
+                console.log("Parsed user data:", parsedUser);
+                setUser(parsedUser);
+            } catch (error) {
+                console.error("Error parsing user data from localStorage:", error);
+                setUser(null);
+            }
+        } else {
+            console.warn("No user data found in localStorage.");
+        }
+    }, []);
+
     const [currentStep, setCurrentStep] = useState(0);
     const [trackerData, setTrackerData] = useState(null);
     const [remarks, setRemarks] = useState('');
@@ -38,6 +57,8 @@ const ProgressTracker = ({ currentUser }) => {
                 if (!response.ok) throw new Error(`Error fetching tracker data: ${response.statusText}`);
 
                 const data = await response.json();
+                console.log("Fetched tracker data:", data);
+
                 setTrackerData(data);
                 setCurrentStep(data.currentStep);
             } catch (error) {
@@ -50,51 +71,64 @@ const ProgressTracker = ({ currentUser }) => {
 
     if (!trackerData) return <p>Loading...</p>;
 
+    console.log("User Data from LocalStorage:", user);
+    console.log("Tracker's currentAuthority:", trackerData.currentAuthority);
+
     const handleEditClick = () => setIsEditing(true);
 
     const handleSaveClick = async () => {
         if (!trackerData) return;
-
-        if (!user?.id || !user?.faculty || !user?.role) {
-            console.error("Error: User data is missing required fields (ID, faculty, or role)");
+    
+        if (!user || !user._id || (!user.facultyRole && !user.role)) {
+            console.error("Error: User data is missing required fields (ID, facultyRole, or role)");
             return;
         }
-
+    
         const status = isApprovedChecked ? 'approved' : 'declined';
-        let nextStep = currentStep;
+        let nextStep = currentStep; 
         let nextAuthority = null;
-
+    
         console.log("Updating tracker for formId:", formId);
-
-        const updatedSteps = [...trackerData.steps];
-
-        if (status === 'approved' && currentStep < updatedSteps.length - 1) {
+    
+        // **Ensure nextStep is calculated first**
+        if (status === 'approved' && currentStep < trackerData.steps.length - 1) {
             nextStep += 1;
-            nextAuthority = updatedSteps[nextStep].label;
+        } else if (status === 'declined' && currentStep > 0) {
+            nextStep -= 1;
         }
-
-        updatedSteps[nextStep] = {
-            ...updatedSteps[nextStep],
-            reviewedBy: user.id,
-            reviewedByRole: user.faculty, 
-            status, 
-            remarks,
-            color: status === 'approved' ? 'green' : 'red',
-            timestamp: Date.now(),
-        };
-
+    
+        // **Check if nextStep is valid before accessing `updatedSteps[nextStep]`**
+        if (nextStep >= 0 && nextStep < trackerData.steps.length) {
+            nextAuthority = trackerData.steps[nextStep].reviewerRole;
+        }
+    
+        // Clone and update steps
+        const updatedSteps = trackerData.steps.map((step, index) =>
+            index === currentStep
+                ? {
+                      ...step,
+                      reviewedBy: user._id,
+                      reviewedByRole: user.facultyRole || user.role,
+                      status,
+                      remarks,
+                      color: status === 'approved' ? 'green' : 'red',
+                      timestamp: new Date().toISOString(),
+                  }
+                : step
+        );
+    
         const requestBody = {
             currentStep: nextStep,
             status,
             remarks,
-            reviewerId: user.id,
-            reviewerRole: user.faculty, 
+            reviewerId: user._id,
+            reviewerRole: user.facultyRole || user.role,
             steps: updatedSteps,
             currentAuthority: nextAuthority,
         };
-
+    
         console.log("Sending data:", JSON.stringify(requestBody, null, 2));
-
+    
         try {
             const response = await fetch(`https://studevent-server.vercel.app/api/tracker/${formId}`, {
                 method: 'PUT',
@@ -104,12 +138,12 @@ const ProgressTracker = ({ currentUser }) => {
                 },
                 body: JSON.stringify(requestBody),
             });
-
+    
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`Failed to update progress tracker: ${errorText}`);
             }
-
+    
             setCurrentStep(nextStep);
             setTrackerData(prevData => ({
                 ...prevData,
@@ -123,7 +157,9 @@ const ProgressTracker = ({ currentUser }) => {
             console.error('Error updating progress tracker:', error);
         }
     };
-
+    
+    
+    
     const handleCheckboxChange = (checkbox) => {
         setIsApprovedChecked(checkbox === 'approved');
         setIsDeclinedChecked(checkbox === 'declined');
@@ -135,7 +171,7 @@ const ProgressTracker = ({ currentUser }) => {
 
     return (
         <div className='prog-box'>
-            <h3 style={{ textAlign: 'center' }}>Event Proposal Tracker</h3> 
+            <h3 style={{ textAlign: 'center' }}>Event Proposal Tracker</h3>
             <div className="progress-tracker">
                 <div className="progress-bar-container">
                     {trackerData.steps.map((step, index) => {
@@ -195,7 +231,7 @@ const ProgressTracker = ({ currentUser }) => {
                         <Button variant="contained" className="action-button" onClick={handleViewForms}>
                             VIEW FORMS
                         </Button>
-                        {trackerData.currentAuthority === user?.faculty || trackerData.currentAuthority === user?.role ? (
+                        {trackerData.currentAuthority && (trackerData.currentAuthority === user?.faculty || trackerData.currentAuthority === user?.role) ? (
                             <Button variant="contained" className="action-button" onClick={handleEditClick}>
                                 EDIT TRACKER
                             </Button>

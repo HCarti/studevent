@@ -11,11 +11,6 @@ import twitterIcon from '../Images/twitter.png';
 import instagramIcon from '../Images/instagram.png';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
-import image1 from '../Images/NU_moa_event2.jpg';
-import image2 from '../Images/NU_moa_event6.jpg';
-import image3 from '../Images/NU_moa_event3.jpg';
-import image4 from '../Images/NU_moa_event4.jpg';
-import Slider from 'react-slick';
 
 const OrgMemHome = () => {
   const navigate = useNavigate();
