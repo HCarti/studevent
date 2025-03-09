@@ -76,88 +76,107 @@ const ProgressTracker = ({ currentUser }) => {
 
     const handleEditClick = () => setIsEditing(true);
 
-    const handleSaveClick = async () => {
-        if (!trackerData) return;
     
-        if (!user || !user._id || (!user.facultyRole && !user.role)) {
-            console.error("Error: User data is missing required fields (ID, facultyRole, or role)");
+    const handleSaveClick = async () => {
+        if (!trackerData) {
+            console.error("Error: trackerData is undefined.");
             return;
         }
     
-        const status = isApprovedChecked ? 'approved' : 'declined';
-        let nextStep = currentStep; 
-        let nextAuthority = null;
+        if (!user || !user._id || (!user.faculty && !user.role)) {
+            console.error("Error: User data is missing required fields (ID, facultyRole, or role)");
+            return;
+        }
+        
     
-        console.log("Updating tracker for formId:", formId);
-    
-        // **Ensure nextStep is calculated first**
-        if (status === 'approved' && currentStep < trackerData.steps.length - 1) {
-            nextStep += 1;
-        } else if (status === 'declined' && currentStep > 0) {
-            nextStep -= 1;
+        const status = isApprovedChecked ? "approved" : "declined";
+        const remarksText = remarks || "";
+        const trackerId = formId;
+
+          // Find step index based on step name
+          const stepIndex = trackerData.steps.findIndex(step => 
+            step?.stepName && step.stepName.trim().toLowerCase() === currentStep.trim().toLowerCase()
+        );              
+        
+        if (stepIndex === -1) {
+            console.error("Error: No matching step found for currentStep:", currentStep);
+            console.log("Available Steps:", trackerData.steps.map(steps => steps.name)); // Debugging step names
+            return;
         }
     
-        // **Check if nextStep is valid before accessing `updatedSteps[nextStep]`**
-        if (nextStep >= 0 && nextStep < trackerData.steps.length) {
-            nextAuthority = trackerData.steps[nextStep].reviewerRole;
+        // Ensure step exists
+        const step = trackerData.steps[stepIndex];
+        if (!step || !step._id) {
+            console.error("Error: Step data is missing or step ID is undefined.", step);
+            return;
+        }
+
+        if (currentStep < 0 || currentStep >= trackerData.steps.length) {
+            console.error("Error: currentStep is out of bounds.", currentStep, trackerData.steps.length);
+            return;
         }
     
-        // Clone and update steps
-        const updatedSteps = trackerData.steps.map((step, index) =>
-            index === currentStep
-                ? {
-                      ...step,
-                      reviewedBy: user._id,
-                      reviewedByRole: user.facultyRole || user.role,
-                      status,
-                      remarks,
-                      color: status === 'approved' ? 'green' : 'red',
-                      timestamp: new Date().toISOString(),
-                  }
-                : step
-        );
+        const stepId = step._id; // Now safe to access
+        console.log("Updating tracker step:", stepId);
+        console.log("Tracker ID:", trackerId);
+        console.log("Selected Step Data:", trackerData?.steps?.[stepIndex]);
+        console.log("Updating tracker step:", { trackerId, stepId, status, remarks: remarksText });
     
-        const requestBody = {
-            currentStep: nextStep,
-            status,
-            remarks,
-            reviewerId: user._id,
-            reviewerRole: user.facultyRole || user.role,
-            steps: updatedSteps,
-            currentAuthority: nextAuthority,
-        };
-    
-        console.log("Sending data:", JSON.stringify(requestBody, null, 2));
+        const requestBody = { status, remarks: remarksText };
     
         try {
-            const response = await fetch(`https://studevent-server.vercel.app/api/tracker/${formId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem("token")}`
-                },
-                body: JSON.stringify(requestBody),
-            });
+            const response = await fetch(
+                `https://studevent-server.vercel.app/api/tracker/update-step/${trackerId}/${stepId}`,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                    body: JSON.stringify(requestBody),
+                }
+            );
     
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`Failed to update progress tracker: ${errorText}`);
             }
     
-            setCurrentStep(nextStep);
-            setTrackerData(prevData => ({
+            // Update local state
+            const updatedSteps = trackerData.steps.map((s, index) =>
+                index === currentStep
+                    ? {
+                          ...s,
+                          reviewedBy: user._id,
+                          reviewedByRole: user.faculty || user.role,
+                          status,
+                          remarks: remarksText,
+                          color: status === "approved" ? "green" : "red",
+                          timestamp: new Date().toISOString(),
+                      }
+                    : s
+            );
+    
+            setCurrentStep((prevStep) =>
+                status === "approved" && prevStep < trackerData.steps.length - 1
+                    ? prevStep + 1
+                    : prevStep
+            );
+    
+            setTrackerData((prevData) => ({
                 ...prevData,
-                currentStep: nextStep,
                 steps: updatedSteps,
             }));
+    
             setIsEditing(false);
             setIsApprovedChecked(false);
             setIsDeclinedChecked(false);
+    
+            console.log("Tracker updated successfully!");
         } catch (error) {
-            console.error('Error updating progress tracker:', error);
+            console.error("Error updating progress tracker:", error);
         }
     };
-    
     
     
     const handleCheckboxChange = (checkbox) => {
