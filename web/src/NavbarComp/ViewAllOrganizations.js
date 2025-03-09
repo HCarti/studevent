@@ -83,7 +83,7 @@ const ViewAllOrganizations = () => {
         Back
       </button>
     </div>
-   <Footer></Footer>
+   {/* <Footer></Footer> */}
   </React.Fragment>
   
   );
