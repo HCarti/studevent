@@ -87,11 +87,14 @@ const ProgressTracker = ({ currentUser }) => {
             console.error("Error: User data is missing required fields (ID, facultyRole, or role)");
             return;
         }
+
+        console.log("🔍 Current User:", JSON.parse(localStorage.getItem("user")));
+
         
     
         const status = isApprovedChecked ? "approved" : "declined";
         const remarksText = remarks || "";
-        const trackerId = formId;
+        const trackerId = trackerData?._id || formId; // Prefer trackerData ID if available
 
           // Find step index based on step name
           const stepIndex = trackerData.steps.findIndex(step => 
@@ -143,19 +146,18 @@ const ProgressTracker = ({ currentUser }) => {
             }
     
             // Update local state
-            const updatedSteps = trackerData.steps.map((s, index) =>
-                index === currentStep
-                    ? {
-                          ...s,
-                          reviewedBy: user._id,
-                          reviewedByRole: user.faculty || user.role,
-                          status,
-                          remarks: remarksText,
-                          color: status === "approved" ? "green" : "red",
-                          timestamp: new Date().toISOString(),
-                      }
-                    : s
+            const updatedSteps = trackerData.steps.map((s) =>
+                s._id === stepId ? {
+                    ...s,
+                    reviewedBy: user._id,
+                    reviewedByRole: user.faculty || user.role,
+                    status,
+                    remarks: remarksText,
+                    color: status === "approved" ? "green" : "red",
+                    timestamp: new Date().toISOString(),
+                } : s
             );
+            
     
             setCurrentStep((prevStep) =>
                 status === "approved" && prevStep < trackerData.steps.length - 1
