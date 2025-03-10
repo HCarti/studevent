@@ -87,23 +87,32 @@ const ProgressTracker = ({ currentUser }) => {
             console.error("Error: User data is missing required fields (ID, facultyRole, or role)");
             return;
         }
-
+    
         console.log("🔍 Current User:", JSON.parse(localStorage.getItem("user")));
-
-        
+    
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.error("Error: No authentication token found. Please log in again.");
+            return;
+        }
     
         const status = isApprovedChecked ? "approved" : "declined";
         const remarksText = remarks || "";
         const trackerId = trackerData?._id || formId; // Prefer trackerData ID if available
-
-          // Find step index based on step name
-          const stepIndex = trackerData.steps.findIndex(step => 
+    
+        if (!trackerData.steps || trackerData.steps.length === 0) {
+            console.error("Error: No steps found in trackerData.");
+            return;
+        }
+    
+        // Find step index based on step name
+        const stepIndex = trackerData.steps.findIndex(step => 
             step?.stepName && step.stepName.trim().toLowerCase() === currentStep.trim().toLowerCase()
         );              
-        
+    
         if (stepIndex === -1) {
             console.error("Error: No matching step found for currentStep:", currentStep);
-            console.log("Available Steps:", trackerData.steps.map(steps => steps.name)); // Debugging step names
+            console.log("Available Steps:", trackerData.steps.map(step => step.stepName)); // Debugging step names
             return;
         }
     
@@ -113,16 +122,11 @@ const ProgressTracker = ({ currentUser }) => {
             console.error("Error: Step data is missing or step ID is undefined.", step);
             return;
         }
-
-        if (currentStep < 0 || currentStep >= trackerData.steps.length) {
-            console.error("Error: currentStep is out of bounds.", currentStep, trackerData.steps.length);
-            return;
-        }
     
-        const stepId = step._id; // Now safe to access
+        const stepId = step._id;
         console.log("Updating tracker step:", stepId);
         console.log("Tracker ID:", trackerId);
-        console.log("Selected Step Data:", trackerData?.steps?.[stepIndex]);
+        console.log("Selected Step Data:", trackerData.steps[stepIndex]);
         console.log("Updating tracker step:", { trackerId, stepId, status, remarks: remarksText });
     
         const requestBody = { status, remarks: remarksText };
@@ -134,7 +138,7 @@ const ProgressTracker = ({ currentUser }) => {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                        Authorization: `Bearer ${token}`, // Ensuring token exists before sending
                     },
                     body: JSON.stringify(requestBody),
                 }
@@ -147,17 +151,18 @@ const ProgressTracker = ({ currentUser }) => {
     
             // Update local state
             const updatedSteps = trackerData.steps.map((s) =>
-                s._id === stepId ? {
-                    ...s,
-                    reviewedBy: user._id,
-                    reviewedByRole: user.faculty || user.role,
-                    status,
-                    remarks: remarksText,
-                    color: status === "approved" ? "green" : "red",
-                    timestamp: new Date().toISOString(),
-                } : s
+                s._id === stepId
+                    ? {
+                        ...s,
+                        reviewedBy: user._id,
+                        reviewedByRole: user.faculty || user.role,
+                        status,
+                        remarks: remarksText,
+                        color: status === "approved" ? "green" : "red",
+                        timestamp: new Date().toISOString(),
+                    }
+                    : s
             );
-            
     
             setCurrentStep((prevStep) =>
                 status === "approved" && prevStep < trackerData.steps.length - 1
@@ -174,11 +179,12 @@ const ProgressTracker = ({ currentUser }) => {
             setIsApprovedChecked(false);
             setIsDeclinedChecked(false);
     
-            console.log("Tracker updated successfully!");
+            console.log("✅ Tracker updated successfully!");
         } catch (error) {
-            console.error("Error updating progress tracker:", error);
+            console.error("❌ Error updating progress tracker:", error);
         }
     };
+    
     
     
     const handleCheckboxChange = (checkbox) => {

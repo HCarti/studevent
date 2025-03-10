@@ -74,6 +74,11 @@ const createEventTracker = async (req, res) => {
 // Update event tracker progress
 const updateTrackerStep = async (req, res) => {
   try {
+      // Ensure req.user exists before extracting role & faculty
+      if (!req.user) {
+          return res.status(403).json({ message: "Unauthorized: Missing user credentials." });
+      }
+
       const { trackerId, stepId } = req.params;
       const { status, remarks } = req.body;
       const userId = req.user._id; // Logged-in user ID
@@ -83,24 +88,13 @@ const updateTrackerStep = async (req, res) => {
       console.log("User Data:", req.user);
       console.log("Request Body:", req.body);
 
-      if (!req.user || !req.user.role) {
-        return res.status(403).json({ message: "Unauthorized: Missing user role." });
-    }
-
-      const facultyRoles = ["Adviser", "Dean", "Academic Director", "Academic Services", "Executive Director"];
-
-      if (role !== "Admin" && (!faculty || !facultyRoles.includes(faculty))) {
-        return res.status(403).json({ message: "Unauthorized: Only Admins or Faculty reviewers can update the tracker." });
-      }
-
-
       // Allowed faculty roles for reviewing
-      const facultys = ["Adviser", "Dean", "Academic Services", "Academic Director", "Executive Director"];
+      const facultyRoles = ["Adviser", "Dean", "Academic Services", "Academic Director", "Executive Director"];
 
-      // Ensure user is an Admin or Faculty with a valid faculty role
-      if (role !== "Admin" && (!faculty || !facultys.includes(faculty))) {
-    return res.status(403).json({ message: "Unauthorized: Only Admins or Faculty reviewers can update the tracker." });
-}
+      // Ensure user is an Admin or a Faculty with a valid faculty role
+      if (role !== "Admin" && (!faculty || !facultyRoles.includes(faculty))) {
+          return res.status(403).json({ message: "Unauthorized: Only Admins or Faculty reviewers can update the tracker." });
+      }
 
       // Fetch the event tracker
       const tracker = await EventTracker.findById(trackerId);
@@ -117,30 +111,20 @@ const updateTrackerStep = async (req, res) => {
       // Find the first "pending" step (steps must be reviewed in order)
       const firstPendingStepIndex = tracker.steps.findIndex(step => step.status === "pending");
       const firstPendingStep = tracker.steps[firstPendingStepIndex];
-     
+
       if (!firstPendingStep || firstPendingStep._id.toString() !== stepId) {
-        return res.status(403).json({ message: "You cannot skip steps. Approve them in order." });
-    }
+          return res.status(403).json({ message: "You cannot skip steps. Approve them in order." });
+      }
 
       // Prevent modification of already reviewed steps
       if (firstPendingStep.status !== "pending") {
-        return res.status(400).json({ message: "This step has already been reviewed." });
-      }    
+          return res.status(400).json({ message: "This step has already been reviewed." });
+      }
 
       // Ensure the correct faculty role is updating the right step
-      const stepRoleMap = {
-          "Adviser": "Adviser",
-          "Dean": "Dean",
-          "Admin":"Admin",
-          "Academic Services": "Academic Services",
-          "Academic Director": "Academic Director",
-          "Executive Director": "Executive Director"
-      };
-
-          if (step.stepName !== faculty && role !== "Admin") {
-      return res.status(403).json({ message: `Unauthorized: Only the ${step.stepName} can review this step.` });
-    }
-      
+      if (step.stepName !== faculty && role !== "Admin") {
+          return res.status(403).json({ message: `Unauthorized: Only the ${step.stepName} can review this step.` });
+      }
 
       // Assign the reviewer if not already assigned
       if (!firstPendingStep.reviewedBy) {
@@ -155,15 +139,15 @@ const updateTrackerStep = async (req, res) => {
 
       // Move to the next step if approved
       if (status === "approved") {
-        const nextStepIndex = tracker.steps.findIndex(s => s._id.toString() === stepId) + 1;
-        if (nextStepIndex < tracker.steps.length) {
-            tracker.currentStep = tracker.steps[nextStepIndex].stepName;
-            tracker.currentAuthority = tracker.steps[nextStepIndex].reviewerRole;          
-        } else {
-            tracker.currentStep = "Completed";
-            tracker.currentAuthority = "None";
-        }
-    }    
+          const nextStepIndex = firstPendingStepIndex + 1;
+          if (nextStepIndex < tracker.steps.length) {
+              tracker.currentStep = tracker.steps[nextStepIndex].stepName;
+              tracker.currentAuthority = tracker.steps[nextStepIndex].stepName; // Fix this assignment
+          } else {
+              tracker.currentStep = "Completed";
+              tracker.currentAuthority = "None";
+          }
+      }
 
       // Save the updated tracker
       await tracker.save();
@@ -174,6 +158,7 @@ const updateTrackerStep = async (req, res) => {
       return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 // Get event tracker by form ID
 const getEventTrackerByFormId = async (req, res) => {

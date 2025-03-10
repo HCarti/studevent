@@ -10,13 +10,14 @@ const createToken = (user) => {
   return jwt.sign(
     {
       _id: user._id,
-      role: user.role,  // ✅ Include role
-      faculty: user.faculty // ✅ Include faculty (if applicable)
+      role: user.role || "faculty", // Make sure role exists
+      faculty: user.faculty || null // Include faculty role
     },
     process.env.JWT_SECRET,
     { expiresIn: "3d" }
   );
 };
+
 
 
 const login = async (req, res) => {
