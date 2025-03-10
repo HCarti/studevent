@@ -83,9 +83,9 @@ const updateTrackerStep = async (req, res) => {
       console.log("User Data:", req.user);
       console.log("Request Body:", req.body);
 
-        if (!role) {
+      if (!req.user || !req.user.role) {
         return res.status(403).json({ message: "Unauthorized: Missing user role." });
-         }
+    }
 
       const facultyRoles = ["Adviser", "Dean", "Academic Director", "Academic Services", "Executive Director"];
 

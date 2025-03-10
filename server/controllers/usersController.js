@@ -1,13 +1,23 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 
-const createToken = (_id) => {
+const createToken = (user) => {
   if (!process.env.JWT_SECRET) {
     console.error("JWT_SECRET is not defined");
     throw new Error("JWT_SECRET must be set in environment variables");
   }
-  return jwt.sign({ _id }, process.env.JWT_SECRET, { expiresIn: '3d' });
+
+  return jwt.sign(
+    {
+      _id: user._id,
+      role: user.role,  // ✅ Include role
+      faculty: user.faculty // ✅ Include faculty (if applicable)
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "3d" }
+  );
 };
+
 
 const login = async (req, res) => {
   const { email, password } = req.body;
