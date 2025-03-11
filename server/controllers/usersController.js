@@ -10,13 +10,21 @@ const createToken = (user) => {
   return jwt.sign(
     {
       _id: user._id,
-      role: user.role || "faculty", // Make sure role exists
-      faculty: user.faculty || null // Include faculty role
+      email: user.email,
+      role: user.role,
+      faculty: user.faculty || null,
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      organizationType: user.organizationType || '',
+      organizationName: user.organizationName || '',
+      status: user.status || '',
+      logo: user.logo || ''
     },
     process.env.JWT_SECRET,
     { expiresIn: "3d" }
   );
 };
+
 
 
 
@@ -49,7 +57,7 @@ const login = async (req, res) => {
       }
 
       // Generate JWT token
-      const token = createToken(user._id);
+      const token = createToken(user);
       console.log("Generated token:", token); // Log token for debugging
 
       res.status(200).json({
