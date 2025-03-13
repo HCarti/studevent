@@ -31,7 +31,7 @@ exports.getAllForms = async (req, res) => {
 
 exports.getFormById = async (req, res) => {
   try {
-    const form = await Form.findById(req.params.id);
+    const form = await Form.findById(req.params.formId);
     if (!form) {
       return res.status(404).json({ message: 'Form not found' });
     }

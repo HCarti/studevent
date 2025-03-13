@@ -92,11 +92,6 @@ const Home = ({ handleLogin }) => {
         setErrorMessage('Invalid email or password.');
     }
 };
-
-
-  
-  
-
   
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);

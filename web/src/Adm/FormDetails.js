@@ -3,11 +3,14 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import './FormDetails.css';
 
-const FormDetails = () => {
+const   FormDetails = () => {
   const { formId } = useParams(); // Assuming the route includes a formId parameter
   const [formData, setFormData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  console.log("Fetching form with ID:", formId);
+
 
   useEffect(() => {
     const fetchFormData = async () => {

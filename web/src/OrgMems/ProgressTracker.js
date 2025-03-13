@@ -39,19 +39,13 @@ const ProgressTracker = ({ currentUser }) => {
     const [isDeclinedChecked, setIsDeclinedChecked] = useState(false);
 
     useEffect(() => {
-        console.log("Updated Tracker Data:", trackerData);
-        console.log("Current Step:", currentStep);
-    }, [trackerData, currentStep]);
-    
-
-    useEffect(() => {
         if (!formId) return;
     
         const fetchTrackerData = async () => {
             try {
                 const token = localStorage.getItem("token");
                 if (!token) throw new Error("No token found. Please log in again.");
-    
+        
                 const response = await fetch(`https://studevent-server.vercel.app/api/tracker/${formId}`, {
                     method: "GET",
                     headers: {
@@ -59,21 +53,34 @@ const ProgressTracker = ({ currentUser }) => {
                         "Content-Type": "application/json",
                     },
                 });
-    
+        
                 if (!response.ok) throw new Error(`Error fetching tracker data: ${response.statusText}`);
-    
+        
                 const data = await response.json();
                 console.log("Fetched tracker data:", data);
-    
+        
                 setTrackerData(data);
-                setCurrentStep(String(data.currentStep));  // ✅ Ensure it is a string
+                setCurrentStep(String(data.currentStep));
+        
+                // Only clear old tracker data *after* successful fetch
+                localStorage.removeItem(`tracker_${formId}`);
+                localStorage.setItem(`tracker_${formId}`, JSON.stringify(data));
+        
             } catch (error) {
                 console.error("Error fetching tracker data:", error.message);
+                // Fallback to localStorage if API call fails
+                const cachedData = localStorage.getItem(`tracker_${formId}`);
+                if (cachedData) {
+                    console.log("Using cached tracker data from localStorage.");
+                    setTrackerData(JSON.parse(cachedData));
+                }
             }
         };
-    
+        
         fetchTrackerData();
-    }, [formId]);    
+    }, [formId]);
+    
+    
 
     if (!trackerData) return <p>Loading...</p>;
 
@@ -93,7 +100,7 @@ const ProgressTracker = ({ currentUser }) => {
         const remarksText = remarks || "";
         const trackerId = trackerData?._id || formId;
     
-        const stepIndex = trackerData.steps.findIndex(step =>
+        const stepIndex = trackerData.steps.findIndex(step => 
             step?.stepName?.trim().toLowerCase() === String(currentStep).trim().toLowerCase()
         );
     
@@ -117,9 +124,11 @@ const ProgressTracker = ({ currentUser }) => {
             );
     
             if (!response.ok) throw new Error(await response.text());
-            
     
-            // Fetch updated tracker data immediately after saving
+            // Remove old tracker data from localStorage before fetching the updated data
+            localStorage.removeItem(`tracker_${formId}`);
+    
+            // Fetch updated tracker data after saving
             const updatedResponse = await fetch(
                 `https://studevent-server.vercel.app/api/tracker/${formId}`,
                 {
@@ -135,10 +144,19 @@ const ProgressTracker = ({ currentUser }) => {
     
             const updatedData = await updatedResponse.json();
     
-            setTrackerData({ ...updatedData });
-            setCurrentStep(Number(updatedData.currentStep)); // Ensure it's a number
+            setTrackerData(updatedData);
     
-            // Reset editing state
+            // Save updated data to localStorage
+            localStorage.setItem(`tracker_${formId}`, JSON.stringify(updatedData));
+    
+            // Determine the next step if approved
+            // Determine the next step if approved
+            const nextStepIndex = stepIndex + 1;
+            if (status === "approved" && nextStepIndex < updatedData.steps.length) {
+                setCurrentStep(nextStepIndex);
+            }
+
+    
             setIsEditing(false);
             setIsApprovedChecked(false);
             setIsDeclinedChecked(false);
@@ -149,14 +167,13 @@ const ProgressTracker = ({ currentUser }) => {
         }
     };
     
-    
     const handleCheckboxChange = (checkbox) => {
         setIsApprovedChecked(checkbox === 'approved');
         setIsDeclinedChecked(checkbox === 'declined');
     };
 
     const handleViewForms = () => {
-        navigate(`/formdetails/${form.id}`, { state: { form } });
+        navigate(`/formdetails/${formId}`, { state: { form } });
     };
 
     return (
