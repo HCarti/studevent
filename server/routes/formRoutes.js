@@ -3,7 +3,7 @@ const router = express.Router();
 const Form = require('../models/Form');
 const formController = require('../controllers/formController');
 
-router.get("/organization/:_id", getFormsByOrganization); // Correct function name
+router.get("/organization/:_id", formController.getFormsByOrganization); // Correct function name
 
 router.get('/all', formController.getAllForms); // ✅ Correct
 
