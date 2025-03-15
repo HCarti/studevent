@@ -9,27 +9,38 @@ import { useNavigate } from 'react-router-dom';
 const FormsandSig = () => {
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState(null);
+  const [organizationId, setOrganizationId] = useState(null); // Using the userId of the organization
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
-      setUserRole(parsedUser.role);
+      setUserRole(parsedUser?.role); // Get the role
+      setOrganizationId(parsedUser?._id); // Get the userId (which matches the organizationId in forms)
     }
   }, []);
 
   const handleForms = () => {
+    if (!userRole) {
+      alert("User role not found. Please log in again.");
+      return;
+    }
+
     if (userRole === 'Organization') {
-      navigate('/forms'); // Organization users go to Forms page
+      navigate('/forms');
     } else if (userRole === 'Admin' || userRole === 'Authority') {
-      navigate('/trackerlist'); // Admins & Authorities go to EventTrackerList
+      navigate('/trackerlist');
     } else {
-      alert("Unauthorized access"); // Optional: Handle unexpected roles
+      alert("Unauthorized access");
     }
   };
 
   const handleSig = () => {
-    navigate('/my-submissions');
+    if (organizationId) {
+      navigate(`/organization/${organizationId}/forms`); // Use the userId as the identifier
+    } else {
+      alert("Organization ID not found.");
+    }
   };
 
   return (
@@ -59,12 +70,10 @@ const FormsandSig = () => {
       </div>
 
       <div className="bottom-links">
-        {/* FORMS button with role-based redirection */}
         <div className="link forms-link" onClick={handleForms}>
           FORMS<br />All forms are located here.
         </div>
 
-        {/* Only show Proposal Tracker if the user is an Organization */}
         {userRole === 'Organization' && (
           <div className="link proposal-link" onClick={handleSig}>
             PROPOSAL TRACKER<br />Monitor all proposals here.

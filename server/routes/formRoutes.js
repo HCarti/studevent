@@ -3,6 +3,8 @@ const router = express.Router();
 const Form = require('../models/Form');
 const formController = require('../controllers/formController');
 
+router.get('/organization/:organizationId', getOrganizationForms);
+
 router.get('/all', formController.getAllForms); // ✅ Correct
 
 // Route to get specific form details

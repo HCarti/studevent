@@ -35,9 +35,10 @@ import FormDetails from './Adm/FormDetails';
 import Liquidation from './Forms/Liquidation';
 import Waiver from './Forms/Waiver';
 import LocalOffCampus from './Forms/LocalOffCampus';
-// import MySubmissions from './OrgMems/MySubmissions'; // Import the new page
+import OrgTrackerViewer from './OrgMems/OrgTrackerViewer'; // Import the new page
 import Footer from './Components/footer';
 import EventTrackerList from './Components/EventTrackerList';
+import OrgSubmittedForms from './OrgMems/OrgSubmittedForms';
 
 
 const App = () => {
@@ -118,7 +119,8 @@ const App = () => {
           <Route path="/progtrack/:formId" element={<ProgressTracker />} /> {/* Route with formId */}
           <Route path="/formss" element={<FormsandSig />} />
           <Route path="/forms" element={<Forms role={role} />} />
-          {/* <Route path="/my-submissions" element={<MySubmissions/>} /> */}
+          <Route path="/my-submissions" element={<OrgTrackerViewer/>} />
+          <Route path="/organization/:studentOrganization/forms" element={<OrgSubmittedForms />} />
           <Route path="/activity" element={<Aap />} />
           <Route path="/liquidation" element={<Liquidation />} />
           <Route path="/project" element={<Project />} />

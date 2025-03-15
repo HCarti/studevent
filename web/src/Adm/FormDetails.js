@@ -22,7 +22,8 @@ const   FormDetails = () => {
             `https://studevent-server.vercel.app/api/forms/${formId}`,
             {
               headers: {
-                Authorization: `Bearer ${token}`, // Send token in the request
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json", // Send token in the request
               },
             }
           );

@@ -6,6 +6,31 @@ const Notification = require("../models/Notification"); // Import the Notificati
 const EventTracker = require("../models/EventTracker"); // ✅ Check this path
 
 
+exports.getFormsByOrganization = async (req, res) => {
+  try {
+    const { _id } = req.params; // Fetch organizationId correctly from URL params
+
+    if (!_id) {
+      return res.status(400).json({ message: "Organization ID is required" });
+    }
+
+    const forms = await Form.find({ studentOrganization: _id }) // Ensure proper filtering
+      .populate({ path: "studentOrganization", select: "organizationName" });
+
+    if (!forms || forms.length === 0) {
+      return res.status(404).json({ message: "No forms found for this organization" });
+    }
+
+    res.status(200).json(forms);
+  } catch (error) {
+    console.error("Error fetching forms:", error);
+    res.status(500).json({ error: "Internal Server Error", details: error.message });
+  }
+};
+
+
+
+
 
 // Controller to get all submitted forms
 exports.getAllForms = async (req, res) => {
@@ -40,34 +65,6 @@ exports.getFormById = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
-
-
-// exports.getUserSubmissions = async (req, res) => {
-//   try {
-//     const { userId } = req.query; // Get the userId from query params
-
-//     // If userId is not provided, return an error
-//     if (!userId) {
-//       return res.status(400).json({ message: 'User ID is required' });
-//     }
-
-//     // Find the submissions for this user
-//     const submissions = await Form.find({ userId: userId }).populate('eventId'); // Assuming eventId is referenced in the Form model
-
-//     // If no submissions found, return an empty array
-//     if (!submissions.length) {
-//       return res.status(404).json({ message: 'No submissions found for this user' });
-//     }
-
-//     // Return the submissions
-//     res.status(200).json(submissions);
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: 'Internal Server Error' });
-//   }
-// };  
-
 
 
 // Add a new form (when the user submits)

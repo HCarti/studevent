@@ -37,7 +37,6 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
       );
   
       const data = await response.json();
-      console.log("Fetched notifications:", data); // Debugging log
   
       if (!data.length) {
         console.log("No notifications available");
