@@ -3,7 +3,7 @@ const router = express.Router();
 const Form = require('../models/Form');
 const formController = require('../controllers/formController');
 
-router.get('/my-organization/:userId', getFormsByUser);
+router.get('/my-organization/:userId', formController.getFormsByUser);
 
 router.get('/all', formController.getAllForms); // ✅ Correct
 
