@@ -6,32 +6,17 @@ const Notification = require("../models/Notification"); // Import the Notificati
 const EventTracker = require("../models/EventTracker"); // ✅ Check this path
 
 
-exports.getFormsByStudentOrganization = async (req, res) => {
+exports.getFormsByUser = async (req, res) => {
   try {
-      console.log("🔍 Fetching forms for user:", req.user);
-
-      const userId = req.user._id;
-      const user = await User.findById(userId);
+      const { _id } = req.params;
       
-      if (!user) {
-          console.log("❌ User not found");
-          return res.status(404).json({ message: "User not found" });
-      }
+      // Find forms where the studentOrganization field matches the user's ID
+      const forms = await Form.find({ studentOrganization: _id });
 
-      if (user.role !== 'Organization' || !user.organizationName) {
-          console.log("❌ User is not an organization or has no organizationName");
-          return res.status(400).json({ message: "User does not belong to an organization" });
-      }
-
-      console.log("✅ Searching for forms where studentOrganization =", user.organizationName);
-
-      const forms = await Form.find({ studentOrganization: user.organizationName });
-
-      console.log("📄 Forms found:", forms);
       res.status(200).json(forms);
   } catch (error) {
-      console.error("🔥 Server error fetching forms:", error);
-      res.status(500).json({ message: "Server error fetching forms" });
+      console.error("Error fetching forms:", error);
+      res.status(500).json({ message: "Server error fetching forms", error });
   }
 };
 
