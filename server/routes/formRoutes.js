@@ -3,7 +3,28 @@ const router = express.Router();
 const Form = require('../models/Form');
 const formController = require('../controllers/formController');
 
-router.get("/organization/:_id", formController.getFormsByOrganization); // Correct function name
+router.get("/organization/:orgId", async (req, res) => {
+  try {
+      const { orgId } = req.params; // ✅ Corrected variable name
+
+      // Ensure orgId is valid before querying
+      if (!orgId) {
+          return res.status(400).json({ message: "Organization ID is required." });
+      }
+
+      const forms = await Form.find({ studentOrganization: orgId }); // ✅ Corrected query
+
+      if (!forms.length) {
+          return res.status(404).json({ message: "No forms found for this organization." });
+      }
+
+      res.status(200).json(forms);
+  } catch (error) {
+      console.error("Error fetching forms by organization:", error);
+      res.status(500).json({ message: "Server error", error });
+  }
+});
+
 
 router.get('/all', formController.getAllForms); // ✅ Correct
 

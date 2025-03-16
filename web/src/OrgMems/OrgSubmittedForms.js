@@ -7,13 +7,16 @@ const OrgSubmittedForms = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Retrieve organizationId from localStorage
+    // Retrieve organization ID from localStorage
     const storedUser = localStorage.getItem("user");
     const parsedUser = storedUser ? JSON.parse(storedUser) : null;
-    const _id = parsedUser?.studentOrganization; // Use studentOrganization, not _id
+    const organizationId = parsedUser?.studentOrganization; // Ensure correct ID
+
+    console.log("Retrieved Organization ID:", organizationId); // Debugging log
 
     useEffect(() => {
-        if (!_id) {
+        if (!organizationId) {
+            console.warn("No organization ID found.");
             setLoading(false);
             return;
         }
@@ -21,17 +24,23 @@ const OrgSubmittedForms = () => {
         const fetchForms = async () => {
             try {
                 const token = localStorage.getItem("token");
-                const response = await fetch(`https://studevent-server.vercel.app/api/forms/organization/${_id}`, {
-                    method: "GET",
-                    headers: {
-                        "Authorization": `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                });
+                const response = await fetch(
+                    `https://studevent-server.vercel.app/api/forms/organization/${organizationId}`,
+                    {
+                        method: "GET",
+                        headers: {
+                            "Authorization": `Bearer ${token}`,
+                            "Content-Type": "application/json",
+                        },
+                    }
+                );
 
-                if (!response.ok) throw new Error("Error fetching forms");
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.statusText}`);
+                }
 
                 const data = await response.json();
+                console.log("Filtered Forms Data:", data);
                 setForms(data);
             } catch (error) {
                 console.error("Error fetching forms:", error);
@@ -42,7 +51,7 @@ const OrgSubmittedForms = () => {
         };
 
         fetchForms();
-    }, [_id]);
+    }, [organizationId]); // Ensure useEffect runs when organizationId changes
 
     return (
         <div className="org-forms-container">

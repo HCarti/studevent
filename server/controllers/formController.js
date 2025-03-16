@@ -6,32 +6,6 @@ const Notification = require("../models/Notification"); // Import the Notificati
 const EventTracker = require("../models/EventTracker"); // ✅ Check this path
 
 
-exports.getFormsByOrganization = async (req, res) => {
-  try {
-    const { _id } = req.params; // Fetch organizationId correctly from URL params
-
-    if (!_id) {
-      return res.status(400).json({ message: "Organization ID is required" });
-    }
-
-    const forms = await Form.find({ studentOrganization: _id }) // Ensure proper filtering
-      .populate({ path: "studentOrganization", select: "organizationName" });
-
-    if (!forms || forms.length === 0) {
-      return res.status(404).json({ message: "No forms found for this organization" });
-    }
-
-    res.status(200).json(forms);
-  } catch (error) {
-    console.error("Error fetching forms:", error);
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
-  }
-};
-
-
-
-
-
 // Controller to get all submitted forms
 exports.getAllForms = async (req, res) => {
   console.log("Fetching all forms...");
