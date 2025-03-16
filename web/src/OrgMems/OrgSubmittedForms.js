@@ -7,40 +7,29 @@ const OrgSubmittedForms = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Retrieve organization ID from localStorage
-    const storedUser = localStorage.getItem("user");
-    const parsedUser = storedUser ? JSON.parse(storedUser) : null;
-    const organizationId = parsedUser?.studentOrganization; // Ensure correct ID
-
-    console.log("Retrieved Organization ID:", organizationId); // Debugging log
-
     useEffect(() => {
-        if (!organizationId) {
-            console.warn("No organization ID found.");
-            setLoading(false);
-            return;
-        }
-
         const fetchForms = async () => {
             try {
                 const token = localStorage.getItem("token");
-                const response = await fetch(
-                    `https://studevent-server.vercel.app/api/forms/organization/${organizationId}`,
-                    {
-                        method: "GET",
-                        headers: {
-                            "Authorization": `Bearer ${token}`,
-                            "Content-Type": "application/json",
-                        },
-                    }
-                );
-
-                if (!response.ok) {
-                    throw new Error(`Error: ${response.statusText}`);
+                if (!token) {
+                    setError("Authentication token is missing! Please log in again.");
+                    setLoading(false);
+                    return;
                 }
-
+    
+                const response = await fetch("https://studevent-server.vercel.app/api/forms/my-organization", {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+    
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+    
                 const data = await response.json();
-                console.log("Filtered Forms Data:", data);
                 setForms(data);
             } catch (error) {
                 console.error("Error fetching forms:", error);
@@ -49,9 +38,10 @@ const OrgSubmittedForms = () => {
                 setLoading(false);
             }
         };
-
+    
         fetchForms();
-    }, [organizationId]); // Ensure useEffect runs when organizationId changes
+    }, []);
+    
 
     return (
         <div className="org-forms-container">
@@ -59,16 +49,16 @@ const OrgSubmittedForms = () => {
             {loading ? (
                 <p>Loading...</p>
             ) : error ? (
-                <p>Error: {error}</p>
+                <p className="error-message">Error: {error}</p>
             ) : forms.length === 0 ? (
                 <p>No submitted forms found.</p>
             ) : (
                 <ul>
                     {forms.map((form) => (
                         <li key={form._id} className="form-item">
-                            <h4>{form.title}</h4>
-                            <p>Status: <strong>{form.status}</strong></p>
-                            <p>Submitted on: {new Date(form.submissionDate).toLocaleDateString()}</p>
+                            <h4>{form.eventTitle}</h4>
+                            <p>Status: <strong>{form.finalStatus || "Pending"}</strong></p>
+                            <p>Submitted on: {form.applicationDate ? new Date(form.applicationDate).toLocaleDateString() : "No Date"}</p>
                             <button onClick={() => navigate(`/formdetails/${form._id}`)}>View Details</button>
                         </li>
                     ))}
