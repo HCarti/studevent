@@ -16,12 +16,13 @@ const OrgSubmittedForms = () => {
                 const userId = parsedUser?._id; // Get userId from user schema
     
                 if (!token || !userId) {
+                    console.error("❌ Authentication failed! Missing token or userId.");
                     setError("Authentication failed! Please log in again.");
                     setLoading(false);
                     return;
                 }
 
-                console.log( "Fetching forms for user with id: ", userId );
+                console.log("🟢 Fetching forms for user with id:", userId);
     
                 const response = await fetch(`https://studevent-server.vercel.app/api/forms/my-organization/${userId}`, {
                     method: "GET",
@@ -30,15 +31,19 @@ const OrgSubmittedForms = () => {
                         "Content-Type": "application/json",
                     },
                 });
-    
+
+                console.log("🔄 API Response Status:", response.status);
+
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
-    
+
                 const data = await response.json();
+                console.log("✅ Fetched Forms:", data);
+
                 setForms(data);
             } catch (error) {
-                console.error("Error fetching forms:", error);
+                console.error("🔥 Error fetching forms:", error);
                 setError(error.message);
             } finally {
                 setLoading(false);
@@ -47,8 +52,6 @@ const OrgSubmittedForms = () => {
     
         fetchForms();
     }, []);
-    
-    
 
     return (
         <div className="org-forms-container">
