@@ -6,16 +6,16 @@ const Notification = require("../models/Notification"); // Import the Notificati
 const EventTracker = require("../models/EventTracker"); // ✅ Check this path
 
 
+const mongoose = require("mongoose");
+
 exports.getFormsByUser = async (req, res) => {
   try {
     const userId = req.params.userId;
     console.log("🔍 Fetching forms for user ID:", userId);
 
     // Fetch the user with studentOrganization field explicitly selected
-    const user = await User.findById(req.params.userId).select("studentOrganization");
-    console.log("User's studentOrganization:", user?._id);
-    console.log("Fetching user with ID:", req.params.userId);
-    
+    const user = await User.findById(userId).select("studentOrganization");
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -24,11 +24,16 @@ exports.getFormsByUser = async (req, res) => {
 
     if (!user.studentOrganization) {
       return res.status(400).json({ message: "User has no associated organization" });
-    }  
+    }
 
+    // Ensure studentOrganization is an ObjectId
+    const orgId =
+      mongoose.Types.ObjectId.isValid(user.studentOrganization)
+        ? new mongoose.Types.ObjectId(user.studentOrganization)
+        : user.studentOrganization;
 
     // Find forms associated with that organization
-    const forms = await Form.find({ studentOrganization: new mongoose.Types.ObjectId(user.studentOrganization) });
+    const forms = await Form.find({ studentOrganization: orgId });
 
     console.log("📜 Found Forms:", forms);
     res.status(200).json(forms);
@@ -37,6 +42,7 @@ exports.getFormsByUser = async (req, res) => {
     res.status(500).json({ message: "Server error fetching forms", error });
   }
 };
+
 
 
 
