@@ -6,23 +6,29 @@ const formController = require('../controllers/formController');
 router.get("/by-email/:email", async (req, res) => {
   try {
       const email = req.params.email;
+
       if (!email) {
           return res.status(400).json({ message: "Email is required" });
       }
 
-      // Fetch forms submitted by the user with this email
-      const forms = await Form.find({ emailAddress: email });
+      console.log("🔍 Searching forms for email:", email);
 
-      if (!forms.length) {
+      // Case-insensitive search
+      const forms = await Form.find({
+          emailAddress: { $regex: new RegExp(`^${email}$`, "i") },
+      });
+
+      if (forms.length === 0) {
           return res.status(404).json({ message: "No forms found for this email" });
       }
 
       res.status(200).json(forms);
   } catch (error) {
-      console.error("Error fetching forms:", error);
+      console.error("🔥 Error fetching forms by email:", error);
       res.status(500).json({ message: "Internal Server Error" });
   }
 });
+
 
 router.get('/all', formController.getAllForms); // ✅ Correct
 
