@@ -1,4 +1,6 @@
-const userSchema = new Schema({
+const mongoose = require('mongoose');
+
+const userSchema = new mongoose.Schema({ // Fix here: Use mongoose.Schema directly
   email: {
     type: String,
     required: true,
@@ -16,42 +18,42 @@ const userSchema = new Schema({
   },
   firstName: {
     type: String,
-    required: function() {
-      return this.role === 'Admin' || this.role === 'Authority'; // Required for Admin and Authority
-    }
+    required: function () {
+      return this.role === 'Admin' || this.role === 'Authority';
+    },
   },
   lastName: {
     type: String,
-    required: function() {
-      return this.role === 'Admin' || this.role === 'Authority'; // Required for Admin and Authority
-    }
+    required: function () {
+      return this.role === 'Admin' || this.role === 'Authority';
+    },
   },
   organizationType: {
     type: String,
-    required: function() {
-      return this.role === 'Organization'; // Required for Organization
-    }
+    required: function () {
+      return this.role === 'Organization';
+    },
   },
   organizationName: {
     type: String,
-    required: function() {
-      return this.role === 'Organization'; // Required for Organization
-    }
+    required: function () {
+      return this.role === 'Organization';
+    },
   },
   faculty: {
     type: String,
-    required: function() {
-      return this.role === 'Authority'; // Required for Authority
-    }
+    required: function () {
+      return this.role === 'Authority';
+    },
   },
   studentOrganization: {
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Organization' // Reference to the Organization model
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organization', // Reference to the Organization model
   },
-  logo: String, // Optional for all roles
+  logo: String, 
   status: {
     type: String,
-    default: 'Active'
+    default: 'Active',
   },
 });
 
