@@ -13,18 +13,18 @@ const OrgSubmittedForms = () => {
                 const token = localStorage.getItem("token");
                 const storedUser = localStorage.getItem("user");
                 const parsedUser = storedUser ? JSON.parse(storedUser) : null;
-                const userId = parsedUser?._id; // Get userId from user schema
-    
-                if (!token || !userId) {
-                    console.error("❌ Authentication failed! Missing token or userId.");
+                const userEmail = parsedUser?.email; // Get user email
+
+                if (!token || !userEmail) {
+                    console.error("❌ Authentication failed! Missing token or user email.");
                     setError("Authentication failed! Please log in again.");
                     setLoading(false);
                     return;
                 }
 
-                console.log("🟢 Fetching forms for user with id:", userId);
-    
-                const response = await fetch(`https://studevent-server.vercel.app/api/forms/my-organization/${userId}`, {
+                console.log("🟢 Fetching forms submitted by:", userEmail);
+
+                const response = await fetch(`https://studevent-server.vercel.app/api/forms/by-email/${userEmail}`, {
                     method: "GET",
                     headers: {
                         "Authorization": `Bearer ${token}`,
@@ -49,7 +49,7 @@ const OrgSubmittedForms = () => {
                 setLoading(false);
             }
         };
-    
+
         fetchForms();
     }, []);
 

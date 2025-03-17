@@ -3,7 +3,26 @@ const router = express.Router();
 const Form = require('../models/Form');
 const formController = require('../controllers/formController');
 
-router.get('/my-organization/:userId', formController.getFormsByUser);
+router.get("/by-email/:email", async (req, res) => {
+  try {
+      const email = req.params.email;
+      if (!email) {
+          return res.status(400).json({ message: "Email is required" });
+      }
+
+      // Fetch forms submitted by the user with this email
+      const forms = await Form.find({ emailAddress: email });
+
+      if (!forms.length) {
+          return res.status(404).json({ message: "No forms found for this email" });
+      }
+
+      res.status(200).json(forms);
+  } catch (error) {
+      console.error("Error fetching forms:", error);
+      res.status(500).json({ message: "Internal Server Error" });
+  }
+});
 
 router.get('/all', formController.getAllForms); // ✅ Correct
 
