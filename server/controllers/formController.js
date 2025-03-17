@@ -12,7 +12,9 @@ exports.getFormsByUser = async (req, res) => {
     console.log("🔍 Fetching forms for user ID:", userId);
 
     // Fetch the user with studentOrganization field explicitly selected
-    const user = await User.findById(userId).select("studentOrganization");
+    const user = await User.findById(req.params.userId).select("studentOrganization");
+    console.log("User's studentOrganization:", user?.studentOrganization);
+    console.log("Fetching user with ID:", req.params.userId);
     
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -22,7 +24,8 @@ exports.getFormsByUser = async (req, res) => {
 
     if (!user.studentOrganization) {
       return res.status(400).json({ message: "User has no associated organization" });
-    }
+    }  
+
 
     // Find forms associated with that organization
     const forms = await Form.find({ studentOrganization: new mongoose.Types.ObjectId(user.studentOrganization) });
