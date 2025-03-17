@@ -25,7 +25,7 @@ exports.getFormsByUser = async (req, res) => {
     }
 
     // Find forms associated with that organization
-    const forms = await Form.find({ studentOrganization: user.studentOrganization });
+    const forms = await Form.find({ studentOrganization: new mongoose.Types.ObjectId(user.studentOrganization) });
 
     console.log("📜 Found Forms:", forms);
     res.status(200).json(forms);
@@ -44,9 +44,11 @@ exports.getAllForms = async (req, res) => {
   try {
     // ✅ Find and populate in one step
     const forms = await Form.find({})
-      .populate({ path: "studentOrganization", select: "organizationName" });
+  .populate("studentOrganization")
+  .lean();  // Converts documents to plain objects for debugging
 
-    console.log("Forms retrieved:", forms); // Debug log
+console.log("Retrieved Forms:", JSON.stringify(forms, null, 2));
+
 
     if (!forms || forms.length === 0) {
       return res.status(404).json({ message: "No forms found" });
