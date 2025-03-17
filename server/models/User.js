@@ -1,6 +1,3 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
-
 const userSchema = new Schema({
   email: {
     type: String,
@@ -47,24 +44,15 @@ const userSchema = new Schema({
       return this.role === 'Authority'; // Required for Authority
     }
   },
+  studentOrganization: {
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Organization' // Reference to the Organization model
+  },
   logo: String, // Optional for all roles
   status: {
     type: String,
     default: 'Active'
   },
-  // New fields for login attempt and OTP functionality
-  // loginAttempts: {
-  //   type: Number,
-  //   default: 0, // Track failed login attempts
-  // },
-  // otp: {
-  //   type: String, // Store OTP for email verification
-  //   default: null,
-  // },
-  // otpExpiry: {
-  //   type: Date, // Store OTP expiration time (e.g., valid for 10 minutes)
-  //   default: null,
-  // }
 });
 
 const User = mongoose.model('User', userSchema);

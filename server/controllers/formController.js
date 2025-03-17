@@ -13,7 +13,7 @@ exports.getFormsByUser = async (req, res) => {
 
     // Fetch the user with studentOrganization field explicitly selected
     const user = await User.findById(req.params.userId).select("studentOrganization");
-    console.log("User's studentOrganization:", user?.studentOrganization);
+    console.log("User's studentOrganization:", user?._id);
     console.log("Fetching user with ID:", req.params.userId);
     
     if (!user) {
