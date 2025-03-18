@@ -45,7 +45,7 @@ const ProgressTracker = ({ currentUser }) => {
             try {
                 const token = localStorage.getItem("token");
                 if (!token) throw new Error("No token found. Please log in again.");
-        
+    
                 const response = await fetch(`https://studevent-server.vercel.app/api/tracker/${formId}`, {
                     method: "GET",
                     headers: {
@@ -53,35 +53,23 @@ const ProgressTracker = ({ currentUser }) => {
                         "Content-Type": "application/json",
                     },
                 });
-        
+    
                 if (!response.ok) throw new Error(`Error fetching tracker data: ${response.statusText}`);
-        
+    
                 const data = await response.json();
                 console.log("Fetched tracker data:", data);
-        
+    
                 setTrackerData(data);
                 setCurrentStep(String(data.currentStep));
-        
-                // Only clear old tracker data *after* successful fetch
-                localStorage.removeItem(`tracker_${formId}`);
-                localStorage.setItem(`tracker_${formId}`, JSON.stringify(data));
-        
+    
             } catch (error) {
                 console.error("Error fetching tracker data:", error.message);
-                // Fallback to localStorage if API call fails
-                const cachedData = localStorage.getItem(`tracker_${formId}`);
-                if (cachedData) {
-                    console.log("Using cached tracker data from localStorage.");
-                    setTrackerData(JSON.parse(cachedData));
-                }
             }
         };
-        
+    
         fetchTrackerData();
     }, [formId]);
     
-    
-
     if (!trackerData) return <p>Loading...</p>;
 
     console.log("User Data from LocalStorage:", user);
@@ -125,9 +113,6 @@ const ProgressTracker = ({ currentUser }) => {
     
             if (!response.ok) throw new Error(await response.text());
     
-            // Remove old tracker data from localStorage before fetching the updated data
-            localStorage.removeItem(`tracker_${formId}`);
-    
             // Fetch updated tracker data after saving
             const updatedResponse = await fetch(
                 `https://studevent-server.vercel.app/api/tracker/${formId}`,
@@ -143,19 +128,14 @@ const ProgressTracker = ({ currentUser }) => {
             if (!updatedResponse.ok) throw new Error(await updatedResponse.text());
     
             const updatedData = await updatedResponse.json();
-    
+            console.log("Updated tracker data:", updatedData); // Log the updated data
             setTrackerData(updatedData);
     
-            // Save updated data to localStorage
-            localStorage.setItem(`tracker_${formId}`, JSON.stringify(updatedData));
-    
-            // Determine the next step if approved
             // Determine the next step if approved
             const nextStepIndex = stepIndex + 1;
             if (status === "approved" && nextStepIndex < updatedData.steps.length) {
                 setCurrentStep(nextStepIndex);
             }
-
     
             setIsEditing(false);
             setIsApprovedChecked(false);
