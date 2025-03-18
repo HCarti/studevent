@@ -74,35 +74,38 @@ const createEventTracker = async (req, res) => {
 // Update event tracker progress
 const updateTrackerStep = async (req, res) => {
   try {
-      if (!req.user) {
-          return res.status(403).json({ message: "Unauthorized: Missing user credentials." });
-      }
+      console.log("🔍 Incoming PUT Request");
+      console.log("User Data:", req.user);
+      console.log("Request Body:", req.body);
 
       const { trackerId, stepId } = req.params;
       const { status, remarks } = req.body;
       const userId = req.user._id;
       const { role, faculty } = req.user;
 
-      console.log("🔍 Incoming PUT Request");
-      console.log("User Data:", req.user);
-      console.log("Request Body:", req.body);
+      // Validate user and request
+      if (!req.user) {
+          return res.status(403).json({ message: "Unauthorized: Missing user credentials." });
+      }
 
       const facultyRoles = ["Adviser", "Dean", "Academic Services", "Academic Director", "Executive Director"];
-
       if (role !== "Admin" && (!faculty || !facultyRoles.includes(faculty))) {
           return res.status(403).json({ message: "Unauthorized: Only Admins or Faculty reviewers can update the tracker." });
       }
 
+      // Fetch the tracker
       const tracker = await EventTracker.findById(trackerId);
       if (!tracker) {
           return res.status(404).json({ message: "Tracker not found" });
       }
 
+      // Find the step
       const step = tracker.steps.find(step => step._id.toString() === stepId);
       if (!step) {
           return res.status(404).json({ message: "Step not found" });
       }
 
+      // Check if the step is pending
       const firstPendingStepIndex = tracker.steps.findIndex(step => step.status === "pending");
       const firstPendingStep = tracker.steps[firstPendingStepIndex];
 
@@ -118,35 +121,41 @@ const updateTrackerStep = async (req, res) => {
           return res.status(403).json({ message: `Unauthorized: Only the ${step.stepName} can review this step.` });
       }
 
-      const nextStepIndex = firstPendingStepIndex + 1;
-      const updatedTracker = await EventTracker.findOneAndUpdate(
-        { _id: trackerId, "steps._id": stepId },
-        {
-            $set: {
-                "steps.$.status": status,
-                "steps.$.remarks": remarks || "",
-                "steps.$.timestamp": new Date(),
-                "steps.$.reviewedBy": userId,
-                "steps.$.reviewedByRole": faculty || role,
-                currentStep: status === "approved" ? (nextStepIndex < tracker.steps.length ? tracker.steps[nextStepIndex].stepName : "Completed") : firstPendingStep.stepName,
-                currentAuthority: status === "approved" ? (nextStepIndex < tracker.steps.length ? tracker.steps[nextStepIndex].reviewerRole : "None") : firstPendingStep.reviewerRole,
-            },
-        },
-        { new: true } // Return the updated document
-    );
-    
-    if (!updatedTracker) {
-        return res.status(404).json({ message: "Tracker or step not found" });
-    }
-    console.log("Updated tracker data:", updatedTracker); // Log the updated data
-    return res.status(200).json({ message: "Tracker step updated successfully", tracker: updatedTracker });
+      // Update the step
+      firstPendingStep.status = status;
+      firstPendingStep.remarks = remarks || "";
+      firstPendingStep.timestamp = new Date();
+      firstPendingStep.reviewedBy = userId;
+      firstPendingStep.reviewedByRole = faculty || role;
+
+      // Update currentStep and currentAuthority
+      if (status === "approved") {
+          const nextStepIndex = firstPendingStepIndex + 1;
+          if (nextStepIndex < tracker.steps.length) {
+              tracker.currentStep = tracker.steps[nextStepIndex].stepName;
+              tracker.currentAuthority = tracker.steps[nextStepIndex].reviewerRole;
+          } else {
+              tracker.currentStep = "Completed";
+              tracker.currentAuthority = "None";
+          }
+      } else if (status === "rejected") {
+          tracker.currentStep = firstPendingStep.stepName;
+          tracker.currentAuthority = firstPendingStep.reviewerRole;
+      }
+
+      // Save the updated tracker
+      console.log("Tracker before saving:", tracker);
+      await tracker.save();
+      console.log("Tracker after saving:", tracker);
+
+      // Return the updated tracker
+      return res.status(200).json({ message: "Tracker step updated successfully", tracker });
 
   } catch (error) {
-      console.error(error);
+      console.error("❌ Error updating progress tracker:", error);
       return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
 
 
 // Get event tracker by form ID

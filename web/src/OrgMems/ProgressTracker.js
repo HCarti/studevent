@@ -99,6 +99,7 @@ const ProgressTracker = ({ currentUser }) => {
         const requestBody = { status, remarks: remarksText };
     
         try {
+            // Send update request
             const response = await fetch(
                 `https://studevent-server.vercel.app/api/tracker/update-step/${trackerId}/${step._id}`,
                 {
@@ -113,7 +114,7 @@ const ProgressTracker = ({ currentUser }) => {
     
             if (!response.ok) throw new Error(await response.text());
     
-            // Fetch updated tracker data after saving
+            // Fetch updated tracker data
             const updatedResponse = await fetch(
                 `https://studevent-server.vercel.app/api/tracker/${formId}`,
                 {
@@ -128,15 +129,10 @@ const ProgressTracker = ({ currentUser }) => {
             if (!updatedResponse.ok) throw new Error(await updatedResponse.text());
     
             const updatedData = await updatedResponse.json();
-            console.log("Updated tracker data:", updatedData); // Log the updated data
+            console.log("Updated tracker data:", updatedData);
+    
+            // Update state
             setTrackerData(updatedData);
-    
-            // Determine the next step if approved
-            const nextStepIndex = stepIndex + 1;
-            if (status === "approved" && nextStepIndex < updatedData.steps.length) {
-                setCurrentStep(nextStepIndex);
-            }
-    
             setIsEditing(false);
             setIsApprovedChecked(false);
             setIsDeclinedChecked(false);
