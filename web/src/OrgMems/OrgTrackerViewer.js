@@ -4,6 +4,7 @@ import './OrgTrackerViewer.css';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress'; // Import spinner
 
 const OrgTrackerViewer = () => {
     const navigate = useNavigate();
@@ -41,55 +42,61 @@ const OrgTrackerViewer = () => {
         fetchTrackerData();
     }, [formId]);
 
-    if (!trackerData) return <p>Loading...</p>;
-
     const handleViewForms = () => {
         navigate(`/formdetails/${formId}`, { state: { form } });
     };
 
     return (
         <div className='org-prog-box'>
-            <h3 style={{ textAlign: 'center' }}>Event Proposal Tracker</h3>
+            {!trackerData && (
+                <div className="org-floating-loader">
+                    <CircularProgress className="org-spinner" />
+                </div>
+            )}
+            <h3 style={{ textAlign: 'center' }} className="proposal-ttl">Event Proposal Tracker</h3>
             <div className="org-progress-tracker">
                 <div className="org-progress-bar-container">
-                    {trackerData.steps.map((step, index) => {
-                        const canShowStep = index <= trackerData.currentStep || trackerData.steps.slice(0, index).every(prevStep => prevStep.color === 'green' || prevStep.color === 'red');
-                        return canShowStep ? (
-                            <div key={index} className="org-step-container">
-                                <div className="org-progress-step">
-                                    {step.color === 'green' ? (
-                                        <CheckCircleIcon style={{ color: '#4caf50', fontSize: 24 }} />
-                                    ) : step.color === 'red' ? (
-                                        <CheckCircleIcon style={{ color: 'red', fontSize: 24 }} />
-                                    ) : (
-                                        <RadioButtonUncheckedIcon style={{ color: '#ffeb3b', fontSize: 24 }} />
-                                    )}
+                    {trackerData ? (
+                        trackerData.steps.map((step, index) => {
+                            const canShowStep = index <= trackerData.currentStep || trackerData.steps.slice(0, index).every(prevStep => prevStep.color === 'green' || prevStep.color === 'red');
+                            return canShowStep ? (
+                                <div key={index} className="org-step-container">
+                                    <div className="org-progress-step">
+                                        {step.color === 'green' ? (
+                                            <CheckCircleIcon style={{ color: '#4caf50', fontSize: 24 }} />
+                                        ) : step.color === 'red' ? (
+                                            <CheckCircleIcon style={{ color: 'red', fontSize: 24 }} />
+                                        ) : (
+                                            <RadioButtonUncheckedIcon style={{ color: '#ffeb3b', fontSize: 24 }} />
+                                        )}
+                                    </div>
+                                    <div className="org-step-label">
+                                        <strong>{step.stepName}</strong>
+                                        {step.reviewedBy && (
+                                            <div className="org-reviewer-info">
+                                                <small>Reviewed by: {step.reviewedByRole} ({step.reviewedBy})</small>
+                                            </div>
+                                        )}
+                                        {step.timestamp && (
+                                            <div className="org-timestamp">
+                                                <small>{new Date(step.timestamp).toLocaleString()}</small>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="org-step-label">
-                                    <strong>{step.stepName}</strong>
-                                    {step.reviewedBy && (
-                                        <div className="org-reviewer-info">
-                                            <small>Reviewed by: {step.reviewedByRole} ({step.reviewedBy})</small>
-                                        </div>
-                                    )}
-                                    {step.timestamp && (
-                                        <div className="org-timestamp">
-                                            <small>{new Date(step.timestamp).toLocaleString()}</small>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        ) : null;
-                    })}
+                            ) : null;
+                        })
+                    ) : null}
                 </div>
-            </div>
             <div className="org-action-buttons">
                 <Button variant="contained" className="org-action-button" onClick={handleViewForms}>
                     VIEW FORMS
                 </Button>
             </div>
+            </div>
         </div>
     );
+    
 };
 
 export default OrgTrackerViewer;

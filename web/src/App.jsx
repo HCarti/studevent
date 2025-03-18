@@ -119,7 +119,7 @@ const App = () => {
           <Route path="/progtrack/:formId" element={<ProgressTracker />} /> {/* Route with formId */}
           <Route path="/formss" element={<FormsandSig />} />
           <Route path="/forms" element={<Forms role={role} />} />
-          <Route path="/my-submissions" element={<OrgTrackerViewer/>} />
+          <Route path="/orgTrackerViewer/:formId" element={<OrgTrackerViewer />} />
           <Route path="/organization/:studentOrganization/forms" element={<OrgSubmittedForms />} />
           <Route path="/activity" element={<Aap />} />
           <Route path="/liquidation" element={<Liquidation />} />

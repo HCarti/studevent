@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import './OrgSubmittedForms.css';
 
 const OrgSubmittedForms = () => {
     const navigate = useNavigate();
@@ -13,7 +14,7 @@ const OrgSubmittedForms = () => {
                 const token = localStorage.getItem("token");
                 const storedUser = localStorage.getItem("user");
                 const parsedUser = storedUser ? JSON.parse(storedUser) : null;
-                const userEmail = parsedUser?.email; // Get user email
+                const userEmail = parsedUser?.email;
 
                 if (!token || !userEmail) {
                     console.error("❌ Authentication failed! Missing token or user email.");
@@ -54,26 +55,37 @@ const OrgSubmittedForms = () => {
     }, []);
 
     return (
-        <div className="org-forms-container">
+        <div className="org-forms-body">
+        <div className="org-submitted-forms">
             <h2>My Submitted Forms</h2>
-            {loading ? (
-                <p>Loading...</p>
+                        {loading ? (
+                <div className="loading-container">
+                    <div className="loader"></div>
+                </div>
             ) : error ? (
                 <p className="error-message">Error: {error}</p>
             ) : forms.length === 0 ? (
-                <p>No submitted forms found.</p>
+                <p className="no-forms-text">No submitted forms found.</p>
             ) : (
-                <ul>
-                    {forms.map((form) => (
-                        <li key={form._id} className="form-item">
-                            <h4>{form.eventTitle}</h4>
-                            <p>Status: <strong>{form.finalStatus || "Pending"}</strong></p>
+                <ul className="form-list">
+                 {forms.map((form) => (
+                        <li 
+                            key={form._id} 
+                            className="form-card"
+                            onClick={() => navigate(`/orgTrackerViewer/${form._id}`)} // Redirect to OrgTrackerViewer
+                        >
+                            <h4 className="event-title">{form.eventTitle}</h4>
+                            <p>Status: 
+                                <strong className={`status-indicator ${form.finalStatus?.toLowerCase() || "pending"}`}>
+                                    {form.finalStatus || "Pending"}
+                                </strong>
+                            </p>
                             <p>Submitted on: {form.applicationDate ? new Date(form.applicationDate).toLocaleDateString() : "No Date"}</p>
-                            <button onClick={() => navigate(`/formdetails/${form._id}`)}>View Details</button>
                         </li>
                     ))}
                 </ul>
             )}
+        </div>
         </div>
     );
 };
