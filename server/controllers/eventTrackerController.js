@@ -99,6 +99,9 @@ const updateTrackerStep = async (req, res) => {
           return res.status(404).json({ message: "Tracker not found" });
       }
 
+      // Log the steps for debugging
+      console.log("Steps in Tracker:", tracker.steps);
+
       // Find the step
       const step = tracker.steps.find(step => step._id.toString() === stepId);
       if (!step) {
@@ -107,7 +110,10 @@ const updateTrackerStep = async (req, res) => {
 
       // Find the first pending step
       const firstPendingStepIndex = tracker.steps.findIndex(step => step.status === "pending");
+      console.log("First Pending Step Index:", firstPendingStepIndex);
+
       const firstPendingStep = tracker.steps[firstPendingStepIndex];
+      console.log("First Pending Step:", firstPendingStep);
 
       // Ensure the step being updated is the first pending step
       if (!firstPendingStep || firstPendingStep._id.toString() !== stepId) {
