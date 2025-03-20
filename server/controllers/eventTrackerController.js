@@ -105,18 +105,21 @@ const updateTrackerStep = async (req, res) => {
           return res.status(404).json({ message: "Step not found" });
       }
 
-      // Check if the step is pending
+      // Find the first pending step
       const firstPendingStepIndex = tracker.steps.findIndex(step => step.status === "pending");
       const firstPendingStep = tracker.steps[firstPendingStepIndex];
 
+      // Ensure the step being updated is the first pending step
       if (!firstPendingStep || firstPendingStep._id.toString() !== stepId) {
           return res.status(403).json({ message: "You cannot skip steps. Approve them in order." });
       }
 
+      // Check if the step is already reviewed
       if (firstPendingStep.status !== "pending") {
           return res.status(400).json({ message: "This step has already been reviewed." });
       }
 
+      // Ensure the user has the correct role to review this step
       if (step.stepName !== faculty && role !== "Admin") {
           return res.status(403).json({ message: `Unauthorized: Only the ${step.stepName} can review this step.` });
       }
@@ -148,15 +151,40 @@ const updateTrackerStep = async (req, res) => {
       await tracker.save();
       console.log("Tracker after saving:", tracker);
 
-      // Return the updated tracker
-      return res.status(200).json({ message: "Tracker step updated successfully", tracker });
+      // Update the Form's finalStatus based on the tracker's steps
+      const Form = mongoose.model('Form');
+      const form = await Form.findById(tracker.formId);
+
+      if (!form) {
+          return res.status(404).json({ message: "Form not found" });
+      }
+
+      // Check if any step is declined
+      const isDeclined = tracker.steps.some(step => step.status === 'declined');
+
+      // Check if all steps are approved
+      const isApproved = tracker.steps.every(step => step.status === 'approved');
+
+      // Determine the finalStatus
+      let finalStatus = 'pending';
+      if (isDeclined) {
+          finalStatus = 'declined';
+      } else if (isApproved) {
+          finalStatus = 'approved';
+      }
+
+      // Update the Form's finalStatus
+      form.finalStatus = finalStatus;
+      await form.save();
+
+      // Return the updated tracker and form
+      return res.status(200).json({ message: "Tracker step updated successfully", tracker, form });
 
   } catch (error) {
       console.error("❌ Error updating progress tracker:", error);
       return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
 
 // Get event tracker by form ID
 const getEventTrackerByFormId = async (req, res) => {

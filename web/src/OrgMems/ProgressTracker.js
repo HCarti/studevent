@@ -157,36 +157,33 @@ const ProgressTracker = ({ currentUser }) => {
             <h3 style={{ textAlign: 'center' }}>Event Proposal Tracker</h3>
             <div className="progress-tracker">
             <div className="progress-bar-container">
-                {trackerData.steps.map((step, index) => {
-                    const canShowStep = index <= currentStep || trackerData.steps.slice(0, index).every(prevStep => prevStep.color === 'green' || prevStep.color === 'red');
-                            return canShowStep ? (
-                                <div key={index} className="step-container">
-                                    <div className="progress-step">
-                                        {step.color === 'green' ? (
-                                            <CheckCircleIcon style={{ color: '#4caf50', fontSize: 24 }} />
-                                        ) : step.color === 'red' ? (
-                                            <CheckCircleIcon style={{ color: 'red', fontSize: 24 }} />
-                                        ) : (
-                                            <RadioButtonUncheckedIcon style={{ color: '#ffeb3b', fontSize: 24 }} />
-                                        )}
-                                    </div>
-                                    <div className="step-label">
-                                        <strong>{step.stepName}</strong>
-                                        {step.reviewedBy && (
-                                            <div className="reviewer-info">
-                                                <small>Reviewed by: {step.reviewedByRole} ({step.reviewedBy})</small>
-                                            </div>
-                                        )}
-                                        {step.timestamp && (
-                                            <div className="timestamp">
-                                                <small>{new Date(step.timestamp).toLocaleString()}</small>
-                                            </div>
-                                        )}
-                                    </div>
+                {trackerData.steps.map((step, index) => (
+                    <div key={index} className="step-container">
+                        <div className="progress-step">
+                            {step.color === 'green' ? (
+                                <CheckCircleIcon style={{ color: '#4caf50', fontSize: 24 }} />
+                            ) : step.color === 'red' ? (
+                                <CheckCircleIcon style={{ color: 'red', fontSize: 24 }} />
+                            ) : (
+                                <RadioButtonUncheckedIcon style={{ color: '#ffeb3b', fontSize: 24 }} />
+                            )}
+                        </div>
+                        <div className="step-label">
+                            <strong>{step.stepName}</strong>
+                            {step.reviewedBy && (
+                                <div className="reviewer-info">
+                                    <small>Reviewed by: {step.reviewedByRole} ({step.reviewedBy})</small>
                                 </div>
-                            ) : null;
-                        })}
+                            )}
+                            {step.timestamp && (
+                                <div className="timestamp">
+                                    <small>{new Date(step.timestamp).toLocaleString()}</small>
+                                </div>
+                            )}
+                        </div>
                     </div>
+                ))}
+            </div>
 
 
                 {isEditing ? (
