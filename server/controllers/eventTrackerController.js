@@ -138,6 +138,9 @@ const updateTrackerStep = async (req, res) => {
       firstPendingStep.reviewedBy = userId;
       firstPendingStep.reviewedByRole = faculty || role;
 
+      // Log the step status after update
+      console.log("Step Status After Update:", firstPendingStep.status);
+
       // Update currentStep and currentAuthority
       if (status === "approved") {
           const nextStepIndex = firstPendingStepIndex + 1;
@@ -154,6 +157,10 @@ const updateTrackerStep = async (req, res) => {
           tracker.currentAuthority = firstPendingStep.reviewerRole;
           tracker.isCompleted = false; // Do not mark the tracker as completed if rejected
       }
+
+      // Log the current step and authority after update
+      console.log("Current Step After Update:", tracker.currentStep);
+      console.log("Current Authority After Update:", tracker.currentAuthority);
 
       // Save the updated tracker
       console.log("Tracker before saving:", tracker);
