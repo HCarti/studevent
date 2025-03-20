@@ -1,6 +1,7 @@
 const EventTracker = require("../models/EventTracker");
 const User = require("../models/User"); // Import User model
 const Form = require("../models/Form");
+const mongoose = require('mongoose');
 
 // Get event tracker by form ID
 const getEventTracker = async (req, res) => {
