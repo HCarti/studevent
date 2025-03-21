@@ -40,12 +40,12 @@ const ProgressTracker = ({ currentUser }) => {
 
     useEffect(() => {
         if (!formId) return;
-    
+
         const fetchTrackerData = async () => {
             try {
                 const token = localStorage.getItem("token");
                 if (!token) throw new Error("No token found. Please log in again.");
-    
+
                 const response = await fetch(`https://studevent-server.vercel.app/api/tracker/${formId}`, {
                     method: "GET",
                     headers: {
@@ -53,23 +53,23 @@ const ProgressTracker = ({ currentUser }) => {
                         "Content-Type": "application/json",
                     },
                 });
-    
+
                 if (!response.ok) throw new Error(`Error fetching tracker data: ${response.statusText}`);
-    
+
                 const data = await response.json();
                 console.log("Fetched tracker data:", data);
-    
+
                 setTrackerData(data);
                 setCurrentStep(String(data.currentStep));
-    
+
             } catch (error) {
                 console.error("Error fetching tracker data:", error.message);
             }
         };
-    
+
         fetchTrackerData();
     }, [formId]);
-    
+
     if (!trackerData) return <p>Loading...</p>;
 
     console.log("User Data from LocalStorage:", user);
@@ -77,27 +77,47 @@ const ProgressTracker = ({ currentUser }) => {
 
     const handleEditClick = () => setIsEditing(true);
 
-    
     const handleSaveClick = async () => {
-        if (!trackerData || !user || !user._id || (!user.faculty && !user.role)) return;
-    
+        if (!trackerData || !user || !user._id || (!user.faculty && !user.role)) {
+            console.error("Invalid user or tracker data.");
+            return;
+        }
+
         const token = localStorage.getItem("token");
-        if (!token) return;
-    
+        if (!token) {
+            console.error("No token found. Please log in again.");
+            return;
+        }
+
+        // Ensure either approved or declined is selected
+        if (!isApprovedChecked && !isDeclinedChecked) {
+            console.error("Please select either 'Approved' or 'Declined'.");
+            return;
+        }
+
         const status = isApprovedChecked ? "approved" : "declined";
         const remarksText = remarks || "";
         const trackerId = trackerData?._id || formId;
-    
-        const stepIndex = trackerData.steps.findIndex(step => 
+
+        // Find the step being updated
+        const stepIndex = trackerData.steps.findIndex(step =>
             step?.stepName?.trim().toLowerCase() === String(currentStep).trim().toLowerCase()
         );
-    
-        if (stepIndex === -1) return;
-    
+
+        if (stepIndex === -1) {
+            console.error("Step not found in tracker data.");
+            return;
+        }
+
         const step = trackerData.steps[stepIndex];
-    
+
+        // Log the step being updated
+        console.log("Step being updated:", step);
+        console.log("Status:", status);
+        console.log("Remarks:", remarksText);
+
         const requestBody = { status, remarks: remarksText };
-    
+
         try {
             // Send update request
             const response = await fetch(
@@ -111,9 +131,9 @@ const ProgressTracker = ({ currentUser }) => {
                     body: JSON.stringify(requestBody),
                 }
             );
-    
+
             if (!response.ok) throw new Error(await response.text());
-    
+
             // Fetch updated tracker data
             const updatedResponse = await fetch(
                 `https://studevent-server.vercel.app/api/tracker/${formId}`,
@@ -125,24 +145,24 @@ const ProgressTracker = ({ currentUser }) => {
                     },
                 }
             );
-    
+
             if (!updatedResponse.ok) throw new Error(await updatedResponse.text());
-    
+
             const updatedData = await updatedResponse.json();
             console.log("Updated tracker data:", updatedData);
-    
+
             // Update state
             setTrackerData(updatedData);
             setIsEditing(false);
             setIsApprovedChecked(false);
             setIsDeclinedChecked(false);
             setRemarks("");
-    
+
         } catch (error) {
             console.error("Error updating progress tracker:", error);
         }
     };
-    
+
     const handleCheckboxChange = (checkbox) => {
         setIsApprovedChecked(checkbox === 'approved');
         setIsDeclinedChecked(checkbox === 'declined');
@@ -156,35 +176,34 @@ const ProgressTracker = ({ currentUser }) => {
         <div className='prog-box'>
             <h3 style={{ textAlign: 'center' }}>Event Proposal Tracker</h3>
             <div className="progress-tracker">
-            <div className="progress-bar-container">
-                {trackerData.steps.map((step, index) => (
-                    <div key={index} className="step-container">
-                        <div className="progress-step">
-                            {step.color === 'green' ? (
-                                <CheckCircleIcon style={{ color: '#4caf50', fontSize: 24 }} />
-                            ) : step.color === 'red' ? (
-                                <CheckCircleIcon style={{ color: 'red', fontSize: 24 }} />
-                            ) : (
-                                <RadioButtonUncheckedIcon style={{ color: '#ffeb3b', fontSize: 24 }} />
-                            )}
+                <div className="progress-bar-container">
+                    {trackerData.steps.map((step, index) => (
+                        <div key={index} className="step-container">
+                            <div className="progress-step">
+                                {step.color === 'green' ? (
+                                    <CheckCircleIcon style={{ color: '#4caf50', fontSize: 24 }} />
+                                ) : step.color === 'red' ? (
+                                    <CheckCircleIcon style={{ color: 'red', fontSize: 24 }} />
+                                ) : (
+                                    <RadioButtonUncheckedIcon style={{ color: '#ffeb3b', fontSize: 24 }} />
+                                )}
+                            </div>
+                            <div className="step-label">
+                                <strong>{step.stepName}</strong>
+                                {step.reviewedBy && (
+                                    <div className="reviewer-info">
+                                        <small>Reviewed by: {step.reviewedByRole} ({step.reviewedBy})</small>
+                                    </div>
+                                )}
+                                {step.timestamp && (
+                                    <div className="timestamp">
+                                        <small>{new Date(step.timestamp).toLocaleString()}</small>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                        <div className="step-label">
-                            <strong>{step.stepName}</strong>
-                            {step.reviewedBy && (
-                                <div className="reviewer-info">
-                                    <small>Reviewed by: {step.reviewedByRole} ({step.reviewedBy})</small>
-                                </div>
-                            )}
-                            {step.timestamp && (
-                                <div className="timestamp">
-                                    <small>{new Date(step.timestamp).toLocaleString()}</small>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                ))}
-            </div>
-
+                    ))}
+                </div>
 
                 {isEditing ? (
                     <div className="edit-tracker">
