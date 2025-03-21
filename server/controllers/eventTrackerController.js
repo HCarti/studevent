@@ -153,7 +153,6 @@ const updateTrackerStep = async (req, res) => {
           tracker.currentStep = firstPendingStep.stepName;
           tracker.currentAuthority = firstPendingStep.reviewerRole;
           tracker.isCompleted = false; // Do not mark the tracker as completed if rejected
-          return res.status(200).json({ message: "Tracker step rejected", tracker });
       }
 
       // Save the updated tracker
