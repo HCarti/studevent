@@ -149,10 +149,19 @@ const updateTrackerStep = async (req, res) => {
               tracker.currentAuthority = "None";
           }
       } else if (status === "declined") {
-          // If the step is rejected, stay on the current step
+          // If the step is declined, stay on the current step
           tracker.currentStep = firstPendingStep.stepName;
           tracker.currentAuthority = firstPendingStep.reviewerRole;
-          tracker.isCompleted = false; // Do not mark the tracker as completed if rejected
+          tracker.isCompleted = false; // Do not mark the tracker as completed if declined
+
+          // Reset all subsequent steps to "pending"
+          for (let i = firstPendingStepIndex + 1; i < tracker.steps.length; i++) {
+              tracker.steps[i].status = "pending";
+              tracker.steps[i].reviewedBy = null;
+              tracker.steps[i].reviewedByRole = null;
+              tracker.steps[i].remarks = "";
+              tracker.steps[i].timestamp = null;
+          }
       }
 
       // Save the updated tracker
