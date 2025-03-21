@@ -148,7 +148,7 @@ const updateTrackerStep = async (req, res) => {
               tracker.currentStep = "Completed";
               tracker.currentAuthority = "None";
           }
-      } else if (status === "rejected") {
+      } else if (status === "declined") {
           // If the step is rejected, stay on the current step
           tracker.currentStep = firstPendingStep.stepName;
           tracker.currentAuthority = firstPendingStep.reviewerRole;
