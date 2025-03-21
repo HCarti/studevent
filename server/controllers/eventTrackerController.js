@@ -109,20 +109,22 @@ const updateTrackerStep = async (req, res) => {
           return res.status(404).json({ message: "Step not found" });
       }
 
-      // Find the first pending step
-      const firstPendingStepIndex = tracker.steps.findIndex(step => step.status === "pending");
-      console.log("First Pending Step Index:", firstPendingStepIndex);
+      // Find the first pending or declined step
+      const firstPendingOrDeclinedStepIndex = tracker.steps.findIndex(step => 
+          step.status === "pending" || step.status === "declined"
+      );
+      console.log("First Pending or Declined Step Index:", firstPendingOrDeclinedStepIndex);
 
-      const firstPendingStep = tracker.steps[firstPendingStepIndex];
-      console.log("First Pending Step:", firstPendingStep);
+      const firstPendingOrDeclinedStep = tracker.steps[firstPendingOrDeclinedStepIndex];
+      console.log("First Pending or Declined Step:", firstPendingOrDeclinedStep);
 
-      // Ensure the step being updated is the first pending step
-      if (!firstPendingStep || firstPendingStep._id.toString() !== stepId) {
+      // Ensure the step being updated is the first pending or declined step
+      if (!firstPendingOrDeclinedStep || firstPendingOrDeclinedStep._id.toString() !== stepId) {
           return res.status(403).json({ message: "You cannot skip steps. Approve them in order." });
       }
 
-      // Check if the step is already reviewed
-      if (firstPendingStep.status !== "pending") {
+      // Check if the step is already reviewed (only for pending steps)
+      if (firstPendingOrDeclinedStep.status !== "pending" && firstPendingOrDeclinedStep.status !== "declined") {
           return res.status(400).json({ message: "This step has already been reviewed." });
       }
 
@@ -132,15 +134,15 @@ const updateTrackerStep = async (req, res) => {
       }
 
       // Update the step
-      firstPendingStep.status = status;
-      firstPendingStep.remarks = remarks || "";
-      firstPendingStep.timestamp = new Date();
-      firstPendingStep.reviewedBy = userId;
-      firstPendingStep.reviewedByRole = faculty || role;
+      step.status = status;
+      step.remarks = remarks || "";
+      step.timestamp = new Date();
+      step.reviewedBy = userId;
+      step.reviewedByRole = faculty || role;
 
       // Update currentStep and currentAuthority
       if (status === "approved") {
-          const nextStepIndex = firstPendingStepIndex + 1;
+          const nextStepIndex = firstPendingOrDeclinedStepIndex + 1;
           if (nextStepIndex < tracker.steps.length) {
               tracker.currentStep = tracker.steps[nextStepIndex].stepName;
               tracker.currentAuthority = tracker.steps[nextStepIndex].reviewerRole;
@@ -150,12 +152,11 @@ const updateTrackerStep = async (req, res) => {
           }
       } else if (status === "declined") {
           // If the step is declined, stay on the current step
-          tracker.currentStep = firstPendingStep.stepName;
-          tracker.currentAuthority = firstPendingStep.reviewerRole;
-          tracker.isCompleted = false; // Do not mark the tracker as completed if declined
+          tracker.currentStep = step.stepName;
+          tracker.currentAuthority = step.reviewerRole;
 
           // Reset all subsequent steps to "pending"
-          for (let i = firstPendingStepIndex + 1; i < tracker.steps.length; i++) {
+          for (let i = firstPendingOrDeclinedStepIndex + 1; i < tracker.steps.length; i++) {
               tracker.steps[i].status = "pending";
               tracker.steps[i].reviewedBy = null;
               tracker.steps[i].reviewedByRole = null;
