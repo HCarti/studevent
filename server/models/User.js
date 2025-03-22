@@ -48,15 +48,11 @@ const userSchema = new Schema({
     }
   },
   logo: String, // Optional for all roles
+  signature: String, // NEW: Signature URL for Admin and Authority
   status: {
     type: String,
     default: 'Active'
   },
-  signature: {String,// NEW: Signature URL for Admin and Authority
-  required: function() {
-    return this.role === 'Admin' || this.role === 'Authority'; // Required for Admin and Authority
-  }
-},
 });
 
 const User = mongoose.model('User', userSchema);
