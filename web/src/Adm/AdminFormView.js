@@ -46,7 +46,7 @@ const AdminFormView = () => {
   
 
   const handleRedirectToProgressTracker = (form) => {
-    navigate(`/progtrack/${form._id}`, { state: { form } }); // Pass the whole form object
+    navigate(`/progtrack/${form._id}`, { state: { form } }); 
   };
 
   return (

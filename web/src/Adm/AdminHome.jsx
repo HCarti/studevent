@@ -91,29 +91,23 @@ const AdminHome = () => {
     navigate('/calendar');
   };
 
-  const handleProfileClick = () => {
-    handleButtonClick('profile');
-    navigate('/orgprof');
-  };
-
   const handleDashboardClick = () => {
     handleButtonClick('dashboard');
     navigate('/dashboard');
   };
 
   const sliderSettings = {
-    dots: true,
+    dots: false, // Remove dots
     infinite: true,
     speed: 500,
     slidesToShow: 1,
     slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 4000,
+    autoplay: true, // Enable autoplay
+    autoplaySpeed: 4000, // Set autoplay speed to 4 seconds
     pauseOnHover: true,
-    arrows: true,
+    arrows: false, // Remove navigation arrows
     fade: true,
     cssEase: 'linear',
-    dotsClass: 'slick-dots custom-dots',
     responsive: [
       { breakpoint: 1024, settings: { slidesToShow: 2 } },
       { breakpoint: 600, settings: { slidesToShow: 1 } },

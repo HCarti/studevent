@@ -4,6 +4,7 @@ import './ProgressTracker.css';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress'; // Import Material-UI spinner
 
 const ProgressTracker = ({ currentUser }) => {
     const navigate = useNavigate();
@@ -12,6 +13,13 @@ const ProgressTracker = ({ currentUser }) => {
     const { formId } = useParams();
 
     const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true); // Add loading state
+    const [currentStep, setCurrentStep] = useState(0);
+    const [trackerData, setTrackerData] = useState(null);
+    const [remarks, setRemarks] = useState('');
+    const [isEditing, setIsEditing] = useState(false);
+    const [isApprovedChecked, setIsApprovedChecked] = useState(false);
+    const [isDeclinedChecked, setIsDeclinedChecked] = useState(false);
 
     useEffect(() => {
         console.log("Retrieving user data from localStorage...");
@@ -30,13 +38,6 @@ const ProgressTracker = ({ currentUser }) => {
             console.warn("No user data found in localStorage.");
         }
     }, []);
-
-    const [currentStep, setCurrentStep] = useState(0);
-    const [trackerData, setTrackerData] = useState(null);
-    const [remarks, setRemarks] = useState('');
-    const [isEditing, setIsEditing] = useState(false);
-    const [isApprovedChecked, setIsApprovedChecked] = useState(false);
-    const [isDeclinedChecked, setIsDeclinedChecked] = useState(false);
 
     useEffect(() => {
         if (!formId) return;
@@ -61,16 +62,30 @@ const ProgressTracker = ({ currentUser }) => {
 
                 setTrackerData(data);
                 setCurrentStep(String(data.currentStep));
-
             } catch (error) {
                 console.error("Error fetching tracker data:", error.message);
+            } finally {
+                setLoading(false); // Stop loading after fetching data
             }
         };
 
         fetchTrackerData();
     }, [formId]);
 
-    if (!trackerData) return <p>Loading...</p>;
+    // Show loading spinner while data is being fetched
+    if (loading) {
+        return (
+            <div className="loading-spinner-container">
+                <CircularProgress color="primary" size={60} /> {/* Material-UI spinner */}
+                <p>Loading tracker data...</p>
+            </div>
+        );
+    }
+
+    // Show error message if no tracker data is found
+    if (!trackerData) {
+        return <p>No tracker data found.</p>;
+    }
 
     console.log("User Data from LocalStorage:", user);
     console.log("Tracker's currentAuthority:", trackerData.currentAuthority);
@@ -82,44 +97,40 @@ const ProgressTracker = ({ currentUser }) => {
             console.error("Invalid user or tracker data.");
             return;
         }
-    
+
         const token = localStorage.getItem("token");
         if (!token) {
             console.error("No token found. Please log in again.");
             return;
         }
-    
-        // Ensure either approved or declined is selected
+
         if (!isApprovedChecked && !isDeclinedChecked) {
             console.error("Please select either 'Approved' or 'Declined'.");
             return;
         }
-    
+
         const status = isApprovedChecked ? "approved" : "declined";
         const remarksText = remarks || "";
         const trackerId = trackerData?._id || formId;
-    
-        // Find the step being updated
+
         const stepIndex = trackerData.steps.findIndex(step =>
             step?.stepName?.trim().toLowerCase() === String(currentStep).trim().toLowerCase()
         );
-    
+
         if (stepIndex === -1) {
             console.error("Step not found in tracker data.");
             return;
         }
-    
+
         const step = trackerData.steps[stepIndex];
-    
-        // Log the step being updated
+
         console.log("Step being updated:", step);
         console.log("Status:", status);
         console.log("Remarks:", remarksText);
-    
+
         const requestBody = { status, remarks: remarksText };
-    
+
         try {
-            // Send update request
             const response = await fetch(
                 `https://studevent-server.vercel.app/api/tracker/update-step/${trackerId}/${step._id}`,
                 {
@@ -131,10 +142,9 @@ const ProgressTracker = ({ currentUser }) => {
                     body: JSON.stringify(requestBody),
                 }
             );
-    
+
             if (!response.ok) throw new Error(await response.text());
-    
-            // Fetch updated tracker data
+
             const updatedResponse = await fetch(
                 `https://studevent-server.vercel.app/api/tracker/${formId}`,
                 {
@@ -145,20 +155,18 @@ const ProgressTracker = ({ currentUser }) => {
                     },
                 }
             );
-    
+
             if (!updatedResponse.ok) throw new Error(await updatedResponse.text());
-    
+
             const updatedData = await updatedResponse.json();
             console.log("Updated tracker data:", updatedData);
-    
-            // Update state with the updated tracker data
+
             setTrackerData(updatedData);
-            setCurrentStep(updatedData.currentStep); // Ensure currentStep is updated
+            setCurrentStep(updatedData.currentStep);
             setIsEditing(false);
             setIsApprovedChecked(false);
             setIsDeclinedChecked(false);
             setRemarks("");
-    
         } catch (error) {
             console.error("Error updating progress tracker:", error);
         }

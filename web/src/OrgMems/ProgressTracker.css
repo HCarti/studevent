@@ -8,6 +8,7 @@
   align-items: center;
   width: 78%;
   margin: 40px auto;
+  height: 80vh;
   padding: 20px;
   font-family: 'Roboto', sans-serif;
 }
@@ -24,6 +25,7 @@ h3 {
   justify-content: space-between;
   width: 100%;
   flex-direction: column;
+  height: 75vh;
 }
 
 .upper-row {
@@ -189,4 +191,19 @@ h3 {
 
 .action-button:last-child {
   margin-right: 0;
+}
+
+/* Loading Spinner Styling */
+.loading-spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 91vh; /* Full viewport height */
+  gap: 20px;
+}
+
+.loading-spinner-container p {
+  font-size: 18px;
+  color: #333;
 }

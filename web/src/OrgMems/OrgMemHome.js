@@ -96,18 +96,17 @@ const OrgMemHome = () => {
   const images = [image1, image2, image3, image4];
 
   const sliderSettings = {
-    dots: true,
+    dots: false,
     infinite: true,
     speed: 500,
     slidesToShow: 1,
     slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 4000,
+    autoplay: true, 
+    autoplaySpeed: 4000, 
     pauseOnHover: true,
-    arrows: true,
+    arrows: false, 
     fade: true,
     cssEase: 'linear',
-    dotsClass: 'slick-dots custom-dots',
     responsive: [
       { breakpoint: 1024, settings: { slidesToShow: 2 } },
       { breakpoint: 600, settings: { slidesToShow: 1 } },
