@@ -18,7 +18,8 @@ const createToken = (user) => {
       organizationType: user.organizationType || '',
       organizationName: user.organizationName || '',
       status: user.status || '',
-      logo: user.logo || ''
+      logo: user.logo || '',
+      signature: user.signature || ''
     },
     process.env.JWT_SECRET,
     { expiresIn: "3d" }
@@ -41,13 +42,15 @@ const login = async (req, res) => {
     if (password === user.password) {
       // Validate role-specific fields
       if (user.role === 'Admin' || user.role === 'Authority') {
-        if (!user.firstName || !user.lastName) {
+        if (!user.firstName || !user.lastName || !user.signature) {
           return res.status(400).json({ message: 'First name and last name are required for Admin and Authority roles.' });
         }
       }
 
       if (user.role === 'Authority' && !user.faculty) {
-        return res.status(400).json({ message: 'Faculty is required for Authority roles.' });
+        if (!user.signature){
+          return res.status(400).json({ message: 'Faculty is required for Authority roles.' });
+        }
       }
 
       if (user.role === 'Organization') {
@@ -73,7 +76,8 @@ const login = async (req, res) => {
           organizationType: user.organizationType,
           organizationName: user.organizationName,
           faculty: user.faculty,
-          status: user.status
+          status: user.status,
+          signature: user.signature
         }
       });
     } else {
@@ -114,10 +118,11 @@ const getCurrentUser = async (req, res) => {
 
 
 // Add user
-const addUser = async (userData, blobUrl) => {
+const addUser = async (userData, logoUrl, signatureUrl) => {
   try {
     console.log('User Data:', userData);
-    console.log('Blob URL:', blobUrl);
+    console.log('Logo URL:', logoUrl);
+    console.log('Signature URL:', signatureUrl);
 
     if (!userData.email || !userData.password) throw new Error('Email and password are required');
 
@@ -129,7 +134,8 @@ const addUser = async (userData, blobUrl) => {
       password: userData.password,
       role: userData.role,
       status: 'Active',
-      logo: blobUrl,
+      logo: logoUrl,
+      signature: signatureUrl, // NEW: Store signature URL
     });
 
     if (userData.role === 'Authority') {
@@ -147,6 +153,7 @@ const addUser = async (userData, blobUrl) => {
     await newUser.save();
     return newUser;
   } catch (error) {
+    console.error('Error in addUser:', error); // Log the error
     throw error;
   }
 };

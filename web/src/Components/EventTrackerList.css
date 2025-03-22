@@ -1,5 +1,4 @@
 /* EventTrackerList.css */
-
 /* Container Styling */
 .event-tracker-container {
   display: flex;
@@ -120,7 +119,7 @@
   color: #ffffff;
 }
 
-.status-badge.rejected {
+.status-badge.declined {
   background-color: #D9534F;
   color: #ffffff;
 }
@@ -141,6 +140,11 @@
   width: 40px;
   height: 40px;
   animation: spin 1s linear infinite;
+}
+
+.event-tracker-table td:nth-child(5) {
+  font-weight: 500; /* Make the current step text slightly bold */
+  color: #34495e; /* Dark blue color for better visibility */
 }
 
 @keyframes spin {

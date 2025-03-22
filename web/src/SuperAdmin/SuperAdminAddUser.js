@@ -18,6 +18,7 @@
 
         const [logo, setLogo] = useState(null);
         const [loading, setLoading] = useState(false);
+        const [signature, setSignature] = useState(null); // NEW: Signature state
         const [error, setError] = useState('');
         const [success, setSuccess] = useState('');
         const [validationErrors, setValidationErrors] = useState({});
@@ -42,6 +43,18 @@
                 setLogo(file);
             }
         };
+
+         // NEW: Handle signature upload
+    const handleSignatureChange = (e) => {
+        const file = e.target.files[0];
+        if (file && file.type === 'image/png') {
+            setSignature(file);
+            setError('');
+        } else {
+            setError('Please upload a valid PNG file for the signature.');
+            setSignature(null);
+        }
+    };
 
         const validateForm = () => {
             const { firstName, lastName, email, password, confirmPassword, role, organizationType, organizationName } = formData;
@@ -107,6 +120,13 @@
                 errors.confirmPassword = 'Passwords do not match.';
             }
 
+                    // NEW: Validate signature for roles that require it
+            if ((role === 'Admin' || role === 'Authority') && !signature) {
+                isValid = false;
+                errors.signature = 'Signature is required.';
+            }
+
+
             setValidationErrors(errors);
             return isValid;
         };
@@ -141,6 +161,12 @@
             data.append('organizationType', formData.organizationType); 
             data.append('organizationName', formData.organizationName); // Include organization name in submission
         }
+
+         // NEW: Append signature if required
+         if ((formData.role === 'Admin' || formData.role === 'Authority') && signature) {
+            data.append('signature', signature);
+        }
+
         // Debugging: Check FormData content
         for (let pair of data.entries()) {
             console.log(pair[0], pair[1]);
@@ -167,6 +193,7 @@
                 confirmPassword: '',
             });
             setLogo(null);
+            setSignature(null); // NEW: Reset signature
         } catch (error) {
             setError(error.response?.data?.message || 'Error adding user.');
         } finally {
@@ -197,6 +224,21 @@
                                 <input type="file" name="logo" accept="image/*" onChange={handleLogoChange} />
                             </label>
                         </div>
+
+                        {/* NEW: Signature Upload Field */}
+                    {(formData.role === 'Admin' || formData.role === 'Authority') && (
+                        <div className="form-group">
+                            <label htmlFor="signature">Signature (PNG) <span className="important">*</span></label>
+                            <input
+                                type="file"
+                                name="signature"
+                                accept="image/png"
+                                onChange={handleSignatureChange}
+                                className={validationErrors.signature ? 'input-error' : ''}
+                            />
+                            {validationErrors.signature && <small className="error-text">{validationErrors.signature}</small>}
+                        </div>
+                    )}
 
                         <div className="form-fields">
                             <div className="form-group">

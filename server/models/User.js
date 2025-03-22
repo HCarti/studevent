@@ -52,19 +52,10 @@ const userSchema = new Schema({
     type: String,
     default: 'Active'
   },
-  // New fields for login attempt and OTP functionality
-  // loginAttempts: {
-  //   type: Number,
-  //   default: 0, // Track failed login attempts
-  // },
-  // otp: {
-  //   type: String, // Store OTP for email verification
-  //   default: null,
-  // },
-  // otpExpiry: {
-  //   type: Date, // Store OTP expiration time (e.g., valid for 10 minutes)
-  //   default: null,
-  // }
+  signature: String, // NEW: Signature URL for Admin and Authority
+  required: function() {
+    return this.role === 'Admin' || this.role === 'Authority'; // Required for Admin and Authority
+  }
 });
 
 const User = mongoose.model('User', userSchema);
