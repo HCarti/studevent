@@ -52,10 +52,11 @@ const userSchema = new Schema({
     type: String,
     default: 'Active'
   },
-  signature: String, // NEW: Signature URL for Admin and Authority
+  signature: {String,// NEW: Signature URL for Admin and Authority
   required: function() {
     return this.role === 'Admin' || this.role === 'Authority'; // Required for Admin and Authority
   }
+},
 });
 
 const User = mongoose.model('User', userSchema);
