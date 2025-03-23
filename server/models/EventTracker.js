@@ -12,7 +12,8 @@ const eventTrackerSchema = new mongoose.Schema({
             reviewedByRole: { type: String, default: null },
             status: { type: String, enum: ["pending", "approved", "declined"], default: "pending" },
             remarks: { type: String, default: "" },
-            timestamp: { type: Date, default: null }
+            timestamp: { type: Date, default: null},
+            signature: { type: String, default: null }, // NEW: Signature URL
         }
     ]
 });

@@ -14,6 +14,7 @@ const ProgressTracker = ({ currentUser }) => {
 
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true); // Add loading state
+    const [signature, setSignature] = useState(null); // NEW: State for signature file
     const [currentStep, setCurrentStep] = useState(0);
     const [trackerData, setTrackerData] = useState(null);
     const [remarks, setRemarks] = useState('');
@@ -94,83 +95,86 @@ const ProgressTracker = ({ currentUser }) => {
 
     const handleSaveClick = async () => {
         if (!trackerData || !user || !user._id || (!user.faculty && !user.role)) {
-            console.error("Invalid user or tracker data.");
-            return;
+          console.error("Invalid user or tracker data.");
+          return;
         }
-
+      
         const token = localStorage.getItem("token");
         if (!token) {
-            console.error("No token found. Please log in again.");
-            return;
+          console.error("No token found. Please log in again.");
+          return;
         }
-
+      
         if (!isApprovedChecked && !isDeclinedChecked) {
-            console.error("Please select either 'Approved' or 'Declined'.");
-            return;
+          console.error("Please select either 'Approved' or 'Declined'.");
+          return;
         }
-
+      
         const status = isApprovedChecked ? "approved" : "declined";
         const remarksText = remarks || "";
         const trackerId = trackerData?._id || formId;
-
+      
         const stepIndex = trackerData.steps.findIndex(step =>
-            step?.stepName?.trim().toLowerCase() === String(currentStep).trim().toLowerCase()
+          step?.stepName?.trim().toLowerCase() === String(currentStep).trim().toLowerCase()
         );
-
+      
         if (stepIndex === -1) {
-            console.error("Step not found in tracker data.");
-            return;
+          console.error("Step not found in tracker data.");
+          return;
         }
-
+      
         const step = trackerData.steps[stepIndex];
-
+      
         console.log("Step being updated:", step);
         console.log("Status:", status);
         console.log("Remarks:", remarksText);
-
-        const requestBody = { status, remarks: remarksText };
-
+      
+        // NEW: Include the user's signature URL
+        const signature = user.signatureUrl; // Assuming the signature URL is stored in the user object
+      
+        const requestBody = { status, remarks: remarksText, signature }; // Include signature
+      
         try {
-            const response = await fetch(
-                `https://studevent-server.vercel.app/api/tracker/update-step/${trackerId}/${step._id}`,
-                {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify(requestBody),
-                }
-            );
-
-            if (!response.ok) throw new Error(await response.text());
-
-            const updatedResponse = await fetch(
-                `https://studevent-server.vercel.app/api/tracker/${formId}`,
-                {
-                    method: "GET",
-                    headers: {
-                        "Authorization": `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                }
-            );
-
-            if (!updatedResponse.ok) throw new Error(await updatedResponse.text());
-
-            const updatedData = await updatedResponse.json();
-            console.log("Updated tracker data:", updatedData);
-
-            setTrackerData(updatedData);
-            setCurrentStep(updatedData.currentStep);
-            setIsEditing(false);
-            setIsApprovedChecked(false);
-            setIsDeclinedChecked(false);
-            setRemarks("");
+          const response = await fetch(
+            `https://studevent-server.vercel.app/api/tracker/update-step/${trackerId}/${step._id}`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify(requestBody),
+            }
+          );
+      
+          if (!response.ok) throw new Error(await response.text());
+      
+          const updatedResponse = await fetch(
+            `https://studevent-server.vercel.app/api/tracker/${formId}`,
+            {
+              method: "GET",
+              headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+      
+          if (!updatedResponse.ok) throw new Error(await updatedResponse.text());
+      
+          const updatedData = await updatedResponse.json();
+          console.log("Updated tracker data:", updatedData);
+      
+          setTrackerData(updatedData);
+          setCurrentStep(updatedData.currentStep);
+          setIsEditing(false);
+          setIsApprovedChecked(false);
+          setIsDeclinedChecked(false);
+          setRemarks("");
         } catch (error) {
-            console.error("Error updating progress tracker:", error);
+          console.error("Error updating progress tracker:", error);
         }
-    };
+      };
 
     const handleCheckboxChange = (checkbox) => {
         setIsApprovedChecked(checkbox === 'approved');

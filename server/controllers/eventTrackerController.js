@@ -2,6 +2,7 @@ const EventTracker = require("../models/EventTracker");
 const User = require("../models/User"); // Import User model
 const Form = require("../models/Form");
 const mongoose = require('mongoose');
+const { put } = require('@vercel/blob');
 
 // Get event tracker by form ID
 const getEventTracker = async (req, res) => {
@@ -75,133 +76,135 @@ const createEventTracker = async (req, res) => {
 // Update event tracker progress
 const updateTrackerStep = async (req, res) => {
   try {
-      console.log("🔍 Incoming PUT Request");
-      console.log("User Data:", req.user);
-      console.log("Request Body:", req.body);
+    console.log("🔍 Incoming PUT Request");
+    console.log("User Data:", req.user);
+    console.log("Request Body:", req.body);
 
-      const { trackerId, stepId } = req.params;
-      const { status, remarks } = req.body;
-      const userId = req.user._id;
-      const { role, faculty } = req.user;
+    const { trackerId, stepId } = req.params;
+    const { status, remarks, signature } = req.body; // NEW: Signature URL
+    const userId = req.user._id;
+    const { role, faculty } = req.user;
 
-      // Validate user and request
-      if (!req.user) {
-          return res.status(403).json({ message: "Unauthorized: Missing user credentials." });
+    // Validate user and request
+    if (!req.user) {
+      return res.status(403).json({ message: "Unauthorized: Missing user credentials." });
+    }
+
+    const facultyRoles = ["Adviser", "Dean", "Academic Services", "Academic Director", "Executive Director"];
+    if (role !== "Admin" && (!faculty || !facultyRoles.includes(faculty))) {
+      return res.status(403).json({ message: "Unauthorized: Only Admins or Faculty reviewers can update the tracker." });
+    }
+
+    // Fetch the tracker
+    const tracker = await EventTracker.findById(trackerId);
+    if (!tracker) {
+      return res.status(404).json({ message: "Tracker not found" });
+    }
+
+    // Log the steps for debugging
+    console.log("Steps in Tracker:", tracker.steps);
+
+    // Find the step
+    const step = tracker.steps.find(step => step._id.toString() === stepId);
+    if (!step) {
+      return res.status(404).json({ message: "Step not found" });
+    }
+
+    // Find the first pending or declined step
+    const firstPendingOrDeclinedStepIndex = tracker.steps.findIndex(step => 
+      step.status === "pending" || step.status === "declined"
+    );
+    console.log("First Pending or Declined Step Index:", firstPendingOrDeclinedStepIndex);
+
+    const firstPendingOrDeclinedStep = tracker.steps[firstPendingOrDeclinedStepIndex];
+    console.log("First Pending or Declined Step:", firstPendingOrDeclinedStep);
+
+    // Ensure the step being updated is the first pending or declined step
+    if (!firstPendingOrDeclinedStep || firstPendingOrDeclinedStep._id.toString() !== stepId) {
+      return res.status(403).json({ message: "You cannot skip steps. Approve them in order." });
+    }
+
+    // Check if the step is already reviewed (only for pending steps)
+    if (firstPendingOrDeclinedStep.status !== "pending" && firstPendingOrDeclinedStep.status !== "declined") {
+      return res.status(400).json({ message: "This step has already been reviewed." });
+    }
+
+    // Ensure the user has the correct role to review this step
+    if (step.stepName !== faculty && role !== "Admin") {
+      return res.status(403).json({ message: `Unauthorized: Only the ${step.stepName} can review this step.` });
+    }
+
+    // Update the step
+    step.status = status;
+    step.remarks = remarks || "";
+    step.timestamp = new Date();
+    step.reviewedBy = userId;
+    step.reviewedByRole = faculty || role;
+    step.signature = signature; // NEW: Store the signature URL
+
+    // Update currentStep and currentAuthority
+    if (status === "approved") {
+      const nextStepIndex = firstPendingOrDeclinedStepIndex + 1;
+      if (nextStepIndex < tracker.steps.length) {
+        tracker.currentStep = tracker.steps[nextStepIndex].stepName;
+        tracker.currentAuthority = tracker.steps[nextStepIndex].reviewerRole;
+      } else {
+        tracker.currentStep = "Completed";
+        tracker.currentAuthority = "None";
       }
+    } else if (status === "declined") {
+      // If the step is declined, stay on the current step
+      tracker.currentStep = step.stepName;
+      tracker.currentAuthority = step.reviewerRole;
 
-      const facultyRoles = ["Adviser", "Dean", "Academic Services", "Academic Director", "Executive Director"];
-      if (role !== "Admin" && (!faculty || !facultyRoles.includes(faculty))) {
-          return res.status(403).json({ message: "Unauthorized: Only Admins or Faculty reviewers can update the tracker." });
+      // Reset all subsequent steps to "pending"
+      for (let i = firstPendingOrDeclinedStepIndex + 1; i < tracker.steps.length; i++) {
+        tracker.steps[i].status = "pending";
+        tracker.steps[i].reviewedBy = null;
+        tracker.steps[i].reviewedByRole = null;
+        tracker.steps[i].remarks = "";
+        tracker.steps[i].timestamp = null;
+        tracker.steps[i].signature = null; // NEW: Reset signature
       }
+    }
 
-      // Fetch the tracker
-      const tracker = await EventTracker.findById(trackerId);
-      if (!tracker) {
-          return res.status(404).json({ message: "Tracker not found" });
-      }
+    // Save the updated tracker
+    console.log("Tracker before saving:", tracker);
+    await tracker.save();
+    console.log("Tracker after saving:", tracker);
 
-      // Log the steps for debugging
-      console.log("Steps in Tracker:", tracker.steps);
+    // Update the Form's finalStatus based on the tracker's steps
+    const Form = mongoose.model('Form');
+    const form = await Form.findById(tracker.formId);
 
-      // Find the step
-      const step = tracker.steps.find(step => step._id.toString() === stepId);
-      if (!step) {
-          return res.status(404).json({ message: "Step not found" });
-      }
+    if (!form) {
+      return res.status(404).json({ message: "Form not found" });
+    }
 
-      // Find the first pending or declined step
-      const firstPendingOrDeclinedStepIndex = tracker.steps.findIndex(step => 
-          step.status === "pending" || step.status === "declined"
-      );
-      console.log("First Pending or Declined Step Index:", firstPendingOrDeclinedStepIndex);
+    // Check if any step is declined
+    const isDeclined = tracker.steps.some(step => step.status === 'declined');
 
-      const firstPendingOrDeclinedStep = tracker.steps[firstPendingOrDeclinedStepIndex];
-      console.log("First Pending or Declined Step:", firstPendingOrDeclinedStep);
+    // Check if all steps are approved
+    const isApproved = tracker.steps.every(step => step.status === 'approved');
 
-      // Ensure the step being updated is the first pending or declined step
-      if (!firstPendingOrDeclinedStep || firstPendingOrDeclinedStep._id.toString() !== stepId) {
-          return res.status(403).json({ message: "You cannot skip steps. Approve them in order." });
-      }
+    // Determine the finalStatus
+    let finalStatus = 'pending';
+    if (isDeclined) {
+      finalStatus = 'declined';
+    } else if (isApproved) {
+      finalStatus = 'approved';
+    }
 
-      // Check if the step is already reviewed (only for pending steps)
-      if (firstPendingOrDeclinedStep.status !== "pending" && firstPendingOrDeclinedStep.status !== "declined") {
-          return res.status(400).json({ message: "This step has already been reviewed." });
-      }
+    // Update the Form's finalStatus
+    form.finalStatus = finalStatus;
+    await form.save();
 
-      // Ensure the user has the correct role to review this step
-      if (step.stepName !== faculty && role !== "Admin") {
-          return res.status(403).json({ message: `Unauthorized: Only the ${step.stepName} can review this step.` });
-      }
-
-      // Update the step
-      step.status = status;
-      step.remarks = remarks || "";
-      step.timestamp = new Date();
-      step.reviewedBy = userId;
-      step.reviewedByRole = faculty || role;
-
-      // Update currentStep and currentAuthority
-      if (status === "approved") {
-          const nextStepIndex = firstPendingOrDeclinedStepIndex + 1;
-          if (nextStepIndex < tracker.steps.length) {
-              tracker.currentStep = tracker.steps[nextStepIndex].stepName;
-              tracker.currentAuthority = tracker.steps[nextStepIndex].reviewerRole;
-          } else {
-              tracker.currentStep = "Completed";
-              tracker.currentAuthority = "None";
-          }
-      } else if (status === "declined") {
-          // If the step is declined, stay on the current step
-          tracker.currentStep = step.stepName;
-          tracker.currentAuthority = step.reviewerRole;
-
-          // Reset all subsequent steps to "pending"
-          for (let i = firstPendingOrDeclinedStepIndex + 1; i < tracker.steps.length; i++) {
-              tracker.steps[i].status = "pending";
-              tracker.steps[i].reviewedBy = null;
-              tracker.steps[i].reviewedByRole = null;
-              tracker.steps[i].remarks = "";
-              tracker.steps[i].timestamp = null;
-          }
-      }
-
-      // Save the updated tracker
-      console.log("Tracker before saving:", tracker);
-      await tracker.save();
-      console.log("Tracker after saving:", tracker);
-
-      // Update the Form's finalStatus based on the tracker's steps
-      const Form = mongoose.model('Form');
-      const form = await Form.findById(tracker.formId);
-
-      if (!form) {
-          return res.status(404).json({ message: "Form not found" });
-      }
-
-      // Check if any step is declined
-      const isDeclined = tracker.steps.some(step => step.status === 'declined');
-
-      // Check if all steps are approved
-      const isApproved = tracker.steps.every(step => step.status === 'approved');
-
-      // Determine the finalStatus
-      let finalStatus = 'pending';
-      if (isDeclined) {
-          finalStatus = 'declined';
-      } else if (isApproved) {
-          finalStatus = 'approved';
-      }
-
-      // Update the Form's finalStatus
-      form.finalStatus = finalStatus;
-      await form.save();
-
-      // Return the updated tracker and form
-      return res.status(200).json({ message: "Tracker step updated successfully", tracker, form });
+    // Return the updated tracker and form
+    return res.status(200).json({ message: "Tracker step updated successfully", tracker, form });
 
   } catch (error) {
-      console.error("❌ Error updating progress tracker:", error);
-      return res.status(500).json({ message: "Server error", error: error.message });
+    console.error("❌ Error updating progress tracker:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
