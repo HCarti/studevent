@@ -5,13 +5,15 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress'; // Import Material-UI spinner
+import { PDFDownloadLink } from '@react-pdf/renderer'; // Import PDFDownloadLink
+import ActivityPdf from '../PdfForms/ActivityPdf'; // Import the PDF component
 
 const ProgressTracker = ({ currentUser }) => {
     const navigate = useNavigate();
     const { state } = useLocation();
     const form = state?.form;
     const { formId } = useParams();
-
+    const formData = state?.form; // Access the form data
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true); // Add loading state
     const [signature, setSignature] = useState(null); // NEW: State for signature file
@@ -130,7 +132,7 @@ const ProgressTracker = ({ currentUser }) => {
         console.log("Remarks:", remarksText);
       
         // NEW: Include the user's signature URL
-        const signature = user.signatureUrl; // Assuming the signature URL is stored in the user object
+        const signature = user.signature; // Ensure this is correctly populated
       
         const requestBody = { status, remarks: remarksText, signature }; // Include signature
       
@@ -164,6 +166,8 @@ const ProgressTracker = ({ currentUser }) => {
       
           const updatedData = await updatedResponse.json();
           console.log("Updated tracker data:", updatedData);
+          console.log("User Signature URL:", user.signature);
+            console.log("Request Body:", requestBody);
       
           setTrackerData(updatedData);
           setCurrentStep(updatedData.currentStep);
@@ -184,6 +188,10 @@ const ProgressTracker = ({ currentUser }) => {
     const handleViewForms = () => {
         navigate(`/formdetails/${formId}`, { state: { form } });
     };
+
+    const isTrackerCompleted = trackerData.steps.every(step => step.status === 'approved');
+
+    console.log("Form Data:", formData);
 
     return (
         <div className='prog-box'>
@@ -259,6 +267,21 @@ const ProgressTracker = ({ currentUser }) => {
                                 EDIT TRACKER
                             </Button>
                         ) : null}
+                    </div>
+                )}
+                            {/* NEW: PDF Download Button */}
+                            {isTrackerCompleted && (
+                    <div style={{ marginTop: 20 }}>
+                                                <PDFDownloadLink
+                        document={<ActivityPdf formData={formData || {}} />}
+                        fileName="activity_proposal_form.pdf"
+                        >
+                        {({ loading }) => (
+                            <Button variant="contained" color="primary" disabled={loading}>
+                            {loading ? 'Generating PDF...' : 'Download PDF'}
+                            </Button>
+                        )}
+                        </PDFDownloadLink>
                     </div>
                 )}
             </div>
