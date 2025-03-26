@@ -8,12 +8,13 @@ import CircularProgress from '@mui/material/CircularProgress'; // Import Materia
 import { PDFDownloadLink } from '@react-pdf/renderer'; // Import PDFDownloadLink
 import ActivityPdf from '../PdfForms/ActivityPdf'; // Import the PDF component
 
-const ProgressTracker = ({ currentUser }) => {
+const ProgressTracker = ({ }) => {
     const navigate = useNavigate();
     const { state } = useLocation();
     const form = state?.form;
     const { formId } = useParams();
     const formData = state?.form; // Access the form data
+    const [formDetails, setFormDetails] = useState(null);
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true); // Add loading state
     const [signature, setSignature] = useState(null); // NEW: State for signature file
@@ -23,6 +24,7 @@ const ProgressTracker = ({ currentUser }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [isApprovedChecked, setIsApprovedChecked] = useState(false);
     const [isDeclinedChecked, setIsDeclinedChecked] = useState(false);
+    const [reviewSignatures, setReviewSignatures] = useState({}); // NEW: State for storing all review signatures
 
     useEffect(() => {
         console.log("Retrieving user data from localStorage...");
@@ -41,6 +43,22 @@ const ProgressTracker = ({ currentUser }) => {
             console.warn("No user data found in localStorage.");
         }
     }, []);
+
+    // NEW: Function to fetch review signatures
+    const fetchReviewSignatures = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            const response = await fetch(`https://studevent-server.vercel.app/api/tracker/signatures/${formId}`, {
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                },
+            });
+            const data = await response.json();
+            setReviewSignatures(data);
+        } catch (error) {
+            console.error("Error fetching review signatures:", error);
+        }
+    };
 
     useEffect(() => {
         if (!formId) return;
@@ -74,6 +92,28 @@ const ProgressTracker = ({ currentUser }) => {
 
         fetchTrackerData();
     }, [formId]);
+
+    useEffect(() => {
+        const fetchFormData = async () => {
+          try {
+            const token = localStorage.getItem("token");
+            const response = await fetch(`https://studevent-server.vercel.app/api/forms/${formId}`, {
+              headers: {
+                "Authorization": `Bearer ${token}`,
+              },
+            });
+            const data = await response.json();
+            setFormDetails(data);
+
+            // Fetch review signatures
+            await fetchReviewSignatures();
+          } catch (error) {
+            console.error("Error fetching form data:", error);
+          }
+        };
+        
+        if (formId) fetchFormData();
+      }, [formId]);
 
     // Show loading spinner while data is being fetched
     if (loading) {
@@ -171,6 +211,10 @@ const ProgressTracker = ({ currentUser }) => {
       
           setTrackerData(updatedData);
           setCurrentStep(updatedData.currentStep);
+
+          // Refresh signatures after update
+          await fetchReviewSignatures();
+
           setIsEditing(false);
           setIsApprovedChecked(false);
           setIsDeclinedChecked(false);
@@ -273,7 +317,7 @@ const ProgressTracker = ({ currentUser }) => {
                             {isTrackerCompleted && (
                     <div style={{ marginTop: 20 }}>
                                                 <PDFDownloadLink
-                        document={<ActivityPdf formData={formData || {}} />}
+                        document={<ActivityPdf formData={formDetails} signatures={reviewSignatures} />}
                         fileName="activity_proposal_form.pdf"
                         >
                         {({ loading }) => (

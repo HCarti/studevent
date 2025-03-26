@@ -1,49 +1,79 @@
 import React from 'react';
-import { Page, Text, View, Document, StyleSheet, Image } from '@react-pdf/renderer';
+import { Page, Text, View, Document, StyleSheet, Image, PDFViewer } from '@react-pdf/renderer';
 import NU_logo from "../Images/NU_logo.png";
 
+// A4 dimensions in points (1mm = 2.83465 points)
+const A4_WIDTH = 595;
+const A4_HEIGHT = 842;
+
 const styles = StyleSheet.create({
-  body: {
-    padding: 20,
-    fontSize: 12,
+  document: {
+    width: '100%',
+    minHeight: '100vh',
+  },
+  page: {
+    padding: 40,
+    fontSize: 10,
+    lineHeight: 1.5,
+    color: '#333',
+    backgroundColor: '#FFF',
+    size: 'A4',
   },
   header: {
     flexDirection: "row",
     marginBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1a365d',
+    paddingBottom: 10,
   },
   logo: {
-    width: 60,
-    height: 60,
+    width: 50,
+    height: 50,
   },
   headerText: {
-    marginLeft: 10,
+    marginLeft: 15,
     justifyContent: "center",
+    flex: 1,
   },
   title: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
+    color: '#1a365d',
   },
   formTitle: {
     textAlign: "center",
     fontSize: 14,
     marginBottom: 20,
     fontWeight: "bold",
+    color: '#1a365d',
+    textTransform: 'uppercase',
   },
   section: {
     marginBottom: 15,
     padding: 10,
     borderWidth: 1,
-    borderColor: "#000",
+    borderColor: "#ddd",
+    borderRadius: 4,
+    backgroundColor: '#f8fafc',
   },
   sectionTitle: {
     fontWeight: "bold",
-    backgroundColor: "#D9E8FC",
+    backgroundColor: "#1a365d",
+    color: 'white',
     padding: 5,
+    margin: -10,
+    marginBottom: 5,
+    fontSize: 11,
+    textTransform: 'uppercase',
   },
   formRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 5,
+    gap: 10,
+  },
+  formColumn: {
+    flex: 1,
   },
   signatureRow: {
     flexDirection: "row",
@@ -52,24 +82,127 @@ const styles = StyleSheet.create({
   },
   table: {
     borderWidth: 1,
-    borderColor: "#000",
+    borderColor: "#ddd",
     marginTop: 5,
+    backgroundColor: 'white',
   },
   tableRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     padding: 5,
     borderBottomWidth: 1,
-    borderBottomColor: "#000",
+    borderBottomColor: "#ddd",
+  },
+  tableCell: {
+    flex: 1,
+    padding: 3,
+  },
+  tableHeader: {
+    fontWeight: 'bold',
+    backgroundColor: '#edf2f7',
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 30,
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    fontSize: 8,
+    color: '#666',
+  },
+  pageNumber: {
+    position: 'absolute',
+    bottom: 20,
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    fontSize: 10,
+    color: '#666',
+  },
+  longText: {
+    textAlign: 'justify',
+    marginBottom: 5,
+    lineHeight: 1.4,
+  },
+  label: {
+    fontWeight: 'bold',
+    marginRight: 5,
+    fontSize: 10,
+  },
+  value: {
+    flex: 1,
+  },
+  borderedField: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 3,
+    padding: 5,
+    marginBottom: 8,
+    backgroundColor: '#f8fafc',
+  },
+  borderedFieldLabel: {
+    fontWeight: 'bold',
+    fontSize: 10,
+    marginBottom: 3,
+    paddingBottom: 3,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  borderedFieldValue: {
+    fontSize: 10,
+    minHeight: 15,
+    paddingTop: 3,
+  },
+  borderedRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+    gap: 10,
+  },
+  borderedColumn: {
+    flex: 1,
+  },
+  // compact tables
+  compactTable: {
+    borderWidth: 1,
+    borderColor: '#000',
+    marginBottom: 10,
+  },
+  compactTableRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#000',
+  },
+  compactTableFirstCell: {
+    width: '40%',
+    padding: 3,
+    borderRightWidth: 1,
+    borderRightColor: '#000',
+    backgroundColor: '#f0f0f0',
+  },
+  compactTableCell: {
+    width: '60%',
+    padding: 3,
+  },
+  compactTableIndentedRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#000',
+  },
+  compactTableIndentedCell: {
+    width: '40%',
+    padding: 3,
+    paddingLeft: 15,
+    borderRightWidth: 1,
+    borderRightColor: '#000',
   },
 });
 
+// Create Document Component with Page Numbers
 const ActivityPdf = ({ formData = {} }) => {
-  // Fallback for missing or undefined fields
   const {
     eventLocation = "N/A",
     applicationDate = "N/A",
-    isOnCampus = "N/A",
     studentOrganization = "N/A",
     contactPerson = "N/A",
     contactNo = "N/A",
@@ -79,44 +212,51 @@ const ActivityPdf = ({ formData = {} }) => {
     venueAddress = "N/A",
     eventStartDate = "N/A",
     eventEndDate = "N/A",
-    eventTime = "N/A",
     organizer = "N/A",
     budgetAmount = "N/A",
+    budgetFrom = "N/A",
     coreValuesIntegration = "N/A",
     objectives = "N/A",
-    marketing = false,
-    pressRelease = false,
+    marketingCollaterals = "N/A",
+    pressRelease = "N/A",
     others = "N/A",
-    eventFacilities = false,
-    holdingArea = false,
-    toilets = false,
-    transportation = false,
+    eventFacilities = "N/A",
+    holdingArea = "N/A",
+    toilets = "N/A",
+    transportationandParking = "N/A",
+    more = "N/A",
+    licensesRequired = "N/A",
+    houseKeeping = "N/A",
+    wasteManagement = "N/A",
     eventManagementHead = "N/A",
     eventCommitteesandMembers = "N/A",
     health = "N/A",
     safetyAttendees = "N/A",
     emergencyFirstAid = "N/A",
     fireSafety = "N/A",
-    weather = "N/A",
-    applicantSignature = "N/A",
-    facultySignature = "N/A",
-    applicantDate = "N/A",
-    facultyDate = "N/A",
-    studentDevApproval = "N/A",
-    studentDevApproved = "N/A",
-    academicServicesApproval = "N/A",
-    academicServicesApproved = "N/A",
-    academicDirectorApproval = "N/A",
-    academicDirectorApproved = "N/A",
-    executiveDirectorApproval = "N/A",
-    executiveDirectorApproved = "N/A",
+    weather = "N/A"
   } = formData;
+
+  // Format date function
+  const formatDate = (dateString) => {
+    if (!dateString || dateString === "N/A") return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
 
   return (
     <Document>
-      <Page style={styles.body}>
-        {/* Logo and Header */}
-        <View style={styles.header}>
+      <Page 
+        size="A4" 
+        style={styles.page}
+        wrap
+      >
+        {/* Header */}
+        <View style={styles.header} fixed>
           <Image src={NU_logo} style={styles.logo} />
           <View style={styles.headerText}>
             <Text style={styles.title}>NU MOA</Text>
@@ -125,104 +265,138 @@ const ActivityPdf = ({ formData = {} }) => {
         </View>
 
         <Text style={styles.formTitle}>STUDENT ORGANIZATION ACTIVITY APPLICATION FORM</Text>
-        <Text></Text>
 
         {/* Event Location and Date */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>EVENT LOCATION</Text>
-          <View style={styles.formRow}>
-            <Text>Location: {eventLocation}</Text>
-            <Text>Date of Application: {applicationDate}</Text>
-          </View>
-          <View style={styles.formRow}>
-            <Text>On Campus: {isOnCampus === "on-campus" ? "Yes" : "No"}</Text>
+          <View style={styles.compactTable}>
+            <View style={styles.compactTableRow}>
+              <Text style={styles.compactTableFirstCell}>Location</Text>
+              <Text style={styles.compactTableCell}>{eventLocation}</Text>
+            </View>
+            <View style={styles.compactTableIndentedRow}>
+              <Text style={styles.compactTableFirstCell}>Date Of Application</Text>
+              <Text style={styles.compactTableCell}>{formatDate(applicationDate)}</Text>
+            </View>
           </View>
         </View>
 
         {/* Contact Information */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>1. CONTACT INFORMATION</Text>
-          <View style={styles.formRow}>
-            <Text>Student Organization: {studentOrganization}</Text>
-            <Text>Contact Person: {contactPerson}</Text>
-          </View>
-          <View style={styles.formRow}>
-            <Text>Contact No: {contactNo}</Text>
-            <Text>Email Address: {emailAddress}</Text>
+          <View style={styles.compactTable}>
+            <View style={styles.compactTableRow}>
+              <Text style={styles.compactTableFirstCell}>Student Organization</Text>
+              <Text style={styles.compactTableCell}>{studentOrganization}</Text>
+            </View>
+            <View style={styles.compactTableIndentedRow}>
+              <Text style={styles.compactTableFirstCell}>Contact Person</Text>
+              <Text style={styles.compactTableCell}>{contactPerson}</Text>
+            </View>
+            <View style={styles.compactTableIndentedRow}>
+              <Text style={styles.compactTableFirstCell}>Contact No.</Text>
+              <Text style={styles.compactTableCell}>{contactNo}</Text>
+            </View>
+            <View style={styles.compactTableIndentedRow}>
+              <Text style={styles.compactTableFirstCell}>Email Address</Text>
+              <Text style={styles.compactTableCell}>{emailAddress}</Text>
+            </View>
           </View>
         </View>
 
         {/* Event Details */}
-        <View style={styles.section}>
+      <View style={styles.section}>
           <Text style={styles.sectionTitle}>2. EVENT DETAILS</Text>
-          <View style={styles.formRow}>
-            <Text>Event Title: {eventTitle}</Text>
-            <Text>Event Type: {eventType}</Text>
-          </View>
-          <View style={styles.formRow}>
-            <Text>Venue Address: {venueAddress}</Text>
-            <Text>Event Start Date: {eventStartDate}</Text>
-            <Text>Event End Date: {eventEndDate}</Text>
-          </View>
-          <View style={styles.formRow}>
-            <Text>Event Time: {eventTime}</Text>
-          </View>
-          <View style={styles.formRow}>
-            <Text>Organizer: {organizer}</Text>
-            <Text>Budget Amount: {budgetAmount}</Text>
+          <View style={styles.compactTable}>
+            <View style={styles.compactTableRow}>
+              <Text style={styles.compactTableFirstCell}>Event Title</Text>
+              <Text style={styles.compactTableCell}>{eventTitle}</Text>
+            </View>
+            <View style={styles.compactTableIndentedRow}>
+              <Text style={styles.compactTableFirstCell}>Event Type</Text>
+              <Text style={styles.compactTableCell}>{eventType}</Text>
+            </View>
+            <View style={styles.compactTableIndentedRow}>
+              <Text style={styles.compactTableFirstCell}>Venue Address</Text>
+              <Text style={styles.compactTableCell}>{venueAddress}</Text>
+            </View>
+            <View style={styles.compactTableIndentedRow}>
+              <Text style={styles.compactTableFirstCell}>Start Date</Text>
+              <Text style={styles.compactTableCell}>{formatDate(eventStartDate)}</Text>
+            </View>
+            <View style={styles.compactTableIndentedRow}>
+              <Text style={styles.compactTableFirstCell}>End Date</Text>
+              <Text style={styles.compactTableCell}>{formatDate(eventEndDate)}</Text>
+            </View>
+            <View style={styles.compactTableIndentedRow}>
+              <Text style={styles.compactTableFirstCell}>Organizer</Text>
+              <Text style={styles.compactTableCell}>{organizer}</Text>
+            </View>
+            <View style={styles.compactTableIndentedRow}>
+              <Text style={styles.compactTableFirstCell}>Budget Amount</Text>
+              <Text style={styles.compactTableCell}>₱{budgetAmount}</Text>
+            </View>
+            <View style={styles.compactTableIndentedRow}>
+              <Text style={styles.compactTableFirstCell}>Budget From</Text>
+              <Text style={styles.compactTableCell}>{budgetFrom}</Text>
+            </View>
           </View>
         </View>
 
         {/* Core Values Integration */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>CORE VALUES INTEGRATION</Text>
-          <Text>{coreValuesIntegration}</Text>
+          <Text style={styles.longText}>{coreValuesIntegration}</Text>
         </View>
 
         {/* Objectives */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>OBJECTIVES</Text>
-          <Text>{objectives}</Text>
+          <Text style={styles.longText}>{objectives}</Text>
         </View>
 
         {/* Communications and Promotions */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>COMMUNICATIONS AND PROMOTIONS REQUIRED</Text>
-          <View style={styles.table}>
-            <View style={styles.tableRow}>
-              <Text>Marketing Collaterals</Text>
-              <Text>{marketing ? "Yes" : "No"}</Text>
+          <View style={styles.compactTable}>
+            <View style={styles.compactTableRow}>
+              <Text style={styles.compactTableFirstCell}>Marketing Collaterals</Text>
+              <Text style={styles.compactTableCell}>{marketingCollaterals}</Text>
             </View>
-            <View style={styles.tableRow}>
-              <Text>Press Release</Text>
-              <Text>{pressRelease ? "Yes" : "No"}</Text>
+            <View style={styles.compactTableRow}>
+              <Text style={styles.compactTableFirstCell}>Press Release</Text>
+              <Text style={styles.compactTableCell}>{pressRelease}</Text>
             </View>
-            <View style={styles.tableRow}>
-              <Text>Others</Text>
-              <Text>{others || "N/A"}</Text>
+            <View style={styles.compactTableRow}>
+              <Text style={styles.compactTableFirstCell}>Others</Text>
+              <Text style={styles.compactTableCell}>{others}</Text>
             </View>
           </View>
         </View>
 
-        {/* Facilities Considerations */}
+       {/* Facilities Considerations */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>FACILITIES CONSIDERATIONS</Text>
-          <View style={styles.table}>
-            <View style={styles.tableRow}>
-              <Text>Event Facilities</Text>
-              <Text>{eventFacilities ? "Yes" : "No"}</Text>
+          <View style={styles.compactTable}>
+            <View style={styles.compactTableRow}>
+              <Text style={styles.compactTableFirstCell}>Event Facilities</Text>
+              <Text style={styles.compactTableCell}>{eventFacilities}</Text>
             </View>
-            <View style={styles.tableRow}>
-              <Text>Holding Area</Text>
-              <Text>{holdingArea ? "Yes" : "No"}</Text>
+            <View style={styles.compactTableIndentedRow}>
+              <Text style={styles.compactTableFirstCell}>Holding Area</Text>
+              <Text style={styles.compactTableCell}>{holdingArea}</Text>
             </View>
-            <View style={styles.tableRow}>
-              <Text>Toilets</Text>
-              <Text>{toilets ? "Yes" : "No"}</Text>
+            <View style={styles.compactTableIndentedRow}>
+              <Text style={styles.compactTableFirstCell}>Toilets</Text>
+              <Text style={styles.compactTableCell}>{toilets}</Text>
             </View>
-            <View style={styles.tableRow}>
-              <Text>Transportation & Parking</Text>
-              <Text>{transportation ? "Yes" : "No"}</Text>
+            <View style={styles.compactTableIndentedRow}>
+              <Text style={styles.compactTableFirstCell}>Transportation & Parking</Text>
+              <Text style={styles.compactTableCell}>{transportationandParking}</Text>
+            </View>
+            <View style={styles.compactTableIndentedRow}>
+              <Text style={styles.compactTableFirstCell}>Others</Text>
+              <Text style={styles.compactTableCell}>{more}</Text>
             </View>
           </View>
         </View>
@@ -230,75 +404,62 @@ const ActivityPdf = ({ formData = {} }) => {
         {/* Event Management Team */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>3. EVENT MANAGEMENT TEAM</Text>
-          <Text>Event Management Head: {eventManagementHead}</Text>
-          <Text>Event Committees and Members: {eventCommitteesandMembers}</Text>
+          <View style={styles.compactTable}>
+            <View style={styles.compactTableRow}>
+              <Text style={styles.compactTableFirstCell}>Management Head</Text>
+              <Text style={styles.compactTableCell}>{eventManagementHead}</Text>
+            </View>
+            <View style={styles.compactTableIndentedRow}>
+              <Text style={styles.compactTableFirstCell}>Committees and Members</Text>
+              <Text style={styles.compactTableCell}>{eventCommitteesandMembers}</Text>
+            </View>
+          </View>
         </View>
+
 
         {/* Risk Assessments */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>4. RISK ASSESSMENTS</Text>
-          <View style={styles.table}>
-            <View style={styles.tableRow}>
-              <Text>Health</Text>
-              <Text>{health || "N/A"}</Text>
+          <View style={styles.compactTable}>
+            <View style={styles.compactTableRow}>
+              <Text style={styles.compactTableFirstCell}>Health</Text>
+              <Text style={styles.compactTableCell}>{health}</Text>
             </View>
-            <View style={styles.tableRow}>
-              <Text>Safety of Attendees</Text>
-              <Text>{safetyAttendees || "N/A"}</Text>
+            <View style={styles.compactTableIndentedRow}>
+              <Text style={styles.compactTableFirstCell}>Safety Attendees</Text>
+              <Text style={styles.compactTableCell}>{safetyAttendees}</Text>
             </View>
-            <View style={styles.tableRow}>
-              <Text>Emergency/First Aid</Text>
-              <Text>{emergencyFirstAid || "N/A"}</Text>
+            <View style={styles.compactTableIndentedRow}>
+              <Text style={styles.compactTableFirstCell}>Emergency/First Aid</Text>
+              <Text style={styles.compactTableCell}>{emergencyFirstAid}</Text>
             </View>
-            <View style={styles.tableRow}>
-              <Text>Fire Safety</Text>
-              <Text>{fireSafety || "N/A"}</Text>
+            <View style={styles.compactTableIndentedRow}>
+              <Text style={styles.compactTableFirstCell}>Fire Safety</Text>
+              <Text style={styles.compactTableCell}>{fireSafety}</Text>
             </View>
-            <View style={styles.tableRow}>
-              <Text>Weather</Text>
-              <Text>{weather || "N/A"}</Text>
+            <View style={styles.compactTableIndentedRow}>
+              <Text style={styles.compactTableFirstCell}>Weather</Text>
+              <Text style={styles.compactTableCell}>{weather}</Text>
             </View>
           </View>
         </View>
 
-        {/* Signatures/Endorsements */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>5. SIGNATURES / ENDORSEMENTS</Text>
-          <View style={styles.signatureRow}>
-            <Text>Applicant Organization: {applicantSignature}</Text>
-            <Text>Faculty Adviser/College Dean: {facultySignature}</Text>
-          </View>
-          <View style={styles.signatureRow}>
-            <Text>Date: {applicantDate}</Text>
-            <Text>Date: {facultyDate}</Text>
-          </View>
-        </View>
+        {/* Page Number Footer */}
+        <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
+          `Page ${pageNumber} of ${totalPages}`
+        )} fixed />
+      </Page>
 
-        {/* Approvals */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>6. APPROVALS</Text>
-          <View style={styles.table}>
-            <View style={styles.tableRow}>
-              <Text>Student Development Office: {studentDevApproval}</Text>
-              <Text>Approved / Disapproved: {studentDevApproved}</Text>
-            </View>
-            <View style={styles.tableRow}>
-              <Text>Academic Services Director: {academicServicesApproval}</Text>
-              <Text>Approved / Disapproved: {academicServicesApproved}</Text>
-            </View>
-            <View style={styles.tableRow}>
-              <Text>Academic Director: {academicDirectorApproval}</Text>
-              <Text>Approved / Disapproved: {academicDirectorApproved}</Text>
-            </View>
-            <View style={styles.tableRow}>
-              <Text>Executive Director: {executiveDirectorApproval}</Text>
-              <Text>Approved / Disapproved: {executiveDirectorApproved}</Text>
-            </View>
-          </View>
-        </View>
+      {/* Second Page for Additional Content */}
+      <Page size="A4" style={styles.page} wrap>
+
+        {/* Page Number Footer */}
+        <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
+          `Page ${pageNumber} of ${totalPages}`
+        )} fixed />
       </Page>
     </Document>
   );
 };
 
-export default ActivityPdf;
+export default ActivityPdf;   

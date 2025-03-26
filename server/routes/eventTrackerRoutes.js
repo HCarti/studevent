@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { getEventTracker, updateTrackerStep, createEventTracker } = require('../controllers/eventTrackerController');
+const { getEventTracker, updateTrackerStep, createEventTracker, getReviewSignatures } = require('../controllers/eventTrackerController');
 const EventTracker = require('../models/EventTracker'); // Import the EventTracker model
+
+// Add this to your routes file (e.g., trackerRoutes.js)
+router.get('/signatures/:formId', getReviewSignatures);
 
 // Create event tracker (POST /api/tracker)
 router.post('/', createEventTracker);

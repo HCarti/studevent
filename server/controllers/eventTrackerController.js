@@ -73,6 +73,45 @@ const createEventTracker = async (req, res) => {
   }
 };
 
+// Add this to your eventTrackerController.js
+const getReviewSignatures = async (req, res) => {
+  try {
+      const { formId } = req.params;
+
+      // Find the tracker document
+      const tracker = await EventTracker.findOne({ formId })
+          .populate({
+              path: 'steps.reviewedBy',
+              select: 'name signature role'
+          });
+
+      if (!tracker) {
+          return res.status(404).json({ message: 'Tracker not found' });
+      }
+
+      // Structure the signatures data
+      const signatures = {};
+      
+      tracker.steps.forEach(step => {
+          if (step.status === 'approved' || step.status === 'declined') {
+              const reviewerRole = step.reviewedBy?.role?.toLowerCase() || 'unknown';
+              
+              signatures[reviewerRole] = {
+                  name: step.reviewedBy?.name || 'Unknown',
+                  signature: step.reviewedBy?.signature,
+                  date: step.timestamp,
+                  status: step.status
+              };
+          }
+      });
+
+      res.status(200).json(signatures);
+  } catch (error) {
+      console.error('Error fetching review signatures:', error);
+      res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Update event tracker progress
 const updateTrackerStep = async (req, res) => {
   try {
@@ -226,6 +265,7 @@ const getEventTrackerByFormId = async (req, res) => {
 };
 
 module.exports = {
+  getReviewSignatures,
   getEventTracker,
   createEventTracker,
   updateTrackerStep,
