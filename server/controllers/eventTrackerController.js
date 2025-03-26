@@ -77,38 +77,37 @@ const createEventTracker = async (req, res) => {
 const getReviewSignatures = async (req, res) => {
   try {
       const { formId } = req.params;
-
-      // Find the tracker document
       const tracker = await EventTracker.findOne({ formId })
           .populate({
               path: 'steps.reviewedBy',
-              select: 'name signature role'
+              select: 'name role signature'
           });
 
       if (!tracker) {
-          return res.status(404).json({ message: 'Tracker not found' });
+          return res.status(200).json({});
       }
 
-      // Structure the signatures data
       const signatures = {};
       
       tracker.steps.forEach(step => {
-          if (step.status === 'approved' || step.status === 'declined') {
-              const reviewerRole = step.reviewedBy?.role?.toLowerCase() || 'unknown';
+          if (step.status && step.reviewedBy) {
+              // Use stepName or reviewedByRole as the key
+              const roleKey = step.stepName.toLowerCase().replace(/\s+/g, '');
               
-              signatures[reviewerRole] = {
-                  name: step.reviewedBy?.name || 'Unknown',
-                  signature: step.reviewedBy?.signature,
+              signatures[roleKey] = {
+                  name: step.reviewedBy.name,
+                  signature: step.reviewedBy.signature,
                   date: step.timestamp,
-                  status: step.status
+                  status: step.status,
+                  remarks: step.remarks
               };
           }
       });
 
       res.status(200).json(signatures);
   } catch (error) {
-      console.error('Error fetching review signatures:', error);
-      res.status(500).json({ message: 'Server error' });
+      console.error('Error:', error);
+      res.status(200).json({});
   }
 };
 

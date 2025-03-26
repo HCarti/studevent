@@ -196,10 +196,74 @@ const styles = StyleSheet.create({
     borderRightWidth: 1,
     borderRightColor: '#000',
   },
+  signatureSection: {
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: '#000',
+    padding: 10,
+  },
+  signatureTitle: {
+    fontWeight: 'bold',
+    textDecoration: 'underline',
+    marginBottom: 10,
+  },
+  signatureRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+  },
+  signatureColumn: {
+    width: '48%',
+  },
+  signatureSubRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+  },
+  signatureLabel: {
+    fontWeight: 'bold',
+    fontSize: 10,
+  },
+  signatureValue: {
+    minHeight: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#000',
+    marginBottom: 10,
+  },
+  signatureName: {
+    marginTop: 5,
+    fontSize: 10,
+  },
+  signatureImage: {
+    width: 120,
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#000',
+    marginBottom: 5,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  checkbox: {
+    width: 10,
+    height: 10,
+    borderWidth: 1,
+    borderColor: 'black',
+    marginRight: 5,
+  },
+  checked: {
+    backgroundColor: 'black',
+  },
+  dateText: {
+    marginTop: 5,
+    fontSize: 10,
+  }
 });
 
 // Create Document Component with Page Numbers
-const ActivityPdf = ({ formData = {} }) => {
+const ActivityPdf = ({ formData = {}, signatures = {} }) => {
   const {
     eventLocation = "N/A",
     applicationDate = "N/A",
@@ -247,6 +311,38 @@ const ActivityPdf = ({ formData = {} }) => {
       day: 'numeric'
     });
   };
+
+  const SignatureField = ({ title, name, signature, date, status, remarks }) => (
+    <View style={styles.signatureColumn}>
+      <Text style={styles.signatureLabel}>{title}</Text>
+      
+      <View style={styles.checkboxContainer}>
+        <View style={[styles.checkbox, status === 'approved' && styles.checked]} />
+        <Text>Approved</Text>
+      </View>
+      <View style={styles.checkboxContainer}>
+        <View style={[styles.checkbox, status === 'declined' && styles.checked]} />
+        <Text>Disapproved</Text>
+      </View>
+      
+      <Text style={styles.signatureName}>{name}</Text>
+      
+      {signature ? (
+        <Image 
+          src={signature} 
+          style={styles.signatureImage}
+        />
+      ) : (
+        <View style={styles.signatureValue}></View>
+      )}
+      
+      <Text style={styles.dateText}>Date: {formatDate(date)}</Text>
+      
+      {remarks && (
+        <Text style={styles.remarksText}>Remarks: {remarks}</Text>
+      )}
+    </View>
+  );
 
   return (
     <Document>
@@ -401,6 +497,23 @@ const ActivityPdf = ({ formData = {} }) => {
           </View>
         </View>
 
+        <View style={styles.section}>
+          <View style={styles.compactTable}>
+            <View style={styles.compactTableRow}>
+              <Text style={styles.compactTableFirstCell}>Licenses Required</Text>
+              <Text style={styles.compactTableCell}>{licensesRequired}</Text>
+            </View>
+            <View style={styles.compactTableIndentedRow}>
+              <Text style={styles.compactTableFirstCell}>House Keeping</Text>
+              <Text style={styles.compactTableCell}>{houseKeeping}</Text>
+            </View>
+            <View style={styles.compactTableIndentedRow}>
+              <Text style={styles.compactTableFirstCell}>Waste Management</Text>
+              <Text style={styles.compactTableCell}>{wasteManagement}</Text>
+            </View>
+          </View>
+        </View>
+
         {/* Event Management Team */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>3. EVENT MANAGEMENT TEAM</Text>
@@ -444,6 +557,94 @@ const ActivityPdf = ({ formData = {} }) => {
           </View>
         </View>
 
+        {/* Signatures and Endorsements Section */}
+          <View style={styles.signatureSection}>
+            <Text style={styles.signatureTitle}>5. SIGNATURES / ENDORSEMENTS</Text>
+            
+            <View style={styles.signatureRow}>
+              {/* Applicant Organization */}
+              <View style={styles.signatureColumn}>
+                <Text style={styles.signatureLabel}>a. Applicant Organization</Text>
+                <View style={styles.signatureValue}></View>
+                <Text style={styles.signatureName}>Printed Name and Signature</Text>
+                <Text style={styles.dateText}>Date: ___________________</Text>
+              </View>
+              
+              {/* Faculty Adviser */}
+              <View style={styles.signatureColumn}>
+                <Text style={styles.signatureLabel}>b. Faculty Adviser</Text>
+                {signatures.adviser && (
+                  <>
+                    {signatures.adviser.signature && (
+                      <Image 
+                        src={signatures.adviser.signature} 
+                        style={styles.signatureImage}
+                      />
+                    )}
+                    <Text style={styles.signatureName}>
+                      {signatures.adviser.name || "adviser NAME"}
+                    </Text>
+                    <Text style={styles.dateText}>
+                      Date: {signatures.adviser.date ? formatDate(signatures.adviser.date) : "___________________"}
+                    </Text>
+                    {signatures.adviser.remarks && (
+                      <Text style={styles.remarksText}>Remarks: {signatures.adviser.remarks}</Text>
+                    )}
+                  </>
+                )}
+              </View>
+            </View>
+          </View>
+
+          {/* Approvals Section */}
+          <View style={styles.signatureSection}>
+            <Text style={styles.signatureTitle}>APPROVALS</Text>
+            
+            <View style={styles.signatureRow}>
+              {/* Dean */}
+              <SignatureField 
+                title="a. Dean"
+                name={signatures.dean?.name || "DEAN NAME"}
+                signature={signatures.dean?.signature}
+                date={signatures.dean?.date}
+                status={signatures.dean?.status}
+                remarks={signatures.dean?.remarks}
+              />
+              
+              {/* Admin */}
+              <SignatureField 
+                title="b. Admin"
+                name={signatures.admin?.stepName || "ADMIN NAME"}
+                signature={signatures.admin?.signature}
+                date={signatures.admin?.date}
+                status={signatures.admin?.status}
+                remarks={signatures.admin?.remarks}
+              />
+            </View>
+            
+            <View style={styles.signatureRow}>
+              {/* Academic Service */}
+              <SignatureField 
+                title="c. Academic Services"
+                name={signatures.academicservices?.name || "ACADEMIC SERVICE NAME"}
+                signature={signatures.academicservices?.signature}
+                date={signatures.academicservices?.date}
+                status={signatures.academicservices?.status}
+                remarks={signatures.academicservices?.remarks}
+              />
+              
+              {/* Executive Director */}
+              <SignatureField 
+                title="d. Executive Director"
+                name={signatures.executivedirector?.name || "EXECUTIVE DIRECTOR NAME"}
+                signature={signatures.executivedirector?.signature}
+                date={signatures.executivedirector?.date}
+                status={signatures.executivedirector?.status}
+                remarks={signatures.executivedirector?.remarks}
+              />
+            </View>
+          </View>
+
         {/* Page Number Footer */}
         <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
           `Page ${pageNumber} of ${totalPages}`
@@ -451,13 +652,6 @@ const ActivityPdf = ({ formData = {} }) => {
       </Page>
 
       {/* Second Page for Additional Content */}
-      <Page size="A4" style={styles.page} wrap>
-
-        {/* Page Number Footer */}
-        <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
-          `Page ${pageNumber} of ${totalPages}`
-        )} fixed />
-      </Page>
     </Document>
   );
 };
