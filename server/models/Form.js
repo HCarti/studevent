@@ -1,64 +1,172 @@
 const mongoose = require('mongoose');
 
 const reviewStageSchema = new mongoose.Schema({
-    role: { type: String, enum: ['Adviser', 'Dean', 'AcademicServices', 'AcademicDirector', 'Executive Director'], required: true },
-    status: { type: String, enum: ['pending', 'approved', 'declined'], default: 'pending' },
+    role: { 
+        type: String, 
+        enum: ['Adviser', 'Dean', 'AcademicServices', 'AcademicDirector', 'Executive Director'], 
+        required: true 
+    },
+    status: { 
+        type: String, 
+        enum: ['pending', 'approved', 'declined'], 
+        default: 'pending' 
+    },
     remarks: { type: String },
     timestamp: { type: Date }
 });
 
 const formSchema = new mongoose.Schema({
-     // Event Details
-  eventLocation: { type: String, required: true },
-  applicationDate: { type: Date, default: Date.now, required: true },
-  studentOrganization: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Assuming a reference to a collection
+    // --- Form Type Discriminator ---
+    formType: { 
+        type: String, 
+        required: true, 
+        enum: ['Activity', 'Budget'],
+        default: 'Activity'
+    },
 
-  // Contact Information
-  contactPerson: { type: String, required: true },
-  contactNo: { type: Number, required: true }, // Number type for consistency in validation
-  emailAddress: { type: String, required: true },
+    // ===== EVENT APPROVAL FIELDS =====
+    // Event Details
+    eventLocation: { 
+        type: String, 
+        required: function() { return this.formType === 'Activity'; } 
+    },
+    applicationDate: { 
+        type: Date, 
+        default: Date.now, 
+        required: function() { return this.formType === 'Activity'; } 
+    },
+    studentOrganization: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User',
+        required: function() { return this.formType === 'Activity'; } 
+    },
 
-  // Event Information
-  eventTitle: { type: String, required: true },
-  eventType: { type: String, required: true },
-  venueAddress: { type: String, required: true },
-  eventStartDate: { type: Date, required: true },
-  eventEndDate: { type: Date, required: true },
-  organizer: { type: String, required: true },
-  budgetAmount: { type: Number, required: true }, // Numeric value for easier calculations
-  budgetFrom: { type: String, required: true },
-  coreValuesIntegration: { type: String, required: true },
-  objectives: { type: String, required: true },
-  marketingCollaterals: { type: String },
-  pressRelease: { type: String },
-  others: { type: String },
+    // Contact Information
+    contactPerson: { 
+        type: String, 
+        required: function() { return this.formType === 'Activity'; } 
+    },
+    contactNo: { 
+        type: Number, 
+        required: function() { return this.formType === 'Activity'; } 
+    },
+    emailAddress: { 
+        type: String, 
+        required: function() { return this.formType === 'Activity'; } 
+    },
 
-  // Event Facilities
-  eventFacilities: { type: String },
-  holdingArea: { type: String },
-  toilets: { type: String },
-  transportationandParking: { type: String },
-  more: { type: String },
+    // Event Information
+    eventTitle: { 
+        type: String, 
+        required: function() { return this.formType === 'Activity'; } 
+    },
+    eventType: { 
+        type: String, 
+        required: function() { return this.formType === 'Activity'; } 
+    },
+    venueAddress: { 
+        type: String, 
+        required: function() { return this.formType === 'Activity'; } 
+    },
+    eventStartDate: { 
+        type: Date, 
+        required: function() { return this.formType === 'Activity'; } 
+    },
+    eventEndDate: { 
+        type: Date, 
+        required: function() { return this.formType === 'Activity'; } 
+    },
+    organizer: { 
+        type: String, 
+        required: function() { return this.formType === 'Activity'; } 
+    },
+    budgetAmount: { 
+        type: Number, 
+        required: function() { return this.formType === 'Activity'; } 
+    },
+    budgetFrom: { 
+        type: String, 
+        required: function() { return this.formType === 'Activity'; } 
+    },
+    coreValuesIntegration: { 
+        type: String, 
+        required: function() { return this.formType === 'Activity'; } 
+    },
+    objectives: { 
+        type: String, 
+        required: function() { return this.formType === 'Activity'; } 
+    },
+    marketingCollaterals: { type: String, required: function() { return this.formType === 'Activity'; } },
+    pressRelease: { type: String, required: function() { return this.formType === 'Activity'; } },
+    others: { type: String, required: function() { return this.formType === 'Activity'; } },
 
-  // Licenses and Compliance
-  licensesRequired: { type: String },
-  houseKeeping: { type: String },
-  wasteManagement: { type: String },
+    // Event Facilities
+    eventFacilities: { type: String, required: function() { return this.formType === 'Activity'; } },
+    holdingArea: { type: String, required: function() { return this.formType === 'Activity'; } },
+    toilets: { type: String, required: function() { return this.formType === 'Activity'; } },
+    transportationandParking: { type: String, required: function() { return this.formType === 'Activity'; } },
+    more: { type: String, required: function() { return this.formType === 'Activity'; } },
 
-  // Event Management Team
-  eventManagementHead: { type: String, required: true },
-  eventCommitteesandMembers: { type: String, required: true },
+    // Licenses and Compliance
+    licensesRequired: { type: String, required: function() { return this.formType === 'Activity'; } },
+    houseKeeping: { type: String, required: function() { return this.formType === 'Activity'; } },
+    wasteManagement: { type: String, required: function() { return this.formType === 'Activity'; } },
 
-  // Risk Assessments
-  health: { type: String },
-  safetyAttendees: { type: String },
-  emergencyFirstAid: { type: String },
-  fireSafety: { type: String },
-  weather: { type: String },
+    // Event Management Team
+    eventManagementHead: { 
+        type: String, 
+        required: function() { return this.formType === 'Activity'; } 
+    },
+    eventCommitteesandMembers: { 
+        type: String, 
+        required: function() { return this.formType === 'Activity'; } 
+    },
 
-    currentStep: { type: Number, default: 0 }, // Tracks the current stage index
-    reviewStages: [reviewStageSchema], // Holds details of each reviewer's status
-    finalStatus: { type: String, enum: ['pending', 'approved', 'declined'], default: 'pending' } // Overall status of the form
+    // Risk Assessments
+    health: { type: String, required: function() { return this.formType === 'Activity'; } },
+    safetyAttendees: { type: String, required: function() { return this.formType === 'Activity'; } },
+    emergencyFirstAid: { type: String,  required: function() { return this.formType === 'Activity'; } },
+    fireSafety: { type: String, required: function() { return this.formType === 'Activity'; } },
+    weather: { type: String, required: function() { return this.formType === 'Activity'; } },
+
+    // ===== BUDGET FIELDS =====
+    nameOfRso: { 
+        type: String, 
+        required: function() { return this.formType === 'Budget'; } 
+    },
+    quantity: { 
+        type: Number, 
+        required: function() { return this.formType === 'Budget'; } 
+    },
+    unit: { 
+        type: String, 
+        required: function() { return this.formType === 'Budget'; } 
+    },
+    description: { 
+        type: String, 
+        required: function() { return this.formType === 'Budget'; } 
+    },
+    unitCost: { 
+        type: Number, 
+        required: function() { return this.formType === 'Budget'; } 
+    },
+    totalCost: { 
+        type: Number, 
+        required: function() { return this.formType === 'Budget'; } 
+    },
+    grandTotal: { 
+        type: Number, 
+        required: function() { return this.formType === 'Budget'; } 
+    },
+
+    // ===== COMMON FIELDS =====
+    currentStep: { type: Number, default: 0 },
+    reviewStages: [reviewStageSchema],
+    finalStatus: { 
+        type: String, 
+        enum: ['pending', 'approved', 'declined'], 
+        default: 'pending' 
+    }
 });
 
 const Form = mongoose.model('Form', formSchema);

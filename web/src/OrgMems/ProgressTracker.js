@@ -25,6 +25,10 @@ const ProgressTracker = ({ }) => {
     const [isApprovedChecked, setIsApprovedChecked] = useState(false);
     const [isDeclinedChecked, setIsDeclinedChecked] = useState(false);
     const [reviewSignatures, setReviewSignatures] = useState({}); // NEW: State for storing all review signatures
+    const [feedbackText, setFeedbackText] = useState('');
+    const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+    const [feedbackError, setFeedbackError] = useState('');
+    const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
 
     useEffect(() => {
         console.log("Retrieving user data from localStorage...");
@@ -59,6 +63,49 @@ const ProgressTracker = ({ }) => {
             console.error("Error fetching review signatures:", error);
         }
     };
+
+    // NEW: Function to handle feedback submission
+    const handleFeedbackSubmit = async () => {
+        if (!feedbackText.trim()) {
+            setFeedbackError('Please enter your feedback before submitting');
+            return;
+        }
+    
+        setIsSubmittingFeedback(true);
+        setFeedbackError('');
+    
+        try {
+            const token = localStorage.getItem("token");
+            const response = await fetch('https://studevent-server.vercel.app/api/feedback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    formId,
+                    feedback: feedbackText,
+                    userId: user?._id,
+                    userName: user?.name || 'Anonymous',
+                    userEmail: user?.email || '',
+                    formType: 'Event Proposal',
+                }),
+            });
+    
+            if (!response.ok) {
+                throw new Error('Failed to submit feedback');
+            }
+    
+            setFeedbackSubmitted(true);
+            setFeedbackText('');
+        } catch (error) {
+            console.error('Error submitting feedback:', error);
+            setFeedbackError('Failed to submit feedback. Please try again later.');
+        } finally {
+            setIsSubmittingFeedback(false);
+        }
+    };
+
 
     useEffect(() => {
         if (!formId) return;
@@ -239,7 +286,8 @@ const ProgressTracker = ({ }) => {
 
     return (
         <div className='prog-box'>
-            <h3 style={{ textAlign: 'center' }}>Event Proposal Tracker</h3>
+        <h3 style={{ textAlign: 'center' }}>Event Proposal Tracker</h3>
+        <div className="progress-content">
             <div className="progress-tracker">
                 <div className="progress-bar-container">
                     {trackerData.steps.map((step, index) => (
@@ -303,33 +351,80 @@ const ProgressTracker = ({ }) => {
                     </div>
                 ) : (
                     <div className="action-buttons">
+                        {isTrackerCompleted && (
+                    <div className="pdf-download-container">
+                        <PDFDownloadLink
+                            document={<ActivityPdf formData={formDetails} signatures={reviewSignatures} />}
+                            fileName="activity_proposal_form.pdf"
+                        >
+                            {({ loading }) => (
+                                <Button variant="contained" color="primary" disabled={loading}>
+                                    {loading ? 'Generating PDF...' : 'Download PDF'}
+                                </Button>
+                            )}
+                        </PDFDownloadLink>
+                    </div>
+                )}
                         <Button variant="contained" className="action-button" onClick={handleViewForms}>
                             VIEW FORMS
                         </Button>
                         {trackerData.currentAuthority && (trackerData.currentAuthority === user?.faculty || trackerData.currentAuthority === user?.role) ? (
                             <Button variant="contained" className="action-button" onClick={handleEditClick}>
                                 EDIT TRACKER
-                            </Button>
+                        </Button>
                         ) : null}
                     </div>
                 )}
-                            {/* NEW: PDF Download Button */}
-                            {isTrackerCompleted && (
-                    <div style={{ marginTop: 20 }}>
-                                                <PDFDownloadLink
-                        document={<ActivityPdf formData={formDetails} signatures={reviewSignatures} />}
-                        fileName="activity_proposal_form.pdf"
-                        >
-                        {({ loading }) => (
-                            <Button variant="contained" color="primary" disabled={loading}>
-                            {loading ? 'Generating PDF...' : 'Download PDF'}
-                            </Button>
-                        )}
-                        </PDFDownloadLink>
+                
+            </div>
+
+            {isTrackerCompleted && (
+    <div className="feedback-container">
+        <h4>Your feedback is valuable to us!</h4>
+        <p>Please share your thoughts and suggestions to help us improve our system.</p>
+        
+        {feedbackSubmitted ? (
+            <div className="feedback-thank-you">
+                <CheckCircleIcon style={{ color: '#4caf50', marginRight: 8 }} />
+                Thank you for your feedback!
+            </div>
+        ) : (
+            <>
+                <textarea
+                    className="feedback-textarea"
+                    placeholder="Write your feedback here..."
+                    value={feedbackText}
+                    onChange={(e) => {
+                        setFeedbackText(e.target.value);
+                        if (feedbackError) setFeedbackError('');
+                    }}
+                    rows={4}
+                    disabled={isSubmittingFeedback}
+                />
+                
+                {feedbackError && (
+                    <div className="feedback-error">
+                        <small style={{ color: 'red' }}>{feedbackError}</small>
                     </div>
                 )}
-            </div>
+                
+                <div className="feedback-button-container">
+                    <Button 
+                        variant="contained" 
+                        onClick={handleFeedbackSubmit}
+                        disabled={!feedbackText.trim() || isSubmittingFeedback}
+                        className="feedback-submit-button"
+                        startIcon={isSubmittingFeedback ? <CircularProgress size={20} /> : null}
+                    >
+                        {isSubmittingFeedback ? 'Submitting...' : 'Submit Feedback'}
+                    </Button>
+                </div>
+            </>
+        )}
+    </div>
+)}
         </div>
+    </div>
     );
 };
 

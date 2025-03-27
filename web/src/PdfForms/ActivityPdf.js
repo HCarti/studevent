@@ -196,11 +196,12 @@ const styles = StyleSheet.create({
     borderRightWidth: 1,
     borderRightColor: '#000',
   },
+  //signature section
   signatureSection: {
-    marginTop: 20,
+    marginTop: 12,
     borderWidth: 1,
     borderColor: '#000',
-    padding: 10,
+    padding: 5,
   },
   signatureTitle: {
     fontWeight: 'bold',
@@ -237,8 +238,8 @@ const styles = StyleSheet.create({
   signatureImage: {
     width: 120,
     height: 50,
-    borderWidth: 1,
-    borderColor: '#000',
+    // borderWidth: 1,
+    // borderColor: '#000',
     marginBottom: 5,
   },
   checkboxContainer: {
@@ -259,7 +260,24 @@ const styles = StyleSheet.create({
   dateText: {
     marginTop: 5,
     fontSize: 10,
+  },
+  borderedSignatureColumn: {
+    width: '48%',
+    padding: 8,
+    marginBottom: 10,
+  },
+  signatureRowGap: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+    gap: 8
+  },
+  signatureDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    marginVertical: 8
   }
+  
 });
 
 // Create Document Component with Page Numbers
@@ -557,93 +575,131 @@ const ActivityPdf = ({ formData = {}, signatures = {} }) => {
           </View>
         </View>
 
-        {/* Signatures and Endorsements Section */}
-          <View style={styles.signatureSection}>
-            <Text style={styles.signatureTitle}>5. SIGNATURES / ENDORSEMENTS</Text>
-            
-            <View style={styles.signatureRow}>
-              {/* Applicant Organization */}
-              <View style={styles.signatureColumn}>
-                <Text style={styles.signatureLabel}>a. Applicant Organization</Text>
-                <View style={styles.signatureValue}></View>
-                <Text style={styles.signatureName}>Printed Name and Signature</Text>
-                <Text style={styles.dateText}>Date: ___________________</Text>
-              </View>
-              
-              {/* Faculty Adviser */}
-              <View style={styles.signatureColumn}>
-                <Text style={styles.signatureLabel}>b. Faculty Adviser</Text>
-                {signatures.adviser && (
-                  <>
-                    {signatures.adviser.signature && (
-                      <Image 
-                        src={signatures.adviser.signature} 
-                        style={styles.signatureImage}
-                      />
-                    )}
-                    <Text style={styles.signatureName}>
-                      {signatures.adviser.name || "adviser NAME"}
-                    </Text>
-                    <Text style={styles.dateText}>
-                      Date: {signatures.adviser.date ? formatDate(signatures.adviser.date) : "___________________"}
-                    </Text>
-                    {signatures.adviser.remarks && (
-                      <Text style={styles.remarksText}>Remarks: {signatures.adviser.remarks}</Text>
-                    )}
-                  </>
-                )}
-              </View>
-            </View>
-          </View>
 
-          {/* Approvals Section */}
-          <View style={styles.signatureSection}>
-            <Text style={styles.signatureTitle}>APPROVALS</Text>
-            
-            <View style={styles.signatureRow}>
-              {/* Dean */}
-              <SignatureField 
-                title="a. Dean"
-                name={signatures.dean?.name || "DEAN NAME"}
-                signature={signatures.dean?.signature}
-                date={signatures.dean?.date}
-                status={signatures.dean?.status}
-                remarks={signatures.dean?.remarks}
-              />
+         {/* Signatures and Endorsements Section */}
+        <View style={styles.signatureSection}>
+              <Text style={styles.signatureTitle}>5. SIGNATURES / ENDORSEMENTS</Text>
               
-              {/* Admin */}
-              <SignatureField 
-                title="b. Admin"
-                name={signatures.admin?.stepName || "ADMIN NAME"}
-                signature={signatures.admin?.signature}
-                date={signatures.admin?.date}
-                status={signatures.admin?.status}
-                remarks={signatures.admin?.remarks}
-              />
+              <View style={styles.signatureRowGap}>
+                {/* Applicant Organization */}
+                <View style={styles.borderedSignatureColumn}>
+                  <Text style={styles.signatureLabel}>a. Applicant Organization</Text>
+                  <View style={styles.signatureDivider} />
+                  <View style={styles.signatureValue}></View>
+                  <Text style={styles.signatureName}>Printed Name and Signature</Text>
+                  <Text style={styles.dateText}>Date: ___________________</Text>
+                </View>
+                
+                {/* Faculty Adviser */}
+                <View style={styles.borderedSignatureColumn}>
+                  <Text style={styles.signatureLabel}>b. Faculty Adviser</Text>
+                  <View style={styles.signatureDivider} />
+                  {signatures.adviser ? (
+                    <>
+                      {signatures.adviser.signature ? (
+                        <Image 
+                          src={signatures.adviser.signature} 
+                          style={styles.signatureImage}
+                        />
+                      ) : (
+                        <View style={styles.signatureValue}></View>
+                      )}
+                      <Text style={styles.signatureName}>
+                        {signatures.adviser.name || "ADVISER NAME"}
+                      </Text>
+                      <Text style={styles.dateText}>
+                        Date: {signatures.adviser.date ? formatDate(signatures.adviser.date) : "___________________"}
+                      </Text>
+                      {signatures.adviser.remarks && (
+                        <Text style={styles.remarksText}>Remarks: {signatures.adviser.remarks}</Text>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <View style={styles.signatureValue}></View>
+                      <Text style={styles.signatureName}>ADVISER NAME</Text>
+                      <Text style={styles.dateText}>Date: ___________________</Text>
+                    </>
+                  )}
+                </View>
+              </View>
             </View>
+
+        <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
+          `Page ${pageNumber} of ${totalPages}`
+        )} fixed />
+      </Page>
+      
+      <Page size="A4" style={styles.page} wrap>
+      
+        {/* Signatures and Endorsements Section */}
             
-            <View style={styles.signatureRow}>
-              {/* Academic Service */}
-              <SignatureField 
-                title="c. Academic Services"
-                name={signatures.academicservices?.name || "ACADEMIC SERVICE NAME"}
-                signature={signatures.academicservices?.signature}
-                date={signatures.academicservices?.date}
-                status={signatures.academicservices?.status}
-                remarks={signatures.academicservices?.remarks}
-              />
+            {/* Approvals Section */}
+            <View style={styles.signatureSection}>
+              <Text style={styles.signatureTitle}>APPROVALS</Text>
               
-              {/* Executive Director */}
-              <SignatureField 
-                title="d. Executive Director"
-                name={signatures.executivedirector?.name || "EXECUTIVE DIRECTOR NAME"}
-                signature={signatures.executivedirector?.signature}
-                date={signatures.executivedirector?.date}
-                status={signatures.executivedirector?.status}
-                remarks={signatures.executivedirector?.remarks}
-              />
+              {/* Dean & Admin Row */}
+              <View style={styles.signatureRowGap}>
+                <View style={styles.borderedSignatureColumn}>
+                  <SignatureField 
+                    title="a. Dean"
+                    name={signatures.dean?.name || "DEAN NAME"}
+                    signature={signatures.dean?.signature}
+                    date={signatures.dean?.date}
+                    status={signatures.dean?.status}
+                    remarks={signatures.dean?.remarks}
+                  />
+                </View>
+                
+                <View style={styles.borderedSignatureColumn}>
+                  <SignatureField 
+                    title="b. Admin"
+                    name={signatures.admin?.stepName || "ADMIN NAME"}
+                    signature={signatures.admin?.signature}
+                    date={signatures.admin?.date}
+                    status={signatures.admin?.status}
+                    remarks={signatures.admin?.remarks}
+                  />
+                </View>
+              </View>
+              
+              {/* Academic Services & Academic Director Row */}
+              <View style={styles.signatureRowGap}>
+                <View style={styles.borderedSignatureColumn}>
+                  <SignatureField 
+                    title="c. Academic Services"
+                    name={signatures.academicservices?.name || "ACADEMIC SERVICE NAME"}
+                    signature={signatures.academicservices?.signature}
+                    date={signatures.academicservices?.date}
+                    status={signatures.academicservices?.status}
+                    remarks={signatures.academicservices?.remarks}
+                  />
+                </View>
+                
+                <View style={styles.borderedSignatureColumn}>
+                  <SignatureField 
+                    title="d. Academic Director"
+                    name={signatures.academicdirector?.name || "ACADEMIC DIRECTOR NAME"}
+                    signature={signatures.academicdirector?.signature}
+                    date={signatures.academicdirector?.date}
+                    status={signatures.academicdirector?.status}
+                    remarks={signatures.academicdirector?.remarks}
+                  />
+                </View>
+              </View>
+              
+              {/* Executive Director Row (full width) */}
+              <View style={[styles.borderedSignatureColumn, { width: '100%' }]}>
+                <SignatureField 
+                  title="e. Executive Director"
+                  name={signatures.executivedirector?.name || "EXECUTIVE DIRECTOR NAME"}
+                  signature={signatures.executivedirector?.signature}
+                  date={signatures.executivedirector?.date}
+                  status={signatures.executivedirector?.status}
+                  remarks={signatures.executivedirector?.remarks}
+                />
+              </View>
             </View>
-          </View>
 
         {/* Page Number Footer */}
         <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
