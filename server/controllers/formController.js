@@ -8,20 +8,17 @@ const mongoose = require("mongoose");
 
 // Controller to get all submitted forms
 exports.getAllForms = async (req, res) => {
-  console.log("Fetching all forms...");
   try {
-    // ✅ Find and populate in one step
-    const forms = await Form.find({})
-  .populate("studentOrganization")
-  .lean();  // Converts documents to plain objects for debugging
+    const { formType } = req.query;
+    const filter = formType ? { formType } : {};
+    
+    const forms = await Form.find(filter)
+      .populate("studentOrganization")
+      .lean();
 
-console.log("Retrieved Forms:", JSON.stringify(forms, null, 2));
-
-
-    if (!forms || forms.length === 0) {
+    if (!forms.length) {
       return res.status(404).json({ message: "No forms found" });
     }
-
     res.status(200).json(forms);
   } catch (error) {
     console.error("Error fetching forms:", error);
@@ -47,72 +44,101 @@ exports.getFormById = async (req, res) => {
 
 exports.createForm = async (req, res) => {
   try {
+    // Set default application date if not provided
     if (!req.body.applicationDate) {
       req.body.applicationDate = new Date();
     }
 
-    if (!req.body.emailAddress && req.user && req.user.email) {
+    // Auto-populate email if user is logged in
+    if (!req.body.emailAddress && req.user?.email) {
       req.body.emailAddress = req.user.email;
     }
 
-    const organization = await User.findOne({
-      organizationName: req.body.studentOrganization,
-      role: "Organization",
-    });
+    // Event Approval specific logic
+    if (req.body.formType === 'EventApproval' && req.body.studentOrganization) {
+      const organization = await User.findOne({
+        organizationName: req.body.studentOrganization,
+        role: "Organization",
+      });
+      if (!organization) {
+        return res.status(400).json({ error: "Organization not found" });
+      }
+      req.body.studentOrganization = organization._id;
+    }else {
+      return res.status(400).json({ error: "studentOrganization is required for EventApproval forms" });
+    }
+    // ... rest of your code
+  
 
-    if (!organization) {
-      return res.status(400).json({ error: "Organization not found with the provided name" });
+    // Budget form validation
+    if (req.body.formType === 'Budget') {
+      // Verify items array exists and has at least one item
+      if (!req.body.items || !Array.isArray(req.body.items) || req.body.items.length === 0) {
+        return res.status(400).json({ error: "At least one budget item is required" });
+      }
+
+      // Verify grandTotal matches sum of item totals
+      const calculatedTotal = req.body.items.reduce((sum, item) => {
+        return sum + (parseFloat(item.totalCost) || 0);
+      }, 0);
+      
+      if (Math.abs(calculatedTotal - parseFloat(req.body.grandTotal || 0)) > 0.01) {
+        return res.status(400).json({ 
+          error: "Grand total calculation mismatch",
+          details: `Calculated: ${calculatedTotal}, Submitted: ${req.body.grandTotal}`
+        });
+      }
     }
 
-    req.body.studentOrganization = organization._id;
-
+    // Create and save the form
     const form = new Form(req.body);
     await form.save();
 
-    console.log("✅ Form Created:", form); // ✅ Debug log
+    console.log("✅ Form Created:", form);
 
-    // ✅ Fix: Declare `tracker` outside of the try-catch
-
-    console.log("🛠 Creating tracker for form ID:", form._id);
-
+    // Create progress tracker (works for both form types)
     const tracker = new EventTracker({
       formId: form._id,
       currentStep: "Adviser",
       currentAuthority: "Adviser",
       steps: [
-        { stepName: "Adviser", reviewerRole: "Adviser", reviewedBy: null, reviewedByRole: null, status: "pending", remarks: "", timestamp: null },
-        { stepName: "Dean", reviewerRole: "Dean", reviewedBy: null, reviewedByRole: null, status: "pending", remarks: "", timestamp: null },
-        { stepName: "Admin", reviewerRole: "Admin", reviewedBy: null, reviewedByRole: null, status: "pending", remarks: "", timestamp: null },
-        { stepName: "Academic Services", reviewerRole: "Academic Services", reviewedBy: null, reviewedByRole: null, status: "pending", remarks: "", timestamp: null },
-        { stepName: "Academic Director", reviewerRole: "Academic Director", reviewedBy: null, reviewedByRole: null, status: "pending", remarks: "", timestamp: null },
-        { stepName: "Executive Director", reviewerRole: "Executive Director", reviewedBy: null, reviewedByRole: null, status: "pending", remarks: "", timestamp: null },
+        { stepName: "Adviser", reviewerRole: "Adviser", status: "pending", remarks: "", timestamp: null },
+        { stepName: "Dean", reviewerRole: "Dean", status: "pending", remarks: "", timestamp: null },
+        { stepName: "Admin", reviewerRole: "Admin", status: "pending", remarks: "", timestamp: null },
+        { stepName: "Academic Services", reviewerRole: "Academic Services", status: "pending", remarks: "", timestamp: null },
+        { stepName: "Academic Director", reviewerRole: "Academic Director", status: "pending", remarks: "", timestamp: null },
+        { stepName: "Executive Director", reviewerRole: "Executive Director", status: "pending", remarks: "", timestamp: null },
       ]
     });
+    await tracker.save();
 
-    console.log("🔄 Saving tracker...");
-    await tracker.save().catch(err => {
-        console.error("❌ Tracker Save Error:", err);
-        throw err; // Re-throw the error to be caught in the catch block
-    });
-
-
+    // Send notification
     if (req.body.emailAddress) {
       await Notification.create({
         userEmail: req.body.emailAddress,
-        message: `Your form has been submitted successfully!`,
+        message: `Your ${req.body.formType} form has been submitted!`,
         read: false,
         timestamp: new Date(),
       });
-    } else {
-      console.error("Error: Email address is missing in the request body!");
     }
 
-    // ✅ Fix: Ensure `tracker` is defined before sending response
-    res.status(201).json({ form, tracker: tracker || {} });
+    res.status(201).json({ form, tracker });
 
   } catch (error) {
-    console.error("❌ Full Error Details:", error); // Log full error details
-    res.status(500).json({ error: "Server error", details: error.message });
-}
+    console.error("❌ Form Creation Error:", error);
+    
+    // Handle validation errors more gracefully
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ 
+        error: "Validation Error",
+        details: errors 
+      });
+    }
+    
+    res.status(500).json({ 
+      error: "Server error", 
+      details: error.message 
+    });
+  }
 };
-

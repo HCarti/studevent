@@ -15,6 +15,33 @@ const reviewStageSchema = new mongoose.Schema({
     timestamp: { type: Date }
 });
 
+// Schema for individual budget items
+const budgetItemSchema = new mongoose.Schema({
+    quantity: { 
+        type: Number, 
+        required: function() { return this.parent().formType === 'Budget'; },
+        min: 0
+    },
+    unit: { 
+        type: String, 
+        required: function() { return this.parent().formType === 'Budget'; }
+    },
+    description: { 
+        type: String, 
+        required: function() { return this.parent().formType === 'Budget'; }
+    },
+    unitCost: { 
+        type: Number, 
+        required: function() { return this.parent().formType === 'Budget'; },
+        min: 0
+    },
+    totalCost: { 
+        type: Number, 
+        required: function() { return this.parent().formType === 'Budget'; },
+        min: 0
+    }
+});
+
 const formSchema = new mongoose.Schema({
     // --- Form Type Discriminator ---
     formType: { 
@@ -129,34 +156,20 @@ const formSchema = new mongoose.Schema({
     fireSafety: { type: String, required: function() { return this.formType === 'Activity'; } },
     weather: { type: String, required: function() { return this.formType === 'Activity'; } },
 
-    // ===== BUDGET FIELDS =====
-    nameOfRso: { 
+     // ===== BUDGET FIELDS =====
+     nameOfRso: { 
         type: String, 
         required: function() { return this.formType === 'Budget'; } 
     },
-    quantity: { 
-        type: Number, 
-        required: function() { return this.formType === 'Budget'; } 
-    },
-    unit: { 
+    eventTitle: { 
         type: String, 
         required: function() { return this.formType === 'Budget'; } 
     },
-    description: { 
-        type: String, 
-        required: function() { return this.formType === 'Budget'; } 
-    },
-    unitCost: { 
-        type: Number, 
-        required: function() { return this.formType === 'Budget'; } 
-    },
-    totalCost: { 
-        type: Number, 
-        required: function() { return this.formType === 'Budget'; } 
-    },
+    items: [budgetItemSchema], // Array of budget items
     grandTotal: { 
         type: Number, 
-        required: function() { return this.formType === 'Budget'; } 
+        required: function() { return this.formType === 'Budget'; },
+        min: 0
     },
 
     // ===== COMMON FIELDS =====

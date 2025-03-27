@@ -202,6 +202,7 @@ const Aap = () => {
 
     // Convert fields to expected data types for the backend schema
     const eventData = {
+      formType: 'Activity', // ⭐️ Critical addition
       ...formData,
       eventLocation: formData.eventLocation,
       applicationDate: new Date(formData.applicationDate),
