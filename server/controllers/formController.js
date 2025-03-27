@@ -55,29 +55,32 @@ exports.createForm = async (req, res) => {
     }
 
     // Event Approval specific logic
-    if (req.body.formType === 'EventApproval' && req.body.studentOrganization) {
+    if (req.body.formType === 'Activity') {
+      // Activity form validation
+      if (!req.body.studentOrganization) {
+        return res.status(400).json({ error: "studentOrganization is required for Activity forms" });
+      }
+      
       const organization = await User.findOne({
         organizationName: req.body.studentOrganization,
         role: "Organization",
       });
+      
       if (!organization) {
         return res.status(400).json({ error: "Organization not found" });
       }
       req.body.studentOrganization = organization._id;
-    }else {
-      return res.status(400).json({ error: "studentOrganization is required for EventApproval forms" });
-    }
-    // ... rest of your code
-  
+    } 
+    else if (req.body.formType === 'Budget') {
+      // Budget form validation
+      if (!req.body.nameOfRso) {
+        return res.status(400).json({ error: "nameOfRso is required for Budget forms" });
+      }
 
-    // Budget form validation
-    if (req.body.formType === 'Budget') {
-      // Verify items array exists and has at least one item
       if (!req.body.items || !Array.isArray(req.body.items) || req.body.items.length === 0) {
         return res.status(400).json({ error: "At least one budget item is required" });
       }
 
-      // Verify grandTotal matches sum of item totals
       const calculatedTotal = req.body.items.reduce((sum, item) => {
         return sum + (parseFloat(item.totalCost) || 0);
       }, 0);
@@ -88,6 +91,9 @@ exports.createForm = async (req, res) => {
           details: `Calculated: ${calculatedTotal}, Submitted: ${req.body.grandTotal}`
         });
       }
+    }
+    else {
+      return res.status(400).json({ error: "Invalid form type" });
     }
 
     // Create and save the form
