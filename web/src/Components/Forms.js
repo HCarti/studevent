@@ -17,12 +17,6 @@ const Forms = ({ role }) => {
 
   const formsData = [
     {
-      name: 'Waiver for Outside School',
-      description: 'Required for events or organizations going outside the school.',
-      icon: <FaFileContract />,
-      path: '/waiver',
-    },
-    {
       name: 'Budget Proposal',
       description: 'Request a budget from the school.',
       icon: <FaMoneyCheckAlt />,

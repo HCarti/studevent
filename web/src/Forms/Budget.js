@@ -1,14 +1,8 @@
 import React, {useState, useEffect} from "react";
-import axios from 'axios';
 import './Budget.css';
 import moment from 'moment';
-import { FaCheck } from 'react-icons/fa'; // Import check icon from react-icons
-import { Document, Page, Text, View, StyleSheet, Image, PDFDownloadLink } from "@react-pdf/renderer";
-import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import NU_logo from "../Images/NU_logo.png";
-import { useNavigate } from 'react-router-dom';
-import { MdOutlineContactPage } from "react-icons/md";
+
 
 const Budget  = () => {
   const [formData, setFormData] = useState({
@@ -48,7 +42,6 @@ const Budget  = () => {
     }
   };
 
-  const [currentStep, setCurrentStep] = useState(0);
   const [formSent, setFormSent] = useState(false);
   const [eventId, setEventId] = useState(null);
   const [notificationVisible, setNotificationVisible] = useState(false); // State to control notification visibility
@@ -157,101 +150,74 @@ const Budget  = () => {
     
 
     const handleSubmit = async () => {
-      const budgetData = {
-        formType: 'Budget',
-        nameOfRso: formData.nameOfRso,
-        eventTitle: formData.eventTitle,
-        items: rows,
-        grandTotal: formData.grandTotal
-      };
-
-    const eventStart = moment(formData.eventStartDate);
-    const eventEnd = moment(formData.eventEndDate);
-
-    if (!eventStart.isValid() || !eventEnd.isValid()) {
-      alert("Invalid event start or end date.");
-      return;
-    }
-
-    if (eventEnd.isBefore(eventStart)) {
-      alert("End date must be after the start date.");
-      return;
-    }
-
-    const token = localStorage.getItem('token'); // Ensure you have previously set this during login
-
-    if (!token) {
-      alert('Authentication token not found. Please log in again.');
-      return;
-    }
-
-    console.log('Token:', token); // Check if token is defined
-
-
-    // Convert fields to expected data types for the backend schema
-    const eventData = {
-      ...formData,
-      nameOfRso: formData.nameOfRso,
-      eventTitle: formData.eventTitle,
-      quantity: formData.quantity, // Ensure this field is properly formatted as an ObjectId or handled by the backend
-      description: formData.description,
-      unitCost: Number(formData.unitCost), // Ensure it's converted to a number if necessary
-      totalCost: formData.totalCost,
-    };
-    
-
-    try {
-      const response = await fetch('https://studevent-server.vercel.app/api/forms', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, // Uncomment if needed
-        },
-        body: JSON.stringify(eventData),
-      });
-    
-      if (!response.ok) {
-        // Check if the response is JSON before trying to parse it
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const errorData = await response.json();
-          alert(`Error: ${errorData.error || 'Submission failed'}`);
-        } else {
-          const text = await response.text();
-          alert(`Error: ${text}`);
-        }
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please log in to submit the form');
         return;
       }
     
-      const result = await response.json();
-    
-      if (result._id) {
-        setEventId(result._id);
+      // Validate required fields
+      if (!formData.nameOfRso) {
+        alert("Name of RSO is required");
+        return;
       }
-      setFormSent(true);
-
-      setFormSent(true); // Mark form as submitted
-      setNotificationVisible(true); // Show notification
-      setTimeout(() => {
-        setNotificationVisible(false); // Hide notification after 3 seconds
-      }, 3000);
     
-      // Reset form data
-      setFormData({
-        nameOfRso: "",
-        eventTitle: "",
-        quantity: "",
-        unit:"",
-        description: "",
-        unitCost: "",
-        totalCost: "",
-      });
+      const validRows = rows.filter(row => row.quantity && row.unitCost);
+      if (validRows.length === 0) {
+        alert("Please add at least one valid budget item");
+        return;
+      }
     
-    } catch (error) {
-      console.error('Error:', error);
-      alert('An error occurred while submitting the form.');
-    }
-  };    
+      // Prepare the payload
+      const budgetData = {
+        formType: 'Budget',
+        nameOfRso: formData.nameOfRso,
+        eventTitle: formData.eventTitle || 'Budget Proposal', // Default title
+        items: validRows.map(row => ({
+          quantity: Number(row.quantity),
+          unit: row.unit,
+          description: row.description,
+          unitCost: Number(row.unitCost),
+          totalCost: Number(row.totalCost)
+        })),
+        grandTotal: Number(formData.grandTotal)
+      };
+    
+      try {
+        const response = await fetch('https://studevent-server.vercel.app/api/forms', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(budgetData),
+        });
+    
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          alert(`Error: ${errorData.error || 'Submission failed'}`);
+          return;
+        }
+    
+        const result = await response.json();
+        setEventId(result._id);
+        setFormSent(true);
+        setNotificationVisible(true);
+        
+        // Reset form
+        setFormData({
+          nameOfRso: "",
+          eventTitle: "",
+          grandTotal: 0
+        });
+        setRows([{ quantity: "", unit: "", description: "", unitCost: "", totalCost: "" }]);
+        
+        setTimeout(() => setNotificationVisible(false), 3000);
+      } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while submitting the form.');
+      }
+    };
 
  return (
     <div className="budget-form">
@@ -265,6 +231,7 @@ const Budget  = () => {
           name="nameOfRso" 
           value={formData.nameOfRso} 
           onChange={handleChange} 
+          readOnly
         />
       </div>
 

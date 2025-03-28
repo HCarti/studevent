@@ -1,50 +1,49 @@
+/* Main Container - Matched to ProgressTracker */
 .org-prog-box {
   border: 1px solid #e0e0e0;
   background-color: #fafafa;
   border-radius: 8px;
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 75%;
-  margin: 40px auto;
+  width: 90%;
+  max-width: 1200px;
+  margin: 20px auto;
   padding: 20px;
   font-family: 'Roboto', sans-serif;
+  overflow: hidden; /* Added to prevent content overflow */
 }
 
-.proposal-ttl{
+.proposal-ttl {
   color: #333;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 24px;
   margin-bottom: 20px;
-  
+  text-align: center; /* Ensured center alignment */
 }
 
+/* Content Layout - Matched to ProgressTracker */
 .org-progress-tracker {
-  padding: 10px;
   display: flex;
-  justify-content: space-between;
-  width: 100%;
-  height: 450px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
   flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-height: calc(100vh - 200px); /* Added max-height with overflow */
+  overflow: auto; /* Added scroll if content overflows */
+  padding: 10px 0; /* Adjusted padding */
+  min-width: 0; /* Prevent flex item overflow */
 }
-  
-  .upper-row {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-  }
-  
-  .org-progress-bar-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    width: 60%;
-    position: relative;
+
+/* Progress Bar - Matched to ProgressTracker */
+.org-progress-bar-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding: 10px 0;
+  overflow-y: auto; /* Add scroll if steps overflow */
+  max-height: 500px; /* Limit height */
+  width: 100%; /* Changed from 60% to full width */
 }
-  
+
 .org-progress-bar-container::before {
   content: '';
   position: absolute;
@@ -55,11 +54,12 @@
   background-color: #ddd;
   z-index: 0;
 }
-  
+
 .org-step-container {
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* Changed from center to flex-start */
   margin-bottom: 15px;
+  min-height: 60px; /* Added minimum height */
 }
 
 .org-progress-step {
@@ -70,31 +70,40 @@
   background-color: #e0e0e0;
   position: relative;
   z-index: 1;
+  flex-shrink: 0; /* Prevent shrinking */
 }
-  
+
 .org-step-label {
   font-size: 16px;
   color: #555;
   position: relative;
-  margin: 15px 0;
+  margin: 5px 0; /* Adjusted margin */
+  word-break: break-word; /* Added to prevent text overflow */
 }
 
-.org-reviewer-info, .org-timestamp {
+.org-reviewer-info, 
+.org-timestamp {
   font-size: 12px;
   color: #999;
-  margin-left: 8px;
+  margin-left: 0; /* Changed from 8px to 0 */
+  margin-top: 4px; /* Added for spacing */
 }
 
-/* Action Button */
+/* Action Buttons - Matched to ProgressTracker */
 .org-action-buttons {
-  gap: 20px;
-  margin-top: 30px;
   display: flex;
+  gap: 15px;
+  margin-top: 20px;
   justify-content: flex-end;
-  width: 100%;
+  align-items: flex-end;
+  flex-wrap: wrap; /* Allow buttons to wrap on small screens */
+  width: 100%; /* Ensure full width */
 }
 
 .org-action-button {
+  display: flex;
+  height: 37px;
+  width: 150px;
   border-radius: 50px;
   padding: 10px 20px;
   background-color: #007bff;
@@ -103,19 +112,19 @@
   cursor: pointer;
   font-size: 16px;
   transition: background-color 0.3s ease;
-  margin-right: 10px;
 }
 
 .org-action-button:hover {
   background-color: #0056b3;
 }
 
+/* Loading Spinner - Kept your original styling */
 .org-floating-loader {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 10; /* Ensure it floats above other content */
+  z-index: 10;
 }
 
 .org-spinner {
@@ -124,4 +133,17 @@
   height: 50px !important;
 }
 
+/* Responsive Adjustments - Matched to ProgressTracker */
+@media (max-width: 768px) {
+  .org-progress-tracker {
+    flex-direction: column;
+  }
   
+  .org-progress-bar-container {
+    max-height: none;
+  }
+  
+  .org-action-buttons {
+    justify-content: center;
+  }
+}

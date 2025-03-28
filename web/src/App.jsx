@@ -33,7 +33,6 @@ import AdminFormView from './Adm/AdminFormView';
 import OTPVerification from './Components/OTPVerification';
 import FormDetails from './Adm/FormDetails';
 import Liquidation from './Forms/Liquidation';
-import Waiver from './Forms/Waiver';
 import LocalOffCampus from './Forms/LocalOffCampus';
 import OrgTrackerViewer from './OrgMems/OrgTrackerViewer'; // Import the new page
 import Footer from './Components/footer';
@@ -124,7 +123,6 @@ const App = () => {
           <Route path="/activity" element={<Aap />} />
           <Route path="/liquidation" element={<Liquidation />} />
           <Route path="/project" element={<Project />} />
-          <Route path="/waiver" element={<Waiver />} />
           <Route path="/budget" element={<Budget />} />
           <Route path="/localoffcampus" element={<LocalOffCampus />} />
 
