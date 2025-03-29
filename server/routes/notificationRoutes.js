@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const authenticateToken = require("../middleware/authenticateToken");
 const Notification = require("../models/Notification"); // Create this model
-const { markNotificationAsRead } = require("../controllers/notificationController");
+const { markNotificationAsRead, createTrackerNotification } = require("../controllers/notificationController");
 
 // Get notifications by user email
 router.get("/notifications", authenticateToken, async (req, res) => {
@@ -26,6 +26,7 @@ router.get("/notifications", authenticateToken, async (req, res) => {
   }
 });
 
+router.post("/tracker-notification", authenticateToken, createTrackerNotification);
 
 router.post("/mark-read", authenticateToken, markNotificationAsRead); // Protect route
 

@@ -9,6 +9,23 @@ exports.getNotifications = async (req, res) => {
     }
 };
 
+exports.createTrackerNotification = async (req, res) => {
+  try {
+    const { userEmail, message } = req.body;
+    
+    if (!userEmail || !message) {
+      return res.status(400).json({ error: 'User email and message are required' });
+    }
+
+    await exports.createNotification(userEmail, message);
+    res.status(201).json({ message: 'Notification created successfully' });
+    
+  } catch (error) {
+    console.error("Error creating tracker notification:", error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 exports.createNotification = async (userEmail, message) => {
     try {
       console.log("🔹 Attempting to create notification for:", userEmail); // Debug log

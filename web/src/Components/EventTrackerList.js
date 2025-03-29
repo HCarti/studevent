@@ -158,7 +158,7 @@ const EventTrackerList = () => {
                     className={`event-tracker-row ${form.finalStatus?.trim().toLowerCase()}`}
                     onClick={() => handleRedirectToProgressTracker(form)}
                   >
-                    <td>{form.studentOrganization?.organizationName || 'Unknown Organization'}</td>
+                    <td>{form.studentOrganization?.organizationName || form.nameOfRso?.organizationName || 'Unknown Organization'}</td>
                     <td>{form.eventTitle}</td>
                     <td>
                       <span className={`status-badge ${form.finalStatus?.trim().toLowerCase()}`}>

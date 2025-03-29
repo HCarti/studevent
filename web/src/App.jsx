@@ -32,7 +32,6 @@ import SuperAdminAddUser from './SuperAdmin/SuperAdminAddUser';
 import AdminFormView from './Adm/AdminFormView';
 import OTPVerification from './Components/OTPVerification';
 import FormDetails from './Adm/FormDetails';
-import Liquidation from './Forms/Liquidation';
 import LocalOffCampus from './Forms/LocalOffCampus';
 import OrgTrackerViewer from './OrgMems/OrgTrackerViewer'; // Import the new page
 import Footer from './Components/footer';
@@ -121,7 +120,6 @@ const App = () => {
           <Route path="/orgTrackerViewer/:formId" element={<OrgTrackerViewer />} />
           <Route path="/organization/:studentOrganization/forms" element={<OrgSubmittedForms />} />
           <Route path="/activity" element={<Aap />} />
-          <Route path="/liquidation" element={<Liquidation />} />
           <Route path="/project" element={<Project />} />
           <Route path="/budget" element={<Budget />} />
           <Route path="/localoffcampus" element={<LocalOffCampus />} />

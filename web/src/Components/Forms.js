@@ -40,12 +40,6 @@ const Forms = ({ role }) => {
       icon: <FaMapMarkedAlt />,
       path: '/localoffcampus',
     },
-    {
-      name: 'Liquidation',
-      description: 'Submit liquidation forms for financial reconciliation.',
-      icon: <FaMoneyBillWave />,
-      path: '/liquidation',
-    },  
   ];
 
   return (

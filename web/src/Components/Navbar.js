@@ -26,28 +26,31 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   }, [isLoggedIn, user]);
   
   const fetchNotifications = async () => {
-    if (!user || !user.email) return; // Prevent making API calls if user is not available
-    try {
-      const token = localStorage.getItem("token");     
-      const response = await fetch(
-        `https://studevent-server.vercel.app/api/notifications?userEmail=${user.email}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+  if (!user || !user.email) return;
   
-      const data = await response.json();
-  
-      if (!data.length) {
-        console.log("No notifications available");
-      } else {
-        setNotifications(data);
-        setUnreadCount(data.filter(n => !n.read).length); // Count unread notifications
+  try {
+    const token = localStorage.getItem("token");     
+    const response = await fetch(
+      `https://studevent-server.vercel.app/api/notifications`,
+      {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
       }
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-    }
-  };
+    );
+
+    if (!response.ok) throw new Error('Failed to fetch notifications');
+    
+    const data = await response.json();
+    setNotifications(data);
+    setUnreadCount(data.filter(n => !n.read).length);
+    
+  } catch (error) {
+    console.error("Error fetching notifications:", error);
+    // Optional: Add retry logic or error state
+  }
+};
   
   
 
@@ -176,18 +179,41 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
              <FiBell className="navbar-notification-icon" />
              {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
              {notificationMenuOpen && (
-               <div className="notification-dropdown">
-                 {notifications.length > 0 ? (
-                   notifications.map((notification, index) => (
-                     <div key={index} className="notification-item">
-                       {notification.message}
-                     </div>
-                   ))
-                 ) : (
-                   <div className="notification-item no-notifications">No new notifications</div>
-                 )}
-               </div>
-             )}
+  <div className="notification-dropdown">
+    {notifications.length > 0 ? (
+      notifications.map((notification) => (
+        <div 
+          key={notification._id} 
+          className={`notification-item ${notification.read ? 'read' : 'unread'}`}
+          onClick={() => {
+            markNotificationAsRead(notification._id);
+            // Add navigation to tracker if needed
+          }}
+        >
+          <div className="notification-message">{notification.message}</div>
+          <div className="notification-time">
+            {new Date(notification.createdAt).toLocaleString()}
+          </div>
+          {notification.type === 'tracker' && (
+            <button 
+              className="view-tracker-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/tracker/${notification.trackerId}`);
+              }}
+            >
+              View Tracker
+            </button>
+          )}
+        </div>
+      ))
+    ) : (
+      <div className="notification-item no-notifications">
+        No new notifications
+      </div>
+    )}
+  </div>
+)}
            </div>      
 
   <div className="account-dropdown" onClick={toggleAccountMenu}>
