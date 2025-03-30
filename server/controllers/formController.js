@@ -167,18 +167,17 @@ exports.updateForm = async (req, res) => {
       });
     }
 
-    if (form.formType === 'Budget' || updates.formType === 'Budget') {
+     // 2. Form-specific validation
+     if (updates.formType === 'Budget') {
       if (!updates.nameOfRso) {
         return res.status(400).json({ error: "nameOfRso is required for Budget forms" });
       }
-
-      // Convert items to array if it's not (safety check)
-      const items = Array.isArray(updates.items) ? updates.items : [];
-      if (items.length === 0) {
+    
+      if (!updates.items || !Array.isArray(updates.items) || updates.items.length === 0) {
         return res.status(400).json({ error: "At least one budget item is required" });
       }
-
-      const calculatedTotal = items.reduce((sum, item) => {
+    
+      const calculatedTotal = updates.items.reduce((sum, item) => {
         return sum + (parseFloat(item.totalCost) || 0);
       }, 0);
       
@@ -187,6 +186,12 @@ exports.updateForm = async (req, res) => {
           error: "Grand total calculation mismatch",
           details: `Calculated: ${calculatedTotal}, Submitted: ${updates.grandTotal}`
         });
+      }
+    } 
+    else if (updates.formType === 'Activity') {
+      // Only Activity forms need organization validation
+      if (!updates.studentOrganization) {
+        return res.status(400).json({ error: "studentOrganization is required for Activity forms" });
       }
       
       const organization = await User.findOne({
