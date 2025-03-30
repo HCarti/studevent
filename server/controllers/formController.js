@@ -153,78 +153,26 @@ exports.createForm = async (req, res) => {
 exports.updateForm = async (req, res) => {
   try {
     const { formId } = req.params;
-    
-    // 1. Handle both flat and nested payload structures
-    const formUpdates = req.body.formData || req.body;
-    const formType = req.body.formType; // formType must be at root level
+    const updates = req.body;
 
-    // 2. Validate formType exists
-    if (!formType) {
-      return res.status(400).json({ 
-        error: "Validation Error",
-        details: ["formType is required"]
-      });
-    }
-
-    // 3. Find the existing form
+    // 1. Find the form and its tracker
     const form = await Form.findById(formId);
     if (!form) {
       return res.status(404).json({ message: 'Form not found' });
     }
 
-    // 4. Authorization check
     if (form.emailAddress !== req.user.email) {
       return res.status(403).json({ 
         message: 'Only the original submitter can edit this form' 
       });
     }
 
-    // 5. Form-specific validation
-    if (formType === 'Budget') {
-      if (!formUpdates.nameOfRso) {
-        return res.status(400).json({ error: "nameOfRso is required for Budget forms" });
-      }
-    
-      if (!formUpdates.items || !Array.isArray(formUpdates.items) || formUpdates.items.length === 0) {
-        return res.status(400).json({ error: "At least one budget item is required" });
-      }
-    
-      const calculatedTotal = formUpdates.items.reduce((sum, item) => {
-        return sum + (parseFloat(item.totalCost) || 0);
-      }, 0);
-      
-      if (Math.abs(calculatedTotal - parseFloat(formUpdates.grandTotal || 0)) > 0.01) {
-        return res.status(400).json({ 
-          error: "Grand total calculation mismatch",
-          details: `Calculated: ${calculatedTotal}, Submitted: ${formUpdates.grandTotal}`
-        });
-      }
-      
-      // Ensure no organization fields are included
-      delete formUpdates.studentOrganization;
-    } 
-    else if (formType === 'Activity') {
-      if (!formUpdates.studentOrganization) {
-        return res.status(400).json({ error: "studentOrganization is required for Activity forms" });
-      }
-      
-      const organization = await User.findOne({
-        organizationName: formUpdates.studentOrganization,
-        role: "Organization",
-      });
-      
-      if (!organization) {
-        return res.status(400).json({ error: "Organization not found" });
-      }
-      formUpdates.studentOrganization = organization._id;
-    }
-
-    // 6. Check tracker status
     const tracker = await EventTracker.findOne({ formId });
     if (!tracker) {
       return res.status(404).json({ message: 'Progress tracker not found' });
     }
 
+    // 2. Check if editing is allowed (not reviewed by dean yet)
     const isDeanReviewing = tracker.currentAuthority === 'Dean';
     const isDeanApproved = tracker.steps.some(
       step => step.stepName === 'Dean' && step.status === 'approved'
@@ -236,28 +184,28 @@ exports.updateForm = async (req, res) => {
       });
     }
 
-    // 7. Prepare update data
-    const updateData = {
-      ...formUpdates,
-      formType, // Ensure formType is preserved
-      lastEdited: new Date()
-    };
-
-    // 8. Perform the update
+    // 3. Perform the update
     const updatedForm = await Form.findByIdAndUpdate(
       formId,
-      updateData,
+      { 
+        ...updates,
+        lastEdited: new Date() // Track when edits were made
+      },
       { new: true, runValidators: true }
     );
 
-    // 9. Update tracker if needed
+    // 4. Update tracker if needed (example: reset approvals if form changes)
     if (tracker.currentStep !== 'Adviser') {
+      await EventTracker.updateOne(
+        { formId },
+        { $set: { currentStep: 'Adviser', currentAuthority: 'Adviser' } }
+      );
+      
+      // Reset all step statuses except Adviser
       await EventTracker.updateOne(
         { formId },
         { 
           $set: { 
-            currentStep: 'Adviser', 
-            currentAuthority: 'Adviser',
             "steps.$[].status": "pending",
             "steps.$[].remarks": "",
             "steps.$[].timestamp": null
@@ -270,11 +218,11 @@ exports.updateForm = async (req, res) => {
       );
     }
 
-    // 10. Send notification
+    // 5. Send notification
     if (form.emailAddress) {
       await Notification.create({
         userEmail: form.emailAddress,
-        message: `Your ${formType} form has been updated!`,
+        message: `Your ${form.formType} form has been updated!`,
         read: false,
         timestamp: new Date(),
       });
@@ -283,16 +231,11 @@ exports.updateForm = async (req, res) => {
     res.status(200).json({
       message: 'Form updated successfully',
       form: updatedForm,
-      tracker: await EventTracker.findOne({ formId })
+      tracker: await EventTracker.findOne({ formId }) // Return fresh tracker
     });
 
   } catch (error) {
-    console.error("Form Update Error:", {
-      error: error.message,
-      stack: error.stack,
-      body: req.body,
-      params: req.params
-    });
+    console.error("Form Update Error:", error);
     
     if (error.name === 'ValidationError') {
       const errors = Object.values(error.errors).map(err => err.message);
@@ -304,7 +247,7 @@ exports.updateForm = async (req, res) => {
     
     res.status(500).json({ 
       error: "Server error", 
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      details: error.message 
     });
   }
 };
