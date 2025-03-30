@@ -131,7 +131,7 @@ const OrgSubmittedForms = () => {
                                             onClick={() => navigate(`/orgTrackerViewer/${form._id}`)}
                                         >
                                             <td>{form.formType || 'N/A'}</td>
-                                            <td>{form.eventTitle || 'Untitled Event'}</td>
+                                            <td>{form.eventTitle || form.nameOfRso || 'Untitled Event'}</td>
                                             <td>
                                                 <span className={`status-badge ${form.finalStatus?.toLowerCase() || 'pending'}`}>
                                                     {form.finalStatus || 'Pending'}
@@ -146,15 +146,26 @@ const OrgSubmittedForms = () => {
                                                             e.stopPropagation();
                                                             const formDataForEdit = {
                                                                 ...form,
-                                                                eventStartDate: form.eventStartDate ? new Date(form.eventStartDate).toISOString() : '',
-                                                                eventEndDate: form.eventEndDate ? new Date(form.eventEndDate).toISOString() : '',
-                                                                applicationDate: form.applicationDate ? new Date(form.applicationDate).toISOString().split('T')[0] : ''
+                                                                ...(form.eventStartDate && { 
+                                                                  eventStartDate: new Date(form.eventStartDate).toISOString() 
+                                                                }),
+                                                                ...(form.eventEndDate && { 
+                                                                  eventEndDate: new Date(form.eventEndDate).toISOString() 
+                                                                }),
+                                                                ...(form.applicationDate && { 
+                                                                  applicationDate: new Date(form.applicationDate).toISOString().split('T')[0] 
+                                                                })
                                                             };
-                                                            navigate(`/edit-form/${form._id}`, { 
-                                                                state: { 
-                                                                    formData: formDataForEdit,
-                                                                    from: 'submitted-forms' 
-                                                                } 
+                                                            
+                                                            const editRoute = form.formType === 'Budget' 
+                                                              ? `/edit-budget/${form._id}`
+                                                              : `/edit-form/${form._id}`;
+                                                            
+                                                            navigate(editRoute, { 
+                                                              state: { 
+                                                                formData: formDataForEdit,
+                                                                from: 'submitted-forms' 
+                                                              } 
                                                             });
                                                         }}
                                                     >
@@ -174,4 +185,4 @@ const OrgSubmittedForms = () => {
     );
 };
 
-export default OrgSubmittedForms;
+export default OrgSubmittedForms;   

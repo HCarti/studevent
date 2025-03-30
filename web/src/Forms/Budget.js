@@ -2,14 +2,64 @@ import React, {useState, useEffect} from "react";
 import './Budget.css';
 import moment from 'moment';
 import "react-datepicker/dist/react-datepicker.css";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 
 const Budget  = () => {
+  const { formId } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isEditMode = !!formId;
+  const [loading, setLoading] = useState(isEditMode);
   const [formData, setFormData] = useState({
     nameOfRso: "",
     eventTitle: "",
     grandTotal: 0 // Will calculate from row totals
   });
+
+  useEffect(() => {
+    const fetchFormData = async () => {
+      if (!isEditMode) return;
+      
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`https://studevent-server.vercel.app/api/forms/${formId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        
+        if (!response.ok) throw new Error('Failed to fetch form');
+        
+        const data = await response.json();
+        
+        setFormData({
+          nameOfRso: data.nameOfRso,
+          eventTitle: data.eventTitle,
+          grandTotal: data.grandTotal
+        });
+        
+        setRows(data.items || []);
+      } catch (error) {
+        console.error('Error fetching form:', error);
+        alert('Failed to load form data');
+        navigate('/submitted-forms');
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    // Pre-fill user data
+    const userData = JSON.parse(localStorage.getItem('user'));
+    if (userData) {
+      setFormData(prev => ({
+        ...prev,
+        nameOfRso: userData.role === 'Organization' ? userData.organizationName || "" : "",
+      }));
+    }
+  
+    fetchFormData();
+  }, [formId, isEditMode, navigate]);
 
   const [rows, setRows] = useState([
     { 
@@ -172,7 +222,7 @@ const Budget  = () => {
       const budgetData = {
         formType: 'Budget',
         nameOfRso: formData.nameOfRso,
-        eventTitle: formData.eventTitle || 'Budget Proposal', // Default title
+        eventTitle: formData.eventTitle || 'Budget Proposal',
         items: validRows.map(row => ({
           quantity: Number(row.quantity),
           unit: row.unit,
@@ -184,8 +234,14 @@ const Budget  = () => {
       };
     
       try {
-        const response = await fetch('https://studevent-server.vercel.app/api/forms', {
-          method: 'POST',
+        const url = isEditMode 
+          ? `https://studevent-server.vercel.app/api/forms/${formId}`
+          : 'https://studevent-server.vercel.app/api/forms';
+        
+        const method = isEditMode ? 'PUT' : 'POST';
+    
+        const response = await fetch(url, {
+          method,
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
@@ -194,35 +250,45 @@ const Budget  = () => {
         });
     
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          alert(`Error: ${errorData.error || 'Submission failed'}`);
-          return;
+          const errorText = await response.text();
+          throw new Error(errorText.includes('<!DOCTYPE') 
+            ? 'Server error: Please try again later' 
+            : errorText);
         }
     
         const result = await response.json();
-        setEventId(result._id);
         setFormSent(true);
         setNotificationVisible(true);
         
-        // Reset form
-        setFormData({
-          nameOfRso: "",
-          eventTitle: "",
-          grandTotal: 0
-        });
-        setRows([{ quantity: "", unit: "", description: "", unitCost: "", totalCost: "" }]);
-        
-        setTimeout(() => setNotificationVisible(false), 3000);
+        setTimeout(() => {
+          setNotificationVisible(false);
+          if (isEditMode) {
+            navigate('/submitted-forms');
+          }
+        }, 3000);
+    
+        // Reset form if creating new
+        if (!isEditMode) {
+          setFormData({
+            nameOfRso: "",
+            eventTitle: "",
+            grandTotal: 0
+          });
+          setRows([{ quantity: "", unit: "", description: "", unitCost: "", totalCost: "" }]);
+        }
+    
       } catch (error) {
         console.error('Error:', error);
-        alert('An error occurred while submitting the form.');
+        alert(error.message || 'An error occurred while submitting the form.');
       }
     };
 
  return (
     <div className="budget-form">
       <h1>Budget Proposal</h1>
-      {notificationVisible && <Notification message="Form submitted successfully" />}
+      {notificationVisible && (
+  <Notification message={`Form ${isEditMode ? 'updated' : 'submitted'} successfully`} />
+)}
       {/* Main form fields */}
       <div>
         <label>Name of RSO:</label>
@@ -264,8 +330,8 @@ const Budget  = () => {
       </div>
 
       <button type="button" onClick={handleSubmit}>
-        Submit
-      </button>
+  {isEditMode ? 'Update Budget' : 'Submit Budget'}
+</button>
     </div>
   );
 };
