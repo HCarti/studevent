@@ -167,12 +167,37 @@ exports.updateForm = async (req, res) => {
       });
     }
 
+    // 2. For Budget forms, validate items before update
+    if (form.formType === 'Budget' || updates.formType === 'Budget') {
+      if (!updates.items || !Array.isArray(updates.items)) {
+        return res.status(400).json({ error: "Valid items array is required for Budget forms" });
+      }
+
+      // Manual validation of each item
+      const itemErrors = [];
+      updates.items.forEach((item, index) => {
+        if (item.quantity === undefined || isNaN(item.quantity)) {
+          itemErrors.push(`items.${index}.quantity: Required number`);
+        }
+        if (item.unitCost === undefined || isNaN(item.unitCost)) {
+          itemErrors.push(`items.${index}.unitCost: Required number`);
+        }
+      });
+
+      if (itemErrors.length > 0) {
+        return res.status(400).json({
+          error: "Budget Item Validation Error",
+          details: itemErrors
+        });
+      }
+    }
+
     const tracker = await EventTracker.findOne({ formId });
     if (!tracker) {
       return res.status(404).json({ message: 'Progress tracker not found' });
     }
 
-    // 2. Check if editing is allowed (not reviewed by dean yet)
+    // 3. Check if editing is allowed (not reviewed by dean yet)
     const isDeanReviewing = tracker.currentAuthority === 'Dean';
     const isDeanApproved = tracker.steps.some(
       step => step.stepName === 'Dean' && step.status === 'approved'
@@ -184,28 +209,29 @@ exports.updateForm = async (req, res) => {
       });
     }
 
-    // 3. Perform the update
+    // 4. Perform the update with conditional validation
+    const updateOptions = {
+      new: true,
+      runValidators: form.formType === 'Activity' // Only run validators for Activity forms
+    };
+
     const updatedForm = await Form.findByIdAndUpdate(
       formId,
       { 
         ...updates,
-        lastEdited: new Date() // Track when edits were made
+        lastEdited: new Date()
       },
-      { new: true, runValidators: true }
+      updateOptions
     );
 
-    // 4. Update tracker if needed (example: reset approvals if form changes)
+    // 5. Update tracker if needed
     if (tracker.currentStep !== 'Adviser') {
-      await EventTracker.updateOne(
-        { formId },
-        { $set: { currentStep: 'Adviser', currentAuthority: 'Adviser' } }
-      );
-      
-      // Reset all step statuses except Adviser
       await EventTracker.updateOne(
         { formId },
         { 
           $set: { 
+            currentStep: 'Adviser',
+            currentAuthority: 'Adviser',
             "steps.$[].status": "pending",
             "steps.$[].remarks": "",
             "steps.$[].timestamp": null
@@ -218,7 +244,7 @@ exports.updateForm = async (req, res) => {
       );
     }
 
-    // 5. Send notification
+    // 6. Send notification
     if (form.emailAddress) {
       await Notification.create({
         userEmail: form.emailAddress,
@@ -231,11 +257,16 @@ exports.updateForm = async (req, res) => {
     res.status(200).json({
       message: 'Form updated successfully',
       form: updatedForm,
-      tracker: await EventTracker.findOne({ formId }) // Return fresh tracker
+      tracker: await EventTracker.findOne({ formId })
     });
 
   } catch (error) {
-    console.error("Form Update Error:", error);
+    console.error("Form Update Error:", {
+      error: error.message,
+      stack: error.stack,
+      body: req.body,
+      formType: req.body.formType
+    });
     
     if (error.name === 'ValidationError') {
       const errors = Object.values(error.errors).map(err => err.message);
@@ -247,7 +278,7 @@ exports.updateForm = async (req, res) => {
     
     res.status(500).json({ 
       error: "Server error", 
-      details: error.message 
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };

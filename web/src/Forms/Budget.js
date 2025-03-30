@@ -181,34 +181,41 @@ const Budget = () => {
     }
   
     // Validate required fields
-    if (!formData.nameOfRso.trim()) {
+    if (!formData.nameOfRso?.trim()) {
       alert("Name of RSO is required");
       return;
     }
   
-    const validRows = rows.filter(row => row.quantity && row.unitCost);
+    const validRows = rows.filter(row => 
+      !isNaN(row.quantity) && 
+      !isNaN(row.unitCost) && 
+      row.unit?.trim() && 
+      row.description?.trim()
+    );
+  
     if (validRows.length === 0) {
       alert("Please add at least one valid budget item");
       return;
     }
   
-    // SIMPLIFIED payload - choose ONE structure:
+    // Prepare payload - FLAT structure like Activity form
     const payload = {
-      formType: 'Budget',  // Must be at root level
+      formType: 'Budget', // Required at root level
       nameOfRso: formData.nameOfRso.trim(),
-      eventTitle: formData.eventTitle.trim() || 'Budget Proposal',
+      eventTitle: formData.eventTitle?.trim() || 'Budget Proposal',
       items: validRows.map(row => ({
         quantity: Number(row.quantity),
         unit: row.unit.trim(),
         description: row.description.trim(),
         unitCost: Number(row.unitCost),
-        totalCost: Number(row.totalCost)
+        totalCost: Number(row.totalCost || row.quantity * row.unitCost)
       })),
-      grandTotal: Number(formData.grandTotal)
+      grandTotal: Number(formData.grandTotal) || 
+        validRows.reduce((sum, row) => sum + (row.quantity * row.unitCost), 0)
     };
   
-    console.log("Final payload:", JSON.stringify(payload, null, 2));
-
+    console.log("Submitting:", payload); // Debug log
+  
     try {
       const url = isEditMode 
         ? `https://studevent-server.vercel.app/api/forms/${formId}`
@@ -227,12 +234,14 @@ const Budget = () => {
   
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Server responded with status ${response.status}`);
+        throw new Error(
+          errorData.message || 
+          errorData.error || 
+          `Server responded with status ${response.status}`
+        );
       }
   
       const result = await response.json();
-      console.log("Submission successful:", result);
-
       setFormSent(true);
       setNotificationVisible(true);
       
@@ -242,15 +251,28 @@ const Budget = () => {
       }, 3000);
   
       if (!isEditMode) {
-        setFormData({ nameOfRso: "", eventTitle: "", grandTotal: 0 });
-        setRows([{ quantity: "", unit: "", description: "", unitCost: "", totalCost: "" }]);
+        setFormData({
+          nameOfRso: "",
+          eventTitle: "",
+          grandTotal: 0
+        });
+        setRows([{ 
+          quantity: "", 
+          unit: "", 
+          description: "", 
+          unitCost: "", 
+          totalCost: "" 
+        }]);
       }
   
     } catch (error) {
-      console.error('Submission error:', error);
-      alert(error.message || 'An error occurred while submitting the form.');
+      console.error('Submission error:', {
+        error: error.message,
+        payload: payload,
+      });
+      alert(error.message || 'Submission failed. Check console for details.');
     }
-};
+  };
 
   return (
     <div className="budget-form">
