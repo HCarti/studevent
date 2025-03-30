@@ -1,22 +1,36 @@
-import React, {useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import './Budget.css';
-import moment from 'moment';
 import "react-datepicker/dist/react-datepicker.css";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
-
-const Budget  = () => {
+const Budget = () => {
   const { formId } = useParams();
-  const location = useLocation();
   const navigate = useNavigate();
   const isEditMode = !!formId;
   const [loading, setLoading] = useState(isEditMode);
   const [formData, setFormData] = useState({
     nameOfRso: "",
     eventTitle: "",
-    grandTotal: 0 // Will calculate from row totals
+    grandTotal: 0
   });
+  const [rows, setRows] = useState([{ 
+    quantity: "", 
+    unit: "", 
+    description: "", 
+    unitCost: "", 
+    totalCost: "" 
+  }]);
+  const [formSent, setFormSent] = useState(false);
+  const [notificationVisible, setNotificationVisible] = useState(false);
 
+  // Notification component
+  const Notification = ({ message }) => (
+    <div className="notification">
+      {message}
+    </div>
+  );
+
+  // Fetch form data in edit mode
   useEffect(() => {
     const fetchFormData = async () => {
       if (!isEditMode) return;
@@ -24,9 +38,7 @@ const Budget  = () => {
       try {
         const token = localStorage.getItem('token');
         const response = await fetch(`https://studevent-server.vercel.app/api/forms/${formId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
+          headers: { 'Authorization': `Bearer ${token}` },
         });
         
         if (!response.ok) throw new Error('Failed to fetch form');
@@ -34,12 +46,14 @@ const Budget  = () => {
         const data = await response.json();
         
         setFormData({
-          nameOfRso: data.nameOfRso,
-          eventTitle: data.eventTitle,
-          grandTotal: data.grandTotal
+          nameOfRso: data.nameOfRso || data.formData?.nameOfRso || "",
+          eventTitle: data.eventTitle || data.formData?.eventTitle || "",
+          grandTotal: data.grandTotal || data.formData?.grandTotal || 0
         });
         
-        setRows(data.items || []);
+        setRows(data.items || data.formData?.items || [{ 
+          quantity: "", unit: "", description: "", unitCost: "", totalCost: "" 
+        }]);
       } catch (error) {
         console.error('Error fetching form:', error);
         alert('Failed to load form data');
@@ -48,7 +62,7 @@ const Budget  = () => {
         setLoading(false);
       }
     };
-  
+
     // Pre-fill user data
     const userData = JSON.parse(localStorage.getItem('user'));
     if (userData) {
@@ -57,22 +71,12 @@ const Budget  = () => {
         nameOfRso: userData.role === 'Organization' ? userData.organizationName || "" : "",
       }));
     }
-  
+
     fetchFormData();
   }, [formId, isEditMode, navigate]);
 
-  const [rows, setRows] = useState([
-    { 
-      quantity: "", 
-      unit: "", 
-      description: "", 
-      unitCost: "", 
-      totalCost: "" 
-    }
-  ]);
-
-   // Add a new row
-   const addRow = () => {
+  // Row management functions
+  const addRow = () => {
     setRows([...rows, { 
       quantity: "", 
       unit: "", 
@@ -82,7 +86,6 @@ const Budget  = () => {
     }]);
   };
 
-  // Remove a row
   const removeRow = (index) => {
     if (rows.length > 1) {
       const newRows = [...rows];
@@ -91,16 +94,6 @@ const Budget  = () => {
       calculateGrandTotal(newRows);
     }
   };
-
-  const [formSent, setFormSent] = useState(false);
-  const [eventId, setEventId] = useState(null);
-  const [notificationVisible, setNotificationVisible] = useState(false); // State to control notification visibility
-
-  const Notification = ({ message }) => (
-    <div className="notification">
-      {message}
-    </div>
-  );
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -114,7 +107,6 @@ const Budget  = () => {
     const newRows = [...rows];
     newRows[index][field] = value;
     
-    // Calculate row total if quantity or unitCost changes
     if (field === 'quantity' || field === 'unitCost') {
       const quantity = parseFloat(newRows[index].quantity) || 0;
       const unitCost = parseFloat(newRows[index].unitCost) || 0;
@@ -125,7 +117,6 @@ const Budget  = () => {
     calculateGrandTotal(newRows);
   };
 
-  // Calculate grand total from all rows
   const calculateGrandTotal = (rowsArray) => {
     const total = rowsArray.reduce((sum, row) => {
       return sum + (parseFloat(row.totalCost) || 0);
@@ -136,8 +127,7 @@ const Budget  = () => {
       grandTotal: total.toFixed(2)
     }));
   };
-  
-  // Render row inputs
+
   const renderRowInputs = () => {
     return rows.map((row, index) => (
       <div key={index} className="budget-row">
@@ -146,30 +136,28 @@ const Budget  = () => {
           value={row.quantity}
           onChange={(e) => handleRowChange(index, 'quantity', e.target.value)}
           placeholder="Qty"
+          min="0"
         />
-        
         <input
           type="text"
           value={row.unit}
           onChange={(e) => handleRowChange(index, 'unit', e.target.value)}
           placeholder="Unit"
         />
-        
         <input
           type="text"
           value={row.description}
           onChange={(e) => handleRowChange(index, 'description', e.target.value)}
           placeholder="Description"
         />
-        
         <input
           type="number"
           step="0.01"
+          min="0"
           value={row.unitCost}
           onChange={(e) => handleRowChange(index, 'unitCost', e.target.value)}
           placeholder="Unit Cost"
         />
-        
         <input
           type="number"
           step="0.01"
@@ -177,7 +165,6 @@ const Budget  = () => {
           readOnly
           placeholder="Total"
         />
-        
         <button type="button" onClick={() => removeRow(index)}>
           Remove
         </button>
@@ -185,107 +172,109 @@ const Budget  = () => {
     ));
   };
 
-   // Fetch the logged-in user's organization name on component mount
-    // Pre-fill `quantity` with `organizationName` if logged in user is an organization
-    useEffect(() => {
-      const userData = JSON.parse(localStorage.getItem('user'));
-      if (userData) {
-        setFormData(prevData => ({
-          ...prevData,
-          nameOfRso: userData.role === 'Organization' ? userData.organizationName || "" : "",
-        }));
-      }
-    }, []);
-    
-    
-
-    const handleSubmit = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        alert('Please log in to submit the form');
-        return;
-      }
-    
-      // Validate required fields
-      if (!formData.nameOfRso) {
-        alert("Name of RSO is required");
-        return;
-      }
-    
-      const validRows = rows.filter(row => row.quantity && row.unitCost);
-      if (validRows.length === 0) {
-        alert("Please add at least one valid budget item");
-        return;
-      }
-    
-      // Prepare budgetData
-      const budgetData = {
-        formType: 'Budget',
-        nameOfRso: formData.nameOfRso,
-        eventTitle: formData.eventTitle || 'Budget Proposal',
+  const handleSubmit = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Please log in to submit the form');
+      return;
+    }
+  
+    // Validate required fields
+    if (!formData.nameOfRso.trim()) {
+      alert("Name of RSO is required");
+      return;
+    }
+  
+    const validRows = rows.filter(row => row.quantity && row.unitCost);
+    if (validRows.length === 0) {
+      alert("Please add at least one valid budget item");
+      return;
+    }
+  
+    // Prepare the payload with both structures for compatibility
+    const payload = {
+      formType: 'Budget',
+      nameOfRso: formData.nameOfRso.trim(),
+      eventTitle: formData.eventTitle.trim() || 'Budget Proposal',
+      items: validRows.map(row => ({
+        quantity: Number(row.quantity),
+        unit: row.unit.trim(),
+        description: row.description.trim(),
+        unitCost: Number(row.unitCost),
+        totalCost: Number(row.totalCost)
+      })),
+      grandTotal: Number(formData.grandTotal),
+      // Nested structure for backend compatibility
+      formData: {
+        nameOfRso: formData.nameOfRso.trim(),
+        eventTitle: formData.eventTitle.trim() || 'Budget Proposal',
         items: validRows.map(row => ({
           quantity: Number(row.quantity),
-          unit: row.unit,
-          description: row.description,
+          unit: row.unit.trim(),
+          description: row.description.trim(),
           unitCost: Number(row.unitCost),
           totalCost: Number(row.totalCost)
         })),
         grandTotal: Number(formData.grandTotal)
-      };
-    
-      console.log("Submitting:", budgetData);
-    
-      try {
-        const url = isEditMode 
-          ? `https://studevent-server.vercel.app/api/forms/${formId}`
-          : 'https://studevent-server.vercel.app/api/forms';
-        
-        const method = isEditMode ? 'PUT' : 'POST';
-    
-        const response = await fetch(url, {
-          method,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify(budgetData),
-        });
-    
-        console.log("Response status:", response.status);
-        
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(
-            errorData.message || 
-            `Server responded with status ${response.status}`
-          );
-        }
-    
-        const result = await response.json();
-        console.log("Full response:", result);
-        
-        setFormSent(true);
-        setNotificationVisible(true);
-        
-        setTimeout(() => {
-          setNotificationVisible(false);
-          navigate('/submitted-forms');
-        }, 3000);
-    
-      } catch (error) {
-        console.error('Submission error:', error);
-        alert(`Error: ${error.message}\nCheck console for details.`);
       }
     };
+  
+    try {
+      const url = isEditMode 
+        ? `https://studevent-server.vercel.app/api/forms/${formId}`
+        : 'https://studevent-server.vercel.app/api/forms';
+      
+      const method = isEditMode ? 'PUT' : 'POST';
+  
+      console.log("Submitting payload:", payload); // Debug log
+  
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Server responded with status ${response.status}`);
+      }
+  
+      const result = await response.json();
+      console.log("Submission successful:", result); // Debug log
+  
+      setFormSent(true);
+      setNotificationVisible(true);
+      
+      setTimeout(() => {
+        setNotificationVisible(false);
+        navigate('/submitted-forms');
+      }, 3000);
+  
+      if (!isEditMode) {
+        setFormData({ nameOfRso: "", eventTitle: "", grandTotal: 0 });
+        setRows([{ quantity: "", unit: "", description: "", unitCost: "", totalCost: "" }]);
+      }
+  
+    } catch (error) {
+      console.error('Submission error:', error);
+      alert(error.message || 'An error occurred while submitting the form.');
+    }
+  };
 
+  if (loading) {
+    return <div className="budget-form">Loading form data...</div>;
+  }
 
- return (
+  return (
     <div className="budget-form">
       <h1>Budget Proposal</h1>
       {notificationVisible && (
-  <Notification message={`Form ${isEditMode ? 'updated' : 'submitted'} successfully`} />
-)}
-      {/* Main form fields */}
+        <Notification message={`Form ${isEditMode ? 'updated' : 'submitted'} successfully`} />
+      )}
+      
       <div>
         <label>Name of RSO:</label>
         <input 
@@ -293,11 +282,21 @@ const Budget  = () => {
           name="nameOfRso" 
           value={formData.nameOfRso} 
           onChange={handleChange} 
-          readOnly
+          required
         />
       </div>
 
-      {/* Budget items table */}
+      <div>
+        <label>Event Title:</label>
+        <input 
+          type="text" 
+          name="eventTitle" 
+          value={formData.eventTitle} 
+          onChange={handleChange} 
+          placeholder="Optional"
+        />
+      </div>
+
       <div className="budget-items">
         <div className="budget-header">
           <span>Quantity</span>
@@ -315,7 +314,6 @@ const Budget  = () => {
         </button>
       </div>
 
-      {/* Grand total */}
       <div className="grand-total">
         <label>Grand Total:</label>
         <input 
@@ -325,11 +323,11 @@ const Budget  = () => {
         />
       </div>
 
-      <button type="button" onClick={handleSubmit}>
-  {isEditMode ? 'Update Budget' : 'Submit Budget'}
-</button>
+      <button type="button" onClick={handleSubmit} disabled={loading}>
+        {isEditMode ? 'Update Budget' : 'Submit Budget'}
+      </button>
     </div>
   );
 };
 
-export default Budget; 
+export default Budget;
