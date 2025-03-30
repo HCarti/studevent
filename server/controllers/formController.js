@@ -167,6 +167,44 @@ exports.updateForm = async (req, res) => {
       });
     }
 
+     // 2. Add Budget-specific validation
+     if (updates.formType === 'Budget') {
+      if (!updates.nameOfRso) {
+        return res.status(400).json({ error: "nameOfRso is required for Budget forms" });
+      }
+
+      if (!updates.items || !Array.isArray(updates.items) || updates.items.length === 0) {
+        return res.status(400).json({ error: "At least one budget item is required" });
+      }
+
+      const calculatedTotal = updates.items.reduce((sum, item) => {
+        return sum + (parseFloat(item.totalCost) || 0);
+      }, 0);
+      
+      if (Math.abs(calculatedTotal - parseFloat(updates.grandTotal || 0)) > 0.01) {
+        return res.status(400).json({ 
+          error: "Grand total calculation mismatch",
+          details: `Calculated: ${calculatedTotal}, Submitted: ${updates.grandTotal}`
+        });
+      }
+    }
+    else if (updates.formType === 'Activity') {
+      // Activity form validation
+      if (!updates.studentOrganization) {
+        return res.status(400).json({ error: "studentOrganization is required for Activity forms" });
+      }
+      
+      const organization = await User.findOne({
+        organizationName: updates.studentOrganization,
+        role: "Organization",
+      });
+      
+      if (!organization) {
+        return res.status(400).json({ error: "Organization not found" });
+      }
+      updates.studentOrganization = organization._id;
+    }
+
     const tracker = await EventTracker.findOne({ formId });
     if (!tracker) {
       return res.status(404).json({ message: 'Progress tracker not found' });
