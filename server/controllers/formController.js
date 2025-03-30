@@ -153,64 +153,73 @@ exports.createForm = async (req, res) => {
 exports.updateForm = async (req, res) => {
   try {
     const { formId } = req.params;
-    const updates = req.body;
+    
+    // 1. Handle both flat and nested payload structures
+    const formUpdates = req.body.formData || req.body;
+    const formType = req.body.formType; // formType must be at root level
 
-    // 1. Find the form
+    // 2. Validate formType exists
+    if (!formType) {
+      return res.status(400).json({ 
+        error: "Validation Error",
+        details: ["formType is required"]
+      });
+    }
+
+    // 3. Find the existing form
     const form = await Form.findById(formId);
     if (!form) {
       return res.status(404).json({ message: 'Form not found' });
     }
 
-    // 2. Authorization check
+    // 4. Authorization check
     if (form.emailAddress !== req.user.email) {
       return res.status(403).json({ 
         message: 'Only the original submitter can edit this form' 
       });
     }
 
-    // 3. Form-specific validation
-    if (updates.formType === 'Budget') {
-      // Budget form validation
-      if (!updates.nameOfRso) {
+    // 5. Form-specific validation
+    if (formType === 'Budget') {
+      if (!formUpdates.nameOfRso) {
         return res.status(400).json({ error: "nameOfRso is required for Budget forms" });
       }
     
-      if (!updates.items || !Array.isArray(updates.items) || updates.items.length === 0) {
+      if (!formUpdates.items || !Array.isArray(formUpdates.items) || formUpdates.items.length === 0) {
         return res.status(400).json({ error: "At least one budget item is required" });
       }
     
-      const calculatedTotal = updates.items.reduce((sum, item) => {
+      const calculatedTotal = formUpdates.items.reduce((sum, item) => {
         return sum + (parseFloat(item.totalCost) || 0);
       }, 0);
       
-      if (Math.abs(calculatedTotal - parseFloat(updates.grandTotal || 0)) > 0.01) {
+      if (Math.abs(calculatedTotal - parseFloat(formUpdates.grandTotal || 0)) > 0.01) {
         return res.status(400).json({ 
           error: "Grand total calculation mismatch",
-          details: `Calculated: ${calculatedTotal}, Submitted: ${updates.grandTotal}`
+          details: `Calculated: ${calculatedTotal}, Submitted: ${formUpdates.grandTotal}`
         });
       }
       
-      // Remove any organization-related fields for Budget forms
-      delete updates.studentOrganization;
+      // Ensure no organization fields are included
+      delete formUpdates.studentOrganization;
     } 
-    else if (updates.formType === 'Activity') {
-      // Activity form validation
-      if (!updates.studentOrganization) {
+    else if (formType === 'Activity') {
+      if (!formUpdates.studentOrganization) {
         return res.status(400).json({ error: "studentOrganization is required for Activity forms" });
       }
       
       const organization = await User.findOne({
-        organizationName: updates.studentOrganization,
+        organizationName: formUpdates.studentOrganization,
         role: "Organization",
       });
       
       if (!organization) {
         return res.status(400).json({ error: "Organization not found" });
       }
-      updates.studentOrganization = organization._id;
+      formUpdates.studentOrganization = organization._id;
     }
 
-    // 4. Check tracker status
+    // 6. Check tracker status
     const tracker = await EventTracker.findOne({ formId });
     if (!tracker) {
       return res.status(404).json({ message: 'Progress tracker not found' });
@@ -227,17 +236,21 @@ exports.updateForm = async (req, res) => {
       });
     }
 
-    // 5. Perform the update
+    // 7. Prepare update data
+    const updateData = {
+      ...formUpdates,
+      formType, // Ensure formType is preserved
+      lastEdited: new Date()
+    };
+
+    // 8. Perform the update
     const updatedForm = await Form.findByIdAndUpdate(
       formId,
-      { 
-        ...updates,
-        lastEdited: new Date()
-      },
+      updateData,
       { new: true, runValidators: true }
     );
 
-    // 6. Update tracker if needed
+    // 9. Update tracker if needed
     if (tracker.currentStep !== 'Adviser') {
       await EventTracker.updateOne(
         { formId },
@@ -257,11 +270,11 @@ exports.updateForm = async (req, res) => {
       );
     }
 
-    // 7. Send notification
+    // 10. Send notification
     if (form.emailAddress) {
       await Notification.create({
         userEmail: form.emailAddress,
-        message: `Your ${form.formType} form has been updated!`,
+        message: `Your ${formType} form has been updated!`,
         read: false,
         timestamp: new Date(),
       });

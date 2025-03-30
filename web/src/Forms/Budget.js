@@ -9,6 +9,7 @@ const Budget = () => {
   const isEditMode = !!formId;
   const [loading, setLoading] = useState(isEditMode);
   const [formData, setFormData] = useState({
+    formType: "Budget",
     nameOfRso: "",
     eventTitle: "",
     grandTotal: 0
@@ -191,9 +192,9 @@ const Budget = () => {
       return;
     }
   
-    // Prepare the payload with both structures for compatibility
+    // SIMPLIFIED payload - choose ONE structure:
     const payload = {
-      formType: 'Budget',
+      formType: 'Budget',  // Must be at root level
       nameOfRso: formData.nameOfRso.trim(),
       eventTitle: formData.eventTitle.trim() || 'Budget Proposal',
       items: validRows.map(row => ({
@@ -203,30 +204,17 @@ const Budget = () => {
         unitCost: Number(row.unitCost),
         totalCost: Number(row.totalCost)
       })),
-      grandTotal: Number(formData.grandTotal),
-      // Nested structure for backend compatibility
-      formData: {
-        nameOfRso: formData.nameOfRso.trim(),
-        eventTitle: formData.eventTitle.trim() || 'Budget Proposal',
-        items: validRows.map(row => ({
-          quantity: Number(row.quantity),
-          unit: row.unit.trim(),
-          description: row.description.trim(),
-          unitCost: Number(row.unitCost),
-          totalCost: Number(row.totalCost)
-        })),
-        grandTotal: Number(formData.grandTotal)
-      }
+      grandTotal: Number(formData.grandTotal)
     };
   
+    console.log("Final payload:", JSON.stringify(payload, null, 2));
+
     try {
       const url = isEditMode 
         ? `https://studevent-server.vercel.app/api/forms/${formId}`
         : 'https://studevent-server.vercel.app/api/forms';
       
       const method = isEditMode ? 'PUT' : 'POST';
-  
-      console.log("Submitting payload:", payload); // Debug log
   
       const response = await fetch(url, {
         method,
@@ -243,8 +231,8 @@ const Budget = () => {
       }
   
       const result = await response.json();
-      console.log("Submission successful:", result); // Debug log
-  
+      console.log("Submission successful:", result);
+
       setFormSent(true);
       setNotificationVisible(true);
       
@@ -262,11 +250,7 @@ const Budget = () => {
       console.error('Submission error:', error);
       alert(error.message || 'An error occurred while submitting the form.');
     }
-  };
-
-  if (loading) {
-    return <div className="budget-form">Loading form data...</div>;
-  }
+};
 
   return (
     <div className="budget-form">
