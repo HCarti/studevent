@@ -119,6 +119,7 @@ const App = () => {
           <Route path="/forms" element={<Forms role={role} />} />
           <Route path="/orgTrackerViewer/:formId" element={<OrgTrackerViewer />} />
           <Route path="/organization/:studentOrganization/forms" element={<OrgSubmittedForms />} />
+          <Route path="/edit-form/:formId" element={<Aap />} />
           <Route path="/activity" element={<Aap />} />
           <Route path="/project" element={<Project />} />
           <Route path="/budget" element={<Budget />} />

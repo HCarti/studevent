@@ -4,9 +4,9 @@ import './EventTrackerList.css';
 
 const EventTrackerList = () => {
   const [forms, setForms] = useState([]);
-  const [loading, setLoading] = useState(true); // Initialize as true
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filter, setFilter] = useState("all"); // State to track the current filter
+  const [filter, setFilter] = useState("all");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -15,11 +15,10 @@ const EventTrackerList = () => {
         const token = localStorage.getItem("token");
         if (!token) {
           setError("Authentication token is missing! Please log in again.");
-          setLoading(false); // Stop loading
+          setLoading(false);
           return;
         }
 
-        // Fetch all forms
         const formsResponse = await fetch("https://studevent-server.vercel.app/api/forms/all", {
           method: "GET",
           headers: {
@@ -38,7 +37,6 @@ const EventTrackerList = () => {
           throw new Error("Unexpected data format from server.");
         }
 
-        // Fetch currentStep for each form
         const formsWithCurrentStep = await Promise.all(
           formsData.map(async (form) => {
             const trackerResponse = await fetch(
@@ -54,7 +52,7 @@ const EventTrackerList = () => {
 
             if (!trackerResponse.ok) {
               console.error(`Error fetching tracker data for form ${form._id}`);
-              return { ...form, currentStep: "N/A" }; // Default value if tracker data is unavailable
+              return { ...form, currentStep: "N/A" };
             }
 
             const trackerData = await trackerResponse.json();
@@ -67,7 +65,7 @@ const EventTrackerList = () => {
         console.error("Error fetching forms:", error);
         setError(error.message);
       } finally {
-        setLoading(false); // Stop loading whether successful or not
+        setLoading(false);
       }
     };
 
@@ -78,7 +76,6 @@ const EventTrackerList = () => {
     navigate(`/progtrack/${form._id}`, { state: { form } });
   };
 
-  // Function to filter forms based on status
   const getFilteredForms = () => {
     switch (filter) {
       case "pending":
@@ -88,11 +85,10 @@ const EventTrackerList = () => {
       case "declined":
         return forms.filter((form) => form.finalStatus?.trim().toLowerCase() === "declined");
       default:
-        return forms; // "all" filter
+        return forms;
     }
   };
 
-  // Function to handle filter button clicks
   const handleFilterClick = (filterType) => {
     setFilter(filterType);
   };
@@ -102,7 +98,6 @@ const EventTrackerList = () => {
       <h2>Event Form Tracker</h2>
       {error && <p className="event-tracker-error">{error}</p>}
 
-      {/* Loading Spinner */}
       {loading && (
         <div className="loading-spinner">
           <div className="spinner"></div>
@@ -110,7 +105,6 @@ const EventTrackerList = () => {
         </div>
       )}
 
-      {/* Filters and Table */}
       {!loading && (
         <>
           <div className="event-tracker-filters">
@@ -145,6 +139,7 @@ const EventTrackerList = () => {
               <thead>
                 <tr>
                   <th>Organization</th>
+                  <th>Form Type</th>
                   <th>Event Title</th>
                   <th>Status</th>
                   <th>Application Date</th>
@@ -158,7 +153,12 @@ const EventTrackerList = () => {
                     className={`event-tracker-row ${form.finalStatus?.trim().toLowerCase()}`}
                     onClick={() => handleRedirectToProgressTracker(form)}
                   >
-                    <td>{form.studentOrganization?.organizationName || form.nameOfRso?.organizationName || 'Unknown Organization'}</td>
+                    <td>
+                      {form.formType === 'Budget' 
+                        ? form.nameOfRso 
+                        : (form.studentOrganization?.organizationName || 'Unknown Organization')}
+                    </td>
+                    <td>{form.formType}</td>
                     <td>{form.eventTitle}</td>
                     <td>
                       <span className={`status-badge ${form.finalStatus?.trim().toLowerCase()}`}>

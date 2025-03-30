@@ -148,3 +148,106 @@ exports.createForm = async (req, res) => {
     });
   }
 };
+
+// Add this after your createForm controller
+exports.updateForm = async (req, res) => {
+  try {
+    const { formId } = req.params;
+    const updates = req.body;
+
+    // 1. Find the form and its tracker
+    const form = await Form.findById(formId);
+    if (!form) {
+      return res.status(404).json({ message: 'Form not found' });
+    }
+
+    if (form.emailAddress !== req.user.email) {
+      return res.status(403).json({ 
+        message: 'Only the original submitter can edit this form' 
+      });
+    }
+
+    const tracker = await EventTracker.findOne({ formId });
+    if (!tracker) {
+      return res.status(404).json({ message: 'Progress tracker not found' });
+    }
+
+    // 2. Check if editing is allowed (not reviewed by dean yet)
+    const isDeanReviewing = tracker.currentAuthority === 'Dean';
+    const isDeanApproved = tracker.steps.some(
+      step => step.stepName === 'Dean' && step.status === 'approved'
+    );
+
+    if (isDeanReviewing || isDeanApproved) {
+      return res.status(403).json({ 
+        message: 'Form cannot be edited once it reaches the Dean for review/approval' 
+      });
+    }
+
+    // 3. Perform the update
+    const updatedForm = await Form.findByIdAndUpdate(
+      formId,
+      { 
+        ...updates,
+        lastEdited: new Date() // Track when edits were made
+      },
+      { new: true, runValidators: true }
+    );
+
+    // 4. Update tracker if needed (example: reset approvals if form changes)
+    if (tracker.currentStep !== 'Adviser') {
+      await EventTracker.updateOne(
+        { formId },
+        { $set: { currentStep: 'Adviser', currentAuthority: 'Adviser' } }
+      );
+      
+      // Reset all step statuses except Adviser
+      await EventTracker.updateOne(
+        { formId },
+        { 
+          $set: { 
+            "steps.$[].status": "pending",
+            "steps.$[].remarks": "",
+            "steps.$[].timestamp": null
+          } 
+        }
+      );
+      await EventTracker.updateOne(
+        { formId, "steps.stepName": "Adviser" },
+        { $set: { "steps.$.status": "pending" } }
+      );
+    }
+
+    // 5. Send notification
+    if (form.emailAddress) {
+      await Notification.create({
+        userEmail: form.emailAddress,
+        message: `Your ${form.formType} form has been updated!`,
+        read: false,
+        timestamp: new Date(),
+      });
+    }
+
+    res.status(200).json({
+      message: 'Form updated successfully',
+      form: updatedForm,
+      tracker: await EventTracker.findOne({ formId }) // Return fresh tracker
+    });
+
+  } catch (error) {
+    console.error("Form Update Error:", error);
+    
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ 
+        error: "Validation Error",
+        details: errors 
+      });
+    }
+    
+    res.status(500).json({ 
+      error: "Server error", 
+      details: error.message 
+    });
+  }
+};

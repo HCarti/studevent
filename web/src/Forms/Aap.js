@@ -7,16 +7,23 @@ import { Document, Page, Text, View, StyleSheet, Image, PDFDownloadLink } from "
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import NU_logo from "../Images/NU_logo.png";
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { MdOutlineContactPage } from "react-icons/md";
 
 const Aap = () => {
+  // Get route parameters and navigation
+  const { formId } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isEditMode = !!formId; // Determine if we're in edit mode
+
+  // Initialize form state
   const [formData, setFormData] = useState({
     eventLocation: "",
-    applicationDate: new Date().toISOString().split('T')[0], // Sets today's date in YYYY-MM-DD format
-    studentOrganization: "", // Ensure this is an ObjectId or can be handled as one
+    applicationDate: new Date().toISOString().split('T')[0],
+    studentOrganization: "",
     contactPerson: "",
-    contactNo: "", // Contact number as string to prevent issues with leading zeros
+    contactNo: "",
     emailAddress: "",
     eventTitle: "",
     eventType: "",
@@ -24,7 +31,7 @@ const Aap = () => {
     eventStartDate: "",
     eventEndDate: "",
     organizer: "",
-    budgetAmount: "", // Use a number input, but store as string and convert when submitting
+    budgetAmount: "",
     budgetFrom: "",
     coreValuesIntegration: "",
     objectives: "",
@@ -50,15 +57,81 @@ const Aap = () => {
 
   const [currentStep, setCurrentStep] = useState(0);
   const [formSent, setFormSent] = useState(false);
-  const [eventId, setEventId] = useState(null);
-  const [notificationVisible, setNotificationVisible] = useState(false); // State to control notification visibility
+  const [notificationVisible, setNotificationVisible] = useState(false);
+  const [loading, setLoading] = useState(isEditMode);
+  const [occupiedDates, setOccupiedDates] = useState([]);
 
+  // Notification component
   const Notification = ({ message }) => (
     <div className="notification">
       {message}
     </div>
   );
 
+  // Fetch form data if in edit mode
+  useEffect(() => {
+    const fetchFormData = async () => {
+      if (!isEditMode) return;
+      
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`https://studevent-server.vercel.app/api/forms/${formId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        
+        if (!response.ok) throw new Error('Failed to fetch form');
+        
+        const data = await response.json();
+        
+        // Format dates for the form
+        const formattedData = {
+          ...data,
+          eventStartDate: data.eventStartDate ? new Date(data.eventStartDate).toISOString() : '',
+          eventEndDate: data.eventEndDate ? new Date(data.eventEndDate).toISOString() : '',
+          applicationDate: data.applicationDate ? new Date(data.applicationDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+        };
+        
+        setFormData(formattedData);
+      } catch (error) {
+        console.error('Error fetching form:', error);
+        alert('Failed to load form data');
+        navigate('/submitted-forms');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Pre-fill user data
+    const userData = JSON.parse(localStorage.getItem('user'));
+    if (userData) {
+      setFormData(prev => ({
+        ...prev,
+        studentOrganization: userData.role === 'Organization' ? userData.organizationName || "" : "",
+        emailAddress: userData.email || "",
+        applicationDate: new Date().toISOString().split('T')[0]
+      }));
+    }
+
+    fetchFormData();
+    fetchOccupiedDates();
+  }, [formId, isEditMode, navigate]);
+
+  // Fetch occupied dates
+  const fetchOccupiedDates = async () => {
+    try {
+      const response = await fetch('https://studevent-server.vercel.app/api/occupied-dates');
+      const data = await response.json();
+      if (data?.occupiedDates) {
+        setOccupiedDates(data.occupiedDates);
+      }
+    } catch (error) {
+      console.error('Error fetching occupied dates:', error);
+    }
+  };
+
+  // Form handlers
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -67,67 +140,57 @@ const Aap = () => {
     });
   };
 
-  const [occupiedDates, setOccupiedDates] = useState([]);
-
   const handleDateChange = (date, field) => {
-    setFormData(prevData => ({
-      ...prevData,
-      [field]: date.toISOString(), // Store as ISO string for backend compatibility
+    setFormData(prev => ({
+      ...prev,
+      [field]: date.toISOString(),
     }));
   };
 
-  useEffect(() => {
-    // Fetch occupied dates from backend
-    const fetchOccupiedDates = async () => {
-      try {
-        const response = await fetch('https://studevent-server.vercel.app/api/occupied-dates');
-        const data = await response.json();
-        if (data && data.occupiedDates) {
-          setOccupiedDates(data.occupiedDates); // Ensure `occupiedDates` exists
-        } else {
-          console.error("Occupied dates data is undefined or malformed:", data);
-        }
-      } catch (error) {
-        console.error('Error fetching occupied dates:', error);
-      }
-    };
-    
-  
-    fetchOccupiedDates();
-  }, []);
-  
-
   const isOccupied = (date) => {
-    const formattedDate = date.toISOString().split('T')[0]; // YYYY-MM-DD format
-    return occupiedDates.includes(formattedDate); // Directly check if the formatted date is in the array
+    const formattedDate = date.toISOString().split('T')[0];
+    return occupiedDates.includes(formattedDate);
   };
-  
 
-  // Adjust highlighting logic
-  const getHighlightedDates = () => {
-    return occupiedDates.map(d => new Date(d));
-  };
-  
-
+  // Form navigation
   const handleNext = () => {
-    if (isSectionComplete(currentStep)) { // Pass currentStep to check completion
+    if (isSectionComplete(currentStep)) {
       setCurrentStep(currentStep + 1);
     } else {
       alert("Please complete all required fields in this section before proceeding.");
     }
   };
-  
-  
-    const isSectionComplete = (step) => {
-      const requiredFields = getFieldsForStep(step);
-      for (const field of requiredFields) {
-        if (!formData[field].trim()) { // Ensure non-empty values
-          return false;
-        }
+
+  const isSectionComplete = (step) => {
+    const requiredFields = getFieldsForStep(step);
+    return requiredFields.every(field => {
+      const value = formData[field];
+      
+      // Handle different value types
+      if (value === null || value === undefined) {
+        return false;
       }
-      return true;
-    };
-  
+      
+      // For strings
+      if (typeof value === 'string') {
+        return value.trim() !== '';
+      }
+      
+      // For numbers
+      if (typeof value === 'number') {
+        return true; // Or add specific number validation if needed
+      }
+      
+      // For dates
+      if (value instanceof Date) {
+        return true;
+      }
+      
+      // For other types (booleans, etc.)
+      return !!value;
+    });
+  };
+
   const getFieldsForStep = (step) => {
     const sections = [
       ['eventLocation', 'applicationDate'],
@@ -144,23 +207,9 @@ const Aap = () => {
     return sections[step] || [];
   };
 
-   // Fetch the logged-in user's organization name on component mount
-    // Pre-fill `studentOrganization` with `organizationName` if logged in user is an organization
-    useEffect(() => {
-      const userData = JSON.parse(localStorage.getItem('user'));
-      if (userData) {
-        setFormData(prevData => ({
-          ...prevData,
-          studentOrganization: userData.role === 'Organization' ? userData.organizationName || "" : "",
-          emailAddress: userData.email || "",
-          applicationDate: new Date().toISOString().split('T')[0] // Always sets today's date
-        }));
-      }
-    }, []);
-    
-    
-
+  // Form submission
   const handleSubmit = async () => {
+    // Validate required fields
     const requiredFields = [
       'eventLocation', 'applicationDate', 'studentOrganization', 'contactPerson', 'contactNo', 'emailAddress', 
       'eventTitle', 'eventType', 'venueAddress', 'eventStartDate', 'eventEndDate', 'organizer', 'budgetAmount', 
@@ -177,151 +226,134 @@ const Aap = () => {
       }
     }
 
+    // Date validation
     const eventStart = moment(formData.eventStartDate);
     const eventEnd = moment(formData.eventEndDate);
-
-    if (!eventStart.isValid() || !eventEnd.isValid()) {
-      alert("Invalid event start or end date.");
+    if (!eventStart.isValid() || !eventEnd.isValid() || eventEnd.isBefore(eventStart)) {
+      alert("Invalid event dates");
       return;
     }
 
-    if (eventEnd.isBefore(eventStart)) {
-      alert("End date must be after the start date.");
-      return;
-    }
-
-    const token = localStorage.getItem('token'); // Ensure you have previously set this during login
-
-    if (!token) {
-      alert('Authentication token not found. Please log in again.');
-      return;
-    }
-
-    console.log('Token:', token); // Check if token is defined
-
-
-    // Convert fields to expected data types for the backend schema
-    const eventData = {
-      formType: 'Activity', // ⭐️ Critical addition
+    // Prepare submission data
+    const submissionData = {
+      formType: 'Activity',
       ...formData,
-      eventLocation: formData.eventLocation,
+      eventStartDate: new Date(formData.eventStartDate),
+      eventEndDate: new Date(formData.eventEndDate),
       applicationDate: new Date(formData.applicationDate),
-      studentOrganization: formData.studentOrganization, // Ensure this field is properly formatted as an ObjectId or handled by the backend
-      contactPerson: formData.contactPerson,
-      contactNo: Number(formData.contactNo), // Ensure it's converted to a number if necessary
-      emailAddress: formData.emailAddress,
-      eventTitle: formData.eventTitle,
-      eventType: formData.eventType,
-      venueAddress: formData.venueAddress,
-      eventStartDate: new Date(formData.eventStartDate), // Convert to Date object
-      eventEndDate: new Date(formData.eventEndDate), // Convert to Date object
-      organizer: formData.organizer,
-      budgetAmount: Number(formData.budgetAmount), // Convert to number
-      budgetFrom: formData.budgetFrom,
-      coreValuesIntegration: formData.coreValuesIntegration,
-      objectives: formData.objectives,
-      marketingCollaterals: formData.marketingCollaterals,
-      pressRelease: formData.pressRelease,
-      others: formData.others,
-      eventFacilities: formData.eventFacilities,
-      holdingArea: formData.holdingArea,
-      toilets: formData.toilets,
-      transportationandParking: formData.transportationandParking,
-      more: formData.more,
-      licensesRequired: formData.licensesRequired,
-      houseKeeping: formData.houseKeeping,
-      wasteManagement: formData.wasteManagement,
-      eventManagementHead: formData.eventManagementHead,
-      eventCommitteesandMembers: formData.eventCommitteesandMembers,
-      health: formData.health,
-      safetyAttendees: formData.safetyAttendees,
-      emergencyFirstAid: formData.emergencyFirstAid,
-      fireSafety: formData.fireSafety,
-      weather: formData.weather,
-      length: moment(formData.eventEndDate).diff(moment(formData.eventStartDate), 'hours') // Calculate event length in hours
+      contactNo: Number(formData.contactNo),
+      budgetAmount: Number(formData.budgetAmount),
+      length: moment(formData.eventEndDate).diff(moment(formData.eventStartDate), 'hours')
     };
-    
-    
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Please log in again');
+      return;
+    }
+
     try {
-      const response = await fetch('https://studevent-server.vercel.app/api/forms', {
-        method: 'POST',
+      // Determine if we're creating or updating
+      const url = isEditMode 
+        ? `https://studevent-server.vercel.app/api/forms/${formId}`
+        : 'https://studevent-server.vercel.app/api/forms';
+      
+      const method = isEditMode ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, // Uncomment if needed
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(eventData),
+        body: JSON.stringify(submissionData),
       });
-    
-      if (!response.ok) {
-        // Check if the response is JSON before trying to parse it
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const errorData = await response.json();
-          alert(`Error: ${errorData.error || 'Submission failed'}`);
-        } else {
-          const text = await response.text();
-          alert(`Error: ${text}`);
-        }
-        return;
-      }
-    
-      const result = await response.json();
-    
-      if (result._id) {
-        setEventId(result._id);
-      }
-      setFormSent(true);
 
-      setFormSent(true); // Mark form as submitted
-      setNotificationVisible(true); // Show notification
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Submission failed');
+      }
+
+      // Show success and redirect
+      setFormSent(true);
+      setNotificationVisible(true);
+      
       setTimeout(() => {
-        setNotificationVisible(false); // Hide notification after 3 seconds
+        setNotificationVisible(false);
+        navigate('/submitted-forms');
       }, 3000);
-    
-      // Reset form data
-      setFormData({
-        eventLocation: "",
-        applicationDate: "",
-        studentOrganization: "",
-        contactPerson: "",
-        contactNo: "",
-        emailAddress: "",
-        eventTitle: "",
-        eventType: "",
-        venueAddress: "",
-        eventStartDate: "",
-        eventEndDate: "",
-        organizer: "",
-        budgetAmount: "",
-        budgetFrom: "",
-        coreValuesIntegration: "",
-        objectives: "",
-        marketingCollaterals: "",
-        pressRelease: "",
-        others: "",
-        eventFacilities: "",
-        holdingArea: "",
-        toilets: "",
-        transportationandParking: "",
-        more: "",
-        licensesRequired: "",
-        houseKeeping: "",
-        wasteManagement: "",
-        eventManagementHead: "",
-        eventCommitteesandMembers: "",
-        health: "",
-        safetyAttendees: "",
-        emergencyFirstAid: "",
-        fireSafety: "",
-        weather: ""
-      });
-    
+
+      // Reset form if creating new
+      if (!isEditMode) {
+        setFormData({
+          eventLocation: "",
+          applicationDate: new Date().toISOString().split('T')[0],
+          studentOrganization: "",
+          contactPerson: "",
+          contactNo: "",
+          emailAddress: "",
+          eventTitle: "",
+          eventType: "",
+          venueAddress: "",
+          eventStartDate: "",
+          eventEndDate: "",
+          organizer: "",
+          budgetAmount: "",
+          budgetFrom: "",
+          coreValuesIntegration: "",
+          objectives: "",
+          marketingCollaterals: "",
+          pressRelease: "",
+          others: "",
+          eventFacilities: "",
+          holdingArea: "",
+          toilets: "",
+          transportationandParking: "",
+          more: "",
+          licensesRequired: "",
+          houseKeeping: "",
+          wasteManagement: "",
+          eventManagementHead: "",
+          eventCommitteesandMembers: "",
+          health: "",
+          safetyAttendees: "",
+          emergencyFirstAid: "",
+          fireSafety: "",
+          weather: ""
+        });
+      }
+
     } catch (error) {
       console.error('Error:', error);
-      alert('An error occurred while submitting the form.');
+      alert(error.message || 'An error occurred');
     }
-  };    
+  };
 
+  // UI Components
+  const renderBackButton = () => (
+    <button 
+      className="back-button"
+      onClick={() => navigate('/submitted-forms')}
+    >
+      ← Back to My Forms
+    </button>
+  );
+
+  const renderFormHeader = () => (
+    <div className="form-header">
+      {isEditMode && renderBackButton()}
+      <h1>
+        {isEditMode ? 'Edit Activity Application' : 'Activity Application Form'}
+      </h1>
+      <p>This Event Proposal/Plan should be submitted at least 1 to 3 months before the event.</p>
+    </div>
+  );
+
+  const renderSubmitButton = () => (
+    <button onClick={handleSubmit}>
+      {isEditMode ? 'Update Form' : 'Submit Form'}
+    </button>
+  );
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -356,8 +388,8 @@ const Aap = () => {
               readOnly
             />
 
-            <label>Contact Person:</label>
-            <input type="text" name="contactPerson" value={formData.contactPerson} onChange={handleChange} />
+            {/* <label>Contact Person:</label>
+            <input type="text" name="contactPerson" value={formData.contactPerson} onChange={handleChange} /> */}
             <label>Contact No:</label>
             <input type="text" name="contactNo" value={formData.contactNo} onChange={handleChange} />
             <label>Email Address:</label>
@@ -391,7 +423,7 @@ const Aap = () => {
               selected={formData.eventStartDate ? new Date(formData.eventStartDate) : null}
               onChange={(date) => handleDateChange(date, 'eventStartDate')}
               minDate={new Date()}
-              highlightDates={getHighlightedDates()}
+              // highlightDates={getHighlightedDates()}
               dayClassName={date => isOccupied(date) ? 'occupied' : 'available'}
               dateFormat="yyyy-MM-dd HH:mm"
               showTimeSelect
@@ -401,7 +433,7 @@ const Aap = () => {
               selected={formData.eventEndDate ? new Date(formData.eventEndDate) : null}
               onChange={(date) => handleDateChange(date, 'eventEndDate')}
               minDate={new Date()}
-              highlightDates={getHighlightedDates()}
+              // highlightDates={getHighlightedDates()}
               dayClassName={date => isOccupied(date) ? 'occupied' : 'available'}
               dateFormat="yyyy-MM-dd HH:mm"
               showTimeSelect
@@ -490,7 +522,9 @@ const Aap = () => {
 
     return (
       <div className="form-ubox-1">
-         {notificationVisible && <Notification message="Form submitted successfully!" />}
+         {notificationVisible && (
+        <Notification message={`Form ${isEditMode ? 'updated' : 'submitted'} successfully!`} />
+      )}
         <div className="sidebar">
           <ul>
             <li className={currentStep === 0 ? 'active' : ''}>
@@ -516,8 +550,8 @@ const Aap = () => {
           </ul>
         </div>
         <div className="inner-forms-1">
-          <h1>Activity Application Form</h1>
-          <p>This Event Proposal/Plan should be submitted at least 1 to 3 months before the event to allow time for preparation and purchasing process.</p>
+          {renderFormHeader()}
+          {renderStepContent()}
           {renderStepContent()}
           <div className="form-navigation">
             {currentStep > 0 && (
@@ -526,7 +560,7 @@ const Aap = () => {
             {currentStep < 4 ? (
               <button onClick={handleNext}>Next</button>
             ) : (
-              <button onClick={handleSubmit}>Submit</button>
+              renderSubmitButton()
             )}
           </div>
         </div>
