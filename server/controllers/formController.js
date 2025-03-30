@@ -155,20 +155,22 @@ exports.updateForm = async (req, res) => {
     const { formId } = req.params;
     const updates = req.body;
 
-    // 1. Find the form and its tracker
+    // 1. Find the form
     const form = await Form.findById(formId);
     if (!form) {
       return res.status(404).json({ message: 'Form not found' });
     }
 
+    // 2. Authorization check
     if (form.emailAddress !== req.user.email) {
       return res.status(403).json({ 
         message: 'Only the original submitter can edit this form' 
       });
     }
 
-     // 2. Form-specific validation
-     if (updates.formType === 'Budget') {
+    // 3. Form-specific validation
+    if (updates.formType === 'Budget') {
+      // Budget form validation
       if (!updates.nameOfRso) {
         return res.status(400).json({ error: "nameOfRso is required for Budget forms" });
       }
@@ -187,9 +189,12 @@ exports.updateForm = async (req, res) => {
           details: `Calculated: ${calculatedTotal}, Submitted: ${updates.grandTotal}`
         });
       }
+      
+      // Remove any organization-related fields for Budget forms
+      delete updates.studentOrganization;
     } 
     else if (updates.formType === 'Activity') {
-      // Only Activity forms need organization validation
+      // Activity form validation
       if (!updates.studentOrganization) {
         return res.status(400).json({ error: "studentOrganization is required for Activity forms" });
       }
@@ -205,12 +210,12 @@ exports.updateForm = async (req, res) => {
       updates.studentOrganization = organization._id;
     }
 
+    // 4. Check tracker status
     const tracker = await EventTracker.findOne({ formId });
     if (!tracker) {
       return res.status(404).json({ message: 'Progress tracker not found' });
     }
 
-    // 2. Check if editing is allowed (not reviewed by dean yet)
     const isDeanReviewing = tracker.currentAuthority === 'Dean';
     const isDeanApproved = tracker.steps.some(
       step => step.stepName === 'Dean' && step.status === 'approved'
@@ -222,28 +227,24 @@ exports.updateForm = async (req, res) => {
       });
     }
 
-    // 3. Perform the update
+    // 5. Perform the update
     const updatedForm = await Form.findByIdAndUpdate(
       formId,
       { 
         ...updates,
-        lastEdited: new Date() // Track when edits were made
+        lastEdited: new Date()
       },
       { new: true, runValidators: true }
     );
 
-    // 4. Update tracker if needed (example: reset approvals if form changes)
+    // 6. Update tracker if needed
     if (tracker.currentStep !== 'Adviser') {
-      await EventTracker.updateOne(
-        { formId },
-        { $set: { currentStep: 'Adviser', currentAuthority: 'Adviser' } }
-      );
-      
-      // Reset all step statuses except Adviser
       await EventTracker.updateOne(
         { formId },
         { 
           $set: { 
+            currentStep: 'Adviser', 
+            currentAuthority: 'Adviser',
             "steps.$[].status": "pending",
             "steps.$[].remarks": "",
             "steps.$[].timestamp": null
@@ -256,7 +257,7 @@ exports.updateForm = async (req, res) => {
       );
     }
 
-    // 5. Send notification
+    // 7. Send notification
     if (form.emailAddress) {
       await Notification.create({
         userEmail: form.emailAddress,
@@ -269,11 +270,16 @@ exports.updateForm = async (req, res) => {
     res.status(200).json({
       message: 'Form updated successfully',
       form: updatedForm,
-      tracker: await EventTracker.findOne({ formId }) // Return fresh tracker
+      tracker: await EventTracker.findOne({ formId })
     });
 
   } catch (error) {
-    console.error("Form Update Error:", error);
+    console.error("Form Update Error:", {
+      error: error.message,
+      stack: error.stack,
+      body: req.body,
+      params: req.params
+    });
     
     if (error.name === 'ValidationError') {
       const errors = Object.values(error.errors).map(err => err.message);
@@ -285,7 +291,7 @@ exports.updateForm = async (req, res) => {
     
     res.status(500).json({ 
       error: "Server error", 
-      details: error.message 
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
