@@ -218,7 +218,7 @@ const Budget  = () => {
         return;
       }
     
-      // Prepare the payload
+      // Prepare budgetData
       const budgetData = {
         formType: 'Budget',
         nameOfRso: formData.nameOfRso,
@@ -232,6 +232,8 @@ const Budget  = () => {
         })),
         grandTotal: Number(formData.grandTotal)
       };
+    
+      console.log("Submitting:", budgetData);
     
       try {
         const url = isEditMode 
@@ -249,39 +251,33 @@ const Budget  = () => {
           body: JSON.stringify(budgetData),
         });
     
+        console.log("Response status:", response.status);
+        
         if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(errorText.includes('<!DOCTYPE') 
-            ? 'Server error: Please try again later' 
-            : errorText);
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            errorData.message || 
+            `Server responded with status ${response.status}`
+          );
         }
     
         const result = await response.json();
+        console.log("Full response:", result);
+        
         setFormSent(true);
         setNotificationVisible(true);
         
         setTimeout(() => {
           setNotificationVisible(false);
-          if (isEditMode) {
-            navigate('/submitted-forms');
-          }
+          navigate('/submitted-forms');
         }, 3000);
     
-        // Reset form if creating new
-        if (!isEditMode) {
-          setFormData({
-            nameOfRso: "",
-            eventTitle: "",
-            grandTotal: 0
-          });
-          setRows([{ quantity: "", unit: "", description: "", unitCost: "", totalCost: "" }]);
-        }
-    
       } catch (error) {
-        console.error('Error:', error);
-        alert(error.message || 'An error occurred while submitting the form.');
+        console.error('Submission error:', error);
+        alert(`Error: ${error.message}\nCheck console for details.`);
       }
     };
+
 
  return (
     <div className="budget-form">
