@@ -35,7 +35,7 @@ router.get('/all', formController.getAllForms); // ✅ Correct
 // Route to get specific form details
 router.get('/:formId', formController.getFormById); // ✅ Correct router.get('/:formId', formController.getFormById); // ✅ Correct
 
-router.put('/edit-form/:formId', formController.updateForm);
+router.put('/:formId', formController.updateForm); // Standard RESTful route
 
 // POST route to handle form submission
 router.post('/submit', async (req, res) => {

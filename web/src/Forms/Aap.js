@@ -70,38 +70,58 @@ const Aap = () => {
 
   // Fetch form data if in edit mode
   useEffect(() => {
-    const fetchFormData = async () => {
-      if (!isEditMode) return;
+    // Update the fetchFormData function in your useEffect
+const fetchFormData = async () => {
+  if (!isEditMode) return;
+  
+  try {
+    const token = localStorage.getItem('token');
+    // 1. First fetch the form data
+    const formResponse = await fetch(`https://studevent-server.vercel.app/api/forms/${formId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    
+    if (!formResponse.ok) throw new Error('Failed to fetch form');
+    
+    const formData = await formResponse.json();
+    
+    // 2. If studentOrganization is an ObjectId, fetch the organization details
+    let organizationName = formData.studentOrganization;
+    
+    // Check if studentOrganization is an ObjectId (24 character hex string)
+    if (typeof formData.studentOrganization === 'string' && /^[0-9a-fA-F]{24}$/.test(formData.studentOrganization)) {
+      const orgResponse = await fetch(`https://studevent-server.vercel.app/api/organizations/${formData.studentOrganization}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       
-      try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`https://studevent-server.vercel.app/api/forms/${formId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-        
-        if (!response.ok) throw new Error('Failed to fetch form');
-        
-        const data = await response.json();
-        
-        // Format dates for the form
-        const formattedData = {
-          ...data,
-          eventStartDate: data.eventStartDate ? new Date(data.eventStartDate).toISOString() : '',
-          eventEndDate: data.eventEndDate ? new Date(data.eventEndDate).toISOString() : '',
-          applicationDate: data.applicationDate ? new Date(data.applicationDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
-        };
-        
-        setFormData(formattedData);
-      } catch (error) {
-        console.error('Error fetching form:', error);
-        alert('Failed to load form data');
-        navigate('/submitted-forms');
-      } finally {
-        setLoading(false);
+      if (orgResponse.ok) {
+        const orgData = await orgResponse.json();
+        organizationName = orgData.organizationName || formData.studentOrganization;
       }
+    }
+    
+    // 3. Format all data for the form
+    const formattedData = {
+      ...formData,
+      studentOrganization: organizationName, // Use the resolved name
+      eventStartDate: formData.eventStartDate ? new Date(formData.eventStartDate).toISOString() : '',
+      eventEndDate: formData.eventEndDate ? new Date(formData.eventEndDate).toISOString() : '',
+      applicationDate: formData.applicationDate ? new Date(formData.applicationDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
     };
+    
+    setFormData(formattedData);
+  } catch (error) {
+    console.error('Error fetching form:', error);
+    alert('Failed to load form data');
+    navigate('/submitted-forms');
+  } finally {
+    setLoading(false);
+  }
+};
 
     // Pre-fill user data
     const userData = JSON.parse(localStorage.getItem('user'));
@@ -270,8 +290,15 @@ const Aap = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Submission failed');
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Submission failed');
+        } else {
+          const text = await response.text();
+          throw new Error(text || `HTTP error! Status: ${response.status}`);
+        }
       }
 
       // Show success and redirect
@@ -329,19 +356,10 @@ const Aap = () => {
     }
   };
 
-  // UI Components
-  const renderBackButton = () => (
-    <button 
-      className="back-button"
-      onClick={() => navigate('/submitted-forms')}
-    >
-      ← Back to My Forms
-    </button>
-  );
 
   const renderFormHeader = () => (
     <div className="form-header">
-      {isEditMode && renderBackButton()}
+      {isEditMode}
       <h1>
         {isEditMode ? 'Edit Activity Application' : 'Activity Application Form'}
       </h1>
@@ -551,7 +569,6 @@ const Aap = () => {
         </div>
         <div className="inner-forms-1">
           {renderFormHeader()}
-          {renderStepContent()}
           {renderStepContent()}
           <div className="form-navigation">
             {currentStep > 0 && (
