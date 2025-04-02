@@ -326,31 +326,40 @@ const formSchema = new mongoose.Schema({
     },
 
     // ==== PROGRAM FLOW ====
-    programFlow: [programFlowSchema], 
-    required: function() { return this.formType === 'Project'; },
-
-    // ==== OFFICERS IN CHARGE ====
-    projectHeads: [projectHeadsSchema],
-    required: function() { return this.formType === 'Project'; },
-
-    workingCommittees: [workingCommitteesSchema],
-    required: function() { return this.formType === 'Project'; },
-
-    // === TASK DELIGATION ===
-    taskDeligation: [taskDeligationSchema],
-    required: function() { return this.formType === 'Project'; },
-
-    // === TIMELINE/POSTING SCHEDULES
-    timelineSchedules: [timelineSchedulesSchema],
-    required: function() { return this.formType === 'Project'; },
-
-    // === School Facilities & Equipments
-    schoolEquipments: [equipmentsNeedSchema],
-    required: function() { return this.formType === 'Project'; },
-
-    // ===Budget Proposal
-    budgetProposal: [projectBudgetSchema],
-    required: function() { return this.formType === 'Project'; },
+    programFlow: { 
+        type: [programFlowSchema],
+        required: function() { return this.formType === 'Project'; }
+    },
+    
+    projectHeads: { 
+        type: [projectHeadsSchema],
+        required: function() { return this.formType === 'Project'; }
+    },
+    
+    workingCommittees: { 
+        type: [workingCommitteesSchema],
+        required: function() { return this.formType === 'Project'; }
+    },
+    
+    taskDeligation: { 
+        type: [taskDeligationSchema],
+        required: function() { return this.formType === 'Project'; }
+    },
+    
+    timelineSchedules: { 
+        type: [timelineSchedulesSchema],
+        required: function() { return this.formType === 'Project'; }
+    },
+    
+    schoolEquipments: { 
+        type: [equipmentsNeedSchema],
+        required: function() { return this.formType === 'Project'; }
+    },
+    
+    budgetProposal: { 
+        type: [projectBudgetSchema],
+        required: function() { return this.formType === 'Project'; }
+    },
 
     
 
