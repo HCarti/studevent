@@ -280,7 +280,10 @@ const formSchema = new mongoose.Schema({
         type: String, 
         required: function() { return this.formType === 'Budget'; } 
     },
-    items: [budgetItemSchema],  required: function() { return this.formType === 'Budget'; }, // Array of budget items
+    items: { 
+        type: [budgetItemSchema],
+        required: function() { return this.formType === 'Budget'; }
+    },
     grandTotal: { 
         type: Number, 
         required: function() { return this.formType === 'Budget'; },
@@ -326,24 +329,24 @@ const formSchema = new mongoose.Schema({
     },
 
     // ==== PROGRAM FLOW ====
-    programFlow: [programFlowSchema],
+    programFlow: [programFlowSchema],  required: function() { return this.formType === 'Project'; },
 
     // ==== OFFICERS IN CHARGE ====
-    projectHeads: [projectHeadsSchema],
+    projectHeads: [projectHeadsSchema],  required: function() { return this.formType === 'Project'; },
 
-    workingCommittees: [workingCommitteesSchema],
+    workingCommittees: [workingCommitteesSchema],  required: function() { return this.formType === 'Project'; },
 
     // === TASK DELEGATION ===
-    taskDeligation: [taskDeligationSchema],
+    taskDeligation: [taskDeligationSchema],  required: function() { return this.formType === 'Project'; },
 
     // === TIMELINE/POSTING SCHEDULES ===
-    timelineSchedules: [timelineSchedulesSchema],
+    timelineSchedules: [timelineSchedulesSchema],  required: function() { return this.formType === 'Project'; },
 
     // === School Facilities & Equipment ===
-    schoolEquipments: [equipmentsNeedSchema],
+    schoolEquipments: [equipmentsNeedSchema],  required: function() { return this.formType === 'Project'; },
 
     // === Budget Proposal ===
-    budgetProposal: [projectBudgetSchema],
+    budgetProposal: [projectBudgetSchema],  required: function() { return this.formType === 'Project'; },
 
     // ===== COMMON FIELDS =====
     currentStep: { type: Number, default: 0 },
