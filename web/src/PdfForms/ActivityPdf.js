@@ -647,7 +647,6 @@ const ActivityPdf = ({ formData = {}, signatures = {} }) => {
                     signature={signatures.dean?.signature}
                     date={signatures.dean?.date}
                     status={signatures.dean?.status}
-                    remarks={signatures.dean?.remarks}
                   />
                 </View>
                 
@@ -658,7 +657,6 @@ const ActivityPdf = ({ formData = {}, signatures = {} }) => {
                     signature={signatures.admin?.signature}
                     date={signatures.admin?.date}
                     status={signatures.admin?.status}
-                    remarks={signatures.admin?.remarks}
                   />
                 </View>
               </View>
@@ -672,7 +670,6 @@ const ActivityPdf = ({ formData = {}, signatures = {} }) => {
                     signature={signatures.academicservices?.signature}
                     date={signatures.academicservices?.date}
                     status={signatures.academicservices?.status}
-                    remarks={signatures.academicservices?.remarks}
                   />
                 </View>
                 
@@ -683,7 +680,6 @@ const ActivityPdf = ({ formData = {}, signatures = {} }) => {
                     signature={signatures.academicdirector?.signature}
                     date={signatures.academicdirector?.date}
                     status={signatures.academicdirector?.status}
-                    remarks={signatures.academicdirector?.remarks}
                   />
                 </View>
               </View>
@@ -696,7 +692,6 @@ const ActivityPdf = ({ formData = {}, signatures = {} }) => {
                   signature={signatures.executivedirector?.signature}
                   date={signatures.executivedirector?.date}
                   status={signatures.executivedirector?.status}
-                  remarks={signatures.executivedirector?.remarks}
                 />
               </View>
             </View>

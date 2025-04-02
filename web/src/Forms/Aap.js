@@ -307,7 +307,6 @@ const fetchFormData = async () => {
       
       setTimeout(() => {
         setNotificationVisible(false);
-        navigate('/submitted-forms');
       }, 3000);
 
       // Reset form if creating new

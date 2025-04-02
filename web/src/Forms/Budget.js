@@ -247,7 +247,6 @@ const Budget = () => {
       
       setTimeout(() => {
         setNotificationVisible(false);
-        navigate('/submitted-forms');
       }, 3000);
   
       if (!isEditMode) {

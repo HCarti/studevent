@@ -42,12 +42,127 @@ const budgetItemSchema = new mongoose.Schema({
     }
 });
 
+// ===PROJECT PROPOSAL===
+
+const programFlowSchema = new mongoose.Schema({
+    timeRange: {  // Combined field
+        type: String,
+        required: function() { return this.parent().formType === 'Project'; },
+        validate: {
+            validator: function(v) {
+                // Validate format: "HH:MM-HH:MM"
+                const regex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]-([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+                if (!regex.test(v)) return false;
+                
+                // Extract times
+                const [start, end] = v.split('-');
+                return convertToMinutes(start) < convertToMinutes(end);
+            },
+            message: props => `Invalid time range! Use "HH:MM-HH:MM" format with end > start`
+        }
+    },
+    duration: {  // Can be auto-calculated
+        type: Number,
+        default: function() {
+            if (!this.timeRange) return undefined;
+            const [start, end] = this.timeRange.split('-');
+            return convertToMinutes(end) - convertToMinutes(start);
+        }
+    },
+    segment: { 
+        type: String, 
+        required: function() { return this.parent().formType === 'Project'; }
+    },
+});
+
+// Helper function
+function convertToMinutes(timeStr) {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+}
+
+const projectHeadsSchema = new mongoose.Schema({
+    headName:{
+        type: String, 
+        required: function() { return this.parent().formType === 'Project'; }
+    },
+    designatedOffice:{
+        type: String, 
+        required: function() { return this.parent().formType === 'Project'; }
+    },
+});
+
+const workingCommitteesSchema = new mongoose.Schema({
+    workingName:{
+        type: String, 
+        required: function() { return this.parent().formType === 'Project'; }
+    },
+    designatedTask:{
+        type: String, 
+        required: function() { return this.parent().formType === 'Project'; }
+    },
+});
+
+const taskDeligationSchema = new mongoose.Schema({
+    taskList:{
+        type: String, 
+        required: function() { return this.parent().formType === 'Project'; }
+    },
+    deadline: {
+        type: Date,  // Changed from String to Date
+        required: function() { return this.parent().formType === 'Project'; },
+        get: (date) => date?.toISOString().split('T')[0] // Optional: Format as YYYY-MM-DD
+    }
+}, { toJSON: { getters: true } });
+
+const timelineSchedulesSchema = new mongoose.Schema({
+    publicationMaterials:{
+        type: String, 
+        required: function() { return this.parent().formType === 'Project'; }
+    },
+    schedule: {
+        type: Date,  // Changed from String to Date
+        required: function() { return this.parent().formType === 'Project'; },
+        get: (date) => date?.toISOString().split('T')[0] // Optional: Format as YYYY-MM-DD
+    }
+});
+
+const equipmentsNeedSchema = new mongoose.Schema({
+    equipments:{
+        type: String, 
+        required: function() { return this.parent().formType === 'Project'; }
+    },
+    estimatedQuantity:{
+        type: Number, 
+        required: function() { return this.parent().formType === 'Project'; }
+    },
+});
+
+const projectBudgetSchema = new mongoose.Schema({
+    budgetItems:{
+        type: String, 
+        required: function() { return this.parent().formType === 'Project'; }
+    },
+    budgetEstimatedQuantity:{
+        type: Number, 
+        required: function() { return this.parent().formType === 'Project'; }
+    },
+    budgetPerUnit:{
+        type: Number, 
+        required: function() { return this.parent().formType === 'Project'; }
+    },
+    budgetEstimatedAmount:{
+        type: Number, 
+        required: function() { return this.parent().formType === 'Project'; }
+    },
+});
+
 const formSchema = new mongoose.Schema({
     // --- Form Type Discriminator ---
     formType: { 
         type: String, 
         required: true, 
-        enum: ['Activity', 'Budget'],
+        enum: ['Activity', 'Budget', 'Project'],
         default: 'Activity'
     },
 
@@ -157,7 +272,7 @@ const formSchema = new mongoose.Schema({
     weather: { type: String, required: function() { return this.formType === 'Activity'; } },
 
      // ===== BUDGET FIELDS =====
-     nameOfRso: { 
+    nameOfRso: { 
         type: String, 
         required: function() { return this.formType === 'Budget'; } 
     },
@@ -165,12 +280,79 @@ const formSchema = new mongoose.Schema({
         type: String, 
         required: function() { return this.formType === 'Budget'; } 
     },
-    items: [budgetItemSchema], // Array of budget items
+    items: [budgetItemSchema],  required: function() { return this.formType === 'Budget'; }, // Array of budget items
     grandTotal: { 
         type: Number, 
         required: function() { return this.formType === 'Budget'; },
         min: 0
     },
+
+
+    //Project Proposal
+    // ==== PROJECT OVERVIEW ====
+    projectTitle: { 
+        type: String, 
+        required: function() { return this.formType === 'Project'; } 
+    },
+    projectDescription: { 
+        type: String, 
+        required: function() { return this.formType === 'Project'; } 
+    },
+    projectObjectives: { 
+        type: String, 
+        required: function() { return this.formType === 'Project'; } 
+    },
+    startDate:{ 
+        type: Date, 
+        required: function() { return this.formType === 'Project'; } 
+    },
+    endDate:{ 
+        type: Date, 
+        required: function() { return this.formType === 'Project'; } 
+    },
+    venue:{ 
+        type: String, 
+        required: function() { return this.formType === 'Project'; } 
+    },
+    targetParticipants:{ 
+        type: String, 
+        required: function() { return this.formType === 'Project'; } 
+    },
+
+     // ==== PROJECT GUIDELINES ====
+     projectGuidelines: { 
+        type: String, 
+        required: function() { return this.formType === 'Project'; }
+    },
+
+    // ==== PROGRAM FLOW ====
+    programFlow: [programFlowSchema], 
+    required: function() { return this.formType === 'Project'; },
+
+    // ==== OFFICERS IN CHARGE ====
+    projectHeads: [projectHeadsSchema],
+    required: function() { return this.formType === 'Project'; },
+
+    workingCommittees: [workingCommitteesSchema],
+    required: function() { return this.formType === 'Project'; },
+
+    // === TASK DELIGATION ===
+    taskDeligation: [taskDeligationSchema],
+    required: function() { return this.formType === 'Project'; },
+
+    // === TIMELINE/POSTING SCHEDULES
+    timelineSchedules: [timelineSchedulesSchema],
+    required: function() { return this.formType === 'Project'; },
+
+    // === School Facilities & Equipments
+    schoolEquipments: [equipmentsNeedSchema],
+    required: function() { return this.formType === 'Project'; },
+
+    // ===Budget Proposal
+    budgetProposal: [projectBudgetSchema],
+    required: function() { return this.formType === 'Project'; },
+
+    
 
     // ===== COMMON FIELDS =====
     currentStep: { type: Number, default: 0 },

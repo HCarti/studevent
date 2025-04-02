@@ -7,6 +7,7 @@ import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress'; // Import Material-UI spinner
 import { PDFDownloadLink } from '@react-pdf/renderer'; // Import PDFDownloadLink
 import ActivityPdf from '../PdfForms/ActivityPdf'; // Import the PDF component
+import BudgetPdf from '../PdfForms/BudgetPdf'; // Add this import
 
 const ProgressTracker = ({ }) => {
     const navigate = useNavigate();
@@ -14,7 +15,7 @@ const ProgressTracker = ({ }) => {
     const form = state?.form;
     const { formId } = useParams();
     const formData = state?.form; // Access the form data
-    const [formDetails, setFormDetails] = useState(null);
+    const [formDetails, setFormDetails] = useState(null);   
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true); // Add loading state
     const [signature, setSignature] = useState(null); // NEW: State for signature file
@@ -282,6 +283,29 @@ const ProgressTracker = ({ }) => {
 
     const isTrackerCompleted = trackerData.steps.every(step => step.status === 'approved');
 
+    // Inside your ProgressTracker component, before the return statement
+const getPdfComponent = (formType) => {
+    switch (formType) {
+      case 'Activity':
+        return ActivityPdf;
+      case 'Budget':
+        return BudgetPdf;
+      default:
+        return ActivityPdf; // Default fallback
+    }
+  };
+  
+  const getPdfFileName = (formType, formDetails) => {
+    switch (formType) {
+      case 'Activity':
+        return 'activity_proposal_form.pdf';
+      case 'Budget':
+        return `budget_proposal_${formDetails?.nameOfRso || ''}.pdf`;
+      default:
+        return 'form_document.pdf';
+    }
+  };
+
     console.log("Form Data:", formData);
 
     return (
@@ -352,19 +376,36 @@ const ProgressTracker = ({ }) => {
                 ) : (
                     <div className="action-buttons">
                         {isTrackerCompleted && (
-                    <div className="pdf-download-container">
-                        <PDFDownloadLink
-                            document={<ActivityPdf formData={formDetails} signatures={reviewSignatures} />}
-                            fileName="activity_proposal_form.pdf"
-                        >
-                            {({ loading }) => (
-                                <Button variant="contained" color="primary" disabled={loading}>
-                                    {loading ? 'Generating PDF...' : 'Download PDF'}
-                                </Button>
-                            )}
-                        </PDFDownloadLink>
-                    </div>
-                )}
+              <div className="pdf-download-container">
+                <PDFDownloadLink
+                  document={React.createElement(
+                    getPdfComponent(formDetails?.formType),
+                    { 
+                      formData: formDetails,
+                      signatures: reviewSignatures 
+                    }
+                  )}
+                  fileName={getPdfFileName(formDetails?.formType, formDetails)}
+                >
+                  {({ loading }) => (
+                    <Button 
+                      variant="contained" 
+                      color="primary" 
+                      disabled={loading}
+                      startIcon={loading ? <CircularProgress size={20} /> : null}
+                      sx={{
+                        backgroundColor: formDetails?.formType === 'Budget' ? '#4caf50' : '#1976d2',
+                        '&:hover': {
+                          backgroundColor: formDetails?.formType === 'Budget' ? '#388e3c' : '#1565c0'
+                        }
+                      }}
+                    >
+                      {loading ? 'Generating PDF...' : `Download ${formDetails?.formType || 'Form'} PDF`}
+                    </Button>
+                  )}
+                </PDFDownloadLink>
+              </div>
+            )}
                         <Button variant="contained" className="action-button" onClick={handleViewForms}>
                             VIEW FORMS
                         </Button>
