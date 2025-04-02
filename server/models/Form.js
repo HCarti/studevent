@@ -330,38 +330,42 @@ const formSchema = new mongoose.Schema({
         type: [programFlowSchema],
         required: function() { return this.formType === 'Project'; }
     },
-    
+
+    // ==== OFFICERS IN CHARGE ====
     projectHeads: { 
         type: [projectHeadsSchema],
         required: function() { return this.formType === 'Project'; }
     },
-    
+
     workingCommittees: { 
         type: [workingCommitteesSchema],
         required: function() { return this.formType === 'Project'; }
     },
-    
+
+    // === TASK DELEGATION ===
     taskDeligation: { 
         type: [taskDeligationSchema],
         required: function() { return this.formType === 'Project'; }
     },
-    
+
+    // === TIMELINE/POSTING SCHEDULES ===
     timelineSchedules: { 
         type: [timelineSchedulesSchema],
         required: function() { return this.formType === 'Project'; }
     },
-    
+
+    // === School Facilities & Equipment ===
     schoolEquipments: { 
         type: [equipmentsNeedSchema],
         required: function() { return this.formType === 'Project'; }
     },
-    
+
+    // === Budget Proposal ===
     budgetProposal: { 
         type: [projectBudgetSchema],
         required: function() { return this.formType === 'Project'; }
     },
 
-    
 
     // ===== COMMON FIELDS =====
     currentStep: { type: Number, default: 0 },
