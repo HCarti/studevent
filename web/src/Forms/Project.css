@@ -91,6 +91,17 @@
   table-layout: fixed;
 }
 
+/* Segment Input */
+.program-flow-table input[type="text"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+
 .program-flow-table th,
 .program-flow-table td {
   padding: 12px;
@@ -108,11 +119,11 @@
   box-sizing: border-box;
 }
 
-/* Time Picker Component */
+/* Time Range Picker Styles */
 .time-range-picker {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .time-inputs {
@@ -124,7 +135,39 @@
 .time-inputs .form-group {
   flex: 1;
   margin-bottom: 0;
+  min-width: 0; /* Prevent flex items from overflowing */
 }
+
+.time-inputs label {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.time-inputs input[type="time"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.time-separator {
+  color: #666;
+  font-weight: bold;
+  padding: 0 5px;
+}
+
+.duration-display {
+  font-size: 14px;
+  color: #666;
+  padding: 8px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  border: 1px solid #eee;
+}
+
 
 /* Buttons */
 .add-btn,
@@ -208,7 +251,11 @@
   
   .time-inputs {
     flex-direction: column;
-    align-items: stretch;
+    gap: 5px;
+  }
+
+  .time-separator {
+    display: none;
   }
 }
 

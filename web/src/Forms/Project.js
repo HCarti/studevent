@@ -41,7 +41,6 @@ const Project = () => {
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState('');
   
-    // Parse the time range when value changes
     useEffect(() => {
       if (value) {
         const [start, end] = value.split('-').map(t => t.trim());
@@ -60,12 +59,10 @@ const Project = () => {
       }
     };
   
-    // Calculate duration in minutes
     const durationMinutes = startTime && endTime 
       ? convertToMinutes(endTime) - convertToMinutes(startTime)
       : 0;
   
-    // Format as "1 hour 30 minutes"
     const durationDisplay = calculateDurationDisplay(durationMinutes);
   
     return (
