@@ -7,10 +7,11 @@ const EventTrackerList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState("all");
+  const [organizations, setOrganizations] = useState({});
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchForms = async () => {
+    const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
@@ -19,6 +20,24 @@ const EventTrackerList = () => {
           return;
         }
 
+        // First fetch all organizations to map emails to organization names
+        const orgsResponse = await fetch("https://studevent-server.vercel.app/api/organizations", {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+
+        if (orgsResponse.ok) {
+          const orgsData = await orgsResponse.json();
+          const orgsMap = {};
+          orgsData.forEach(org => {
+            orgsMap[org.email] = org.organizationName;
+          });
+          setOrganizations(orgsMap);
+        }
+
+        // Then fetch forms as before
         const formsResponse = await fetch("https://studevent-server.vercel.app/api/forms/all", {
           method: "GET",
           headers: {
@@ -62,14 +81,14 @@ const EventTrackerList = () => {
 
         setForms(formsWithCurrentStep);
       } catch (error) {
-        console.error("Error fetching forms:", error);
+        console.error("Error fetching data:", error);
         setError(error.message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchForms();
+    fetchData();
   }, []);
 
   const handleRedirectToProgressTracker = (form) => {
@@ -91,6 +110,19 @@ const EventTrackerList = () => {
 
   const handleFilterClick = (filterType) => {
     setFilter(filterType);
+  };
+
+  // Helper function to get organization name
+  const getOrganizationName = (form) => {
+    if (form.formType === 'Budget') return form.nameOfRso;
+    if (form.formType === 'Project') return organizations[form.emailAddress] || 'Unknown Organization';
+    return form.studentOrganization?.organizationName || organizations[form.emailAddress] || 'Unknown Organization';
+  };
+
+  // Helper function to get event/project title
+  const getEventTitle = (form) => {
+    if (form.formType === 'Project') return form.projectTitle;
+    return form.eventTitle;
   };
 
   return (
@@ -147,29 +179,25 @@ const EventTrackerList = () => {
                 </tr>
               </thead>
               <tbody>
-                {getFilteredForms().map((form) => (
-                  <tr
-                    key={form._id}
-                    className={`event-tracker-row ${form.finalStatus?.trim().toLowerCase()}`}
-                    onClick={() => handleRedirectToProgressTracker(form)}
-                  >
-                    <td>
-                      {form.formType === 'Budget' 
-                        ? form.nameOfRso 
-                        : (form.studentOrganization?.organizationName || 'Unknown Organization')}
-                    </td>
-                    <td>{form.formType}</td>
-                    <td>{form.eventTitle}</td>
-                    <td>
-                      <span className={`status-badge ${form.finalStatus?.trim().toLowerCase()}`}>
-                        {form.finalStatus || "No Status"}
-                      </span>
-                    </td>
-                    <td>{form.applicationDate ? new Date(form.applicationDate).toLocaleDateString() : "No Date"}</td>
-                    <td>{form.currentStep}</td>
-                  </tr>
-                ))}
-              </tbody>
+          {getFilteredForms().map((form) => (
+            <tr
+              key={form._id}
+              className={`event-tracker-row ${form.finalStatus?.trim().toLowerCase()}`}
+              onClick={() => handleRedirectToProgressTracker(form)}
+            >
+              <td>{getOrganizationName(form)}</td>
+              <td>{form.formType}</td>
+              <td>{getEventTitle(form)}</td>
+              <td>
+                <span className={`status-badge ${form.finalStatus?.trim().toLowerCase()}`}>
+                  {form.finalStatus || "No Status"}
+                </span>
+              </td>
+              <td>{form.applicationDate ? new Date(form.applicationDate).toLocaleDateString() : "No Date"}</td>
+              <td>{form.currentStep}</td>
+            </tr>
+          ))}
+        </tbody>
             </table>
           </div>
         </>

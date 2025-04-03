@@ -8,6 +8,7 @@ import CircularProgress from '@mui/material/CircularProgress'; // Import Materia
 import { PDFDownloadLink } from '@react-pdf/renderer'; // Import PDFDownloadLink
 import ActivityPdf from '../PdfForms/ActivityPdf'; // Import the PDF component
 import BudgetPdf from '../PdfForms/BudgetPdf'; // Add this import
+import ProjectPdf from '../PdfForms/ProjectPdf'; // Add this import
 
 const ProgressTracker = ({ }) => {
     const navigate = useNavigate();
@@ -284,27 +285,31 @@ const ProgressTracker = ({ }) => {
     const isTrackerCompleted = trackerData.steps.every(step => step.status === 'approved');
 
     // Inside your ProgressTracker component, before the return statement
-const getPdfComponent = (formType) => {
-    switch (formType) {
-      case 'Activity':
-        return ActivityPdf;
-      case 'Budget':
-        return BudgetPdf;
-      default:
-        return ActivityPdf; // Default fallback
-    }
-  };
+    const getPdfComponent = (formType) => {
+      switch (formType) {
+        case 'Activity':
+          return ActivityPdf;
+        case 'Budget':
+          return BudgetPdf;
+        case 'Project':
+          return ProjectPdf;
+        default:
+          return ActivityPdf; // Default fallback
+      }
+    };
   
-  const getPdfFileName = (formType, formDetails) => {
-    switch (formType) {
-      case 'Activity':
-        return 'activity_proposal_form.pdf';
-      case 'Budget':
-        return `budget_proposal_${formDetails?.nameOfRso || ''}.pdf`;
-      default:
-        return 'form_document.pdf';
-    }
-  };
+    const getPdfFileName = (formType, formDetails) => {
+      switch (formType) {
+        case 'Activity':
+          return 'activity_proposal_form.pdf';
+        case 'Budget':
+          return `budget_proposal_${formDetails?.nameOfRso || ''}.pdf`;
+        case 'Project':
+          return `project_proposal_${formDetails?.projectTitle || ''}.pdf`;
+        default:
+          return 'form_document.pdf';
+      }
+    };
 
     console.log("Form Data:", formData);
 
@@ -376,36 +381,40 @@ const getPdfComponent = (formType) => {
                 ) : (
                     <div className="action-buttons">
                         {isTrackerCompleted && (
-              <div className="pdf-download-container">
-                <PDFDownloadLink
-                  document={React.createElement(
-                    getPdfComponent(formDetails?.formType),
-                    { 
-                      formData: formDetails,
-                      signatures: reviewSignatures 
-                    }
-                  )}
-                  fileName={getPdfFileName(formDetails?.formType, formDetails)}
-                >
-                  {({ loading }) => (
-                    <Button 
-                      variant="contained" 
-                      color="primary" 
-                      disabled={loading}
-                      startIcon={loading ? <CircularProgress size={20} /> : null}
-                      sx={{
-                        backgroundColor: formDetails?.formType === 'Budget' ? '#4caf50' : '#1976d2',
-                        '&:hover': {
-                          backgroundColor: formDetails?.formType === 'Budget' ? '#388e3c' : '#1565c0'
-                        }
-                      }}
-                    >
-                      {loading ? 'Generating PDF...' : `Download ${formDetails?.formType || 'Form'} PDF`}
-                    </Button>
-                  )}
-                </PDFDownloadLink>
-              </div>
-            )}
+                            <div className="pdf-download-container">
+                              <PDFDownloadLink
+                                document={React.createElement(
+                                  getPdfComponent(formDetails?.formType),
+                                  { 
+                                    formData: formDetails,
+                                    signatures: reviewSignatures 
+                                  }
+                                )}
+                                fileName={getPdfFileName(formDetails?.formType, formDetails)}
+                              >
+                                {({ loading }) => (
+                                  <Button 
+                                    variant="contained" 
+                                    color="primary" 
+                                    disabled={loading}
+                                    startIcon={loading ? <CircularProgress size={20} /> : null}
+                                    sx={{
+                                      backgroundColor: formDetails?.formType === 'Budget' ? '#4caf50' : 
+                                                    formDetails?.formType === 'Project' ? '#9c27b0' : 
+                                                    '#1976d2',
+                                      '&:hover': {
+                                        backgroundColor: formDetails?.formType === 'Budget' ? '#388e3c' : 
+                                                      formDetails?.formType === 'Project' ? '#7b1fa2' : 
+                                                      '#1565c0'
+                                      }
+                                    }}
+                                  >
+                                    {loading ? 'Generating PDF...' : `Download ${formDetails?.formType || 'Form'} PDF`}
+                                  </Button>
+                                )}
+                              </PDFDownloadLink>
+                            </div>
+                          )}
                         <Button variant="contained" className="action-button" onClick={handleViewForms}>
                             VIEW FORMS
                         </Button>
@@ -416,7 +425,6 @@ const getPdfComponent = (formType) => {
                         ) : null}
                     </div>
                 )}
-                
             </div>
 
             {isTrackerCompleted && (
