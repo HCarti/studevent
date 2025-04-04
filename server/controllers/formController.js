@@ -3,7 +3,7 @@ const User = require('../models/User');
 const Notification = require("../models/Notification");
 const EventTracker = require("../models/EventTracker");
 const mongoose = require("mongoose");
-const CalendarEvent = require("../models/CalendarEvent"); // Add this line
+const Event = require("../models/CalendarEvent"); // Add this line
 
 // Helper function to get required reviewers based on form type
 const getRequiredReviewers = (formType) => {
@@ -147,21 +147,21 @@ exports.createForm = async (req, res) => {
     await form.save();
 
     // Create calendar event for Activity and Project forms
-    if (['Activity', 'Project'].includes(req.body.formType)) {
-      const event = new CalendarEvent({
-        title: req.body.formType === 'Project' ? req.body.projectTitle : req.body.title,
-        description: req.body.formType === 'Project' ? req.body.projectDescription : req.body.description,
-        location: req.body.location || 'TBA',
-        eventStartDate: req.body.eventStartDate,
-        eventEndDate: req.body.eventEndDate,
-        formId: form._id,
-        formType: req.body.formType,
-        createdBy: req.user?._id || null,
-        status: 'pending' // Will follow form approval status
-      });
+    // if (['Activity', 'Project'].includes(req.body.formType)) {
+    //   const event = new Event({
+    //     title: req.body.formType === 'Project' ? req.body.projectTitle : req.body.title,
+    //     description: req.body.formType === 'Project' ? req.body.projectDescription : req.body.description,
+    //     location: req.body.location || 'TBA',
+    //     eventStartDate: req.body.eventStartDate,
+    //     eventEndDate: req.body.eventEndDate,
+    //     formId: form._id,
+    //     formType: req.body.formType,
+    //     createdBy: req.user?._id || null,
+    //     status: 'pending' // Will follow form approval status
+    //   });
       
-      await event.save();
-    }
+    //   await event.save();
+    // }
 
     // Get the appropriate reviewers based on form type
     const requiredReviewers = getRequiredReviewers(req.body.formType);
