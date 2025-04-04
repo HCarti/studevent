@@ -30,7 +30,7 @@ router.get("/by-email/:email", async (req, res) => {
 });
 
 // Add this route for calendar events
-router.get('/forms/events', formController.getFormEvents);
+// router.get('/forms/events', formController.getFormEvents);
 
 router.get('/all', formController.getAllForms); // ✅ Correct
 
