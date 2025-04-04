@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
@@ -11,127 +11,153 @@ const OrganizationEvents = () => {
   const [events, setEvents] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedEvents, setSelectedEvents] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [lastUpdated, setLastUpdated] = useState(null);
 
-  // Calculate event duration
-  const calculateDuration = useCallback((start, end) => {
-    const duration = moment(end).diff(moment(start), 'days') + 1;
-    return duration === 1 ? '1 day' : `${duration} days`;
-  }, []);
-
-  // Format event data consistently
-  const formatEventData = useCallback((event) => ({
-    id: event._id,
-    title: event.title,
-    start: new Date(event.eventStartDate),
-    end: new Date(event.eventEndDate),
-    description: event.description || 'No additional details available',
-    location: event.location || 'TBA',
-    duration: calculateDuration(event.eventStartDate, event.eventEndDate),
-    type: event.formType || 'event',
-    status: event.status || 'approved',
-    formId: event.formId
-  }), [calculateDuration]);
-
-  // Fetch calendar data with caching
-  const fetchCalendarData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    
+  // Fetch calendar events from backend
+  const fetchCalendarEvents = async () => {
     try {
-      const response = await axios.get('https://studevent-server.vercel.app/api/forms/events', {
-        params: {
-          lastUpdated: lastUpdated?.toISOString()
+      setLoading(true);
+      setError(null);
+      
+      // Get current month's start and end dates for range query
+      const startOfMonth = moment().startOf('month').toISOString();
+      const endOfMonth = moment().endOf('month').toISOString();
+      
+      const response = await axios.get(
+        'https://studevent-server.vercel.app/api/calendar/events/range', 
+        {
+          params: { start: startOfMonth, end: endOfMonth }
         }
-      });
-
-      if (response.data.length > 0) {
-        const formattedEvents = response.data.map(formatEventData);
-        setEvents(prevEvents => {
-          // Merge new events with existing, updating changed ones
-          const eventMap = new Map(prevEvents.map(event => [event.id, event]));
-          formattedEvents.forEach(event => eventMap.set(event.id, event));
-          return Array.from(eventMap.values());
-        });
-        setLastUpdated(new Date());
-      }
+      );
+      
+      const formattedEvents = response.data.map(event => ({
+        id: event._id,
+        title: event.title,
+        start: new Date(event.startDate),
+        end: new Date(event.endDate),
+        description: event.description,
+        location: event.location,
+        organization: event.organization?.organizationName || 'N/A',
+        type: event.formType,
+        duration: calculateDuration(event.startDate, event.endDate),
+        allDay: true // Assuming these are all-day events
+      }));
+      
+      setEvents(formattedEvents);
     } catch (err) {
-      console.error('Error fetching calendar data:', err);
-      setError('Failed to load calendar data. Please try again later.');
+      console.error('Error fetching calendar events:', err);
+      setError('Failed to load calendar events. Please try again later.');
     } finally {
       setLoading(false);
     }
-  }, [formatEventData, lastUpdated]);
+  };
+
+  // Calculate event duration
+  const calculateDuration = (start, end) => {
+    const duration = moment(end).diff(moment(start), 'days') + 1;
+    return duration === 1 ? '1 day' : `${duration} days`;
+  };
+
+  // Handle month change to fetch new events
+  const handleNavigate = (newDate) => {
+    setSelectedDate(newDate);
+    fetchCalendarEventsForMonth(newDate);
+  };
+
+  // Fetch events for specific month
+  const fetchCalendarEventsForMonth = async (date) => {
+    try {
+      const startOfMonth = moment(date).startOf('month').toISOString();
+      const endOfMonth = moment(date).endOf('month').toISOString();
+      
+      const response = await axios.get(
+        'https://studevent-server.vercel.app/api/calendar/events/range', 
+        {
+          params: { start: startOfMonth, end: endOfMonth }
+        }
+      );
+      
+      const formattedEvents = response.data.map(event => ({
+        id: event._id,
+        title: event.title,
+        start: new Date(event.startDate),
+        end: new Date(event.endDate),
+        description: event.description,
+        location: event.location,
+        organization: event.organization?.organizationName || 'N/A',
+        type: event.formType,
+        duration: calculateDuration(event.startDate, event.endDate),
+        allDay: true
+      }));
+      
+      setEvents(formattedEvents);
+    } catch (err) {
+      console.error('Error fetching calendar events:', err);
+      setError('Failed to load calendar events for this month.');
+    }
+  };
+
+  useEffect(() => {
+    fetchCalendarEvents();
+  }, []);
 
   // Handle date selection
-  const handleDateClick = useCallback((date) => {
+  const handleSelectSlot = (slotInfo) => {
+    const date = slotInfo.start;
     setSelectedDate(date);
-    const filteredEvents = events.filter(event =>
+    
+    const filteredEvents = events.filter(event => 
       moment(date).isBetween(
-        moment(event.start).startOf('day'), 
-        moment(event.end).endOf('day'), 
-        null, 
+        moment(event.start).startOf('day'),
+        moment(event.end).endOf('day'),
+        null,
         '[]'
       )
     );
-    setSelectedEvents(filteredEvents);
-  }, [events]);
-
-  // Custom event renderer with status indicators
-  const renderEvent = useCallback((event) => (
-    <div 
-      className={`event-render ${event.status}`}
-      data-type={event.type}
-      data-status={event.status}
-    >
-      <span>{event.title}</span>
-      <br />
-      <span className="event-meta">
-        {event.duration} • {event.type}
-      </span>
-    </div>
-  ), []);
-
-  // Handle event click with more details
-  const handleEventClick = useCallback((event) => {
-    const eventDetails = `
-      Title: ${event.title}
-      Type: ${event.type}
-      Date: ${moment(event.start).format('MMM D')} - ${moment(event.end).format('MMM D, YYYY')}
-      Duration: ${event.duration}
-      Location: ${event.location}
-      Status: ${event.status}
-      Description: ${event.description}
-    `;
-    alert(eventDetails);
-  }, []);
-
-  // Initial data load and setup polling
-  useEffect(() => {
-    fetchCalendarData();
     
-    // Refresh data every 2 minutes
-    const interval = setInterval(fetchCalendarData, 120000);
-    return () => clearInterval(interval);
-  }, [fetchCalendarData]);
+    setSelectedEvents(filteredEvents);
+  };
+
+  // Custom event renderer with type indicator
+  const eventStyleGetter = (event) => {
+    let backgroundColor = '#3174ad'; // Default blue
+    
+    if (event.type === 'Activity') {
+      backgroundColor = '#5cb85c'; // Green
+    } else if (event.type === 'Project') {
+      backgroundColor = '#f0ad4e'; // Orange
+    }
+    
+    return {
+      style: {
+        backgroundColor,
+        borderRadius: '4px',
+        opacity: 0.8,
+        color: 'white',
+        border: '0px',
+        display: 'block'
+      }
+    };
+  };
+
+  // Custom event component
+  const EventComponent = ({ event }) => (
+    <div className="rbc-event-content">
+      <strong>{event.title}</strong>
+      <div className="event-meta">
+        <span>{event.organization}</span>
+        {event.duration !== '1 day' && <span>{event.duration}</span>}
+      </div>
+    </div>
+  );
 
   return (
     <div className="wrap">
       <h1>EVENT CALENDAR</h1>
       
-      {loading && <div className="loading-message">Loading calendar data...</div>}
+      {loading && <div className="loading-message">Loading calendar events...</div>}
       {error && <div className="error-message">{error}</div>}
-
-      <div className="calendar-controls">
-        <button onClick={fetchCalendarData} disabled={loading}>
-          Refresh Calendar
-        </button>
-        <span className="last-updated">
-          Last updated: {lastUpdated ? moment(lastUpdated).format('h:mm a') : 'Never'}
-        </span>
-      </div>
 
       <div className="calendar-container">
         <div className="calendar-wrapper">
@@ -146,26 +172,16 @@ const OrganizationEvents = () => {
               events={events}
               startAccessor="start"
               endAccessor="end"
-              views={['month', 'agenda']}
-              defaultView="month"
-              style={{ height: 500 }}
+              views={['month']}
+              style={{ height: '100%' }}
               selectable
+              onSelectSlot={handleSelectSlot}
+              onSelectEvent={(event) => alert(`${event.title}\n${event.description}`)}
+              onNavigate={handleNavigate}
+              eventPropGetter={eventStyleGetter}
               components={{
-                event: renderEvent,
+                event: EventComponent
               }}
-              onNavigate={setSelectedDate}
-              onSelectSlot={handleDateClick}
-              onSelectEvent={handleEventClick}
-              eventPropGetter={(event) => ({
-                className: `calendar-event ${event.status} ${event.type}`,
-                style: {
-                  opacity: event.status === 'pending' ? 0.8 : 1,
-                  borderLeft: `4px solid ${
-                    event.type === 'Project' ? '#4caf50' : 
-                    event.type === 'Activity' ? '#2196f3' : '#ff9800'
-                  }`
-                }
-              })}
             />
           </div>
         </div>
@@ -173,34 +189,15 @@ const OrganizationEvents = () => {
         <div className="event-details">
           <h2>{moment(selectedDate).format('MMMM D, YYYY')} - Event Details</h2>
           {selectedEvents.length > 0 ? (
-            <ul>
-              {selectedEvents.map((event) => (
-                <li key={event.id} className={`event-item ${event.status}`}>
-                  <strong>{event.title}</strong>
-                  <div className="event-type">{event.type}</div>
-                  <div className="event-info">
-                    <span className="info-label">Duration:</span> {event.duration}
-                  </div>
-                  <div className="event-info">
-                    <span className="info-label">Location:</span> {event.location}
-                  </div>
-                  <div className="event-info">
-                    <span className="info-label">Status:</span> 
-                    <span className={`status-badge ${event.status}`}>
-                      {event.status}
-                    </span>
-                  </div>
-                  <div className="event-description">
-                    {event.description}
-                  </div>
-                  {event.formId && (
-                    <a 
-                      href={`/forms/view/${event.formId}`} 
-                      className="view-form-link"
-                    >
-                      View Form Details
-                    </a>
-                  )}
+            <ul className="event-list">
+              {selectedEvents.map((event, index) => (
+                <li key={index} className={`event-item ${event.type.toLowerCase()}`}>
+                  <h3>{event.title}</h3>
+                  <p><strong>Type:</strong> {event.type}</p>
+                  <p><strong>Organization:</strong> {event.organization}</p>
+                  <p><strong>Duration:</strong> {event.duration}</p>
+                  <p><strong>Location:</strong> {event.location}</p>
+                  <p><strong>Description:</strong> {event.description}</p>
                 </li>
               ))}
             </ul>
