@@ -1,17 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './OrganizationEvents.css';
-import image1 from '../Images/NU_moa_event2.jpg';
-import image2 from '../Images/NU_moa_event6.jpg';
-import image3 from '../Images/NU_moa_event3.jpg';
-import image4 from '../Images/NU_moa_event4.jpg';
-import Slider from 'react-slick';
-import 'slick-carousel/slick/slick.css';
-import 'slick-carousel/slick/slick-theme.css';
-import Footer from '../Components/footer';
 
 const localizer = momentLocalizer(moment);
 
@@ -19,159 +11,205 @@ const OrganizationEvents = () => {
   const [events, setEvents] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedEvents, setSelectedEvents] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
-  useEffect(() => {
-    fetchEvents();
-    fetchForms();
+  // Calculate event duration
+  const calculateDuration = useCallback((start, end) => {
+    const duration = moment(end).diff(moment(start), 'days') + 1;
+    return duration === 1 ? '1 day' : `${duration} days`;
   }, []);
 
-   // Calculate event duration
-   const calculateDuration = (start, end) => {
-    const duration = moment(end).diff(moment(start), 'days') + 1; // Inclusive of both start and end
-    return duration === 1 ? '1 day' : `${duration} days`;
-  };
+  // Format event data consistently
+  const formatEventData = useCallback((event) => ({
+    id: event._id,
+    title: event.title,
+    start: new Date(event.eventStartDate),
+    end: new Date(event.eventEndDate),
+    description: event.description || 'No additional details available',
+    location: event.location || 'TBA',
+    duration: calculateDuration(event.eventStartDate, event.eventEndDate),
+    type: event.formType || 'event',
+    status: event.status || 'approved',
+    formId: event.formId
+  }), [calculateDuration]);
 
- // Fetch events from the backend
-const fetchEvents = async () => {
-  try {
-    const response = await axios.get('https://studevent-server.vercel.app/api/events');
-    const formattedEvents = response.data.map(event => ({
-      title: event.title,
-      start: moment(event.eventStartDate).toDate(), // Use eventStartDate
-      end: moment(event.eventEndDate).toDate(),     // Use eventEndDate
-      description: event.description || 'No additional details available', // Add description
-      location: event.location || 'TBA', // Add location
-      duration: calculateDuration(event.eventStartDate, event.eventEndDate), // Calculate duration
-    }));
-    setEvents(prevEvents => [...prevEvents, ...formattedEvents]);
-  } catch (error) {
-    console.error('Error fetching events:', error);
-  }
-};
+  // Fetch calendar data with caching
+  const fetchCalendarData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await axios.get('https://studevent-server.vercel.app/api/forms/events', {
+        params: {
+          lastUpdated: lastUpdated?.toISOString()
+        }
+      });
 
-// Fetch forms and add them as events to the calendar
-const fetchForms = async () => {
-  try {
-    const response = await axios.get('https://studevent-server.vercel.app/api/forms/all');
-    const formEvents = response.data.map(form => ({
-      title: form.title,
-      start: moment(form.eventStartDate).toDate(), // Use eventStartDate
-      end: moment(form.eventEndDate || form.eventStartDate).toDate(), // Use eventEndDate
-      description: form.description || 'No additional details available', // Add description
-      location: form.location || 'TBA', // Add location
-      duration: calculateDuration(form.eventStartDate, form.eventEndDate || form.eventStartDate), // Calculate duration
-    }));
-    setEvents(prevEvents => [...prevEvents, ...formEvents]);
-  } catch (error) {
-    console.error('Error fetching forms:', error);
-  }
-};
-   // Custom render for events
-  const renderEvent = (event) => (
-    <div className="event-render">
+      if (response.data.length > 0) {
+        const formattedEvents = response.data.map(formatEventData);
+        setEvents(prevEvents => {
+          // Merge new events with existing, updating changed ones
+          const eventMap = new Map(prevEvents.map(event => [event.id, event]));
+          formattedEvents.forEach(event => eventMap.set(event.id, event));
+          return Array.from(eventMap.values());
+        });
+        setLastUpdated(new Date());
+      }
+    } catch (err) {
+      console.error('Error fetching calendar data:', err);
+      setError('Failed to load calendar data. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  }, [formatEventData, lastUpdated]);
+
+  // Handle date selection
+  const handleDateClick = useCallback((date) => {
+    setSelectedDate(date);
+    const filteredEvents = events.filter(event =>
+      moment(date).isBetween(
+        moment(event.start).startOf('day'), 
+        moment(event.end).endOf('day'), 
+        null, 
+        '[]'
+      )
+    );
+    setSelectedEvents(filteredEvents);
+  }, [events]);
+
+  // Custom event renderer with status indicators
+  const renderEvent = useCallback((event) => (
+    <div 
+      className={`event-render ${event.status}`}
+      data-type={event.type}
+      data-status={event.status}
+    >
       <span>{event.title}</span>
       <br />
-      <span style={{ fontSize: '0.85rem', color: '#666' }}>{event.duration}</span>
+      <span className="event-meta">
+        {event.duration} • {event.type}
+      </span>
     </div>
-  );
+  ), []);
 
- const handleDateClick = (date) => {
-  setSelectedDate(date);
+  // Handle event click with more details
+  const handleEventClick = useCallback((event) => {
+    const eventDetails = `
+      Title: ${event.title}
+      Type: ${event.type}
+      Date: ${moment(event.start).format('MMM D')} - ${moment(event.end).format('MMM D, YYYY')}
+      Duration: ${event.duration}
+      Location: ${event.location}
+      Status: ${event.status}
+      Description: ${event.description}
+    `;
+    alert(eventDetails);
+  }, []);
 
-  // Filter events based on the selected date (ensure time differences are ignored)
-  const filteredEvents = events.filter(event =>
-    moment(date).isBetween(moment(event.start).startOf('day'), moment(event.end).endOf('day'), null, '[]') // Inclusive range
-  );
-
-  setSelectedEvents(filteredEvents);
-};
-
-  // Slider settings
-  const sliderSettings = {
-    dots: true,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 4000,
-    pauseOnHover: true,
-    arrows: true,
-    fade: true,
-    cssEase: 'linear',
-    dotsClass: 'slick-dots custom-dots',
-    responsive: [
-      { breakpoint: 1024, settings: { slidesToShow: 2 } },
-      { breakpoint: 600, settings: { slidesToShow: 1 } },
-    ],
-  };
-
-  const images = [image1, image2, image3, image4];
+  // Initial data load and setup polling
+  useEffect(() => {
+    fetchCalendarData();
+    
+    // Refresh data every 2 minutes
+    const interval = setInterval(fetchCalendarData, 120000);
+    return () => clearInterval(interval);
+  }, [fetchCalendarData]);
 
   return (
-    <React.Fragment>
-      <div className="wrap">
-        <h1>EVENT CALENDAR</h1>
-        {/* Image Slider Section */}
-        
-        {/* Calendar Section */}
-        <div className="calendar-container">
-            <div className="calendar-wrapper">
-              <div className="calendar-header">
-                <span className="month-title">{moment(selectedDate).format('MMMM YYYY')}</span>
-              </div>
-              <div style={{ height: 500 }}>
-                <Calendar
-                  localizer={localizer}
-                  events={events}
-                  startAccessor="start"
-                  endAccessor="end"
-                  views={['month']}
-                  style={{ height: 500 }}
-                  selectable
-                  components={{
-                    event: renderEvent, // Custom render for events
-                  }}
-                  onNavigate={(date) => setSelectedDate(date)}
-                  onSelectSlot={(slotInfo) => handleDateClick(slotInfo.start)} // Handle date click
-                  onSelectEvent={(event) => alert(`Event: ${event.title}`)} // Optional event click action
-                />
-              </div>
-            </div>
-             {/* Event Details Section */}
-          <div className="event-details">
-            <h2>{moment(selectedDate).format('MMMM D, YYYY')} - Event Details</h2>
-            {selectedEvents.length > 0 ? (
-              <ul>
-                {selectedEvents.map((event, index) => (
-                  <li key={index}>
-                    <strong>{event.eventTitle}</strong>
-                    <br />
-                    <span>Duration: {event.duration}</span>
-                    <br />
-                    <span>Description: {event.description}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>No events for this day.</p>
-            )}
-          </div>
-            
-          </div>
+    <div className="wrap">
+      <h1>EVENT CALENDAR</h1>
+      
+      {loading && <div className="loading-message">Loading calendar data...</div>}
+      {error && <div className="error-message">{error}</div>}
 
-        {/* <div className="img-slide">
-          <Slider {...sliderSettings}>
-            {images.map((img, index) => (
-              <div key={index} className="slide">
-                <img src={img} alt={`Event ${index + 1}`} className="slider-image" />
-              </div>
-            ))}
-          </Slider>
-        </div> */}
-        
+      <div className="calendar-controls">
+        <button onClick={fetchCalendarData} disabled={loading}>
+          Refresh Calendar
+        </button>
+        <span className="last-updated">
+          Last updated: {lastUpdated ? moment(lastUpdated).format('h:mm a') : 'Never'}
+        </span>
       </div>
-    </React.Fragment>
+
+      <div className="calendar-container">
+        <div className="calendar-wrapper">
+          <div className="calendar-header">
+            <span className="month-title">
+              {moment(selectedDate).format('MMMM YYYY')}
+            </span>
+          </div>
+          <div style={{ height: 500 }}>
+            <Calendar
+              localizer={localizer}
+              events={events}
+              startAccessor="start"
+              endAccessor="end"
+              views={['month', 'agenda']}
+              defaultView="month"
+              style={{ height: 500 }}
+              selectable
+              components={{
+                event: renderEvent,
+              }}
+              onNavigate={setSelectedDate}
+              onSelectSlot={handleDateClick}
+              onSelectEvent={handleEventClick}
+              eventPropGetter={(event) => ({
+                className: `calendar-event ${event.status} ${event.type}`,
+                style: {
+                  opacity: event.status === 'pending' ? 0.8 : 1,
+                  borderLeft: `4px solid ${
+                    event.type === 'Project' ? '#4caf50' : 
+                    event.type === 'Activity' ? '#2196f3' : '#ff9800'
+                  }`
+                }
+              })}
+            />
+          </div>
+        </div>
+
+        <div className="event-details">
+          <h2>{moment(selectedDate).format('MMMM D, YYYY')} - Event Details</h2>
+          {selectedEvents.length > 0 ? (
+            <ul>
+              {selectedEvents.map((event) => (
+                <li key={event.id} className={`event-item ${event.status}`}>
+                  <strong>{event.title}</strong>
+                  <div className="event-type">{event.type}</div>
+                  <div className="event-info">
+                    <span className="info-label">Duration:</span> {event.duration}
+                  </div>
+                  <div className="event-info">
+                    <span className="info-label">Location:</span> {event.location}
+                  </div>
+                  <div className="event-info">
+                    <span className="info-label">Status:</span> 
+                    <span className={`status-badge ${event.status}`}>
+                      {event.status}
+                    </span>
+                  </div>
+                  <div className="event-description">
+                    {event.description}
+                  </div>
+                  {event.formId && (
+                    <a 
+                      href={`/forms/view/${event.formId}`} 
+                      className="view-form-link"
+                    >
+                      View Form Details
+                    </a>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="no-events">No events scheduled for this day.</p>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
 

@@ -153,114 +153,54 @@
   background-color: #f0ac2f;
 }
 
-/* Custom Toolbar */
-.custom-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 20px;
-  background-color: #ffffff;
-  border-top: 1px solid #e0e0e0;
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
-}
-
-.toolbar-label {
-  font-size: 1.2rem;
-  font-weight: 500;
-  color: #333333;
-}
-
-.toolbar-buttons {
-  display: flex;
-  gap: 15px;
-}
-
-.toolbar-button {
-  background-color: #1a3ab5;
-  color: #ffffff;
-  border: none;
-  padding: 10px 20px;
+/* Loading and Error Messages */
+.loading-message, .error-message {
+  padding: 15px;
+  margin: 20px 0;
   border-radius: 5px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+  text-align: center;
+  font-weight: bold;
 }
 
-.toolbar-button:hover {
-  background-color: #1634a1;
+.loading-message {
+  background-color: #e1f5fe;
+  color: #0288d1;
 }
 
-/* Image Slider */
-.img-slide {
-  width: 100%;
-  max-width: 1200px;
-  margin-bottom: 40px;
+.error-message {
+  background-color: #ffebee;
+  color: #d32f2f;
 }
 
-.slide {
+/* Event Type Indicators */
+.event-render {
   position: relative;
 }
 
-.slider-image {
-  width: 100%;
-  height: 450px;
-  object-fit: cover;
-  border-radius: 10px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-  transition: transform 0.5s ease;
+.event-render:after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
 }
 
-.slider-image:hover {
-  transform: scale(1.02);
+.event-render[data-type="event"]:after {
+  background-color: #4caf50;
 }
 
-/* Edit Event Form */
-.edit-event-form {
-  width: 100%;
-  max-width: 600px;
-  background-color: #ffffff;
-  padding: 20px 50px;
-  border-radius: 10px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-  margin-bottom: 40px;
+.event-render[data-type="form"]:after {
+  background-color: #2196f3;
 }
 
-.edit-event-form h3 {
-  margin-bottom: 15px;
-  color: #1a3ab5;
+.event-render[data-type="activity"]:after {
+  background-color: #ff9800;
 }
 
-.edit-event-form input[type="text"],
-.edit-event-form input[type="datetime-local"] {
-  width: 100%;
-  padding: 10px 2px;
-  margin-bottom: 15px;
-  border: 1px solid #cccccc;
-  border-radius: 5px;
-  font-size: 1rem;
-  transition: border-color 0.3s ease;
-}
-
-.edit-event-form input[type="text"]:focus,
-.edit-event-form input[type="datetime-local"]:focus {
-  border-color: #1a3ab5;
-}
-
-.edit-event-form button {
-  width: 100%;
-  padding: 12px 0;
-  background-color: #1a3ab5;
-  color: #ffffff;
-  border: none;
-  border-radius: 5px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.edit-event-form button:hover {
-  background-color: #1634a1;
+.event-render[data-type="project"]:after {
+  background-color: #9c27b0;
 }
 
 /* Responsive Design */
@@ -322,4 +262,122 @@
   .edit-event-form {
     padding: 15px 20px;
   }
+}
+
+.pending {
+  background-color: #fff3e0;
+}
+
+.approved {
+  background-color: #e8f5e9;
+}
+
+.declined {
+  background-color: #ffebee;
+  text-decoration: line-through;
+}
+
+.status-badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  margin-left: 5px;
+}
+
+.status-badge.pending {
+  background-color: #ffb74d;
+  color: #000;
+}
+
+.status-badge.approved {
+  background-color: #66bb6a;
+  color: #fff;
+}
+
+.status-badge.declined {
+  background-color: #ef5350;
+  color: #fff;
+}
+
+/* Event Type Indicators */
+.event-type {
+  display: inline-block;
+  padding: 2px 8px;
+  background-color: #e3f2fd;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  margin-bottom: 5px;
+}
+
+/* Calendar Controls */
+.calendar-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 10px 0;
+  padding: 0 20px;
+  width: 100%;
+}
+
+.calendar-controls button {
+  padding: 8px 16px;
+  background-color: #1a3ab5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.calendar-controls button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.last-updated {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* Event Details Improvements */
+.event-item {
+  padding: 15px;
+  margin-bottom: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #1a3ab5;
+}
+
+.event-info {
+  margin: 5px 0;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #555;
+}
+
+.view-form-link {
+  display: inline-block;
+  margin-top: 10px;
+  color: #1a3ab5;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.view-form-link:hover {
+  text-decoration: underline;
+}
+
+/* Calendar Event Colors */
+.calendar-event.Project {
+  background-color: #e8f5e9;
+}
+
+.calendar-event.Activity {
+  background-color: #e3f2fd;
+}
+
+.calendar-event.event {
+  background-color: #fff3e0;
 }

@@ -10,7 +10,7 @@ import ActivityPdf from '../PdfForms/ActivityPdf'; // Import the PDF component
 import BudgetPdf from '../PdfForms/BudgetPdf'; // Add this import
 import ProjectPdf from '../PdfForms/ProjectPdf'; // Add this import
 
-const ProgressTracker = ({ }) => {
+const ProgressTracker = () => {
     const navigate = useNavigate();
     const { state } = useLocation();
     const form = state?.form;
@@ -19,7 +19,6 @@ const ProgressTracker = ({ }) => {
     const [formDetails, setFormDetails] = useState(null);   
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true); // Add loading state
-    const [signature, setSignature] = useState(null); // NEW: State for signature file
     const [currentStep, setCurrentStep] = useState(0);
     const [trackerData, setTrackerData] = useState(null);
     const [remarks, setRemarks] = useState('');
