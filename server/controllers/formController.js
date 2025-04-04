@@ -148,7 +148,7 @@ exports.createForm = async (req, res) => {
 
     // Create calendar event for Activity and Project forms
     if (['Activity', 'Project'].includes(req.body.formType)) {
-      const event = new Event({
+      const event = new CalendarEvent({
         title: req.body.formType === 'Project' ? req.body.projectTitle : req.body.title,
         description: req.body.formType === 'Project' ? req.body.projectDescription : req.body.description,
         location: req.body.location || 'TBA',
