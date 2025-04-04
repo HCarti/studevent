@@ -405,8 +405,8 @@ const fetchFormData = async () => {
               readOnly
             />
 
-            {/* <label>Contact Person:</label>
-            <input type="text" name="contactPerson" value={formData.contactPerson} onChange={handleChange} /> */}
+            <label>Contact Person:</label>
+            <input type="text" name="contactPerson" value={formData.contactPerson} onChange={handleChange} />
             <label>Contact No:</label>
             <input type="text" name="contactNo" value={formData.contactNo} onChange={handleChange} />
             <label>Email Address:</label>
