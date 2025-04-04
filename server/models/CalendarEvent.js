@@ -1,52 +1,58 @@
 const mongoose = require('mongoose');
 
-const calendarEventSchema = new mongoose.Schema({
+const CalendarEventSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true
   },
   description: {
     type: String,
-    default: 'No additional details available'
+    required: true
   },
-  location: {
-    type: String,
-    default: 'TBA'
-  },
-  eventStartDate: {
+  startDate: {
     type: Date,
     required: true
   },
-  eventEndDate: {
+  endDate: {
     type: Date,
+    required: true
+  },
+  location: {
+    type: String,
     required: true
   },
   formId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Form'
+    ref: 'Form',
+    required: true
   },
   formType: {
     type: String,
     enum: ['Activity', 'Project'],
     required: true
   },
-  status: {
-    type: String,
-    enum: ['pending', 'approved', 'declined'],
-    default: 'pending'
-  },
   createdBy: {
+    type: String,
+    required: true
+  },
+  organization: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
 });
 
-// Index for faster queries
-calendarEventSchema.index({ eventStartDate: 1, eventEndDate: 1 });
-calendarEventSchema.index({ formId: 1 });
+// Update the updatedAt field before saving
+CalendarEventSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
 
-module.exports = mongoose.model('CalendarEvent', calendarEventSchema);
+module.exports = mongoose.model('CalendarEvent', CalendarEventSchema);

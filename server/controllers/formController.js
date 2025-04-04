@@ -4,6 +4,60 @@ const Notification = require("../models/Notification");
 const EventTracker = require("../models/EventTracker");
 const mongoose = require("mongoose");
 
+//HELPERS
+// Helper to create calendar event from form data
+const createCalendarEventFromForm = async (form) => {
+  try {
+    // Only create events for Activity and Project forms with dates
+    if (!['Activity', 'Project'].includes(form.formType) || !form.eventStartDate) {
+      return null;
+    }
+
+    const eventData = {
+      title: form.title || form.projectTitle || `${form.formType} Form`,
+      description: form.description || form.projectDescription || 'No description provided',
+      startDate: form.eventStartDate,
+      endDate: form.eventEndDate || form.eventStartDate,
+      location: form.location || 'TBA',
+      formId: form._id,
+      formType: form.formType,
+      createdBy: form.emailAddress || 'system',
+      organization: form.studentOrganization || null
+    };
+
+    const calendarEvent = new CalendarEvent(eventData);
+    return await calendarEvent.save();
+  } catch (error) {
+    console.error('Error creating calendar event:', error);
+    return null;
+  }
+};
+
+// Helper to update calendar event when form changes
+const updateCalendarEventFromForm = async (form) => {
+  try {
+    // Find existing event for this form
+    const existingEvent = await CalendarEvent.findOne({ formId: form._id });
+    
+    if (!existingEvent) {
+      return await createCalendarEventFromForm(form);
+    }
+
+    // Update event details
+    existingEvent.title = form.title || form.projectTitle || `${form.formType} Form`;
+    existingEvent.description = form.description || form.projectDescription || existingEvent.description;
+    existingEvent.startDate = form.eventStartDate;
+    existingEvent.endDate = form.eventEndDate || form.eventStartDate;
+    existingEvent.location = form.location || existingEvent.location;
+
+    return await existingEvent.save();
+  } catch (error) {
+    console.error('Error updating calendar event:', error);
+    return null;
+  }
+};
+
+
 // Helper function to get required reviewers based on form type
 const getRequiredReviewers = (formType) => {
   if (formType === 'Project') {
@@ -120,6 +174,11 @@ exports.createForm = async (req, res) => {
     // Create and save the form
     const form = new Form(req.body);
     await form.save();
+
+        // Create calendar event if this is an Activity/Project form with dates
+        if (['Activity', 'Project'].includes(req.body.formType) && req.body.eventStartDate) {
+          await createCalendarEventFromForm(form);
+        }
 
     // Get the appropriate reviewers based on form type
     const requiredReviewers = getRequiredReviewers(req.body.formType);
@@ -279,6 +338,11 @@ exports.updateForm = async (req, res) => {
         { $set: { "steps.$.status": "pending" } }
       );
     }
+
+        // Update calendar event if this is an Activity/Project form with dates
+        if (['Activity', 'Project'].includes(form.formType) && updates.eventStartDate) {
+          await updateCalendarEventFromForm(updatedForm);
+        }
 
     // 6. Send notification
     if (form.emailAddress) {
