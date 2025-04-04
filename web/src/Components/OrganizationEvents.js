@@ -4,6 +4,7 @@ import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './OrganizationEvents.css';
+import { useNavigate } from 'react-router-dom';
 
 const localizer = momentLocalizer(moment);
 
@@ -13,6 +14,25 @@ const OrganizationEvents = () => {
   const [selectedEvents, setSelectedEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
+  // Get auth token and user info
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+    const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+    
+    if (!token || !parsedUser) {
+      return null;
+    }
+
+    return {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    };
+  };
 
   // Fetch calendar events from backend
   const fetchCalendarEvents = async () => {
@@ -20,6 +40,9 @@ const OrganizationEvents = () => {
       setLoading(true);
       setError(null);
       
+      const authHeaders = getAuthHeaders();
+      if (!authHeaders) return;
+
       // Get current month's start and end dates for range query
       const startOfMonth = moment().startOf('month').toISOString();
       const endOfMonth = moment().endOf('month').toISOString();
@@ -27,54 +50,8 @@ const OrganizationEvents = () => {
       const response = await axios.get(
         'https://studevent-server.vercel.app/api/calendar/events/range', 
         {
-          params: { start: startOfMonth, end: endOfMonth }
-        }
-      );
-      
-      const formattedEvents = response.data.map(event => ({
-        id: event._id,
-        title: event.title,
-        start: new Date(event.startDate),
-        end: new Date(event.endDate),
-        description: event.description,
-        location: event.location,
-        organization: event.organization?.organizationName || 'N/A',
-        type: event.formType,
-        duration: calculateDuration(event.startDate, event.endDate),
-        allDay: true // Assuming these are all-day events
-      }));
-      
-      setEvents(formattedEvents);
-    } catch (err) {
-      console.error('Error fetching calendar events:', err);
-      setError('Failed to load calendar events. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Calculate event duration
-  const calculateDuration = (start, end) => {
-    const duration = moment(end).diff(moment(start), 'days') + 1;
-    return duration === 1 ? '1 day' : `${duration} days`;
-  };
-
-  // Handle month change to fetch new events
-  const handleNavigate = (newDate) => {
-    setSelectedDate(newDate);
-    fetchCalendarEventsForMonth(newDate);
-  };
-
-  // Fetch events for specific month
-  const fetchCalendarEventsForMonth = async (date) => {
-    try {
-      const startOfMonth = moment(date).startOf('month').toISOString();
-      const endOfMonth = moment(date).endOf('month').toISOString();
-      
-      const response = await axios.get(
-        'https://studevent-server.vercel.app/api/calendar/events/range', 
-        {
-          params: { start: startOfMonth, end: endOfMonth }
+          params: { start: startOfMonth, end: endOfMonth },
+          ...authHeaders
         }
       );
       
@@ -94,8 +71,75 @@ const OrganizationEvents = () => {
       setEvents(formattedEvents);
     } catch (err) {
       console.error('Error fetching calendar events:', err);
-      setError('Failed to load calendar events for this month.');
+      
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/login');
+        setError('Session expired. Please log in again.');
+      } else {
+        setError('Failed to load calendar events. Please try again later.');
+      }
+    } finally {
+      setLoading(false);
     }
+  };
+
+  // Fetch events for specific month
+  const fetchCalendarEventsForMonth = async (date) => {
+    try {
+      const authHeaders = getAuthHeaders();
+      if (!authHeaders) return;
+
+      const startOfMonth = moment(date).startOf('month').toISOString();
+      const endOfMonth = moment(date).endOf('month').toISOString();
+      
+      const response = await axios.get(
+        'https://studevent-server.vercel.app/api/calendar/events/range', 
+        {
+          params: { start: startOfMonth, end: endOfMonth },
+          ...authHeaders
+        }
+      );
+      
+      const formattedEvents = response.data.map(event => ({
+        id: event._id,
+        title: event.title,
+        start: new Date(event.startDate),
+        end: new Date(event.endDate),
+        description: event.description,
+        location: event.location,
+        organization: event.organization?.organizationName || 'N/A',
+        type: event.formType,
+        duration: calculateDuration(event.startDate, event.endDate),
+        allDay: true
+      }));
+      
+      setEvents(formattedEvents);
+    } catch (err) {
+      console.error('Error fetching calendar events:', err);
+      
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/login');
+        setError('Session expired. Please log in again.');
+      } else {
+        setError('Failed to load calendar events for this month.');
+      }
+    }
+  };
+
+  // Calculate event duration
+  const calculateDuration = (start, end) => {
+    const duration = moment(end).diff(moment(start), 'days') + 1;
+    return duration === 1 ? '1 day' : `${duration} days`;
+  };
+
+  // Handle month change to fetch new events
+  const handleNavigate = (newDate) => {
+    setSelectedDate(newDate);
+    fetchCalendarEventsForMonth(newDate);
   };
 
   useEffect(() => {
@@ -119,7 +163,7 @@ const OrganizationEvents = () => {
     setSelectedEvents(filteredEvents);
   };
 
-  // Custom event renderer with type indicator
+  // Custom event style based on type
   const eventStyleGetter = (event) => {
     let backgroundColor = '#3174ad'; // Default blue
     
@@ -152,12 +196,13 @@ const OrganizationEvents = () => {
     </div>
   );
 
+
   return (
     <div className="wrap">
       <h1>EVENT CALENDAR</h1>
       
       {loading && <div className="loading-message">Loading calendar events...</div>}
-      {error && <div className="error-message">{error}</div>}
+      {error && !error.includes('Session expired') && <div className="error-message">{error}</div>}
 
       <div className="calendar-container">
         <div className="calendar-wrapper">
@@ -176,7 +221,6 @@ const OrganizationEvents = () => {
               style={{ height: '100%' }}
               selectable
               onSelectSlot={handleSelectSlot}
-              onSelectEvent={(event) => alert(`${event.title}\n${event.description}`)}
               onNavigate={handleNavigate}
               eventPropGetter={eventStyleGetter}
               components={{
