@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Notification = require("../models/Notification");
 const EventTracker = require("../models/EventTracker");
 const mongoose = require("mongoose");
+const CalendarEvent = require("../models/CalendarEvent");
 
 //HELPERS
 // Helper to create calendar event from form data
