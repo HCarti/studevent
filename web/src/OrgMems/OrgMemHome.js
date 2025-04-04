@@ -22,17 +22,18 @@ const OrgMemHome = () => {
   const [clickedButton, setClickedButton] = useState(null);
   const [organizationName, setOrganizationName] = useState('');
   const [quote, setQuote] = useState('');
+  const [isLoading, setIsLoading] = useState(true); // New loading state
 
   // Array of motivational quotes
   const quotes = [
     "Your work is going to fill a large part of your life, and the only way to be truly satisfied is to do what you believe is great work. – Steve Jobs",
     "I have learned over the years that when one's mind is made up, this diminishes fear; knowing what must be done does away with fear. – Rosa Parks",
     "Success is not the key to happiness. Happiness is the key to success. – Albert Schweitzer",
-    "It always seems impossible until it’s done. – Nelson Mandela",
-    "Your time is limited, so don’t waste it living someone else’s life. – Steve Jobs",
+    "It always seems impossible until it's done. – Nelson Mandela",
+    "Your time is limited, so don't waste it living someone else's life. – Steve Jobs",
     "Believe you can and you're halfway there. – Theodore Roosevelt",
     "The future belongs to those who believe in the beauty of their dreams. – Eleanor Roosevelt",
-    "You miss 100% of the shots you don’t take. – Wayne Gretzky",
+    "You miss 100% of the shots you don't take. – Wayne Gretzky",
     "Success is walking from failure to failure with no loss of enthusiasm. – Winston Churchill",
     "Hardships often prepare ordinary people for an extraordinary destiny. – C.S. Lewis"
   ];
@@ -40,6 +41,7 @@ const OrgMemHome = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        setIsLoading(true); // Start loading
         const token = localStorage.getItem('token');
         console.log('Token retrieved from localStorage:', token);
         if (!token) {
@@ -67,6 +69,8 @@ const OrgMemHome = () => {
         if (error.response && error.response.status === 401) {
           navigate('/');
         }
+      } finally {
+        setIsLoading(false); // Stop loading whether successful or not
       }
     };
 
@@ -113,8 +117,48 @@ const OrgMemHome = () => {
     ],
   };
 
+  // CSS for the loader (you can also add this to your OrgMemHome.css file)
+  const loaderStyles = `
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .loader-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      width: 100%;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background-color: rgba(255, 255, 255, 0.8);
+      z-index: 1000;
+    }
+    
+    .loader {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #3498db;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+    }
+  `;
+
   return (
     <ParallaxProvider>
+      {/* Add the loader styles */}
+      <style>{loaderStyles}</style>
+      
+      {/* Show loader when loading */}
+      {isLoading && (
+        <div className="loader-container">
+          <div className="loader"></div>
+        </div>
+      )}
+
       <div className="orgmem-home">
         <header className="header-admin">
           <img src={StudeventLogo} alt="Studevent Logo" className="logo" />
@@ -146,7 +190,6 @@ const OrgMemHome = () => {
             ))}
           </Slider>
         </div>
-
       </div>
     </ParallaxProvider>
   );

@@ -7,6 +7,7 @@
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  height: 70%;
 }
 
 /* Heading */
@@ -63,6 +64,8 @@
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  display: flex;
+  height: 70%;
 }
 
 /* Forms Table */
@@ -162,7 +165,6 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 3rem;
 }
 
 .spinner {

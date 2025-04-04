@@ -339,3 +339,116 @@
   text-align: center;
   color: gray;
 }
+
+/* Notification Dropdown with Scrollbar */
+.notification-dropdown {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  background-color: white;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  width: 300px;
+  max-height: 400px; /* Limit height and enable scrolling */
+  overflow-y: auto; /* Enable vertical scrolling */
+  z-index: 1000;
+  padding: 0;
+  scrollbar-width: thin; /* For Firefox */
+  scrollbar-color: #1a3ab5 #f1f1f1; /* For Firefox - matches your color scheme */
+}
+
+/* Custom scrollbar for Webkit browsers */
+.notification-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notification-dropdown::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.notification-dropdown::-webkit-scrollbar-thumb {
+  background-color: #1a3ab5;
+  border-radius: 3px;
+}
+
+.notification-dropdown::-webkit-scrollbar-thumb:hover {
+  background-color: #122a8a;
+}
+
+.notification-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+}
+
+.notification-item.unread {
+  background-color: #f0f7ff;
+}
+
+.notification-item:hover {
+  background-color: #f8f9fa;
+}
+
+.notification-message {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.notification-time {
+  font-size: 12px;
+  color: #666;
+}
+
+.view-tracker-btn {
+  margin-top: 8px;
+  padding: 4px 8px;
+  background-color: #1a3ab5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  align-self: flex-start;
+}
+
+.view-tracker-btn:hover {
+  background-color: #122a8a;
+}
+
+.no-notifications {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Animation for dropdown */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notification-dropdown {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+  .notification-dropdown {
+    width: 280px;
+    right: -20px;
+    max-height: 60vh;
+  }
+}

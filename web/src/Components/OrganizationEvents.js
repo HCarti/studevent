@@ -5,6 +5,7 @@ import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './OrganizationEvents.css';
 import { useNavigate } from 'react-router-dom';
+import { ClipLoader } from 'react-spinners';
 
 const localizer = momentLocalizer(moment);
 
@@ -201,7 +202,14 @@ const OrganizationEvents = () => {
     <div className="wrap">
       <h1>EVENT CALENDAR</h1>
       
-      {loading && <div className="loading-message">Loading calendar events...</div>}
+        {loading && (
+        <div className="loader-overlay">
+          <div className="loader-container">
+            <ClipLoader color="#1a3ab5" size={50} />
+            <p>Loading calendar events...</p>
+          </div>
+        </div>
+      )}
       {error && !error.includes('Session expired') && <div className="error-message">{error}</div>}
 
       <div className="calendar-container">
