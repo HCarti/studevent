@@ -141,18 +141,39 @@ const fetchFormData = async () => {
 useEffect(() => {
   const fetchOccupiedDates = async () => {
     try {
-      const response = await fetch('https://studevent-server.vercel.app/api/forms/occupied-dates');
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No token found');
+        return;
+      }
+
+      const response = await fetch('https://studevent-server.vercel.app/api/forms/occupied-dates', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
       const data = await response.json();
+      console.log('Occupied dates from server:', data);
+      
       if (data?.occupiedDates) {
         setOccupiedDates(data.occupiedDates);
       }
     } catch (error) {
       console.error('Error fetching occupied dates:', error);
+      // Handle unauthorized error (401)
+      if (error.message.includes('401')) {
+      }
     }
   };
   
   fetchOccupiedDates();
-}, []);
+}, []); // Add navigate to dependencies
 
 // Add this helper function
 const isOccupied = (date) => {
