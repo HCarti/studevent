@@ -148,7 +148,7 @@ useEffect(() => {
       }
 
       // Correct endpoint
-      const response = await fetch('https://studevent-server.vercel.app/api/forms/occupied-dates', {
+      const response = await fetch('https://studevent-server.vercel.app/api/calendar/occupied-dates', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

@@ -43,4 +43,30 @@ router.get('/events/range', async (req, res) => {
   }
 });
 
+// Get occupied dates from calendar events
+router.get('/occupied-dates',  async (req, res) => {
+  try {
+    const events = await CalendarEvent.find({}, 'startDate endDate');
+    
+    const occupiedDates = [];
+    
+    events.forEach(event => {
+      const start = moment(event.startDate).startOf('day');
+      const end = moment(event.endDate).endOf('day');
+      
+      for (let date = start.clone(); date <= end; date.add(1, 'days')) {
+        occupiedDates.push(date.format('YYYY-MM-DD'));
+      }
+    });
+    
+    res.json({ occupiedDates: [...new Set(occupiedDates)] });
+  } catch (error) {
+    console.error('Error fetching occupied dates:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch occupied dates',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 module.exports = router;

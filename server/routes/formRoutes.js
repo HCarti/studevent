@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const Form = require('../models/Form');
 const formController = require('../controllers/formController');
-const CalendarEvent = require('../models/CalendarEvent'); // Import the CalendarEvent model
 
 router.get("/by-email/:email", async (req, res) => {
   try {
@@ -56,34 +55,6 @@ router.post('/submit', async (req, res) => {
         console.error('Error saving form:', error.message);
         res.status(500).json({ error: 'Internal Server Error' });
     }
-});
-
-// In your backend routes
-// routes/forms.js
-router.get('/occupied-dates', async (req, res) => {
-  try {
-    // Get all CalendarEvents (not Forms)
-    const events = await CalendarEvent.find({}, 'startDate endDate');
-    
-    const occupiedDates = [];
-    
-    events.forEach(event => {
-      const start = moment(event.startDate).startOf('day');
-      const end = moment(event.endDate).endOf('day');
-      
-      for (let date = start.clone(); date <= end; date.add(1, 'days')) {
-        occupiedDates.push(date.format('YYYY-MM-DD'));
-      }
-    });
-    
-    res.json({ occupiedDates: [...new Set(occupiedDates)] });
-  } catch (error) {
-    console.error('Error fetching occupied dates:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch occupied dates',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
 });
 
 // Route to submit a new form
