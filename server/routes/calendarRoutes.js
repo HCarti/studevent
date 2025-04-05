@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const CalendarEvent = require('../models/CalendarEvent');
+const moment = require('moment');
 
 // Get all calendar events
 router.get('/events', async (req, res) => {
