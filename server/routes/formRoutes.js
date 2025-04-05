@@ -58,31 +58,30 @@ router.post('/submit', async (req, res) => {
 });
 
 // In your backend routes
-router.get('/occupied-dates', async (req, res) => {
+// routes/forms.js
+router.get('/occupied-dates', authenticateToken, async (req, res) => {
   try {
-    // Get all events that would make a date "occupied"
+    // Get all CalendarEvents (not Forms)
     const events = await CalendarEvent.find({}, 'startDate endDate');
     
-    // Generate all occupied dates
     const occupiedDates = [];
     
     events.forEach(event => {
-      const start = moment(event.startDate);
-      const end = moment(event.endDate);
+      const start = moment(event.startDate).startOf('day');
+      const end = moment(event.endDate).endOf('day');
       
-      // Add all dates between start and end (inclusive)
       for (let date = start.clone(); date <= end; date.add(1, 'days')) {
         occupiedDates.push(date.format('YYYY-MM-DD'));
       }
     });
     
-    // Remove duplicates
-    const uniqueDates = [...new Set(occupiedDates)];
-    
-    res.json({ occupiedDates: uniqueDates });
+    res.json({ occupiedDates: [...new Set(occupiedDates)] });
   } catch (error) {
     console.error('Error fetching occupied dates:', error);
-    res.status(500).json({ error: 'Failed to fetch occupied dates' });
+    res.status(500).json({ 
+      error: 'Failed to fetch occupied dates',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 

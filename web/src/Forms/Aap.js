@@ -147,6 +147,7 @@ useEffect(() => {
         return;
       }
 
+      // Correct endpoint
       const response = await fetch('https://studevent-server.vercel.app/api/forms/occupied-dates', {
         headers: {
           'Authorization': `Bearer ${token}`,
