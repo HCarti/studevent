@@ -59,7 +59,7 @@ router.post('/submit', async (req, res) => {
 
 // In your backend routes
 // routes/forms.js
-router.get('/occupied-dates', authenticateToken, async (req, res) => {
+router.get('/occupied-dates', async (req, res) => {
   try {
     // Get all CalendarEvents (not Forms)
     const events = await CalendarEvent.find({}, 'startDate endDate');
