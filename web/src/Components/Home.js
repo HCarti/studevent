@@ -21,20 +21,16 @@ const Home = ({ handleLogin }) => {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
-    console.log('Retrieved user from localStorage:', storedUser); // Add this line for debugging
+    console.log('Retrieved user from localStorage:', storedUser);
     if (storedUser && storedUser !== "undefined") {
       setUser(JSON.parse(storedUser));
     }
   }, []);
   
-  
-
   useEffect(() => {
     if (user?.role) {
-      // Redirect based on user role after login
       switch (user.role) {
         case 'Organization':
           navigate('/member');
@@ -56,8 +52,8 @@ const Home = ({ handleLogin }) => {
   
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSuccessMessage(''); // Clear previous success messages
-    setErrorMessage(''); // Clear previous error messages
+    setSuccessMessage('');
+    setErrorMessage('');
 
     const data = { email, password };
     try {
@@ -84,14 +80,13 @@ const Home = ({ handleLogin }) => {
 
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-        // Set success message
         setSuccessMessage("Login successful! Redirecting...");
 
     } catch (error) {
         console.error("Login error:", error.response ? error.response.data : error.message);
         setErrorMessage('Invalid email or password.');
     }
-};
+  };
   
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -99,76 +94,80 @@ const Home = ({ handleLogin }) => {
 
   return (
     <ParallaxProvider>
-      <React.Fragment>
-        <div className="parallax-container">
-          
-          {/* Parallax Section 1 */}
-          <Parallax className="parallax-bg" y={[-20, 20]} tagOuter="div">
-            <div className="parallax-section one">
-              <div className="login-container">
-                <div id="loginBox" className="login-box">
-                  <h2>LOG IN TO YOUR ACCOUNT</h2>
-                  <form onSubmit={handleSubmit}>
-                           <div className={`input-container ${isFocused ? 'input-focused' : ''}`}>
-                            <Person2Icon />
-                            <input
-                                className="homeinputEmail"
-                                type="email"
-                                placeholder="Email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                onFocus={() => setIsFocused(true)}
-                                onBlur={() => setIsFocused(false)}
-                                required
-                            />
-                        </div>
+      <div className="home-parallax-container">
+        {/* Login Section */}
+        <Parallax className="home-parallax-bg" y={[-20, 20]} tagOuter="div">
+          <div className="home-login-section">
+            <div className="home-login-container">
+              <div className="home-login-box">
+                <h2 className="home-login-title">Login to your account </h2>
+                <form onSubmit={handleSubmit}>
+                  <div className={`home-input-container ${isFocused ? 'home-input-focused' : ''}`}>
+                    <Person2Icon className="home-input-icon" />
+                    <input
+                      className="home-email-input"
+                      type="email"
+                      placeholder="Email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onFocus={() => setIsFocused(true)}
+                      onBlur={() => setIsFocused(false)}
+                      required
+                    />
+                  </div>
 
-              <div className={`input-container password-container ${passwordFocused ? 'input-focused' : ''}`}>
-                  <LockIcon />
-                  <input
-                      className="homeinputPass"
+                  <div className={`home-input-container home-password-container ${passwordFocused ? 'home-input-focused' : ''}`}>
+                    <LockIcon className="home-input-icon" />
+                    <input
+                      className="home-password-input"
                       type={showPassword ? 'text' : 'password'}
                       placeholder="Password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       onFocus={() => setPasswordFocused(true)}
                       onBlur={() => setPasswordFocused(false)}
-                      required/>
-                        </div>
-                        <button type="submit" className="login-button">Log in</button>
-                        {successMessage && <p className="success-message">{successMessage}</p>}
-                        {errorMessage && <p className="error-message">{errorMessage}</p>}
-                    </form>
-                </div>
+                      required
+                    />
+                    <button 
+                      type="button" 
+                      className="home-toggle-password-btn"
+                      onClick={togglePasswordVisibility}
+                    >
+                      {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                    </button>
+                  </div>
+                  <button type="submit" className="home-login-btn">Log in</button>
+                  {successMessage && <p className="home-success-message">{successMessage}</p>}
+                  {errorMessage && <p className="home-error-message">{errorMessage}</p>}
+                </form>
+              </div>
 
-                <div className="logo-container">
-                  <img src={NU_logo} alt="NU Logo" className="nu-logo" />
-                </div>
+              <div className="home-logo-container">
+                <img src={NU_logo} alt="NU Logo" className="home-nu-logo" />
+              </div>
 
-                <div className="footer-text">
-                  <h3>NU MOA - SDAO SYSTEM</h3>
-                  <p>SDAO manages the student activities and development programs of the institution</p> 
-                   <p>with the help of the student councils and student organizations.</p>
-                </div>
+              <div className="home-footer-text">
+                <h3>NU MOA - SDAO SYSTEM</h3>
+                <p>SDAO manages the student activities and development programs of the institution</p> 
+                <p>with the help of the student councils and student organizations.</p>
               </div>
             </div>
-          </Parallax>
+          </div>
+        </Parallax>
 
-          {/* Parallax Section 2 */}
-          <Parallax className="parallax-bg" y={[10, -10]} tagOuter="div">
-            <div className="parallax-section two">
-              <div className="content-section">
-                <h2>About Us</h2>
-                 <p> At SDAO (Student Development and Activities Office), we are committed to enriching the student experience by managing</p> 
-                   <p>a wide range of student activities and development programs.</p>
-                    <p>Working hand-in-hand with student councils and organizations, we strive to create a dynamic and engaging environment that fosters leadership, teamwork, and personal growth.</p> 
-                  <p>Our goal is to support and empower students in making the most of their academic journey through meaningful opportunities and initiatives that promote holistic development.</p>
-              </div>
+        {/* About Section */}
+        <Parallax className="home-parallax-bg" y={[10, -10]} tagOuter="div">
+          <div className="home-about-section">
+            <div className="home-about-content">
+              <h2 className="home-about-title">About Us</h2>
+              <p> At SDAO (Student Development and Activities Office), we are committed to enriching the student experience by managing</p> 
+              <p>a wide range of student activities and development programs.</p>
+              <p>Working hand-in-hand with student councils and organizations, we strive to create a dynamic and engaging environment that fosters leadership, teamwork, and personal growth.</p> 
+              <p>Our goal is to support and empower students in making the most of their academic journey through meaningful opportunities and initiatives that promote holistic development.</p>
             </div>
-          </Parallax>
-          
-        </div>
-      </React.Fragment>
+          </div>
+        </Parallax>
+      </div>
     </ParallaxProvider>
   );
 };

@@ -1,94 +1,39 @@
-/* General Styles */
-body {
-  margin: 0;
-  padding: 0;
-  font-family: Arial, sans-serif;
-  background-image: url(../Images/Nu_building2.png);
-  background-color: #ffffff; /* Fallback color */
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  background-position: center;
+/* Home Page General Styles */
+body{
+  align-items: center;
+  background-image: url('../Images/Nu_building2.png');
   background-size: cover;
-  overflow-x: hidden; /* Disable horizontal scrolling */
+  background-position: center;
+  background-attachment: fixed;
+  width: 100%;
+  overflow-x: hidden;
+  position: relative;
 }
- 
-/* Mobile Styles */
-@media (max-width: 768px) {
-  .login-container {
-    padding-top: 100px;
-    padding-left: 20px;
-    padding-right: 20px;
-  }
- 
-  .login-box {
-    width: 100%; /* Make it full width */ 
-    padding: 20px; /* Adjust padding for smaller screens */
-  }
- 
-  .nu-logo {
-    width: 80px; /* Adjust logo size */
-  }
- 
-  .footer-container {
-    flex-direction: column; /* Stack sections vertically on mobile */
-    align-items: center; /* Center items in the middle */
-  }
- 
-  .footer-section {
-    text-align: center; /* Center text on mobile */
-    padding: 5px; /* Reduce padding on smaller screens */
-  }
- 
-  .footer-text h3 {
-    font-size: 18px;
-  }
- 
-  .login-button {
-    padding: 10px; /* Adjust padding for smaller screens */
-  }
- 
-  /* .input-container {
-    padding: 8px; 
-  }
-  */
-  .parallax-section {
-    padding: 50px 20px;
-  }
- 
-  /* Adjust the footer for mobile screens */
-  footer {
-    padding: 20px;
-  }
- 
-  .social-icon {
-    width: 20px; /* Adjust social icons for smaller screens */
-    height: 20px;
-  }
+
+.home-parallax-container {
+  width: 100%;
+  overflow-x: hidden;
 }
- 
-/* Animation Keyframes */
-@keyframes slide-in {
-  from {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+
+/* Login Section Styles */
+.home-login-section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
- 
-.login-container {
+
+.home-login-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding-top: 80px;
+  width: 100%;
 }
- 
-/* Login Box Styling */
-.login-box {
-  background-color: #f9f9f9;
+
+.home-login-box {
+  background-color: rgba(249, 249, 249, 0.9); /* Slightly transparent */
   border-radius: 20px;
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
   padding: 30px;
@@ -96,81 +41,70 @@ body {
   text-align: center;
   transition: width 0.3s ease;
 }
- 
-.login-box h2 {
+
+.home-login-title {
   color: #1a3ab5;
   margin-bottom: 30px;
   font-size: 25px;
   font-weight: bold;
 }
 
-.homeinputPass {
-  border: 1px solid black !important;
-  height: 30px !important;
-  border-radius: 10px !important;
-  padding-left: 10px;
-  padding-right: 40px; /* Fixed padding for the icon space */
-  font-size: 16px;
-  width: 100%; /* Fixed width */
-  box-sizing: border-box;
-  font-family: inherit; /* Inherit the font to prevent style changes */
-}
-
-.homeinputEmail{
-  border: 1px solid black !important;
-  height: 5px !important;
-  flex-grow: 1;
-  padding-left: 10px;
-  font-size: 16px;
-  border-radius: 10px !important;
-  font-family: inherit;
-
-}
- 
-.input-container {
+/* Input Field Styles */
+.home-input-container {
   display: flex;
   align-items: center;
   margin-bottom: 15px;
   padding: 10px;
-  border-radius: 15px !important;
+  border-radius: 15px;
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background-color: white;
 }
- 
-.input-focused {
+
+.home-input-focused {
   transform: scale(1.05);
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
 }
- 
-.password-container {
+
+.home-input-icon {
+  margin-right: 10px;
+  color: #555;
+}
+
+.home-email-input, 
+.home-password-input {
+  border: 1px solid #000;
+  height: 30px;
+  border-radius: 10px;
+  padding-left: 10px;
+  padding-right: 40px;
+  font-size: 16px;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  outline: none;
+}
+
+.home-password-container {
   position: relative;
 }
- 
-.password-container input {
-  padding-right: 40px;
-}
- 
-.toggle-password-btn {
+
+.home-toggle-password-btn {
   position: absolute;
   right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
   background: none;
   border: none;
   cursor: pointer;
-  outline: none;
+  color: #555;
   padding: 0;
-  width: 24px; /* Ensure fixed size for the eye icon */
-  height: 24px;
 }
 
-/* Hover effect for toggle button */
-.toggle-password-btn:hover {
-  transform: scale(1.2); 
-  color: #145ab7;
+.home-toggle-password-btn:hover {
+  color: #1a3ab5;
 }
- 
-.login-button {
+
+/* Button Styles */
+.home-login-btn {
   width: 100%;
   padding: 12px 0;
   background-color: #1a3ab5;
@@ -183,124 +117,95 @@ body {
   margin-top: 8px;
   transition: transform 0.3s ease, background-color 0.3s ease;
 }
- 
-/* Hover effect */
-.login-button:hover {
-  transform: scale(1.05); /* Scale up the button */
-  background-color: #145ab7; /* Darker shade on hover */
+
+.home-login-btn:hover {
+  transform: scale(1.05);
+  background-color: #145ab7;
 }
- 
-.logo-container {
+
+/* Logo Styles */
+.home-logo-container {
   margin-top: 20px;
 }
- 
-.nu-logo {
+
+.home-nu-logo {
   width: 100px;
-}
- 
- 
-/* Footer Styling */
-
-.parallax-sectionz {
-  width: 2200px;
-  max-width: 100%;
+  height: auto;
 }
 
-.footer {
-  justify-content: center;
-  align-items: center;
-  background-color: #333;
-  color: white;
-}
- 
-.footer-container {
-  align-content: center;
-  height: 300px;
-  width: 100%;
-  flex-direction: row;
-}
- 
-.footer-section {
-  flex:auto;
-  padding: 5px;
-  text-align: left;
-}
- 
-.footer-text {
-  text-align: center; /* Center the footer text */
-  animation: slide-in 1.0s ease forwards; /* Apply animation */
-  font-size: 20px;
-}
- 
-.social-icons-container{
-  justify-content: center;
-}
-.contact-info{
-  display: flex;
-  height: 100px;
-  justify-content: center;
-  flex-direction: column;
-  align-items: center;
- 
-}
-.copyright-info{
+/* Footer Text Styles */
+.home-footer-text {
   text-align: center;
-  margin-top: 10px;
+  color: #333;
+  margin-top: 20px;
+  animation: home-slide-in 1.0s ease forwards;
+  padding: 10px;
+  border-radius: 10px;
 }
- 
- 
-.footer h4 {
-  margin-bottom: 5px;
-  font-size: 10px;
-}
- 
-.footer-text h3 {
+
+.home-footer-text h3 {
   color: #1a3ab5;
   font-weight: bold;
-}
- 
-.content-section h2 {
-  color: #1a3ab5;
-  font-weight: bold;
-  font-size: 20px;
-}
- 
-.content-section{
-  font-size: 20px;
-}
- 
-.contact-item {
-  display: flex;
-  align-items: center;
   margin-bottom: 10px;
 }
- 
-.contact-item svg {
-  margin-right: 8px;
+
+.home-footer-text p {
+  margin: 5px 0;
+  font-size: 14px;
 }
- 
-.social-icons-container {
-  display: flex;
-  justify-content: center; /* Center the social icons */
-}
- 
-.social-icon {
-  width: 24px;
-  height: 24px;
-  margin: 0 10px;
-}
- 
-.two {
+
+/* About Section Styles */
+.home-about-section {
+  padding: 80px 20px 100px;
   text-align: center;
- 
-  padding-top: 80px;
-  padding-bottom: 100px;
-  animation: autoShowAnimation both;
-  animation-timeline: view(70% 5%);
 }
- 
- 
-@keyframes autoShowAnimation {
+
+.home-about-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.home-about-title {
+  color: #1a3ab5;
+  font-weight: bold;
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.home-about-content p {
+  margin: 10px 0;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Message Styles */
+.home-success-message {
+  color: #28a745;
+  font-size: 16px;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.home-error-message {
+  color: #dc3545;
+  font-size: 16px;
+  margin-top: 10px;
+  text-align: center;
+}
+
+/* Animation Keyframes */
+@keyframes home-slide-in {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes home-auto-show-animation {
   from {
     opacity: 0;
     transform: translateY(200px) scale(0.3);
@@ -311,17 +216,59 @@ body {
   }
 }
 
-.success-message {
-  color: green;
-  font-size: 16px;
-  margin-top: 10px;
-  text-align: center;
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .home-login-container {
+    padding-top: 60px;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+ 
+  .home-login-box {
+    width: 100%;
+    padding: 20px;
+  }
+ 
+  .home-nu-logo {
+    width: 80px;
+  }
+ 
+  .home-footer-text h3 {
+    font-size: 18px;
+  }
+ 
+  .home-login-btn {
+    padding: 10px;
+  }
+ 
+  .home-about-section {
+    padding: 50px 20px;
+  }
+ 
+  .home-about-content p {
+    font-size: 14px;
+  }
 }
-
-.error-message {
-  color: red;
-  font-size: 16px;
-  margin-top: 10px;
-  text-align: center;
-}
-
+  .home-about-title {
+    font-size: 20px;
+  }
+ 
+  .home-input-container {
+    padding: 8px;
+  }
+ 
+  .home-input-icon {
+    margin-right: 5px;
+  }
+ 
+  .home-email-input, 
+  .home-password-input {
+    padding-left: 8px;
+    padding-right: 30px;
+    font-size: 14px;
+  }
+ 
+  .home-login-btn {
+    font-size: 14px;
+    padding: 10px;
+  }

@@ -1,14 +1,14 @@
 import React, {useState, useEffect} from "react";
-import axios from 'axios';
 import './Aap.css';
 import moment from 'moment';
 import { FaCheck } from 'react-icons/fa'; // Import check icon from react-icons
-import { Document, Page, Text, View, StyleSheet, Image, PDFDownloadLink } from "@react-pdf/renderer";
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import NU_logo from "../Images/NU_logo.png";
+import { registerLocale, setDefaultLocale } from "react-datepicker";
+import en from 'date-fns/locale/en-US';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { MdOutlineContactPage } from "react-icons/md";
+registerLocale('en', en);
+
 
 const Aap = () => {
   // Get route parameters and navigation
@@ -135,13 +135,13 @@ const fetchFormData = async () => {
     }
 
     fetchFormData();
-    fetchOccupiedDates();
   }, [formId, isEditMode, navigate]);
 
-  // Fetch occupied dates
+// Add this effect to fetch occupied dates
+useEffect(() => {
   const fetchOccupiedDates = async () => {
     try {
-      const response = await fetch('https://studevent-server.vercel.app/api/occupied-dates');
+      const response = await fetch('https://studevent-server.vercel.app/api/forms/occupied-dates');
       const data = await response.json();
       if (data?.occupiedDates) {
         setOccupiedDates(data.occupiedDates);
@@ -150,6 +150,15 @@ const fetchFormData = async () => {
       console.error('Error fetching occupied dates:', error);
     }
   };
+  
+  fetchOccupiedDates();
+}, []);
+
+// Add this helper function
+const isOccupied = (date) => {
+  const formattedDate = moment(date).format('YYYY-MM-DD');
+  return occupiedDates.includes(formattedDate);
+};
 
   // Form handlers
   const handleChange = (e) => {
@@ -165,11 +174,6 @@ const fetchFormData = async () => {
       ...prev,
       [field]: date.toISOString(),
     }));
-  };
-
-  const isOccupied = (date) => {
-    const formattedDate = date.toISOString().split('T')[0];
-    return occupiedDates.includes(formattedDate);
   };
 
   // Form navigation
@@ -440,20 +444,33 @@ const fetchFormData = async () => {
               selected={formData.eventStartDate ? new Date(formData.eventStartDate) : null}
               onChange={(date) => handleDateChange(date, 'eventStartDate')}
               minDate={new Date()}
-              // highlightDates={getHighlightedDates()}
-              dayClassName={date => isOccupied(date) ? 'occupied' : 'available'}
+              filterDate={(date) => !isOccupied(date)}
+              dayClassName={(date) => isOccupied(date) ? 'occupied' : ''}
               dateFormat="yyyy-MM-dd HH:mm"
               showTimeSelect
+              timeFormat="HH:mm"
+              timeIntervals={15}
+              locale="en"
+              placeholderText="Select start date"
+              className="date-picker-input"
+              popperClassName="date-picker-popper"
             />
+
             <label>Event End Date:</label>
             <DatePicker
               selected={formData.eventEndDate ? new Date(formData.eventEndDate) : null}
               onChange={(date) => handleDateChange(date, 'eventEndDate')}
-              minDate={new Date()}
-              // highlightDates={getHighlightedDates()}
-              dayClassName={date => isOccupied(date) ? 'occupied' : 'available'}
+              minDate={formData.eventStartDate ? new Date(formData.eventStartDate) : new Date()}
+              filterDate={(date) => !isOccupied(date)}
+              dayClassName={(date) => isOccupied(date) ? 'occupied' : ''}
               dateFormat="yyyy-MM-dd HH:mm"
               showTimeSelect
+              timeFormat="HH:mm"
+              timeIntervals={15}
+              locale="en"
+              placeholderText="Select end date"
+              className="date-picker-input"
+              popperClassName="date-picker-popper"
             />
             <label>Organizer:</label>
             <input type="text" name="organizer" value={formData.organizer} onChange={handleChange} />
