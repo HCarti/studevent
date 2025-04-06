@@ -509,7 +509,7 @@ const filterPassedTime = (time) => {
 
               <label>Event End Date:</label>
               <DatePicker
-                selected={formData.eventEndDate ? new Date(formData.endDate) : null}
+                selected={formData.eventEndDate ? new Date(formData.eventEndDate) : null}
                 onChange={(date) => handleDateChange(date, 'eventEndDate')}
                 minDate={formData.eventStartDate ? new Date(formData.eventStartDate) : new Date()}
                 filterDate={(date) => !isOccupied(date)}

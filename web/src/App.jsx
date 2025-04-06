@@ -4,7 +4,7 @@ import Navbar from './Components/Navbar';
 import Home from './Components/Home';
 import AdminHome from './Adm/AdminHome';
 import Organizations from './NavbarComp/Organizations';
-import ViewAllOrganizations from './NavbarComp/ViewAllOrganizations'; // Import ViewAllOrganizations
+import ViewAllOrganizations from './NavbarComp/ViewAllOrganizations';
 import ProgressTracker from './OrgMems/ProgressTracker';
 import OrgMemHome from './OrgMems/OrgMemHome';
 import OrganizationEvents from './Components/OrganizationEvents';
@@ -33,98 +33,255 @@ import AdminFormView from './Adm/AdminFormView';
 import OTPVerification from './Components/OTPVerification';
 import FormDetails from './Adm/FormDetails';
 import LocalOffCampus from './Forms/LocalOffCampus';
-import OrgTrackerViewer from './OrgMems/OrgTrackerViewer'; // Import the new page
+import OrgTrackerViewer from './OrgMems/OrgTrackerViewer';
 import Footer from './Components/footer';
 import EventTrackerList from './Components/EventTrackerList';
 import OrgSubmittedForms from './OrgMems/OrgSubmittedForms';
 
+// Protected Route Components
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const user = JSON.parse(localStorage.getItem("user"));
+  const isAuthenticated = !!user;
+  const userRole = user?.role || '';
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+  
+  if (allowedRoles && !allowedRoles.includes(userRole)) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+  
+  return children;
+};
+
+// Role-specific layout components
+const AdminLayout = ({ children }) => (
+  <ProtectedRoute allowedRoles={['Admin', 'Authority']}>
+    {children}
+  </ProtectedRoute>
+);
+
+const SuperAdminLayoutWrapper = ({ children }) => (
+  <ProtectedRoute allowedRoles={['SuperAdmin']}>
+    <SuperAdminLayout>
+      {children}
+    </SuperAdminLayout>
+  </ProtectedRoute>
+);
+
+const MemberLayout = ({ children }) => (
+  <ProtectedRoute allowedRoles={['Organization']}>
+    {children}
+  </ProtectedRoute>
+);
 
 const App = () => {
-   // Initialize state with user and role
-   const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null);
 
-   useEffect(() => {
-     const savedUser = localStorage.getItem("user");
-     if (savedUser && savedUser !== "undefined") {
-       try {
-         setUser(JSON.parse(savedUser));
-       } catch (error) {
-         console.error("Error parsing user data:", error);
-       }
-     }
-   }, []);
- 
-   const handleLogin = (userData) => {
-     localStorage.setItem("user", JSON.stringify(userData));
-     setUser(userData);
-   };
- 
-   const handleLogout = () => {
-     localStorage.removeItem("user");
-     setUser(null);
-   };
- 
-   const isSignedIn = !!user;
-   const role = user?.role || '';
- 
+  useEffect(() => {
+    const savedUser = localStorage.getItem("user");
+    if (savedUser && savedUser !== "undefined") {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
+  }, []);
+
+  const handleLogin = (userData) => {
+    localStorage.setItem("user", JSON.stringify(userData));
+    setUser(userData);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    setUser(null);
+  };
+
+  const isSignedIn = !!user;
+  const role = user?.role || '';
+
   return (
     <Router>
       <Navbar isLoggedIn={isSignedIn} user={user} handleLogout={handleLogout} />
       <div className="main-content">
         <Routes>
-        <Route 
+          <Route 
             path="/" 
             element={isSignedIn ? 
-              <Navigate to={role === 'Organization' ? '/member' : role === 'Authority' || role === 'Admin' ? '/admin' : role === 'SuperAdmin' ? '/superadmin' : '/unauthorized'} /> 
+              <Navigate to={
+                role === 'Organization' ? '/member' : 
+                role === 'Authority' || role === 'Admin' ? '/admin' : 
+                role === 'SuperAdmin' ? '/superadmin' : 
+                '/unauthorized'
+              } /> 
               : <Home handleLogin={handleLogin} />
             } 
           />
           <Route path="/unauthorized" element={<Unauthorized />} />
-          {/* <Route path="/verification" element={<OTPVerification />} /> */}
+          
+          {/* Public Routes */}
+          <Route path="/calendar" element={<OrganizationEvents />} />
+          <Route path="/trackerlist" element={<EventTrackerList />} />
+          <Route path="/organizations" element={<Organizations />} />
+          <Route path="/view-all-organizations" element={<ViewAllOrganizations />} />
+          <Route path="/formss" element={<FormsandSig />} />
 
           {/* SuperAdmin Routes */}
-          <Route path="/superadmin" element={<SuperAdminHome />} />
-          <Route path="/calendar" element={<OrganizationEvents />} />
-          <Route path="/trackerlist" element={<EventTrackerList />} />
-          <Route element={<SuperAdminLayout />}>
-            <Route path="/controlpanel" element={<AdminControlPanel />} />
-            <Route path="/authorities" element={<SuperAdminAuthorities />} />
-            <Route path="/adminuser" element={<SuperAdminUsers />} />
-            <Route path="/adduser" element={<SuperAdminAddUser />} />
-            <Route path="/admintab" element={<AdminTab />} />
-          </Route>
+          <Route path="/superadmin" element={
+            <ProtectedRoute allowedRoles={['SuperAdmin']}>
+              <SuperAdminHome />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/controlpanel" element={
+            <SuperAdminLayoutWrapper>
+              <AdminControlPanel />
+            </SuperAdminLayoutWrapper>
+          } />
+          
+          <Route path="/authorities" element={
+            <SuperAdminLayoutWrapper>
+              <SuperAdminAuthorities />
+            </SuperAdminLayoutWrapper>
+          } />
+          
+          <Route path="/adminuser" element={
+            <SuperAdminLayoutWrapper>
+              <SuperAdminUsers />
+            </SuperAdminLayoutWrapper>
+          } />
+          
+          <Route path="/adduser" element={
+            <SuperAdminLayoutWrapper>
+              <SuperAdminAddUser />
+            </SuperAdminLayoutWrapper>
+          } />
+          
+          <Route path="/admintab" element={
+            <SuperAdminLayoutWrapper>
+              <AdminTab />
+            </SuperAdminLayoutWrapper>
+          } />
 
           {/* Admin Routes */}
-          <Route path="/admin" element={<AdminHome />} />
-          <Route path="/calendar" element={<OrganizationEvents />} />
-          <Route path="/formdetails/:formId" element={<FormDetails />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/adminprofile" element={<AdminProfile />} />
-          <Route path="/adminproposal" element={<Proposal />} />
-          <Route path="/adminliquidation" element={<DashLiquidation />} />
-          <Route path="/trackerlist" element={<EventTrackerList />} />
-          <Route path="/budget" element={<Budget />} />
-          <Route path="/adminformview" element={<AdminFormView />} />
-          <Route path="/activity" element={<Aap />} />
-          <Route path="/project" element={<Project />} />
-          <Route path="/organizations" element={<Organizations />} />
-          <Route path="/view-all-organizations" element={<ViewAllOrganizations />} /> {/* New route for ViewAllOrganizations */}
+          <Route path="/admin" element={
+            <AdminLayout>
+              <AdminHome />
+            </AdminLayout>
+          } />
+          
+          <Route path="/formdetails/:formId" element={
+            <AdminLayout>
+              <FormDetails />
+            </AdminLayout>
+          } />
+          
+          <Route path="/dashboard" element={
+            <AdminLayout>
+              <Dashboard />
+            </AdminLayout>
+          } />
+          
+          <Route path="/adminprofile" element={
+            <AdminLayout>
+              <AdminProfile />
+            </AdminLayout>
+          } />
+          
+          <Route path="/adminproposal" element={
+            <AdminLayout>
+              <Proposal />
+            </AdminLayout>
+          } />
+          
+          <Route path="/adminliquidation" element={
+            <AdminLayout>
+              <DashLiquidation />
+            </AdminLayout>
+          } />
+          
+          <Route path="/adminformview" element={
+            <AdminLayout>
+              <AdminFormView />
+            </AdminLayout>
+          } />
 
           {/* Member Routes */}
-          <Route path="/member" element={<OrgMemHome />} />
-          <Route path="/calendar" element={<OrganizationEvents />} />
-          <Route path="/orgprof" element={<OrgProf />} />
-          <Route path="/progtrack/:formId" element={<ProgressTracker />} /> {/* Route with formId */}
-          <Route path="/formss" element={<FormsandSig />} />
-          <Route path="/forms" element={<Forms role={role} />} />
-          <Route path="/orgTrackerViewer/:formId" element={<OrgTrackerViewer />} />
-          <Route path="/organization/:studentOrganization/forms" element={<OrgSubmittedForms />} />
-          <Route path="/edit-budget/:formId" element={<Budget />} />
-          <Route path="/edit-form/:formId" element={<Aap />} />
-          <Route path="/activity" element={<Aap />} />
-          <Route path="/project" element={<Project />} />
-          <Route path="/budget" element={<Budget />} />
-          <Route path="/localoffcampus" element={<LocalOffCampus />} />
+          <Route path="/member" element={
+            <MemberLayout>
+              <OrgMemHome />
+            </MemberLayout>
+          } />
+          
+          <Route path="/orgprof" element={
+            <MemberLayout>
+              <OrgProf />
+            </MemberLayout>
+          } />
+          
+          <Route path="/forms" element={
+            <MemberLayout>
+              <Forms role={role} />
+            </MemberLayout>
+          } />
+          
+          <Route path="/orgTrackerViewer/:formId" element={
+            <MemberLayout>
+              <OrgTrackerViewer />
+            </MemberLayout>
+          } />
+          
+          <Route path="/organization/:studentOrganization/forms" element={
+            <MemberLayout>
+              <OrgSubmittedForms />
+            </MemberLayout>
+          } />
+          
+          <Route path="/edit-budget/:formId" element={
+            <MemberLayout>
+              <Budget />
+            </MemberLayout>
+          } />
+          
+          <Route path="/edit-form/:formId" element={
+            <MemberLayout>
+              <Aap />
+            </MemberLayout>
+          } />
+          
+          <Route path="/localoffcampus" element={
+            <MemberLayout>
+              <LocalOffCampus />
+            </MemberLayout>
+          } />
+
+          {/* Common Form Routes */}
+          <Route path="/progtrack/:formId" element={
+            <ProtectedRoute allowedRoles={['Admin', 'Authority']}>
+              <ProgressTracker />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/activity" element={
+            <ProtectedRoute allowedRoles={['Organization', 'Admin', 'Authority']}>
+              <Aap />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/project" element={
+            <ProtectedRoute allowedRoles={['Organization', 'Admin', 'Authority']}>
+              <Project />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/budget" element={
+            <ProtectedRoute allowedRoles={['Organization', 'Admin', 'Authority']}>
+              <Budget />
+            </ProtectedRoute>
+          } />
 
           <Route path="*" element={<PageNotFound />} />
         </Routes>
@@ -135,4 +292,3 @@ const App = () => {
 };
 
 export default App;
-	
