@@ -3,6 +3,7 @@ import './Project.css';
 import moment from 'moment';
 import { FaCheck } from 'react-icons/fa';
 import "react-datepicker/dist/react-datepicker.css";
+import DatePicker from 'react-datepicker';
 
 const Project = () => {
   const [formData, setFormData] = useState({
@@ -100,6 +101,8 @@ const Project = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [formSent, setFormSent] = useState(false);
   const [notificationVisible, setNotificationVisible] = useState(false);
+  const [occupiedDates, setOccupiedDates] = useState([]);
+  const [loadingDates, setLoadingDates] = useState(false);
 
   const Notification = ({ message }) => (
     <div className="notification">
@@ -121,6 +124,75 @@ const Project = () => {
       timeRange: `${startTime}-${endTime}`
     };
     setFormData(prev => ({ ...prev, programFlow: updatedProgramFlow }));
+  };
+
+   // Fetch occupied dates from server
+   useEffect(() => {
+    const fetchOccupiedDates = async () => {
+      try {
+        setLoadingDates(true);
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const response = await fetch('https://studevent-server.vercel.app/api/calendar/occupied-dates', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch occupied dates');
+        
+        const data = await response.json();
+        if (data?.occupiedDates) {
+          setOccupiedDates(data.occupiedDates);
+        }
+      } catch (error) {
+        console.error('Error fetching occupied dates:', error);
+      } finally {
+        setLoadingDates(false);
+      }
+    };
+
+    fetchOccupiedDates();
+  }, []);
+
+  // Check if a date is occupied
+  const isDateOccupied = (date) => {
+    if (!date) return false;
+    const dateStr = moment(date).format('YYYY-MM-DD');
+    return occupiedDates.includes(dateStr);
+  };
+
+  // Custom date input component with occupied date handling
+  const DateInput = ({ name, value, onChange, minDate }) => {
+    const handleDateChange = (date) => {
+      onChange({
+        target: {
+          name,
+          value: date ? moment(date).format('YYYY-MM-DD') : ''
+        }
+      });
+    };
+
+    return (
+      <div className="date-input-container">
+        <input
+          type="date"
+          name={name}
+          value={value}
+          onChange={onChange}
+          min={minDate}
+          className={isDateOccupied(value) ? 'occupied-date' : ''}
+        />
+        {loadingDates && <div className="date-loading-indicator">Loading dates...</div>}
+        {isDateOccupied(value) && (
+          <div className="date-warning">
+            Warning: This date is already occupied
+          </div>
+        )}
+      </div>
+    );
   };
 
   const handleArrayChange = (field, index, e) => {
@@ -335,22 +407,53 @@ setFormData({
             <div className="form-row">
               <div className="form-group">
                 <label>Start Date:</label>
-                <input
-                  type="date"
-                  name="startDate"
-                  value={formData.startDate}
-                  onChange={handleChange}
+                <DatePicker
+                  selected={formData.startDate ? new Date(formData.startDate) : null}
+                  onChange={(date) => handleChange({
+                    target: {
+                      name: 'startDate',
+                      value: date ? date.toISOString() : ''
+                    }
+                  })}
+                  minDate={new Date()}
+                  filterDate={(date) => !isDateOccupied(date)}
+                  selectsStart
+                  startDate={formData.startDate ? new Date(formData.startDate) : null}
+                  endDate={formData.endDate ? new Date(formData.endDate) : null}
+                  dateFormat="MMMM d, yyyy h:mm aa"  // Changed to show AM/PM
+                  showTimeSelect
+                  timeFormat="h:mm aa"  // 12-hour format with AM/PM
+                  timeIntervals={15}
+                  timeCaption="Time"
+                  className="date-picker-input"
+                  placeholderText="Select start date and time"
                   required
                 />
+                {loadingDates && <div className="date-loading">Checking availability...</div>}
               </div>
 
               <div className="form-group">
                 <label>End Date:</label>
-                <input
-                  type="date"
-                  name="endDate"
-                  value={formData.endDate}
-                  onChange={handleChange}
+                <DatePicker
+                  selected={formData.endDate ? new Date(formData.endDate) : null}
+                  onChange={(date) => handleChange({
+                    target: {
+                      name: 'endDate',
+                      value: date ? date.toISOString() : ''
+                    }
+                  })}
+                  minDate={formData.startDate ? new Date(formData.startDate) : new Date()}
+                  filterDate={(date) => !isDateOccupied(date)}
+                  selectsEnd
+                  startDate={formData.startDate ? new Date(formData.startDate) : null}
+                  endDate={formData.endDate ? new Date(formData.endDate) : null}
+                  dateFormat="MMMM d, yyyy h:mm aa"  // Changed to show AM/PM
+                  showTimeSelect
+                  timeFormat="h:mm aa"  // 12-hour format with AM/PM
+                  timeIntervals={15}
+                  timeCaption="Time"
+                  className="date-picker-input"
+                  placeholderText="Select end date and time"
                   required
                 />
               </div>

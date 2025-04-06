@@ -60,6 +60,7 @@ const Aap = () => {
   const [notificationVisible, setNotificationVisible] = useState(false);
   const [loading, setLoading] = useState(isEditMode);
   const [occupiedDates, setOccupiedDates] = useState([]);
+  const [occupiedTimeSlots, setOccupiedTimeSlots] = useState({});
 
   // Notification component
   const Notification = ({ message }) => (
@@ -138,48 +139,74 @@ const fetchFormData = async () => {
   }, [formId, isEditMode, navigate]);
 
 // Add this effect to fetch occupied dates
-useEffect(() => {
-  const fetchOccupiedDates = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.error('No token found');
-        return;
-      }
-
-      // Correct endpoint
-      const response = await fetch('https://studevent-server.vercel.app/api/calendar/occupied-dates', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('Occupied dates from server:', data);
-      
-      if (data?.occupiedDates) {
-        setOccupiedDates(data.occupiedDates);
-      }
-    } catch (error) {
-      console.error('Error fetching occupied dates:', error);
-      // Handle unauthorized error (401)
-      if (error.message.includes('401')) {
-      }
+const fetchOccupiedDates = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error('No token found');
+      return;
     }
-  };
-  
+
+    const response = await fetch('https://studevent-server.vercel.app/api/calendar/occupied-slots', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Occupied slots from server:', data);
+    
+    if (data?.occupiedDates) {
+      setOccupiedDates(data.occupiedDates);
+    }
+    if (data?.occupiedTimeSlots) {
+      setOccupiedTimeSlots(data.occupiedTimeSlots);
+    }
+  } catch (error) {
+    console.error('Error fetching occupied slots:', error);
+  }
+};
+useEffect(() => {
   fetchOccupiedDates();
-}, []); // Add navigate to dependencies
+}, []);
+
 
 // Add this helper function
 const isOccupied = (date) => {
   const formattedDate = moment(date).format('YYYY-MM-DD');
   return occupiedDates.includes(formattedDate);
+};
+
+// Check if a specific date+time is occupied
+const isTimeSlotOccupied = (date) => {
+  if (!date) return false;
+  
+  const dateStr = moment(date).format('YYYY-MM-DD');
+  const timeStr = moment(date).format('HH:mm');
+  
+  // Check if the date is fully occupied
+  if (occupiedDates.includes(dateStr)) return true;
+  
+  // Check if specific time is occupied
+  return occupiedTimeSlots[dateStr]?.includes(timeStr) || false;
+};
+
+// Filter function for time slots
+const filterPassedTime = (time) => {
+  const currentDate = new Date();
+  const selectedDate = new Date(time);
+  
+  // If comparing to current date
+  if (selectedDate.setHours(0,0,0,0) === currentDate.setHours(0,0,0,0)) {
+    return selectedDate > currentDate && !isTimeSlotOccupied(selectedDate);
+  }
+  
+  return !isTimeSlotOccupied(selectedDate);
 };
 
   // Form handlers
@@ -461,39 +488,43 @@ const isOccupied = (date) => {
 
             <label>Venue Address:</label>
             <input type="text" name="venueAddress" value={formData.venueAddress} onChange={handleChange} />
-            <label>Event Start Date:</label>
-            <DatePicker
-              selected={formData.eventStartDate ? new Date(formData.eventStartDate) : null}
-              onChange={(date) => handleDateChange(date, 'eventStartDate')}
-              minDate={new Date()}
-              filterDate={(date) => !isOccupied(date)}
-              dayClassName={(date) => isOccupied(date) ? 'occupied' : ''}
-              dateFormat="yyyy-MM-dd HH:mm"
-              showTimeSelect
-              timeFormat="HH:mm"
-              timeIntervals={15}
-              locale="en"
-              placeholderText="Select start date"
-              className="date-picker-input"
-              popperClassName="date-picker-popper"
-            />
+              <label>Event Start Date:</label>
+              <DatePicker
+                selected={formData.eventStartDate ? new Date(formData.eventStartDate) : null}
+                onChange={(date) => handleDateChange(date, 'eventStartDate')}
+                minDate={new Date()}
+                filterDate={(date) => !isOccupied(date)}
+                filterTime={filterPassedTime}
+                dayClassName={(date) => isOccupied(date) ? 'occupied' : ''}
+                dateFormat="MMMM d, yyyy h:mm aa"
+                showTimeSelect
+                timeFormat="h:mm aa"
+                timeIntervals={15}
+                timeCaption="Time"
+                locale="en"
+                placeholderText="Select start date and time"
+                className="date-picker-input"
+                popperClassName="date-picker-popper"
+              />
 
-            <label>Event End Date:</label>
-            <DatePicker
-              selected={formData.eventEndDate ? new Date(formData.eventEndDate) : null}
-              onChange={(date) => handleDateChange(date, 'eventEndDate')}
-              minDate={formData.eventStartDate ? new Date(formData.eventStartDate) : new Date()}
-              filterDate={(date) => !isOccupied(date)}
-              dayClassName={(date) => isOccupied(date) ? 'occupied' : ''}
-              dateFormat="yyyy-MM-dd HH:mm"
-              showTimeSelect
-              timeFormat="HH:mm"
-              timeIntervals={15}
-              locale="en"
-              placeholderText="Select end date"
-              className="date-picker-input"
-              popperClassName="date-picker-popper"
-            />
+              <label>Event End Date:</label>
+              <DatePicker
+                selected={formData.eventEndDate ? new Date(formData.endDate) : null}
+                onChange={(date) => handleDateChange(date, 'eventEndDate')}
+                minDate={formData.eventStartDate ? new Date(formData.eventStartDate) : new Date()}
+                filterDate={(date) => !isOccupied(date)}
+                filterTime={filterPassedTime}
+                dayClassName={(date) => isOccupied(date) ? 'occupied' : ''}
+                dateFormat="MMMM d, yyyy h:mm aa"
+                showTimeSelect
+                timeFormat="h:mm aa"
+                timeIntervals={15}
+                timeCaption="Time"
+                locale="en"
+                placeholderText="Select end date and time"
+                className="date-picker-input"
+                popperClassName="date-picker-popper"
+              />
             <label>Organizer:</label>
             <input type="text" name="organizer" value={formData.organizer} onChange={handleChange} />
             <label>Budget Amount:</label>

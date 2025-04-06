@@ -45,28 +45,49 @@ router.get('/events/range', async (req, res) => {
 });
 
 // Get occupied dates from calendar events
-router.get('/occupied-dates',  async (req, res) => {
+router.get('/occupied-slots', async (req, res) => {
   try {
+    // Get all events
     const events = await CalendarEvent.find({}, 'startDate endDate');
     
     const occupiedDates = [];
+    const occupiedTimeSlots = {};
     
     events.forEach(event => {
-      const start = moment(event.startDate).startOf('day');
-      const end = moment(event.endDate).endOf('day');
+      const start = moment(event.startDate);
+      const end = moment(event.endDate);
       
-      for (let date = start.clone(); date <= end; date.add(1, 'days')) {
-        occupiedDates.push(date.format('YYYY-MM-DD'));
+      // If it's a multi-day event, add all dates to occupiedDates
+      if (end.diff(start, 'days') > 0) {
+        for (let date = start.clone(); date <= end; date.add(1, 'days')) {
+          const dateStr = date.format('YYYY-MM-DD');
+          occupiedDates.push(dateStr);
+        }
+      } else {
+        // Single day event - add specific time slots
+        const dateStr = start.format('YYYY-MM-DD');
+        const timeStr = start.format('HH:mm');
+        
+        if (!occupiedTimeSlots[dateStr]) {
+          occupiedTimeSlots[dateStr] = [];
+        }
+        
+        // Add time slot plus buffer (e.g., 1 hour before/after)
+        const slotTime = moment(timeStr, 'HH:mm');
+        for (let i = -1; i <= 1; i++) {
+          const bufferTime = slotTime.clone().add(i, 'hours');
+          occupiedTimeSlots[dateStr].push(bufferTime.format('HH:mm'));
+        }
       }
     });
     
-    res.json({ occupiedDates: [...new Set(occupiedDates)] });
-  } catch (error) {
-    console.error('Error fetching occupied dates:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch occupied dates',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    res.json({ 
+      occupiedDates: [...new Set(occupiedDates)],
+      occupiedTimeSlots 
     });
+  } catch (error) {
+    console.error('Error in /occupied-slots:', error);
+    res.status(500).json({ error: 'Failed to fetch occupied slots' });
   }
 });
 

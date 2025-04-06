@@ -430,3 +430,40 @@ textarea {
   background-color: #1a3ab5 !important;
   color: white !important;
 }
+
+/* Add to your Aap.css */
+.react-datepicker__time-container 
+.react-datepicker__time 
+.react-datepicker__time-box 
+.react-datepicker__time-list 
+.react-datepicker__time-list-item--disabled {
+  background-color: #ffebee;
+  color: #d32f2f;
+  text-decoration: line-through;
+  position: relative;
+}
+
+.react-datepicker__time-list-item--disabled::after {
+  content: "✗";
+  position: absolute;
+  right: 10px;
+  color: #d32f2f;
+}
+
+.occupied-time-slot {
+  background-color: #ffebee;
+  color: #d32f2f;
+}
+
+.occupied-day {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.react-datepicker__time-list-item--disabled {
+  display: none;
+}
+
+.date-picker-popper {
+  z-index: 9999 !important;
+}

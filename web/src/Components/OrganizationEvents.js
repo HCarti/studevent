@@ -105,15 +105,19 @@ const OrganizationEvents = () => {
       
       const formattedEvents = response.data.map(event => ({
         id: event._id,
-        title: event.title,
+        title: event.formType === 'Project' ? event.projectTitle : event.eventTitle || event.title,
         start: new Date(event.startDate),
         end: new Date(event.endDate),
-        description: event.description,
-        location: event.location,
+        description: event.formType === 'Project' ? event.projectDescription : event.description,
+        location: event.location || 'TBA',
         organization: event.organization?.organizationName || 'N/A',
         type: event.formType,
         duration: calculateDuration(event.startDate, event.endDate),
-        allDay: true
+        allDay: true,
+        // Additional fields for display
+        projectTitle: event.projectTitle,
+        eventTitle: event.eventTitle,
+        formType: event.formType
       }));
       
       setEvents(formattedEvents);
@@ -191,7 +195,7 @@ const OrganizationEvents = () => {
     <div className="rbc-event-content">
       <strong>{event.title}</strong>
       <div className="event-meta">
-        <span>{event.organization}</span>
+        <span className="event-type-badge">{event.type}</span>
         {event.duration !== '1 day' && <span>{event.duration}</span>}
       </div>
     </div>
@@ -244,13 +248,19 @@ const OrganizationEvents = () => {
             <ul className="event-list">
               {selectedEvents.map((event, index) => (
                 <li key={index} className={`event-item ${event.type.toLowerCase()}`}>
-                  <h3>{event.title}</h3>
-                  <p><strong>Type:</strong> {event.type}</p>
-                  <p><strong>Organization:</strong> {event.organization}</p>
-                  <p><strong>Duration:</strong> {event.duration}</p>
-                  <p><strong>Location:</strong> {event.location}</p>
-                  <p><strong>Description:</strong> {event.description}</p>
-                </li>
+                <h3>
+                  {event.type === 'Project' ? (
+                    <>Project: <span className="event-title">{event.projectTitle}</span></>
+                  ) : (
+                    <>Event: <span className="event-title">{event.eventTitle}</span></>
+                  )}
+                </h3>
+                <p><strong>Type:</strong> {event.type}</p>
+                <p><strong>Organization:</strong> {event.organization}</p>
+                <p><strong>Duration:</strong> {event.duration}</p>
+                <p><strong>Location:</strong> {event.location}</p>
+                <p><strong>Description:</strong> {event.description}</p>
+              </li>
               ))}
             </ul>
           ) : (
