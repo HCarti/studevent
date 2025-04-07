@@ -119,3 +119,25 @@ exports.getFeedbackForForm = async (req, res) => {
     });
   }
 };
+
+// controllers/feedbackController.js
+exports.getLatestFeedback = async (req, res) => {
+    try {
+      const latestFeedback = await Feedback.find()
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .lean();
+  
+      res.status(200).json({
+        success: true,
+        data: latestFeedback
+      });
+    } catch (error) {
+      console.error('Error fetching latest feedback:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: error.message
+      });
+    }
+  };

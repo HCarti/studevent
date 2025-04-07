@@ -12,7 +12,6 @@ const OrgTrackerViewer = () => {
     const { state } = useLocation();
     const form = state?.form;
     const { formId } = useParams();
-
     const [trackerData, setTrackerData] = useState(null);
     const [rating, setRating] = useState(0);
     const [feedbackText, setFeedbackText] = useState('');

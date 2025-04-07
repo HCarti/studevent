@@ -1,6 +1,5 @@
-// src/Dashboard.js
-import React from 'react';
-import { Box, Typography, Grid, Paper, Avatar, List, ListItem, ListItemAvatar, ListItemText, Divider } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Typography, Grid, Paper, Avatar, List, ListItem, ListItemAvatar, ListItemText, Divider, CircularProgress } from '@mui/material';
 import { Icon } from '@iconify/react';
 import fileDocumentIcon from '@iconify/icons-mdi/file-document';
 import bankIcon from '@iconify/icons-mdi/bank';
@@ -12,37 +11,57 @@ import './Dashboard.css';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    proposals: 0,
+    liquidations: 0,
+    transactions: 0,
+    feedbacks: 0
+  });
 
-  // Sample user feedback data
-  const feedbacks = [
-    {
-      id: 1,
-      name: 'Sarah Johnson',
-      org: 'COCO',
-      comment: 'The proposal submission process was smooth and intuitive. Great job!',
-      rating: 5,
-      date: '2024-03-15',
-      avatarColor: '#007bff'
-    },
-    {
-      id: 2,
-      name: 'Michael Chen',
-      org: 'JPCS',
-      comment: 'Had some issues with file uploads, but support was responsive.',
-      rating: 4,
-      date: '2024-03-10',
-      avatarColor: '#28a745'
-    },
-    {
-      id: 3,
-      name: 'Emma Rodriguez',
-      org: 'FNL',
-      comment: 'Would love to see more reporting features in the dashboard.',
-      rating: 3,
-      date: '2024-03-05',
-      avatarColor: '#dc3545'
-    },
-  ];
+  // Fetch feedback data from backend
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const [feedbackRes] = await Promise.all([
+          fetch('https://studevent-server.vercel.app/api/feedback/latest', {
+            headers: {
+              "Authorization": `Bearer ${token}`,
+            },
+          }),
+          // fetch('https://studevent-server.vercel.app/api/stats', {
+          //   headers: {
+          //     "Authorization": `Bearer ${token}`,
+          //   },
+          // })
+        ]);
+
+        const feedbackData = await feedbackRes.json();
+        // const statsData = await statsRes.json();
+
+        if (feedbackData.success) {
+          setFeedbacks(feedbackData.data);
+        }
+
+        // if (statsData.success) {
+        //   setStats({
+        //     proposals: statsData.proposals,
+        //     liquidations: statsData.liquidations,
+        //     transactions: statsData.transactions,
+        //     feedbacks: statsData.feedbacks
+        //   });
+        // }
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   // Organization distribution data
   const orgDistribution = [
@@ -65,6 +84,13 @@ const Dashboard = () => {
     navigate('/adminfeedback');
   };
 
+  // Function to generate avatar color based on name
+  const getAvatarColor = (name) => {
+    const colors = ['#007bff', '#28a745', '#dc3545', '#ffc107', '#6c757d', '#17a2b8', '#343a40'];
+    const charSum = name.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    return colors[charSum % colors.length];
+  };
+
   return (
     <Box className="dashboard-wrapper">
       <Grid container spacing={3}>
@@ -85,28 +111,28 @@ const Dashboard = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Paper className="stat-box" elevation={0} onClick={handleProposalClick}>
               <Icon icon={fileDocumentIcon} className="stat-icon" />
-              <Typography className="stat-number">178</Typography>
+              <Typography className="stat-number">{stats.proposals}</Typography>
               <Typography className="stat-text">Proposals</Typography>
             </Paper>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <Paper className="stat-box" elevation={0} onClick={handleAdminLiquidationClick}>
               <Icon icon={bankIcon} className="stat-icon" />
-              <Typography className="stat-number">20</Typography>
+              <Typography className="stat-number">{stats.liquidations}</Typography>
               <Typography className="stat-text">Liquidations</Typography>
             </Paper>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <Paper className="stat-box" elevation={0}>
               <Icon icon={cashIcon} className="stat-icon" />
-              <Typography className="stat-number">190</Typography>
+              <Typography className="stat-number">{stats.transactions}</Typography>
               <Typography className="stat-text">Transactions</Typography>
             </Paper>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <Paper className="stat-box" elevation={0} onClick={handleFeedbackClick}>
               <Icon icon={messageText} className="stat-icon" />
-              <Typography className="stat-number">42</Typography>
+              <Typography className="stat-number">{stats.feedbacks}</Typography>
               <Typography className="stat-text">Feedbacks</Typography>
             </Paper>
           </Grid>
@@ -121,45 +147,59 @@ const Dashboard = () => {
                 Recent User Feedback
               </Typography>
             </Box>
-            <List className="feedback-list">
-              {feedbacks.map((feedback, index) => (
-                <React.Fragment key={feedback.id}>
-                  <ListItem className="feedback-item">
-                    <ListItemAvatar>
-                      <Avatar sx={{ bgcolor: feedback.avatarColor }}>
-                        {feedback.name.charAt(0)}
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={
-                        <Box className="feedback-header">
-                          <Typography component="span" className="feedback-name">
-                            {feedback.name}
-                          </Typography>
-                          <Typography component="span" className="feedback-org">
-                            {feedback.org}
-                          </Typography>
-                          <Typography component="span" className="feedback-rating">
-                            {'★'.repeat(feedback.rating)}{'☆'.repeat(5 - feedback.rating)}
-                          </Typography>
-                        </Box>
-                      }
-                      secondary={
-                        <React.Fragment>
-                          <Typography component="p" className="feedback-comment">
-                            {feedback.comment}
-                          </Typography>
-                          <Typography component="p" className="feedback-date">
-                            {feedback.date}
-                          </Typography>
-                        </React.Fragment>
-                      }
-                    />
-                  </ListItem>
-                  {index < feedbacks.length - 1 && <Divider light />}
-                </React.Fragment>
-              ))}
-            </List>
+            {loading ? (
+              <Box display="flex" justifyContent="center" p={4}>
+                <CircularProgress />
+              </Box>
+            ) : feedbacks.length > 0 ? (
+              <List className="feedback-list">
+                {feedbacks.map((feedback, index) => (
+                  <React.Fragment key={feedback._id}>
+                    <ListItem className="feedback-item">
+                      <ListItemAvatar>
+                        <Avatar sx={{ bgcolor: getAvatarColor(feedback.userName || feedback.organizationName) }}>
+                          {(feedback.userName || feedback.organizationName).charAt(0)}
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          <Box className="feedback-header">
+                            <Typography component="span" className="feedback-name">
+                              {feedback.userName || feedback.organizationName}
+                            </Typography>
+                            {feedback.organizationName && (
+                              <Typography component="span" className="feedback-org">
+                                {feedback.organizationName}
+                              </Typography>
+                            )}
+                            {feedback.rating && (
+                              <Typography component="span" className="feedback-rating">
+                                {'★'.repeat(feedback.rating)}{'☆'.repeat(5 - feedback.rating)}
+                              </Typography>
+                            )}
+                          </Box>
+                        }
+                        secondary={
+                          <React.Fragment>
+                            <Typography component="p" className="feedback-comment">
+                              {feedback.feedback}
+                            </Typography>
+                            <Typography component="p" className="feedback-date">
+                              {new Date(feedback.createdAt).toLocaleDateString()}
+                            </Typography>
+                          </React.Fragment>
+                        }
+                      />
+                    </ListItem>
+                    {index < feedbacks.length - 1 && <Divider light />}
+                  </React.Fragment>
+                ))}
+              </List>
+            ) : (
+              <Typography p={3} color="textSecondary">
+                No feedback available
+              </Typography>
+            )}
           </Paper>
         </Grid>
 
