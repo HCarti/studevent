@@ -37,14 +37,17 @@ const Dashboard = () => {
           //   },
           // })
         ]);
-
+  
+        if (!feedbackRes.ok) throw new Error('Failed to fetch feedback');
+        // if (!statsRes.ok) throw new Error('Failed to fetch stats');
+  
         const feedbackData = await feedbackRes.json();
         // const statsData = await statsRes.json();
-
+  
         if (feedbackData.success) {
           setFeedbacks(feedbackData.data);
         }
-
+  
         // if (statsData.success) {
         //   setStats({
         //     proposals: statsData.proposals,
@@ -59,7 +62,7 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
-
+  
     fetchData();
   }, []);
 

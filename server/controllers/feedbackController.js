@@ -126,11 +126,29 @@ exports.getLatestFeedback = async (req, res) => {
       const latestFeedback = await Feedback.find()
         .sort({ createdAt: -1 })
         .limit(5)
+        .populate('userId', 'name email role organizationName firstName lastName faculty') // Populate user details
         .lean();
+  
+      // Format the response
+      const formattedFeedback = latestFeedback.map(feedback => {
+        const user = feedback.userId || {};
+        return {
+          _id: feedback._id,
+          feedback: feedback.feedback,
+          rating: feedback.rating,
+          createdAt: feedback.createdAt,
+          userName: user.role === 'Organization' 
+            ? user.organizationName 
+            : `${user.firstName} ${user.lastName}`,
+          organizationName: user.role === 'Organization' ? user.organizationName : null,
+          faculty: user.role === 'Authority' ? user.faculty : null,
+          userType: user.role
+        };
+      });
   
       res.status(200).json({
         success: true,
-        data: latestFeedback
+        data: formattedFeedback
       });
     } catch (error) {
       console.error('Error fetching latest feedback:', error);
