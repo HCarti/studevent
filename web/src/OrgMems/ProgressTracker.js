@@ -86,7 +86,7 @@ const ProgressTracker = () => {
               body: JSON.stringify({
                   formId,
                   feedback: feedbackText,
-                  formType: formDetails?.formType || 'Event Proposal',
+                  formType: formDetails?.formType || 'Activity', // Adjust based on your form type
               }),
           });
   

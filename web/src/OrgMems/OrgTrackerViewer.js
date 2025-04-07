@@ -40,7 +40,6 @@ const OrgTrackerViewer = () => {
                 const data = await response.json();
                 setTrackerData(data);
                 
-                // Check if feedback already exists
                 if (data.feedback) {
                     setFeedbackSubmitted(true);
                 }
@@ -73,8 +72,8 @@ const OrgTrackerViewer = () => {
                 body: JSON.stringify({
                     formId,
                     feedback: feedbackText,
-                    rating, // Make sure this is included
-                    formType: form?.formType || 'Event Proposal',
+                    rating, 
+                    formType: form?.formType || 'Activity', // Adjust based on your form type
                 }),
             });
     
@@ -84,7 +83,7 @@ const OrgTrackerViewer = () => {
     
             setFeedbackSubmitted(true);
             setFeedbackText('');
-            setRating(0); // Reset rating after submission
+            setRating(0); 
         } catch (error) {
             console.error('Error submitting feedback:', error);
             setFeedbackError('Failed to submit feedback. Please try again later.');
