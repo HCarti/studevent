@@ -61,32 +61,43 @@ const OrgTrackerViewer = () => {
             setFeedbackError('Please provide both a rating and feedback');
             return;
         }
-
+    
         try {
             const token = localStorage.getItem("token");
-            const response = await fetch(`https://studevent-server.vercel.app/api/tracker/${formId}/feedback`, {
-                method: "PATCH",
+            const response = await fetch('https://studevent-server.vercel.app/api/feedback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    formId,
+                    feedback: feedbackText,
+                    rating, // Include the rating in the feedback
+                    formType: form?.formType || 'Event Proposal', // Use formType from the form data
+                }),
+            });
+    
+            if (!response.ok) {
+                throw new Error('Failed to submit feedback');
+            }
+    
+            // Update the local tracker data with the feedback status
+            const updatedTracker = await fetch(`https://studevent-server.vercel.app/api/tracker/${formId}`, {
                 headers: {
                     "Authorization": `Bearer ${token}`,
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({
-                    rating,
-                    comments: feedbackText
-                }),
-            });
-
-            if (!response.ok) throw new Error(`Error submitting feedback: ${response.statusText}`);
-
-            const updatedData = await response.json();
-            setTrackerData(updatedData);
+            }).then(res => res.json());
+    
+            setTrackerData(updatedTracker);
             setFeedbackSubmitted(true);
+            setFeedbackText('');
         } catch (error) {
-            console.error("Error submitting feedback:", error.message);
-            setFeedbackError('Failed to submit feedback. Please try again.');
+            console.error('Error submitting feedback:', error);
+            setFeedbackError('Failed to submit feedback. Please try again later.');
         }
     };
-
     const isTrackerCompleted = trackerData?.steps.every(step => step.status === 'approved');
 
     return (

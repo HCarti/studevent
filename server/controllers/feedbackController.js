@@ -31,7 +31,8 @@ exports.submitFeedback = async (req, res) => {
       userId,
       userType: user.role, // 'Organization', 'Authority', or 'Admin'
       email: user.email,
-      feedback
+      feedback,
+      rating // Include the rating
     };
 
     // Add user-type specific fields

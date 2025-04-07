@@ -45,6 +45,12 @@ const feedbackSchema = new mongoose.Schema({
     type: String,
     required: function() { return this.userType === 'Authority'; }
   },
+  rating: {
+    type: Number,
+    min: 1,
+    max: 5,
+    required: false // Make optional if not all feedback will have ratings
+  },
   feedback: {
     type: String,
     required: true
