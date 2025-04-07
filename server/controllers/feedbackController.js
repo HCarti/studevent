@@ -121,41 +121,47 @@ exports.getFeedbackForForm = async (req, res) => {
 };
 
 // controllers/feedbackController.js
+// controllers/feedbackController.js
 exports.getLatestFeedback = async (req, res) => {
-    try {
-      const latestFeedback = await Feedback.find()
-        .sort({ createdAt: -1 })
-        .limit(5)
-        .populate('userId', 'name email role organizationName firstName lastName faculty') // Populate user details
-        .lean();
-  
-      // Format the response
-      const formattedFeedback = latestFeedback.map(feedback => {
-        const user = feedback.userId || {};
-        return {
-          _id: feedback._id,
-          feedback: feedback.feedback,
-          rating: feedback.rating,
-          createdAt: feedback.createdAt,
-          userName: user.role === 'Organization' 
-            ? user.organizationName 
-            : `${user.firstName} ${user.lastName}`,
-          organizationName: user.role === 'Organization' ? user.organizationName : null,
-          faculty: user.role === 'Authority' ? user.faculty : null,
-          userType: user.role
-        };
-      });
-  
-      res.status(200).json({
-        success: true,
-        data: formattedFeedback
-      });
-    } catch (error) {
-      console.error('Error fetching latest feedback:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        error: error.message
-      });
-    }
-  };
+  try {
+    const latestFeedback = await Feedback.find()
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate({
+        path: 'userId',
+        select: 'role organizationName firstName lastName faculty email',
+        model: 'User' // Explicitly specify the model
+      })
+      .lean();
+
+    // Format the response
+    const formattedFeedback = latestFeedback.map(feedback => {
+      const user = feedback.userId || {};
+      return {
+        _id: feedback._id,
+        feedback: feedback.feedback,
+        rating: feedback.rating,
+        createdAt: feedback.createdAt,
+        userName: user.role === 'Organization' 
+          ? user.organizationName 
+          : `${user.firstName} ${user.lastName}`,
+        organizationName: user.role === 'Organization' ? user.organizationName : null,
+        faculty: user.role === 'Authority' ? user.faculty : null,
+        userType: user.role,
+        email: user.email
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      data: formattedFeedback
+    });
+  } catch (error) {
+    console.error('Error fetching latest feedback:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
