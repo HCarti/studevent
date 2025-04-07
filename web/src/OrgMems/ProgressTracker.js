@@ -67,45 +67,42 @@ const ProgressTracker = () => {
 
     // NEW: Function to handle feedback submission
     const handleFeedbackSubmit = async () => {
-        if (!feedbackText.trim()) {
-            setFeedbackError('Please enter your feedback before submitting');
-            return;
-        }
-    
-        setIsSubmittingFeedback(true);
-        setFeedbackError('');
-    
-        try {
-            const token = localStorage.getItem("token");
-            const response = await fetch('https://studevent-server.vercel.app/api/feedback', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    formId,
-                    feedback: feedbackText,
-                    userId: user?._id,
-                    userName: user?.name || 'Anonymous',
-                    userEmail: user?.email || '',
-                    formType: 'Event Proposal',
-                }),
-            });
-    
-            if (!response.ok) {
-                throw new Error('Failed to submit feedback');
-            }
-    
-            setFeedbackSubmitted(true);
-            setFeedbackText('');
-        } catch (error) {
-            console.error('Error submitting feedback:', error);
-            setFeedbackError('Failed to submit feedback. Please try again later.');
-        } finally {
-            setIsSubmittingFeedback(false);
-        }
-    };
+      if (!feedbackText.trim()) {
+          setFeedbackError('Please enter your feedback before submitting');
+          return;
+      }
+  
+      setIsSubmittingFeedback(true);
+      setFeedbackError('');
+  
+      try {
+          const token = localStorage.getItem("token");
+          const response = await fetch('https://studevent-server.vercel.app/api/feedback', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                  formId,
+                  feedback: feedbackText,
+                  formType: formDetails?.formType || 'Event Proposal',
+              }),
+          });
+  
+          if (!response.ok) {
+              throw new Error('Failed to submit feedback');
+          }
+  
+          setFeedbackSubmitted(true);
+          setFeedbackText('');
+      } catch (error) {
+          console.error('Error submitting feedback:', error);
+          setFeedbackError('Failed to submit feedback. Please try again later.');
+      } finally {
+          setIsSubmittingFeedback(false);
+      }
+  };
 
 
     useEffect(() => {
