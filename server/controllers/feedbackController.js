@@ -1,68 +1,78 @@
 // controllers/feedbackController.js
 const Feedback = require('../models/Feedback');
 const User = require('../models/User'); // Assuming you have a User model
+const Form = require('../models/Form'); // Assuming you have a Form model
 
 exports.submitFeedback = async (req, res) => {
-  try {
-    const { formId, feedback, formType } = req.body;
-    const userId = req.user._id; // From auth middleware
-
-    // Validate required fields
-    if (!formId || !feedback || !formType) {
-      return res.status(400).json({ 
-        success: false,
-        message: 'Missing required fields' 
-      });
-    }
-
-    // Get user details
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    // Prepare feedback data based on user type
-    const feedbackData = {
-      formId,
-      formType,
-      userId,
-      userType: user.role, // 'Organization', 'Authority', or 'Admin'
-      email: user.email,
-      feedback,
-      rating // Include the rating
-    };
-
-    // Add user-type specific fields
-    if (user.role === 'Organization') {
-      feedbackData.organizationName = user.organizationName;
-    } else {
-      feedbackData.firstName = user.firstName;
-      feedbackData.lastName = user.lastName;
-      if (user.role === 'Authority') {
-        feedbackData.faculty = user.faculty;
+    try {
+      const { formId, feedback, formType, rating } = req.body;
+      const userId = req.user._id;
+  
+      // Validate required fields
+      if (!formId || !feedback || !formType) {
+        return res.status(400).json({ 
+          success: false,
+          message: 'Missing required fields' 
+        });
       }
+  
+      // Verify the form exists
+      const formExists = await Form.exists({ _id: formId });
+      if (!formExists) {
+        return res.status(404).json({
+          success: false,
+          message: 'Form not found'
+        });
+      }
+  
+      // Get user details
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+  
+      // Prepare feedback data
+      const feedbackData = {
+        formId,
+        formType,
+        userId,
+        userType: user.role,
+        email: user.email,
+        feedback,
+        rating
+      };
+  
+      // Add user-type specific fields
+      if (user.role === 'Organization') {
+        feedbackData.organizationName = user.organizationName;
+      } else {
+        feedbackData.firstName = user.firstName;
+        feedbackData.lastName = user.lastName;
+        if (user.role === 'Authority') {
+          feedbackData.faculty = user.faculty;
+        }
+      }
+  
+      const newFeedback = new Feedback(feedbackData);
+      await newFeedback.save();
+  
+      res.status(201).json({
+        success: true,
+        message: 'Feedback submitted successfully',
+        data: newFeedback
+      });
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: error.message
+      });
     }
-
-    const newFeedback = new Feedback(feedbackData);
-    await newFeedback.save();
-
-    res.status(201).json({
-      success: true,
-      message: 'Feedback submitted successfully',
-      data: newFeedback
-    });
-  } catch (error) {
-    console.error('Error submitting feedback:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-      error: error.message
-    });
-  }
-};
+  };
 
 exports.getFeedbackForForm = async (req, res) => {
   try {
