@@ -6,6 +6,46 @@ const mongoose = require("mongoose");
 const CalendarEvent = require("../models/CalendarEvent");
 
 //HELPERS
+
+// Add this with your other helper functions
+const checkEventCapacity = async (startDate, endDate, currentFormId = null) => {
+  const start = moment(startDate).startOf('day');
+  const end = moment(endDate).startOf('day');
+  
+  // Find all calendar events in this date range
+  const query = {
+    $or: [
+      { startDate: { $lte: end.toDate() }, endDate: { $gte: start.toDate() } }
+    ]
+  };
+  
+  if (currentFormId) {
+    query.formId = { $ne: currentFormId }; // Exclude current form when editing
+  }
+
+  const existingEvents = await CalendarEvent.find(query);
+  
+  // Count events per date
+  const eventCounts = {};
+  existingEvents.forEach(event => {
+    const eventStart = moment(event.startDate).startOf('day');
+    const eventEnd = moment(event.endDate).startOf('day');
+    
+    for (let date = eventStart.clone(); date <= eventEnd; date.add(1, 'days')) {
+      const dateStr = date.format('YYYY-MM-DD');
+      eventCounts[dateStr] = (eventCounts[dateStr] || 0) + 1;
+    }
+  });
+  
+  // Check each day of the new event
+  for (let date = start.clone(); date <= end; date.add(1, 'days')) {
+    const dateStr = date.format('YYYY-MM-DD');
+    if ((eventCounts[dateStr] || 0) >= 3) {
+      throw new Error(`Date ${dateStr} has reached the maximum number of events (3)`);
+    }
+  }
+};
+
 // Helper to create calendar event from form data
 const createCalendarEventFromForm = async (form) => {
   try {
@@ -13,6 +53,9 @@ const createCalendarEventFromForm = async (form) => {
     if (!['Activity', 'Project'].includes(form.formType) || !form.eventStartDate) {
       return null;
     }
+
+    // Double-check capacity (defensive programming)
+    await checkEventCapacity(form.eventStartDate, form.eventEndDate || form.eventStartDate, form._id);
 
     const eventData = {
       title: form.title || form.projectTitle || `${form.formType} Form`,
@@ -43,7 +86,13 @@ const updateCalendarEventFromForm = async (form) => {
     if (!existingEvent) {
       return await createCalendarEventFromForm(form);
     }
-
+    if (form.eventStartDate) {
+      await checkEventCapacity(
+        form.eventStartDate, 
+        form.eventEndDate || form.eventStartDate, 
+        form._id
+      );
+    }
     // Update event details
     existingEvent.title = form.title || form.projectTitle || `${form.formType} Form`;
     existingEvent.description = form.description || form.projectDescription || existingEvent.description;
@@ -138,6 +187,10 @@ exports.createForm = async (req, res) => {
           return res.status(400).json({ error: "Organization not found" });
         }
         req.body.studentOrganization = organization._id;
+        // ADD EVENT CAPACITY VALIDATION FOR ACTIVITY FORMS
+        if (req.body.eventStartDate) {
+          await checkEventCapacity(req.body.eventStartDate, req.body.eventEndDate || req.body.eventStartDate);
+        }
         break;
 
       case 'Budget':
@@ -165,6 +218,10 @@ exports.createForm = async (req, res) => {
         // Add any Project-specific validation here
         if (!req.body.projectTitle || !req.body.projectDescription) {
           return res.status(400).json({ error: "Project title and description are required" });
+        }
+        // ADD EVENT CAPACITY VALIDATION FOR PROJECT FORMS
+        if (req.body.eventStartDate) {
+          await checkEventCapacity(req.body.eventStartDate, req.body.eventEndDate || req.body.eventStartDate);
         }
         break;
 
@@ -253,6 +310,13 @@ exports.updateForm = async (req, res) => {
     if (form.formType === 'Budget' || updates.formType === 'Budget') {
       if (!updates.items || !Array.isArray(updates.items)) {
         return res.status(400).json({ error: "Valid items array is required for Budget forms" });
+      }
+      if (form.formType === 'Activity' || form.formType === 'Project') {
+        // Check event capacity if dates are being updated
+        if (updates.eventStartDate) {
+          const endDate = updates.eventEndDate || form.eventEndDate || updates.eventStartDate;
+          await checkEventCapacity(updates.eventStartDate, endDate, formId);
+        }
       }
 
       const itemErrors = [];

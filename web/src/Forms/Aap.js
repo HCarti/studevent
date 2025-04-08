@@ -93,8 +93,6 @@ const Aap = () => {
   const [formSent, setFormSent] = useState(false);
   const [notificationVisible, setNotificationVisible] = useState(false);
   const [loading, setLoading] = useState(isEditMode);
-  const [occupiedDates, setOccupiedDates] = useState([]);
-  const [occupiedTimeSlots, setOccupiedTimeSlots] = useState({});
   const [eventsPerDate, setEventsPerDate] = useState({});
 
   // Notification component

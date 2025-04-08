@@ -44,50 +44,75 @@ router.get('/events/range', async (req, res) => {
   }
 });
 
+
 // Get occupied dates from calendar events
 router.get('/occupied-slots', async (req, res) => {
   try {
-    // Get all events
     const events = await CalendarEvent.find({}, 'startDate endDate');
     
     const occupiedDates = [];
     const occupiedTimeSlots = {};
+    const eventCounts = {};
     
     events.forEach(event => {
       const start = moment(event.startDate);
       const end = moment(event.endDate);
       
-      // If it's a multi-day event, add all dates to occupiedDates
-      if (end.diff(start, 'days') > 0) {
-        for (let date = start.clone(); date <= end; date.add(1, 'days')) {
-          const dateStr = date.format('YYYY-MM-DD');
+      // Count events per date
+      for (let date = start.clone().startOf('day'); date <= end.startOf('day'); date.add(1, 'days')) {
+        const dateStr = date.format('YYYY-MM-DD');
+        eventCounts[dateStr] = (eventCounts[dateStr] || 0) + 1;
+        
+        // Mark as fully occupied if 3+ events
+        if (eventCounts[dateStr] >= 3) {
           occupiedDates.push(dateStr);
         }
-      } else {
-        // Single day event - add specific time slots
-        const dateStr = start.format('YYYY-MM-DD');
-        const timeStr = start.format('HH:mm');
-        
-        if (!occupiedTimeSlots[dateStr]) {
-          occupiedTimeSlots[dateStr] = [];
-        }
-        
-        // Add time slot plus buffer (e.g., 1 hour before/after)
-        const slotTime = moment(timeStr, 'HH:mm');
-        for (let i = -1; i <= 1; i++) {
-          const bufferTime = slotTime.clone().add(i, 'hours');
-          occupiedTimeSlots[dateStr].push(bufferTime.format('HH:mm'));
-        }
       }
+
+      // Original time slot logic (keep if you still want time-based validation)
+      const dateStr = start.format('YYYY-MM-DD');
+      const timeStr = start.format('HH:mm');
+      
+      if (!occupiedTimeSlots[dateStr]) {
+        occupiedTimeSlots[dateStr] = [];
+      }
+      occupiedTimeSlots[dateStr].push(timeStr);
     });
     
     res.json({ 
       occupiedDates: [...new Set(occupiedDates)],
-      occupiedTimeSlots 
+      occupiedTimeSlots,
+      eventsPerDate: eventCounts
     });
   } catch (error) {
     console.error('Error in /occupied-slots:', error);
     res.status(500).json({ error: 'Failed to fetch occupied slots' });
+  }
+});
+
+
+// Get event counts per date
+router.get('/event-counts', async (req, res) => {
+  try {
+    const events = await CalendarEvent.find({}, 'startDate endDate');
+    
+    const eventCounts = {};
+    
+    events.forEach(event => {
+      const start = moment(event.startDate).startOf('day');
+      const end = moment(event.endDate).startOf('day');
+      
+      // Count each day the event spans
+      for (let date = start.clone(); date <= end; date.add(1, 'days')) {
+        const dateStr = date.format('YYYY-MM-DD');
+        eventCounts[dateStr] = (eventCounts[dateStr] || 0) + 1;
+      }
+    });
+    
+    res.json({ eventCounts });
+  } catch (error) {
+    console.error('Error in /event-counts:', error);
+    res.status(500).json({ error: 'Failed to fetch event counts' });
   }
 });
 
