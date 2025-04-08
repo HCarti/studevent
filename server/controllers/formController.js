@@ -112,6 +112,11 @@ const createCalendarEventFromForm = async (form) => {
     const calendarEvent = new CalendarEvent(eventData);
     const savedEvent = await calendarEvent.save();
     console.log('Successfully created calendar event:', savedEvent);
+    console.log('ABOUT TO CREATE CALENDAR EVENT FOR:', {
+      formType: form.formType,
+      hasDates: !!(form.eventStartDate || form.startDate),
+      shouldCreate: ['Activity', 'Project'].includes(form.formType)
+    });
     return savedEvent;
   } catch (error) {
     console.error('Error creating calendar event:', {
