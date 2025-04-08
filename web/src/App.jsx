@@ -19,7 +19,6 @@ import { signedIn } from './hooks/isSignedIn';
 import { getUserRole } from './hooks/useUser';
 import Budget from './Forms/Budget';
 import Project from './Forms/Project';
-import DashLiquidation from './Adm/DashLiquidation';
 import Proposal from './Adm/Proposal';
 import AdminProfile from './Adm/AdminProfile';
 import SuperAdminHome from './SuperAdmin/SuperAdmnHome';
@@ -197,12 +196,6 @@ const App = () => {
             </AdminLayout>
           } />
           
-          <Route path="/adminliquidation" element={
-            <AdminLayout>
-              <DashLiquidation />
-            </AdminLayout>
-          } />
-          
           <Route path="/adminformview" element={
             <AdminLayout>
               <AdminFormView />
@@ -213,12 +206,6 @@ const App = () => {
           <Route path="/member" element={
             <MemberLayout>
               <OrgMemHome />
-            </MemberLayout>
-          } />
-          
-          <Route path="/orgprof" element={
-            <MemberLayout>
-              <OrgProf />
             </MemberLayout>
           } />
           
@@ -259,6 +246,12 @@ const App = () => {
           } />
 
           {/* Common Form Routes */}
+          <Route path="/orgprof" element={
+            <ProtectedRoute allowedRoles={['Organization', 'Admin', 'Authority']}>
+              <OrgProf />
+            </ProtectedRoute>
+          } />
+
           <Route path="/progtrack/:formId" element={
             <ProtectedRoute allowedRoles={['Admin', 'Authority']}>
               <ProgressTracker />

@@ -468,11 +468,6 @@ textarea {
   z-index: 9999 !important;
 }
 
-.fully-booked-day {
-  background-color: #fff3e0;
-  color: #e65100;
-  position: relative;
-}
 
 .fully-booked-day::after {
   content: 'Fully Booked';
@@ -486,13 +481,67 @@ textarea {
   text-align: center;
 }
 
-.time-slot-info {
-  margin-top: 5px;
-  font-size: 12px;
-  color: #666;
+/* Add these styles to your CSS */
+.fully-booked-day {
+  background-color: #ffcdd2;
+  color: #b71c1c;
+  text-decoration: line-through;
+  cursor: not-allowed;
 }
 
-.time-slot-full {
-  color: #d32f2f;
-  font-weight: bold;
+.approaching-limit-day {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.occupied-day {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.react-datepicker__day--disabled {
+  color: #ccc !important;
+  cursor: not-allowed !important;
+}
+
+/* Tooltip for date status */
+.date-picker-popper .date-status-tooltip {
+  position: absolute;
+  background: #333;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 9999;
+}
+
+.venue-note {
+  font-size: 0.8rem;
+  color: #dc2626;
+  margin-top: -0.5rem;
+  margin-bottom: 1rem;
+  font-style: italic;
+  padding-left: 0.5rem;
+}
+
+/* Add to your Aap.css file */
+.required-field::after {
+  content: " *";
+  color: red;
+}
+
+.invalid-field {
+  border: 1px solid red !important;
+  background-color: #ffebee;
+}
+
+.validation-error {
+  color: red;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  display: none;
+}
+
+.invalid-field + .validation-error {
+  display: block;
 }

@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, Grid, Paper, Avatar, List, ListItem, ListItemAvatar, ListItemText, Divider, CircularProgress } from '@mui/material';
 import { Icon } from '@iconify/react';
 import fileDocumentIcon from '@iconify/icons-mdi/file-document';
-import bankIcon from '@iconify/icons-mdi/bank';
-import cashIcon from '@iconify/icons-mdi/cash';
 import messageText from '@iconify/icons-mdi/message-text';
 import accountGroup from '@iconify/icons-mdi/account-group';
 import { useNavigate } from 'react-router-dom';
@@ -31,31 +29,16 @@ const Dashboard = () => {
               "Authorization": `Bearer ${token}`,
             },
           }),
-          // fetch('https://studevent-server.vercel.app/api/stats', {
-          //   headers: {
-          //     "Authorization": `Bearer ${token}`,
-          //   },
-          // })
         ]);
   
         if (!feedbackRes.ok) throw new Error('Failed to fetch feedback');
-        // if (!statsRes.ok) throw new Error('Failed to fetch stats');
   
         const feedbackData = await feedbackRes.json();
-        // const statsData = await statsRes.json();
   
         if (feedbackData.success) {
           setFeedbacks(feedbackData.data);
         }
   
-        // if (statsData.success) {
-        //   setStats({
-        //     proposals: statsData.proposals,
-        //     liquidations: statsData.liquidations,
-        //     transactions: statsData.transactions,
-        //     feedbacks: statsData.feedbacks
-        //   });
-        // }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -77,10 +60,6 @@ const Dashboard = () => {
 
   const handleProposalClick = () => {
     navigate('/adminproposal');
-  };
-
-  const handleAdminLiquidationClick = () => {
-    navigate('/adminliquidation');
   };
 
   const handleFeedbackClick = () => {
@@ -110,26 +89,12 @@ const Dashboard = () => {
         </Grid>
 
         {/* Top Stats Section */}
-        <Grid container spacing={3} className="top-stats">
+        <Grid container spacing={3} className="top-stats" style={{justifyContent: 'center'}}>
           <Grid item xs={12} sm={6} md={3}>
             <Paper className="stat-box" elevation={0} onClick={handleProposalClick}>
               <Icon icon={fileDocumentIcon} className="stat-icon" />
               <Typography className="stat-number">{stats.proposals}</Typography>
               <Typography className="stat-text">Proposals</Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Paper className="stat-box" elevation={0} onClick={handleAdminLiquidationClick}>
-              <Icon icon={bankIcon} className="stat-icon" />
-              <Typography className="stat-number">{stats.liquidations}</Typography>
-              <Typography className="stat-text">Liquidations</Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Paper className="stat-box" elevation={0}>
-              <Icon icon={cashIcon} className="stat-icon" />
-              <Typography className="stat-number">{stats.transactions}</Typography>
-              <Typography className="stat-text">Transactions</Typography>
             </Paper>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
@@ -140,6 +105,8 @@ const Dashboard = () => {
             </Paper>
           </Grid>
         </Grid>
+
+        
 
         {/* Recent Feedback Section */}
         <Grid item xs={12} md={8}>

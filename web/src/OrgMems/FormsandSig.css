@@ -17,12 +17,26 @@
 
 .fs-title {
   color: #003366;
-  font-size: clamp(1.5rem, 4vw, 2.2rem); /* Responsive font size */
-  font-weight: 700;
-  margin: 20px 0;
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  font-weight: 800;
+  margin: 20px 0 40px;
   text-transform: uppercase;
   letter-spacing: 1.5px;
   text-align: center;
+  position: relative;
+  padding-bottom: 15px;
+}
+
+.fs-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 4px;
+  background: linear-gradient(90deg, #003366, #1a3ab5, #003366);
+  border-radius: 2px;
 }
 
 /* Steps Styling */
@@ -35,6 +49,13 @@
   padding: 0 20px;
   box-sizing: border-box;
 }
+
+.step:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 35px rgba(0, 51, 102, 0.2);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
 
 .step {
   background-color: #fff;
@@ -54,6 +75,8 @@
   font-size: 100px !important;
   color: #b0b0b0;
   position: absolute;
+  height: 200px;
+  width: 200px;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
