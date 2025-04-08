@@ -127,6 +127,9 @@ const App = () => {
           <Route path="/organizations" element={<Organizations />} />
           <Route path="/view-all-organizations" element={<ViewAllOrganizations />} />
           <Route path="/formss" element={<FormsandSig />} />
+          <Route path="/adduser" element={
+              <SuperAdminAddUser />
+          } />
 
           {/* SuperAdmin Routes */}
           <Route path="/superadmin" element={

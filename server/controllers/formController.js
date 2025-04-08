@@ -272,9 +272,9 @@ exports.createForm = async (req, res) => {
         }
         // ADD EVENT CAPACITY VALIDATION FOR PROJECT FORMS
         // In both Activity and Project form handlers, use the same validation:
-        if (req.body.startDate) {
-          const endDate = req.body.endDate || req.body.startDate;
-          await checkEventCapacity(req.body.startDate, endDate);
+        if (req.body.eventStartDate) {
+          const endDate = req.body.eventEndDate || req.body.eventStartDate;
+          await checkEventCapacity(req.body.eventStartDate, endDate);
         }
         break;
 

@@ -41,6 +41,13 @@ const userSchema = new Schema({
       return this.role === 'Organization'; // Required for Organization
     }
   },
+ // Add president signature field for organizations
+  presidentSignature: {
+    type: String, // This will store the URL/path to the signature image
+    required: function() {
+      return this.role === 'Organization'; // Required for Organization
+    }
+  },
   faculty: {
     type: String,
     required: function() {

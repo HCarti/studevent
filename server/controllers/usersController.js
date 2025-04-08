@@ -17,21 +17,18 @@ const createToken = (user) => {
       lastName: user.lastName || '',
       organizationType: user.organizationType || '',
       organizationName: user.organizationName || '',
+      presidentName: user.presidentName || '', // Added presidentName
       status: user.status || '',
       logo: user.logo || '',
-      signature: user.signature || ''
+      signature: user.signature || '' // Ensure signature is included
     },
     process.env.JWT_SECRET,
     { expiresIn: "3d" }
   );
 };
 
-
-
-
 const login = async (req, res) => {
   const { email, password } = req.body;
-  console.log('JWT_SECRET:', process.env.JWT_SECRET); // Check if JWT_SECRET is accessible
 
   try {
     const user = await User.findOne({ email: email });
@@ -43,26 +40,25 @@ const login = async (req, res) => {
       // Validate role-specific fields
       if (user.role === 'Admin' || user.role === 'Authority') {
         if (!user.firstName || !user.lastName || !user.signature) {
-          return res.status(400).json({ message: 'First name and last name are required for Admin and Authority roles.' });
+          return res.status(400).json({ 
+            message: 'First name, last name, and signature are required for Admin and Authority roles.' 
+          });
         }
       }
 
       if (user.role === 'Authority' && !user.faculty) {
-        if (!user.signature){
-          return res.status(400).json({ message: 'Faculty is required for Authority roles.' });
-        }
+        return res.status(400).json({ message: 'Faculty is required for Authority roles.' });
       }
 
       if (user.role === 'Organization') {
-        if (!user.organizationType || !user.organizationName) {
-          return res.status(400).json({ message: 'Organization type and name are required for Organization roles.' });
+        if (!user.organizationType || !user.organizationName || !user.presidentName || !user.signature) {
+          return res.status(400).json({ 
+            message: 'Organization type, name, president name, and signature are required for Organization roles.' 
+          });
         }
       }
 
-      // Generate JWT token
       const token = createToken(user);
-      console.log("Generated token:", token); // Log token for debugging
-
       res.status(200).json({
         success: true,
         token,
@@ -75,6 +71,7 @@ const login = async (req, res) => {
           lastName: user.lastName,
           organizationType: user.organizationType,
           organizationName: user.organizationName,
+          presidentName: user.presidentName, // Added presidentName
           faculty: user.faculty,
           status: user.status,
           signature: user.signature
@@ -89,21 +86,17 @@ const login = async (req, res) => {
   }
 };
 
-
 const getCurrentUser = async (req, res) => {
   try {
-    // Extract the token from the authorization header
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
       return res.status(401).json({ message: 'No token provided' });
     }
 
-    // Verify the token and get the user ID from it
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userId = decoded._id;
 
-    // Find the user by ID
-    const user = await User.findById(userId).select('-password'); // Exclude password for security
+    const user = await User.findById(userId).select('-password');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -115,16 +108,12 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
-
-
-// Add user
+// Add user with signature handling
 const addUser = async (userData, logoUrl, signatureUrl) => {
   try {
-    console.log('User Data:', userData);
-    console.log('Logo URL:', logoUrl);
-    console.log('Signature URL:', signatureUrl);
-
-    if (!userData.email || !userData.password) throw new Error('Email and password are required');
+    if (!userData.email || !userData.password) {
+      throw new Error('Email and password are required');
+    }
 
     const existingUser = await User.findOne({ email: userData.email });
     if (existingUser) throw new Error('Email already exists');
@@ -135,49 +124,54 @@ const addUser = async (userData, logoUrl, signatureUrl) => {
       role: userData.role,
       status: 'Active',
       logo: logoUrl,
-      signature: signatureUrl, // NEW: Store signature URL
+      signature: signatureUrl, // Store signature URL
     });
 
     if (userData.role === 'Authority') {
       newUser.firstName = userData.firstName;
-      newUser.lastName = userData.lastName || '';
-      newUser.faculty = userData.faculty || null;
+      newUser.lastName = userData.lastName;
+      newUser.faculty = userData.faculty;
     } else if (userData.role === 'Admin') {
       newUser.firstName = userData.firstName;
-      newUser.lastName = userData.lastName || '';
+      newUser.lastName = userData.lastName;
     } else if (userData.role === 'Organization') {
-      newUser.organizationType = userData.organizationType || null;
-      newUser.organizationName = userData.organizationName || null;
+      newUser.organizationType = userData.organizationType;
+      newUser.organizationName = userData.organizationName;
+      newUser.presidentName = userData.presidentName; // Store president name
     }
 
     await newUser.save();
     return newUser;
   } catch (error) {
-    console.error('Error in addUser:', error); // Log the error
+    console.error('Error in addUser:', error);
     throw error;
   }
 };
 
-// Get user by ID
-const getUserById = async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    res.status(200).json(user);
-  } catch (error) {
-    res.status(404).json({ message: 'User not found' });
-  }
-};
-
-// Update user by ID
+// Update user with signature handling
 const updateUser = async (req, res) => {
   const userId = req.params.id;
   const updatedData = req.body;
 
   try {
-    const user = await User.findByIdAndUpdate(userId, updatedData, { new: true });
+    // If updating signature, handle file upload first
+    if (req.files?.signature) {
+      const signatureFile = req.files.signature;
+      const result = await cloudinary.uploader.upload(signatureFile.tempFilePath, {
+        folder: 'signatures',
+      });
+      updatedData.signature = result.secure_url;
+    }
+
+    const user = await User.findByIdAndUpdate(userId, updatedData, { 
+      new: true,
+      runValidators: true 
+    });
+    
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+    
     res.status(200).json(user);
   } catch (error) {
     console.error('Error updating user:', error);
@@ -185,19 +179,37 @@ const updateUser = async (req, res) => {
   }
 };
 
+// Get user by ID
+const getUserById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Delete user by ID
 const deleteUserById = async (req, res) => {
   try {
-    await User.findByIdAndDelete(req.params.id);
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
     res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error deleting user' });
   }
 };
 
+// Get all organizations with their signatures
 const getOrganizations = async (req, res) => {
   try {
-    const organizations = await User.find({ role: 'Organization' });
+    const organizations = await User.find({ role: 'Organization' })
+      .select('organizationName organizationType presidentName signature status');
     res.status(200).json(organizations);
   } catch (error) {
     console.error('Error fetching organizations:', error);
@@ -205,5 +217,12 @@ const getOrganizations = async (req, res) => {
   }
 };
 
-
-module.exports = { getUserById, updateUser, deleteUserById, addUser, login, getCurrentUser, getOrganizations };
+module.exports = { 
+  getUserById, 
+  updateUser, 
+  deleteUserById, 
+  addUser, 
+  login, 
+  getCurrentUser, 
+  getOrganizations 
+};
