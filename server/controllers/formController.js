@@ -112,11 +112,7 @@ const createCalendarEventFromForm = async (form) => {
     const calendarEvent = new CalendarEvent(eventData);
     const savedEvent = await calendarEvent.save();
     console.log('Successfully created calendar event:', savedEvent);
-    console.log('ABOUT TO CREATE CALENDAR EVENT FOR:', {
-      formType: form.formType,
-      hasDates: !!(form.eventStartDate || form.startDate),
-      shouldCreate: ['Activity', 'Project'].includes(form.formType)
-    });
+    
     return savedEvent;
   } catch (error) {
     console.error('Error creating calendar event:', {
@@ -276,9 +272,9 @@ exports.createForm = async (req, res) => {
         }
         // ADD EVENT CAPACITY VALIDATION FOR PROJECT FORMS
         // In both Activity and Project form handlers, use the same validation:
-        if (req.body.eventStartDate) {
-          const endDate = req.body.eventEndDate || req.body.eventStartDate;
-          await checkEventCapacity(req.body.eventStartDate, endDate);
+        if (req.body.startDate) {
+          const endDate = req.body.endDate || req.body.startDate;
+          await checkEventCapacity(req.body.startDate, endDate);
         }
         break;
 
@@ -297,6 +293,7 @@ exports.createForm = async (req, res) => {
             eventStartDate: req.body.eventStartDate,
             eventEndDate: req.body.eventEndDate
           });
+          console.log('Attempting calendar event creation...');
           const calendarEvent = await createCalendarEventFromForm(form);
           console.log('Calendar event creation result:', calendarEvent ? 'success' : 'failed');
         }

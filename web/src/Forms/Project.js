@@ -7,7 +7,6 @@ import DatePicker from 'react-datepicker';
 
 const Project = () => {
   const [formData, setFormData] = useState({
-    formType: 'Project',
     // Project Overview
     projectTitle: '',
     projectDescription: '',
