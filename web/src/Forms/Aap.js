@@ -252,10 +252,13 @@ const isOccupied = (date) => {
       validateField(name, value);
     }
   };
+  
   const handleDateChange = (date, field) => {
+    const isoDate = date.toISOString();
+    console.log(`Date changed - ${field}:`, isoDate);
     setFormData(prev => ({
       ...prev,
-      [field]: date.toISOString(),
+      [field]: isoDate,
     }));
   };
 

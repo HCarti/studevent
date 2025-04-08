@@ -56,8 +56,8 @@ const createCalendarEventFromForm = async (form) => {
     }
 
     // Get the correct date fields based on form type
-    const startDate = form.formType === 'Project' ? form.startDate : form.eventStartDate;
-    const endDate = form.formType === 'Project' ? (form.endDate || form.startDate) : (form.eventEndDate || form.eventStartDate);
+    const startDate = form.startDate || form.eventStartDate;
+    const endDate = form.endDate || form.eventEndDate || startDate;
 
     if (!startDate) {
       console.log('No start date found for calendar event');
@@ -264,7 +264,13 @@ exports.createForm = async (req, res) => {
 
         // Create calendar event if this is an Activity/Project form with dates
         if (['Activity', 'Project'].includes(req.body.formType) && req.body.eventStartDate) {
-          await createCalendarEventFromForm(form);
+          console.log('Attempting to create calendar event for form:', {
+            formType: req.body.formType,
+            eventStartDate: req.body.eventStartDate,
+            eventEndDate: req.body.eventEndDate
+          });
+          const calendarEvent = await createCalendarEventFromForm(form);
+          console.log('Calendar event creation result:', calendarEvent ? 'success' : 'failed');
         }
 
     // Get the appropriate reviewers based on form type
