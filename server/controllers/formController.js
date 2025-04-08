@@ -50,8 +50,22 @@ const checkEventCapacity = async (startDate, endDate, currentFormId = null) => {
 // Unified calendar event creator that handles both form types
 const createCalendarEventFromForm = async (form) => {
   try {
-    // Check if this form type should have calendar events
+    // Detailed logging of incoming form data
+    console.log('Creating calendar event from form:', {
+      formType: form.formType,
+      formId: form._id,
+      allFormFields: Object.keys(form).filter(key => key !== '_id'), // Log all fields except _id
+      relevantFields: {
+        title: form.eventTitle || form.projectTitle,
+        description: form.description || form.projectDescription,
+        location: form.location || form.venue,
+        startDate: form.startDate || form.eventStartDate,
+        endDate: form.endDate || form.eventEndDate
+      }
+    });
+
     if (!['Activity', 'Project'].includes(form.formType)) {
+      console.log(`Skipping calendar event for form type: ${form.formType}`);
       return null;
     }
 
@@ -67,42 +81,45 @@ const createCalendarEventFromForm = async (form) => {
     // Double-check capacity
     await checkEventCapacity(startDate, endDate, form._id);
 
+    // Handle different form types differently
     const eventData = {
-      title: form.eventTitle,
-      description: form.objectives || "No description provided", // Fallback if empty
-      location: form.venueAddress || "No location specified", // Fallback if empty
-      startDate: new Date(form.eventStartDate),
-      endDate: form.eventEndDate ? new Date(form.eventEndDate) : new Date(form.eventStartDate),
+      title: form.formType === 'Project' ? form.projectTitle : form.eventTitle,
+      description: form.formType === 'Project' 
+        ? form.projectDescription 
+        : form.objectives || "No description provided",
+      location: form.formType === 'Project' 
+        ? form.venue || "No venue specified"
+        : form.venueAddress || "No location specified",
+      startDate: new Date(startDate),
+      endDate: endDate ? new Date(endDate) : new Date(startDate),
       formId: form._id,
       formType: form.formType,
       createdBy: form.emailAddress || "system",
+      organization: form.studentOrganization || null
     };
 
     // Validate required fields
     if (!eventData.title || !eventData.startDate) {
       console.error('Missing required fields for calendar event:', {
         hasTitle: !!eventData.title,
-        hasStartDate: !!eventData.startDate
+        hasStartDate: !!eventData.startDate,
+        eventData
       });
       return null;
     }
 
+    console.log('Attempting to create calendar event with:', eventData);
     const calendarEvent = new CalendarEvent(eventData);
     const savedEvent = await calendarEvent.save();
-    console.log('Successfully created calendar event:', savedEvent._id);
-    console.log("Form data received for calendar event:", {
-      title: form.eventTitle,
-      description: form.description,
-      location: form.location,
-      startDate: form.eventStartDate,
-      endDate: form.eventEndDate,
-    });
+    console.log('Successfully created calendar event:', savedEvent);
     return savedEvent;
   } catch (error) {
     console.error('Error creating calendar event:', {
       error: error.message,
+      stack: error.stack,
       formId: form._id,
-      formType: form.formType
+      formType: form.formType,
+      formData: form // Log entire form for debugging
     });
     return null;
   }
