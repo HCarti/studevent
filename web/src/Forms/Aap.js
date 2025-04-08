@@ -612,7 +612,7 @@ const isOccupied = (date) => {
               minDate={new Date()}
               filterDate={(date) => {
                 const dateStr = moment(date).format('YYYY-MM-DD');
-                return (eventsPerDate[dateStr] || 0) < 3; // Allow if less than 3 events
+                return (eventsPerDate[dateStr] || 0) < 3;
               }}
               dayClassName={(date) => {
                 const dateStr = moment(date).format('YYYY-MM-DD');
@@ -630,22 +630,12 @@ const isOccupied = (date) => {
               locale="en"
               placeholderText="Select start date and time"
               className={`date-picker-input ${fieldErrors.eventStartDate ? 'invalid-field' : ''}`}
-              popperClassName="date-picker-popper"
+              popperPlacement="bottom-start"
               disabledKeyboardNavigation
-              popperModifiers={[
-                {
-                  name: 'preventOverflow',
-                  options: {
-                    rootBoundary: 'viewport',
-                    tether: false,
-                    altAxis: true
-                  }
-                }
-              ]}
             />
             {fieldErrors.eventStartDate && (
               <div className="validation-error">
-                {eventsPerDate[moment(formData.eventStartDate).format('YYYY-MM-DD')] >= 3 
+                {formData.eventStartDate && eventsPerDate[moment(formData.eventStartDate).format('YYYY-MM-DD')] >= 3 
                   ? 'This date has reached the maximum number of events (3)'
                   : 'Please select a valid start date'}
               </div>
@@ -658,7 +648,7 @@ const isOccupied = (date) => {
               minDate={formData.eventStartDate ? new Date(formData.eventStartDate) : new Date()}
               filterDate={(date) => {
                 const dateStr = moment(date).format('YYYY-MM-DD');
-                return (eventsPerDate[dateStr] || 0) < 3; // Allow if less than 3 events
+                return (eventsPerDate[dateStr] || 0) < 3;
               }}
               dayClassName={(date) => {
                 const dateStr = moment(date).format('YYYY-MM-DD');
@@ -676,27 +666,16 @@ const isOccupied = (date) => {
               locale="en"
               placeholderText="Select end date and time"
               className={`date-picker-input ${fieldErrors.eventEndDate ? 'invalid-field' : ''}`}
-              popperClassName="date-picker-popper"
+              popperPlacement="bottom-start"
               disabledKeyboardNavigation
-              popperModifiers={[
-                {
-                  name: 'preventOverflow',
-                  options: {
-                    rootBoundary: 'viewport',
-                    tether: false,
-                    altAxis: true
-                  }
-                }
-              ]}
             />
             {fieldErrors.eventEndDate && (
               <div className="validation-error">
-                {eventsPerDate[moment(formData.eventEndDate).format('YYYY-MM-DD')] >= 3 
+                {formData.eventEndDate && eventsPerDate[moment(formData.eventEndDate).format('YYYY-MM-DD')] >= 3 
                   ? 'This date has reached the maximum number of events (3)'
                   : 'End date must be after start date'}
               </div>
             )}
-
             <label className="required-field">Organizer:</label>
             <input 
               type="text" 
@@ -802,25 +781,13 @@ const isOccupied = (date) => {
         return (
           <div>
             <label className="required-field">Event Management Head:</label>
-            <input 
-              type="text" 
-              name="eventManagementHead" 
-              value={formData.eventManagementHead} 
-              onChange={handleChange}
-              className={fieldErrors.eventManagementHead ? 'invalid-field' : ''}
-            />
+            <input type="text" name="eventManagementHead" value={formData.eventManagementHead} onChange={handleChange} className={fieldErrors.eventManagementHead ? 'invalid-field' : ''}/>
             <div className="validation-error">
               Please enter the event management head
             </div>
 
             <label className="required-field">Event Committees & Members:</label>
-            <input 
-              type="text" 
-              name="eventCommitteesandMembers" 
-              value={formData.eventCommitteesandMembers} 
-              onChange={handleChange}
-              className={fieldErrors.eventCommitteesandMembers ? 'invalid-field' : ''}
-            />
+            <input type="text" name="eventCommitteesandMembers" value={formData.eventCommitteesandMembers} onChange={handleChange}className={fieldErrors.eventCommitteesandMembers ? 'invalid-field' : ''}/>
             <div className="validation-error">
               Please enter the event committees and members
             </div>
@@ -831,41 +798,25 @@ const isOccupied = (date) => {
         return (
           <div>
             <label className="required-field">Health:</label>
-            <textarea 
-              name="health" 
-              value={formData.health} 
-              onChange={handleChange}
-              className={fieldErrors.health ? 'invalid-field' : ''}
-            />
+            <textarea name="health" value={formData.health} onChange={handleChange}className={fieldErrors.health ? 'invalid-field' : ''}/>
             <div className="validation-error">
               Please describe health considerations
             </div>
 
             <label className="required-field">Safety of Attendees:</label>
-            <textarea 
-              name="safetyAttendees" 
-              value={formData.safetyAttendees} 
-              onChange={handleChange}
-              className={fieldErrors.safetyAttendees ? 'invalid-field' : ''}
-            />
+            <textarea name="safetyAttendees" value={formData.safetyAttendees} onChange={handleChange} className={fieldErrors.safetyAttendees ? 'invalid-field' : ''}/>
             <div className="validation-error">
               Please describe safety measures
             </div>
 
             <label className="required-field">Emergency/First Aid:</label>
-            <textarea 
-              name="emergencyFirstAid" 
-              value={formData.emergencyFirstAid} 
-              onChange={handleChange}
-              className={fieldErrors.emergencyFirstAid ? 'invalid-field' : ''}
-            />
+            <textarea name="emergencyFirstAid" value={formData.emergencyFirstAid} onChange={handleChange} className={fieldErrors.emergencyFirstAid ? 'invalid-field' : ''}/>
             <div className="validation-error">
               Please describe emergency procedures
             </div>
 
             <label className="required-field">Fire Safety:</label>
-            <textarea 
-              name="fireSafety" 
+            <textarea name="fireSafety" 
               value={formData.fireSafety} 
               onChange={handleChange}
               className={fieldErrors.fireSafety ? 'invalid-field' : ''}

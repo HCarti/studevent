@@ -6,36 +6,27 @@ const mongoose = require("mongoose");
 const CalendarEvent = require("../models/CalendarEvent");
 const moment = require('moment');
 
-//HELPERS
+// HELPERS
 
-// Add this with your other helper functions
+// Enhanced event capacity check that handles both form types
 const checkEventCapacity = async (startDate, endDate, currentFormId = null) => {
   const start = moment(startDate).startOf('day');
   const end = moment(endDate).startOf('day');
   
-  // Find all calendar events in this date range from BOTH form types
+  // Build query to find overlapping events from both form types
   const query = {
     $or: [
-      { 
-        $or: [
-          { formType: 'Activity' },
-          { formType: 'Project' }
-        ],
-        $and: [
-          { startDate: { $lte: end.toDate() } },
-          { endDate: { $gte: start.toDate() } }
-        ]
-      }
+      { startDate: { $lte: end.toDate() }, endDate: { $gte: start.toDate() } }
     ]
   };
   
   if (currentFormId) {
-    query.$or[0].formId = { $ne: currentFormId }; // Exclude current form when editing
+    query.formId = { $ne: currentFormId };
   }
 
   const existingEvents = await CalendarEvent.find(query);
   
-  // Count events per date (combining both types)
+  // Count events per date
   const eventCounts = {};
   existingEvents.forEach(event => {
     const eventStart = moment(event.startDate).startOf('day');
@@ -56,33 +47,57 @@ const checkEventCapacity = async (startDate, endDate, currentFormId = null) => {
   }
 };
 
-// Helper to create calendar event from form data
+// Unified calendar event creator that handles both form types
 const createCalendarEventFromForm = async (form) => {
   try {
-    // Only create events for Activity and Project forms with dates
-    if (!['Activity', 'Project'].includes(form.formType) || !form.eventStartDate) {
+    // Check if this form type should have calendar events
+    if (!['Activity', 'Project'].includes(form.formType)) {
       return null;
     }
 
-    // Double-check capacity (defensive programming)
-    await checkEventCapacity(form.eventStartDate, form.eventEndDate || form.eventStartDate, form._id);
+    // Get the correct date fields based on form type
+    const startDate = form.formType === 'Project' ? form.startDate : form.eventStartDate;
+    const endDate = form.formType === 'Project' ? (form.endDate || form.startDate) : (form.eventEndDate || form.eventStartDate);
+
+    if (!startDate) {
+      console.log('No start date found for calendar event');
+      return null;
+    }
+
+    // Double-check capacity
+    await checkEventCapacity(startDate, endDate, form._id);
 
     const eventData = {
-      title: form.title || form.projectTitle || `${form.formType} Form`,
-      description: form.description || form.projectDescription || 'No description provided',
-      startDate: form.eventStartDate,
-      endDate: form.eventEndDate || form.eventStartDate,
-      location: form.location || 'TBA',
+      title: form.formType === 'Project' ? form.projectTitle : form.eventTitle,
+      description: form.formType === 'Project' ? form.projectDescription : form.description,
+      startDate: startDate,
+      endDate: endDate,
+      location: form.formType === 'Project' ? form.venue : form.location,
       formId: form._id,
       formType: form.formType,
       createdBy: form.emailAddress || 'system',
       organization: form.studentOrganization || null
     };
 
+    // Validate required fields
+    if (!eventData.title || !eventData.startDate) {
+      console.error('Missing required fields for calendar event:', {
+        hasTitle: !!eventData.title,
+        hasStartDate: !!eventData.startDate
+      });
+      return null;
+    }
+
     const calendarEvent = new CalendarEvent(eventData);
-    return await calendarEvent.save();
+    const savedEvent = await calendarEvent.save();
+    console.log('Successfully created calendar event:', savedEvent._id);
+    return savedEvent;
   } catch (error) {
-    console.error('Error creating calendar event:', error);
+    console.error('Error creating calendar event:', {
+      error: error.message,
+      formId: form._id,
+      formType: form.formType
+    });
     return null;
   }
 };
