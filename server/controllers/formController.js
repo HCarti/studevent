@@ -68,15 +68,14 @@ const createCalendarEventFromForm = async (form) => {
     await checkEventCapacity(startDate, endDate, form._id);
 
     const eventData = {
-      title: form.formType === 'Project' ? form.projectTitle : form.eventTitle,
-      description: form.formType === 'Project' ? form.projectDescription : form.description,
-      startDate: startDate,
-      endDate: endDate,
-      location: form.formType === 'Project' ? form.venue : form.location,
+      title: form.eventTitle,
+      description: form.objectives || "No description provided", // Fallback if empty
+      location: form.venueAddress || "No location specified", // Fallback if empty
+      startDate: new Date(form.eventStartDate),
+      endDate: form.eventEndDate ? new Date(form.eventEndDate) : new Date(form.eventStartDate),
       formId: form._id,
       formType: form.formType,
-      createdBy: form.emailAddress || 'system',
-      organization: form.studentOrganization || null
+      createdBy: form.emailAddress || "system",
     };
 
     // Validate required fields
@@ -91,6 +90,13 @@ const createCalendarEventFromForm = async (form) => {
     const calendarEvent = new CalendarEvent(eventData);
     const savedEvent = await calendarEvent.save();
     console.log('Successfully created calendar event:', savedEvent._id);
+    console.log("Form data received for calendar event:", {
+      title: form.eventTitle,
+      description: form.description,
+      location: form.location,
+      startDate: form.eventStartDate,
+      endDate: form.eventEndDate,
+    });
     return savedEvent;
   } catch (error) {
     console.error('Error creating calendar event:', {
