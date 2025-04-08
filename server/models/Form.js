@@ -250,7 +250,6 @@ const formSchema = new mongoose.Schema({
     more: { type: String, required: function() { return this.formType === 'Activity'; } },
 
     // Licenses and Compliance
-    licensesRequired: { type: String, required: function() { return this.formType === 'Activity'; } },
     houseKeeping: { type: String, required: function() { return this.formType === 'Activity'; } },
     wasteManagement: { type: String, required: function() { return this.formType === 'Activity'; } },
 
