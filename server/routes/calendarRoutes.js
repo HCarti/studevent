@@ -94,7 +94,12 @@ router.get('/occupied-slots', async (req, res) => {
 // Get event counts per date
 router.get('/event-counts', async (req, res) => {
   try {
-    const events = await CalendarEvent.find({}, 'startDate endDate');
+    const events = await CalendarEvent.find({
+      $or: [
+        { formType: 'Activity' },
+        { formType: 'Project' }
+      ]
+    }, 'startDate endDate');
     
     const eventCounts = {};
     
@@ -102,7 +107,6 @@ router.get('/event-counts', async (req, res) => {
       const start = moment(event.startDate).startOf('day');
       const end = moment(event.endDate).startOf('day');
       
-      // Count each day the event spans
       for (let date = start.clone(); date <= end; date.add(1, 'days')) {
         const dateStr = date.format('YYYY-MM-DD');
         eventCounts[dateStr] = (eventCounts[dateStr] || 0) + 1;

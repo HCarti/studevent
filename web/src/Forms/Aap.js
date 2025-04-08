@@ -409,6 +409,7 @@ const isOccupied = (date) => {
       
       setTimeout(() => {
         setNotificationVisible(false);
+        navigate('/'); // Redirect to homepage
       }, 3000);
 
       // Reset form if creating new
@@ -609,8 +610,18 @@ const isOccupied = (date) => {
               selected={formData.eventStartDate ? new Date(formData.eventStartDate) : null}
               onChange={(date) => handleDateChange(date, 'eventStartDate')}
               minDate={new Date()}
-              filterDate={(date) => !isOccupied(date)}
-              dayClassName={dayClassName}
+              filterDate={(date) => {
+                const dateStr = moment(date).format('YYYY-MM-DD');
+                return (eventsPerDate[dateStr] || 0) < 3; // Allow if less than 3 events
+              }}
+              dayClassName={(date) => {
+                const dateStr = moment(date).format('YYYY-MM-DD');
+                const count = eventsPerDate[dateStr] || 0;
+                
+                if (count >= 3) return 'fully-booked-day';
+                if (count >= 2) return 'approaching-limit-day';
+                return '';
+              }}
               dateFormat="MMMM d, yyyy h:mm aa"
               showTimeSelect
               timeFormat="h:mm aa"
@@ -620,18 +631,43 @@ const isOccupied = (date) => {
               placeholderText="Select start date and time"
               className={`date-picker-input ${fieldErrors.eventStartDate ? 'invalid-field' : ''}`}
               popperClassName="date-picker-popper"
+              disabledKeyboardNavigation
+              popperModifiers={[
+                {
+                  name: 'preventOverflow',
+                  options: {
+                    rootBoundary: 'viewport',
+                    tether: false,
+                    altAxis: true
+                  }
+                }
+              ]}
             />
-            <div className="validation-error">
-              Please select a valid start date
-            </div>
+            {fieldErrors.eventStartDate && (
+              <div className="validation-error">
+                {eventsPerDate[moment(formData.eventStartDate).format('YYYY-MM-DD')] >= 3 
+                  ? 'This date has reached the maximum number of events (3)'
+                  : 'Please select a valid start date'}
+              </div>
+            )}
 
             <label className="required-field">Event End Date:</label>
             <DatePicker
               selected={formData.eventEndDate ? new Date(formData.eventEndDate) : null}
               onChange={(date) => handleDateChange(date, 'eventEndDate')}
               minDate={formData.eventStartDate ? new Date(formData.eventStartDate) : new Date()}
-              filterDate={(date) => !isOccupied(date)}
-              dayClassName={dayClassName}
+              filterDate={(date) => {
+                const dateStr = moment(date).format('YYYY-MM-DD');
+                return (eventsPerDate[dateStr] || 0) < 3; // Allow if less than 3 events
+              }}
+              dayClassName={(date) => {
+                const dateStr = moment(date).format('YYYY-MM-DD');
+                const count = eventsPerDate[dateStr] || 0;
+                
+                if (count >= 3) return 'fully-booked-day';
+                if (count >= 2) return 'approaching-limit-day';
+                return '';
+              }}
               dateFormat="MMMM d, yyyy h:mm aa"
               showTimeSelect
               timeFormat="h:mm aa"
@@ -641,10 +677,25 @@ const isOccupied = (date) => {
               placeholderText="Select end date and time"
               className={`date-picker-input ${fieldErrors.eventEndDate ? 'invalid-field' : ''}`}
               popperClassName="date-picker-popper"
+              disabledKeyboardNavigation
+              popperModifiers={[
+                {
+                  name: 'preventOverflow',
+                  options: {
+                    rootBoundary: 'viewport',
+                    tether: false,
+                    altAxis: true
+                  }
+                }
+              ]}
             />
-            <div className="validation-error">
-              Please select a valid end date
-            </div>
+            {fieldErrors.eventEndDate && (
+              <div className="validation-error">
+                {eventsPerDate[moment(formData.eventEndDate).format('YYYY-MM-DD')] >= 3 
+                  ? 'This date has reached the maximum number of events (3)'
+                  : 'End date must be after start date'}
+              </div>
+            )}
 
             <label className="required-field">Organizer:</label>
             <input 

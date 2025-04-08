@@ -13,20 +13,29 @@ const checkEventCapacity = async (startDate, endDate, currentFormId = null) => {
   const start = moment(startDate).startOf('day');
   const end = moment(endDate).startOf('day');
   
-  // Find all calendar events in this date range
+  // Find all calendar events in this date range from BOTH form types
   const query = {
     $or: [
-      { startDate: { $lte: end.toDate() }, endDate: { $gte: start.toDate() } }
+      { 
+        $or: [
+          { formType: 'Activity' },
+          { formType: 'Project' }
+        ],
+        $and: [
+          { startDate: { $lte: end.toDate() } },
+          { endDate: { $gte: start.toDate() } }
+        ]
+      }
     ]
   };
   
   if (currentFormId) {
-    query.formId = { $ne: currentFormId }; // Exclude current form when editing
+    query.$or[0].formId = { $ne: currentFormId }; // Exclude current form when editing
   }
 
   const existingEvents = await CalendarEvent.find(query);
   
-  // Count events per date
+  // Count events per date (combining both types)
   const eventCounts = {};
   existingEvents.forEach(event => {
     const eventStart = moment(event.startDate).startOf('day');
@@ -189,8 +198,10 @@ exports.createForm = async (req, res) => {
         }
         req.body.studentOrganization = organization._id;
         // ADD EVENT CAPACITY VALIDATION FOR ACTIVITY FORMS
+        // In both Activity and Project form handlers, use the same validation:
         if (req.body.eventStartDate) {
-          await checkEventCapacity(req.body.eventStartDate, req.body.eventEndDate || req.body.eventStartDate);
+          const endDate = req.body.eventEndDate || req.body.eventStartDate;
+          await checkEventCapacity(req.body.eventStartDate, endDate);
         }
         break;
 
@@ -221,8 +232,10 @@ exports.createForm = async (req, res) => {
           return res.status(400).json({ error: "Project title and description are required" });
         }
         // ADD EVENT CAPACITY VALIDATION FOR PROJECT FORMS
+        // In both Activity and Project form handlers, use the same validation:
         if (req.body.eventStartDate) {
-          await checkEventCapacity(req.body.eventStartDate, req.body.eventEndDate || req.body.eventStartDate);
+          const endDate = req.body.eventEndDate || req.body.eventStartDate;
+          await checkEventCapacity(req.body.eventStartDate, endDate);
         }
         break;
 
