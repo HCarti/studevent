@@ -23,6 +23,7 @@ const SuperAdminAddUser = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [validationErrors, setValidationErrors] = useState({});
+    const [presidentSignature, setPresidentSignature] = useState(null); // Add this with other state declarations
 
     const faculties = ['Adviser', 'Dean', 'Academic Services', 'Academic Director', 'Executive Director'];
     const typeorganizations = [
@@ -48,11 +49,19 @@ const SuperAdminAddUser = () => {
     const handleSignatureChange = (e) => {
         const file = e.target.files[0];
         if (file && (file.type === 'image/png' || file.type === 'image/jpeg')) {
-            setSignature(file);
+            if (e.target.name === 'presidentSignature') {
+                setPresidentSignature(file);
+            } else {
+                setSignature(file);
+            }
             setError('');
         } else {
             setError('Please upload a valid PNG or JPEG file for the signature.');
-            setSignature(null);
+            if (e.target.name === 'presidentSignature') {
+                setPresidentSignature(null);
+            } else {
+                setSignature(null);
+            }
         }
     };
 
@@ -116,6 +125,13 @@ const SuperAdminAddUser = () => {
             isValid = false;
             errors.signature = 'Signature is required.';
         }
+        if (formData.role === 'Organization' && !presidentSignature) {
+            isValid = false;
+            errors.signature = 'President signature is required.';
+        } else if ((formData.role === 'Admin' || formData.role === 'Authority') && !signature) {
+            isValid = false;
+            errors.signature = 'Signature is required.';
+        }
 
         setValidationErrors(errors);
         return isValid;
@@ -126,21 +142,36 @@ const SuperAdminAddUser = () => {
         setError('');
         setSuccess('');
         setValidationErrors({});
-
+    
         if (!validateForm()) return;
-
+    
         if (!logo) {
             setError('Logo or photo is required.');
             return;
         }
-
+    
         const data = new FormData();
         data.append('role', formData.role);
         data.append('email', formData.email);
         data.append('password', formData.password);
         data.append('logo', logo);
-        data.append('signature', signature); // Always append signature for all roles
-
+    
+        // Add appropriate signature based on role
+        if (formData.role === 'Organization') {
+            if (!presidentSignature) {
+                setError('President signature is required');
+                return;
+            }
+            data.append('presidentSignature', presidentSignature);
+        } else {
+            if (!signature) {
+                setError('Signature is required');
+                return;
+            }
+            data.append('signature', signature);
+        }
+    
+        // Add role-specific fields
         if (formData.role === 'Authority') {
             data.append('firstName', formData.firstName);
             data.append('lastName', formData.lastName);
@@ -153,7 +184,7 @@ const SuperAdminAddUser = () => {
             data.append('organizationName', formData.organizationName);
             data.append('presidentName', formData.presidentName);
         }
-
+    
         try {
             setLoading(true);
             const response = await axios.post('https://studevent-server.vercel.app/api/users', data, {
@@ -162,6 +193,7 @@ const SuperAdminAddUser = () => {
                 },
             });
             setSuccess('User added successfully!');
+            // Reset form
             setFormData({
                 role: 'Admin',
                 firstName: '',
@@ -177,6 +209,7 @@ const SuperAdminAddUser = () => {
             });
             setLogo(null);
             setSignature(null);
+            setPresidentSignature(null);
         } catch (error) {
             setError(error.response?.data?.message || 'Error adding user.');
         } finally {
@@ -208,18 +241,34 @@ const SuperAdminAddUser = () => {
                     </div>
 
                     {/* Signature Upload Field for all roles */}
-                    <div className="form-group">
-                        <label htmlFor="signature">Signature (PNG/JPEG) <span className="important">*</span></label>
-                        <input
-                            type="file"
-                            name="signature"
-                            accept="image/png, image/jpeg"
-                            onChange={handleSignatureChange}
-                            className={validationErrors.signature ? 'input-error' : ''}
-                            required
-                        />
-                        {validationErrors.signature && <small className="error-text">{validationErrors.signature}</small>}
-                    </div>
+                    {/* Replace the current signature upload field with this */}
+                        {formData.role === 'Organization' ? (
+                            <div className="form-group">
+                                <label htmlFor="presidentSignature">President Signature (PNG/JPEG) <span className="important">*</span></label>
+                                <input
+                                    type="file"
+                                    name="presidentSignature"
+                                    accept="image/png, image/jpeg"
+                                    onChange={handleSignatureChange}
+                                    className={validationErrors.signature ? 'input-error' : ''}
+                                    required={formData.role === 'Organization'}
+                                />
+                                {validationErrors.signature && <small className="error-text">{validationErrors.signature}</small>}
+                            </div>
+                        ) : (
+                            <div className="form-group">
+                                <label htmlFor="signature">Signature (PNG/JPEG) <span className="important">*</span></label>
+                                <input
+                                    type="file"
+                                    name="signature"
+                                    accept="image/png, image/jpeg"
+                                    onChange={handleSignatureChange}
+                                    className={validationErrors.signature ? 'input-error' : ''}
+                                    required={formData.role === 'Admin' || formData.role === 'Authority'}
+                                />
+                                {validationErrors.signature && <small className="error-text">{validationErrors.signature}</small>}
+                            </div>
+                        )}
 
                     <div className="form-fields">
                         <div className="form-group">
