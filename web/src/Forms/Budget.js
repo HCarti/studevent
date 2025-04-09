@@ -23,13 +23,62 @@ const Budget = () => {
   }]);
   const [formSent, setFormSent] = useState(false);
   const [notificationVisible, setNotificationVisible] = useState(false);
+  const [errors, setErrors] = useState({
+    nameOfRso: false,
+    rows: []
+  });
 
-  // Notification component
-  const Notification = ({ message }) => (
-    <div className="notification">
+  // Enhanced Notification component with minimalistic design
+  const Notification = ({ message, type = "success" }) => (
+    <div className={`notification ${type}`}>
       {message}
     </div>
   );
+
+  // Error message component
+  const ErrorMessage = ({ message, targetId }) => (
+    <div 
+      className="error-tooltip" 
+      data-target={targetId}
+      role="tooltip"
+    >
+      {message}
+      <span className="error-tooltip-arrow"></span>
+    </div>
+  );
+
+  // Validate a single row
+  const validateRow = (row) => {
+    return {
+      quantity: !row.quantity || isNaN(row.quantity),
+      unit: !row.unit?.trim(),
+      description: !row.description?.trim(),
+      unitCost: !row.unitCost || isNaN(row.unitCost)
+    };
+  };
+
+  // Validate all rows
+  const validateAllRows = () => {
+    return rows.map(row => validateRow(row));
+  };
+
+  // Validate the entire form
+  const validateForm = () => {
+    const nameOfRsoError = !formData.nameOfRso?.trim();
+    const rowErrors = validateAllRows();
+    
+    setErrors({
+      nameOfRso: nameOfRsoError,
+      rows: rowErrors
+    });
+
+    // Check if any row has all required fields filled
+    const hasValidRows = rowErrors.some(rowError => 
+      !rowError.quantity && !rowError.unit && !rowError.description && !rowError.unitCost
+    );
+
+    return !nameOfRsoError && hasValidRows;
+  };
 
   // Fetch form data in edit mode
   useEffect(() => {
@@ -57,8 +106,11 @@ const Budget = () => {
         }]);
       } catch (error) {
         console.error('Error fetching form:', error);
-        alert('Failed to load form data');
-        navigate('/submitted-forms');
+        setNotificationVisible(true);
+        setTimeout(() => {
+          setNotificationVisible(false);
+          navigate('/submitted-forms');
+        }, 3000);
       } finally {
         setLoading(false);
       }
@@ -85,6 +137,11 @@ const Budget = () => {
       unitCost: "", 
       totalCost: "" 
     }]);
+    // Add empty error object for the new row
+    setErrors(prev => ({
+      ...prev,
+      rows: [...prev.rows, { quantity: false, unit: false, description: false, unitCost: false }]
+    }));
   };
 
   const removeRow = (index) => {
@@ -93,6 +150,14 @@ const Budget = () => {
       newRows.splice(index, 1);
       setRows(newRows);
       calculateGrandTotal(newRows);
+      
+      // Remove corresponding error object
+      const newRowErrors = [...errors.rows];
+      newRowErrors.splice(index, 1);
+      setErrors(prev => ({
+        ...prev,
+        rows: newRowErrors
+      }));
     }
   };
 
@@ -102,6 +167,14 @@ const Budget = () => {
       ...formData,
       [name]: value
     });
+    
+    // Clear error when typing
+    if (name === 'nameOfRso') {
+      setErrors(prev => ({
+        ...prev,
+        nameOfRso: false
+      }));
+    }
   };
 
   const handleRowChange = (index, field, value) => {
@@ -116,6 +189,19 @@ const Budget = () => {
     
     setRows(newRows);
     calculateGrandTotal(newRows);
+    
+    // Clear error when typing
+    if (errors.rows[index]) {
+      const newRowErrors = [...errors.rows];
+      newRowErrors[index] = {
+        ...newRowErrors[index],
+        [field]: false
+      };
+      setErrors(prev => ({
+        ...prev,
+        rows: newRowErrors
+      }));
+    }
   };
 
   const calculateGrandTotal = (rowsArray) => {
@@ -129,92 +215,132 @@ const Budget = () => {
     }));
   };
 
-  const renderRowInputs = () => {
-    return rows.map((row, index) => (
-      <div key={index} className="budget-row">
-        <input
-          type="number"
-          value={row.quantity}
-          onChange={(e) => handleRowChange(index, 'quantity', e.target.value)}
-          placeholder="Qty"
-          min="0"
-        />
-        <input
-          type="text"
-          value={row.unit}
-          onChange={(e) => handleRowChange(index, 'unit', e.target.value)}
-          placeholder="Unit"
-        />
-        <input
-          type="text"
-          value={row.description}
-          onChange={(e) => handleRowChange(index, 'description', e.target.value)}
-          placeholder="Description"
-        />
-        <input
-          type="number"
-          step="0.01"
-          min="0"
-          value={row.unitCost}
-          onChange={(e) => handleRowChange(index, 'unitCost', e.target.value)}
-          placeholder="Unit Cost"
-        />
-        <input
-          type="number"
-          step="0.01"
-          value={row.totalCost}
-          readOnly
-          placeholder="Total"
-        />
-        <button type="button" onClick={() => removeRow(index)}>
-          Remove
-        </button>
-      </div>
-    ));
+   const renderRowInputs = () => {
+    return rows.map((row, index) => {
+      const rowErrors = errors.rows[index] || {};
+      const rowId = `row-${index}`;
+      
+      return (
+        <div key={index} className="budget-row" id={rowId}>
+          <div className="input-group">
+            <input
+              type="number"
+              id={`quantity-${index}`}
+              value={row.quantity}
+              onChange={(e) => handleRowChange(index, 'quantity', e.target.value)}
+              placeholder="Qty"
+              min="0"
+              className={rowErrors.quantity ? 'error' : ''}
+            />
+            {rowErrors.quantity && (
+              <ErrorMessage 
+                message="Quantity is required" 
+                targetId={`quantity-${index}`}
+              />
+            )}
+          </div>
+          
+          <div className="input-group">
+            <input
+              type="text"
+              id={`unit-${index}`}
+              value={row.unit}
+              onChange={(e) => handleRowChange(index, 'unit', e.target.value)}
+              placeholder="Unit"
+              className={rowErrors.unit ? 'error' : ''}
+            />
+            {rowErrors.unit && (
+              <ErrorMessage 
+                message="Unit is required" 
+                targetId={`unit-${index}`}
+              />
+            )}
+          </div>
+          
+          <div className="input-group">
+            <input
+              type="text"
+              value={row.description}
+              onChange={(e) => handleRowChange(index, 'description', e.target.value)}
+              placeholder="Description"
+              className={rowErrors.description ? 'error' : ''}
+            />
+            {rowErrors.description && (
+              <ErrorMessage 
+                message="Description is required" 
+                targetId={`Description-${index}`}
+              />
+            )}
+          </div>
+          
+          <div className="input-group">
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={row.unitCost}
+              onChange={(e) => handleRowChange(index, 'unitCost', e.target.value)}
+              placeholder="Unit Cost"
+              className={rowErrors.unitCost ? 'error' : ''}
+            />
+            {rowErrors.unitCost && (
+              <ErrorMessage 
+                message="Unit Cost is required" 
+                targetId={`Unit Cost-${index}`}
+              />
+            )}
+          </div>
+          
+          <div className="input-group">
+            <input
+              type="number"
+              step="0.01"
+              value={row.totalCost}
+              readOnly
+              placeholder="Total"
+            />
+          </div>
+          
+          <button type="button" onClick={() => removeRow(index)} className="remove-btn">
+            Remove
+          </button>
+        </div>
+      );
+    });
   };
 
   const handleSubmit = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
     const token = localStorage.getItem('token');
     if (!token) {
-      alert('Please log in to submit the form');
+      setNotificationVisible(true);
+      setTimeout(() => setNotificationVisible(false), 3000);
       return;
     }
   
-    // Validate required fields
-    if (!formData.nameOfRso?.trim()) {
-      alert("Name of RSO is required");
-      return;
-    }
-  
+    // Filter out empty rows (where all fields are empty)
     const validRows = rows.filter(row => 
-      !isNaN(row.quantity) && 
-      !isNaN(row.unitCost) && 
-      row.unit?.trim() && 
-      row.description?.trim()
-    );
+      row.quantity || row.unit || row.description || row.unitCost
+    ).map(row => ({
+      quantity: Number(row.quantity),
+      unit: row.unit.trim(),
+      description: row.description.trim(),
+      unitCost: Number(row.unitCost),
+      totalCost: Number(row.totalCost || row.quantity * row.unitCost)
+    }));
   
-    if (validRows.length === 0) {
-      alert("Please add at least one valid budget item");
-      return;
-    }
-  
-    // Prepare payload - FLAT structure like Activity form
+    // Prepare payload
     const payload = {
-      formType: 'Budget', // Required at root level
+      formType: 'Budget',
       nameOfRso: formData.nameOfRso.trim(),
       eventTitle: formData.eventTitle?.trim() || 'Budget Proposal',
-      items: validRows.map(row => ({
-        quantity: Number(row.quantity),
-        unit: row.unit.trim(),
-        description: row.description.trim(),
-        unitCost: Number(row.unitCost),
-        totalCost: Number(row.totalCost || row.quantity * row.unitCost)
-      })),
+      items: validRows,
       grandTotal: Number(formData.grandTotal) || 
         validRows.reduce((sum, row) => sum + (row.quantity * row.unitCost), 0)
     };
-  
-    console.log("Submitting:", payload); // Debug log
   
     try {
       const url = isEditMode 
@@ -241,12 +367,14 @@ const Budget = () => {
         );
       }
   
-      const result = await response.json();
       setFormSent(true);
       setNotificationVisible(true);
       
       setTimeout(() => {
         setNotificationVisible(false);
+        if (!isEditMode) {
+          navigate('/');
+        }
       }, 3000);
   
       if (!isEditMode) {
@@ -265,11 +393,9 @@ const Budget = () => {
       }
   
     } catch (error) {
-      console.error('Submission error:', {
-        error: error.message,
-        payload: payload,
-      });
-      alert(error.message || 'Submission failed. Check console for details.');
+      console.error('Submission error:', error);
+      setNotificationVisible(true);
+      setTimeout(() => setNotificationVisible(false), 3000);
     }
   };
 
@@ -277,29 +403,27 @@ const Budget = () => {
     <div className="budget-form">
       <h1>Budget Proposal</h1>
       {notificationVisible && (
-        <Notification message={`Form ${isEditMode ? 'updated' : 'submitted'} successfully`} />
+        <Notification 
+          message={formSent 
+            ? `Form ${isEditMode ? 'updated' : 'submitted'} successfully` 
+            : 'Please log in to submit the form'}
+          type={formSent ? "success" : "error"}
+        />
       )}
       
-      <div>
+      <div className="form-group">
         <label>Name of RSO:</label>
-        <input 
-          type="text" 
-          name="nameOfRso" 
-          value={formData.nameOfRso} 
-          onChange={handleChange} 
-          required
-        />
-      </div>
-
-      <div>
-        <label>Event Title:</label>
-        <input 
-          type="text" 
-          name="eventTitle" 
-          value={formData.eventTitle} 
-          onChange={handleChange} 
-          placeholder="Optional"
-        />
+        <div className="input-group-nameofRSO">
+          <input 
+            type="text" 
+            name="nameOfRso" 
+            value={formData.nameOfRso} 
+            onChange={handleChange} 
+            readOnly
+            className={errors.nameOfRso ? 'error' : ''}
+          />
+          {errors.nameOfRso && <ErrorMessage message="This field is required" />}
+        </div>
       </div>
 
       <div className="budget-items">
@@ -314,22 +438,29 @@ const Budget = () => {
         
         {renderRowInputs()}
         
-        <button type="button" onClick={addRow}>
+        <button type="button" onClick={addRow} className="add-row-btn">
           Add Row
         </button>
       </div>
 
-      <div className="grand-total">
+      <div className="form-group">
         <label>Grand Total:</label>
-        <input 
-          type="number" 
-          value={formData.grandTotal} 
-          readOnly 
-        />
+        <div className="input-group">
+          <input 
+            type="number" 
+            value={formData.grandTotal} 
+            readOnly 
+          />
+        </div>
       </div>
 
-      <button type="button" onClick={handleSubmit} disabled={loading}>
-        {isEditMode ? 'Update Budget' : 'Submit Budget'}
+      <button 
+        type="button" 
+        onClick={handleSubmit} 
+        disabled={loading}
+        className="submit-btn"
+      >
+        {loading ? 'Processing...' : isEditMode ? 'Update Budget' : 'Submit Budget'}
       </button>
     </div>
   );

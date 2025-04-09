@@ -203,6 +203,166 @@
   
 }
 
+.input-group-nameofRSO {
+  display: flex;
+  align-items: center;
+  width: 400px
+}
+
+/* Error Styling */
+.error {
+  border: 1px solid #ff6b6b !important;
+}
+
+.error-message {
+  color: #ff6b6b;
+  font-size: 0.8rem;
+  margin-top: 0.2rem;
+  font-style: italic;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+/* Notification Styling */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 4px;
+  color: white;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out;
+}
+
+.notification.success {
+  background-color: #51cf66;
+}
+
+.notification.error {
+  background-color: #ff6b6b;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Button Styling */
+.remove-btn {
+  background-color: #ff6b6b;
+  color: white;
+}
+
+.remove-btn:hover {
+  background-color: #fa5252;
+}
+
+.add-row-btn {
+  background-color: #4dabf7;
+  color: white;
+}
+
+.add-row-btn:hover {
+  background-color: #339af0;
+}
+
+.submit-btn {
+  background-color: #51cf66;
+  color: white;
+}
+
+.submit-btn:hover {
+  background-color: #40c057;
+}
+
+.submit-btn:disabled {
+  background-color: #adb5bd;
+  cursor: not-allowed;
+}
+
+/* Form Group Styling */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+/* Floating Error Tooltip */
+.error-tooltip {
+  position: absolute;
+  background-color: #ff6b6b;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  z-index: 100;
+  transform: translateY(-100%);
+  margin-top: -5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.error-tooltip[data-target] {
+  position: absolute;
+}
+
+.error-tooltip-arrow {
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #ff6b6b;
+}
+
+.input-group {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-90%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-100%);
+  }
+}
+
+/* Make sure inputs have relative positioning */
+input[type="text"],
+input[type="number"] {
+  position: relative;
+}
+
+/* Error state */
+.error {
+  border-color: #ff6b6b !important;
+  outline-color: #ff6b6b;
+}
 /* Responsive Adjustments - More Refined */
 @media (max-width: 900px) {
   .budget-form {
