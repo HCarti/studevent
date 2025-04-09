@@ -72,7 +72,6 @@ router.post('/submit',
 
 // Route to submit a new form
 router.post('/', 
-    authenticateToken,
     upload.fields([
       { name: 'attachments', maxCount: 4 }, // Allow up to 4 attachments
       { name: 'additionalSignatures', maxCount: 1 } // For any additional signatures
