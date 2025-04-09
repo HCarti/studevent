@@ -221,28 +221,31 @@ exports.createForm = async (req, res) => {
     }
 
     // Get the organization's president signature if this is an organization form
-    if (req.body.studentOrganization) {
-      const organization = await User.findOne({
-        organizationName: req.body.studentOrganization,
-        role: "Organization",
-      });
-      
-      if (!organization) {
-        return res.status(400).json({ error: "Organization not found" });
-      }
-      
-      // Add president info to the form
-      req.body.studentOrganization = organization._id;
-      req.body.presidentName = organization.presidentName;
-      req.body.presidentSignature = organization.presidentSignature;
-      
-      // Validate president signature exists
-      if (!organization.presidentSignature) {
-        return res.status(400).json({ 
-          error: "Organization president signature is required" 
+// In the createForm function, replace the organization lookup with:
+      if (req.body.studentOrganization) {
+        const organization = await User.findOne({
+          _id: req.body.studentOrganization, // Lookup by ID if provided
+          role: "Organization"
+        }) || await User.findOne({
+          organizationName: req.body.studentOrganization, // Fallback to name lookup
+          role: "Organization"
         });
+
+        if (!organization) {
+          return res.status(400).json({ error: "Organization not found" });
+        }
+
+        // Always use the organization's _id
+        req.body.studentOrganization = organization._id;
+        req.body.presidentName = organization.presidentName;
+        req.body.presidentSignature = organization.presidentSignature;
+        
+        if (!organization.presidentSignature) {
+          return res.status(400).json({ 
+            error: "Organization president signature is required" 
+          });
+        }
       }
-    }
 
     // Form type specific validation
     switch (req.body.formType) {
