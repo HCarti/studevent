@@ -21,6 +21,7 @@ const Aap = () => {
   const [formData, setFormData] = useState({
     presidentSignature: "",
     presidentName: "",
+    organizationId: "", // Add this new field
     eventLocation: "",
     applicationDate: new Date().toISOString().split('T')[0],
     studentOrganization: "",
@@ -182,6 +183,7 @@ const fetchFormData = async () => {
     // 3. Format all data for the form
     const formattedData = {
       ...formData,
+      organizationId: formData.studentOrganization?._id || formData.studentOrganization || "",
       studentOrganization: organizationName, // Use the resolved name
       eventStartDate: formData.eventStartDate ? new Date(formData.eventStartDate).toISOString() : '',
       eventEndDate: formData.eventEndDate ? new Date(formData.eventEndDate).toISOString() : '',
@@ -203,12 +205,12 @@ const fetchFormData = async () => {
   if (userData) {
     const newData = {
       ...formData,
+      organizationId: userData.role === 'Organization' ? userData._id || "" : "",
       studentOrganization: userData.role === 'Organization' ? userData.organizationName || "" : "",
       emailAddress: userData.email || "",
       applicationDate: new Date().toISOString().split('T')[0]
     };
 
-    // Add president info for organization users
     if (userData.role === 'Organization') {
       newData.presidentName = userData.presidentName || "";
       newData.presidentSignature = userData.presidentSignature || "";
@@ -353,7 +355,7 @@ const isOccupied = (date) => {
 
   // Form submission
   const handleSubmit = async () => {
-    console.log("Submitting form with data:", formData); // Debug log
+    
 
     if (!validateAllFields()) {
       alert("Please fill out all required fields");
@@ -395,12 +397,15 @@ const isOccupied = (date) => {
     const submissionData = {
       formType: 'Activity',
       ...formData,
+      studentOrganization: formData.organizationId, // Send the ID instead of name
       eventStartDate: new Date(formData.eventStartDate),
       eventEndDate: new Date(formData.eventEndDate),
       applicationDate: new Date(formData.applicationDate),
       contactNo: Number(formData.contactNo),
       budgetAmount: Number(formData.budgetAmount),
-      length: moment(formData.eventEndDate).diff(moment(formData.eventStartDate), 'hours')
+      length: moment(formData.eventEndDate).diff(moment(formData.eventStartDate), 'hours'),
+      presidentName: formData.presidentName,
+      presidentSignature: formData.presidentSignature
     };
 
   // For organization forms, include president info

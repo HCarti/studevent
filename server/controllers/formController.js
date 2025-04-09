@@ -219,6 +219,7 @@ exports.createForm = async (req, res) => {
     if (!req.body.emailAddress && req.user?.email) {
       req.body.emailAddress = req.user.email;
     }
+    
 
     // Get the organization's president signature if this is an organization form
 // In the createForm function, replace the organization lookup with:
@@ -231,6 +232,21 @@ exports.createForm = async (req, res) => {
           role: "Organization"
         });
 
+        if (mongoose.Types.ObjectId.isValid(req.body.studentOrganization)) {
+          organization = await User.findOne({
+            _id: req.body.studentOrganization,
+            role: "Organization"
+          });
+        }
+  
+        // If not found by ID or not an ID, try by name
+        if (!organization) {
+          organization = await User.findOne({
+            organizationName: req.body.studentOrganization,
+            role: "Organization"
+          });
+        }
+        
         if (!organization) {
           return res.status(400).json({ error: "Organization not found" });
         }
