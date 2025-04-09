@@ -1,6 +1,6 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
-const cloudinary = require('cloudinary').v2;
+
 
 // Helper function to create JWT token
 const createToken = (user) => {
