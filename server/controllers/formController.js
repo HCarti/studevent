@@ -219,49 +219,42 @@ exports.createForm = async (req, res) => {
     if (!req.body.emailAddress && req.user?.email) {
       req.body.emailAddress = req.user.email;
     }
-    
 
-    // Get the organization's president signature if this is an organization form
-// In the createForm function, replace the organization lookup with:
-      if (req.body.studentOrganization) {
-        const organization = await User.findOne({
-          _id: req.body.studentOrganization, // Lookup by ID if provided
-          role: "Organization"
-        }) || await User.findOne({
-          organizationName: req.body.studentOrganization, // Fallback to name lookup
+    // Handle organization lookup
+    if (req.body.studentOrganization) {
+      let organization;
+
+      // First try to find by ID if the value is a valid ObjectId
+      if (mongoose.Types.ObjectId.isValid(req.body.studentOrganization)) {
+        organization = await User.findOne({
+          _id: req.body.studentOrganization,
           role: "Organization"
         });
-
-        if (mongoose.Types.ObjectId.isValid(req.body.studentOrganization)) {
-          organization = await User.findOne({
-            _id: req.body.studentOrganization,
-            role: "Organization"
-          });
-        }
-  
-        // If not found by ID or not an ID, try by name
-        if (!organization) {
-          organization = await User.findOne({
-            organizationName: req.body.studentOrganization,
-            role: "Organization"
-          });
-        }
-        
-        if (!organization) {
-          return res.status(400).json({ error: "Organization not found" });
-        }
-
-        // Always use the organization's _id
-        req.body.studentOrganization = organization._id;
-        req.body.presidentName = organization.presidentName;
-        req.body.presidentSignature = organization.presidentSignature;
-        
-        if (!organization.presidentSignature) {
-          return res.status(400).json({ 
-            error: "Organization president signature is required" 
-          });
-        }
       }
+
+      // If not found by ID or not an ID, try by name
+      if (!organization) {
+        organization = await User.findOne({
+          organizationName: req.body.studentOrganization,
+          role: "Organization"
+        });
+      }
+
+      if (!organization) {
+        return res.status(400).json({ error: "Organization not found" });
+      }
+
+      // Always use the organization's _id
+      req.body.studentOrganization = organization._id;
+      req.body.presidentName = organization.presidentName;
+      req.body.presidentSignature = organization.presidentSignature;
+      
+      if (!organization.presidentSignature) {
+        return res.status(400).json({ 
+          error: "Organization president signature is required" 
+        });
+      }
+    }
 
     // Form type specific validation
     switch (req.body.formType) {
@@ -270,17 +263,7 @@ exports.createForm = async (req, res) => {
           return res.status(400).json({ error: "studentOrganization is required for Activity forms" });
         }
         
-        const organization = await User.findOne({
-          organizationName: req.body.studentOrganization,
-          role: "Organization",
-        });
-        
-        if (!organization) {
-          return res.status(400).json({ error: "Organization not found" });
-        }
-        req.body.studentOrganization = organization._id;
-        // ADD EVENT CAPACITY VALIDATION FOR ACTIVITY FORMS
-        // In both Activity and Project form handlers, use the same validation:
+        // Event capacity validation
         if (req.body.eventStartDate) {
           const endDate = req.body.eventEndDate || req.body.eventStartDate;
           await checkEventCapacity(req.body.eventStartDate, endDate);
@@ -309,12 +292,11 @@ exports.createForm = async (req, res) => {
         break;
 
       case 'Project':
-        // Add any Project-specific validation here
         if (!req.body.projectTitle || !req.body.projectDescription) {
           return res.status(400).json({ error: "Project title and description are required" });
         }
-        // ADD EVENT CAPACITY VALIDATION FOR PROJECT FORMS
-        // In both Activity and Project form handlers, use the same validation:
+        
+        // Event capacity validation
         if (req.body.eventStartDate) {
           const endDate = req.body.eventEndDate || req.body.eventStartDate;
           await checkEventCapacity(req.body.eventStartDate, endDate);
@@ -329,22 +311,20 @@ exports.createForm = async (req, res) => {
     const form = new Form(req.body);
     await form.save();
 
-        // Create calendar event if this is an Activity/Project form with dates
-        if (['Activity', 'Project'].includes(req.body.formType) && req.body.eventStartDate) {
-          console.log('Attempting to create calendar event for form:', {
-            formType: req.body.formType,
-            eventStartDate: req.body.eventStartDate,
-            eventEndDate: req.body.eventEndDate
-          });
-          console.log('Attempting calendar event creation...');
-          const calendarEvent = await createCalendarEventFromForm(form);
-          console.log('Calendar event creation result:', calendarEvent ? 'success' : 'failed');
+    // Create calendar event if this is an Activity/Project form with dates
+    if (['Activity', 'Project'].includes(req.body.formType)) {
+      try {
+        const calendarEvent = await createCalendarEventFromForm(form);
+        if (!calendarEvent) {
+          console.error('Calendar event creation failed for form:', form._id);
         }
+      } catch (eventError) {
+        console.error('Error creating calendar event:', eventError);
+      }
+    }
 
-    // Get the appropriate reviewers based on form type
+    // Create progress tracker
     const requiredReviewers = getRequiredReviewers(req.body.formType);
-    
-    // Create progress tracker with form-specific reviewers
     const trackerSteps = requiredReviewers.map(reviewer => ({
       stepName: reviewer.stepName,
       reviewerRole: reviewer.reviewerRole,
