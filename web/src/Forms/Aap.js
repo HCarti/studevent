@@ -123,13 +123,16 @@ const Aap = () => {
     ];
   
     let isValid = true;
+  
+    // Validate regular fields
     requiredFields.forEach(field => {
-      if (!validateField(field, formData[field])) {
+      if (!formData[field] || (typeof formData[field] === 'string' && formData[field].trim() === '')) {
+        setFieldErrors(prev => ({ ...prev, [field]: true }));
         isValid = false;
       }
     });
   
-    // Additional validation for organization forms
+    // Special validation for organization forms
     if (formData.studentOrganization) {
       if (!formData.presidentName || !formData.presidentSignature) {
         alert("Organization information is incomplete - missing president details");
@@ -345,6 +348,9 @@ const isOccupied = (date) => {
     return sections[step] || [];
   };
 
+  console.log("Current form data:", formData);
+  console.log("Validation errors:", fieldErrors);
+
   // Form submission
   const handleSubmit = async () => {
 
@@ -396,11 +402,18 @@ const isOccupied = (date) => {
       length: moment(formData.eventEndDate).diff(moment(formData.eventStartDate), 'hours')
     };
 
-      // Include president info if this is an organization form
+  // For organization forms, include president info
   if (formData.studentOrganization) {
     submissionData.presidentName = formData.presidentName;
     submissionData.presidentSignature = formData.presidentSignature;
+    
+    // Verify we have president info
+    if (!submissionData.presidentName || !submissionData.presidentSignature) {
+      alert("Organization information is incomplete - missing president details");
+      return;
+    }
   }
+
 
     const token = localStorage.getItem('token');
     if (!token) {
@@ -449,8 +462,6 @@ const isOccupied = (date) => {
       // Reset form if creating new
       if (!isEditMode) {
         setFormData({
-          presidentName: "",
-          presidentSignature: "",
           eventLocation: "",
           applicationDate: new Date().toISOString().split('T')[0],
           studentOrganization: "",
