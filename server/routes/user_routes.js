@@ -2,27 +2,20 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const { put } = require('@vercel/blob');
-const { 
-  addUser, 
-  getUserById, 
-  deleteUserById, 
-  updateUser, 
-  login, 
-  getCurrentUser, 
-  getOrganizations 
-} = require('../controllers/usersController');
+const usersController = require('../controllers/usersController');
 const authenticateToken = require('../middleware/authenticateToken');
 
-const upload = multer({ 
+// Configure multer for file uploads
+const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit for files
-    files: 2 // Maximum of 2 files (logo and signature)
+    fileSize: 5 * 1024 * 1024, // 5MB
+    files: 3 // logo + signature + presidentSignature
   },
   fileFilter: (req, file, cb) => {
-    if (file.fieldname === 'signature') {
+    if (['signature', 'presidentSignature'].includes(file.fieldname)) {
       if (!file.mimetype.match(/^image\/(png|jpeg|jpg)$/)) {
-        return cb(new Error('Signature must be a PNG or JPEG image'), false);
+        return cb(new Error('Signatures must be PNG or JPEG images'), false);
       }
     } else if (file.fieldname === 'logo') {
       if (!file.mimetype.startsWith('image/')) {
@@ -33,7 +26,7 @@ const upload = multer({
   }
 });
 
-// Error handling middleware for file uploads
+// Error handling middleware
 const handleUploadErrors = (err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     return res.status(400).json({ message: err.message });
@@ -44,126 +37,105 @@ const handleUploadErrors = (err, req, res, next) => {
 };
 
 // Login route (unprotected)
-router.post('/login', login);
+router.post('/login', usersController.login);
 
-// Protected routes with `authenticateToken`
-router.get('/organizations', authenticateToken, getOrganizations);
-router.get('/current', authenticateToken, getCurrentUser);
-router.get('/:id', authenticateToken, getUserById);
-router.delete('/:id', authenticateToken, deleteUserById);
+// Protected routes
+router.get('/organizations', authenticateToken, usersController.getOrganizations);
+router.get('/current', authenticateToken, usersController.getCurrentUser);
+router.get('/:id', authenticateToken, usersController.getUserById);
+router.delete('/:id', authenticateToken, usersController.deleteUserById);
 
-// Update user with file upload support
-router.patch('/:id', 
-  authenticateToken,
-  upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'signature', maxCount: 1 }]),
-  handleUploadErrors,
-  async (req, res) => {
-    try {
-      const { id } = req.params;
-      const updateData = req.body;
-      let logoUrl, signatureUrl;
-
-      // Handle logo upload if provided
-      if (req.files?.logo) {
-        const logoBlob = await put(
-          `user-${id}-logo-${Date.now()}`,
-          req.files.logo[0].buffer,
-          { access: 'public' }
-        );
-        logoUrl = logoBlob.url;
-        updateData.logo = logoUrl;
-      }
-
-      // Handle signature upload if provided
-      if (req.files?.signature) {
-        const signatureBlob = await put(
-          `user-${id}-signature-${Date.now()}`,
-          req.files.signature[0].buffer,
-          { access: 'public' }
-        );
-        signatureUrl = signatureBlob.url;
-        updateData.signature = signatureUrl;
-      }
-
-      const updatedUser = await updateUser({ 
-        params: { id }, 
-        body: updateData,
-        files: req.files 
-      });
-      
-      res.status(200).json(updatedUser);
-    } catch (error) {
-      console.error('Error updating user:', error);
-      res.status(500).json({ 
-        message: 'Error updating user',
-        error: error.message 
-      });
-    }
-  }
-);
-
-// Add new user with file upload
+// User registration route with dual signature support
 router.post('/', 
-  upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'signature', maxCount: 1 }]),
+  upload.fields([
+    { name: 'logo', maxCount: 1 },
+    { name: 'signature', maxCount: 1 },
+    { name: 'presidentSignature', maxCount: 1 }
+  ]),
   handleUploadErrors,
   async (req, res) => {
     try {
       const { role } = req.body;
       
       // Validate required files
-      if (!req.files?.logo || !req.files.logo[0]) {
+      if (!req.files?.logo) {
         return res.status(400).json({ message: 'Logo is required' });
       }
 
-      // Signature is required for Admin, Authority, and Organization
-      if (!req.files?.signature || !req.files.signature[0]) {
-        return res.status(400).json({ message: 'Signature is required' });
+      // Role-specific signature validation
+      if (role === 'Organization') {
+        if (!req.files?.presidentSignature) {
+          return res.status(400).json({ message: 'President signature is required for organizations' });
+        }
+      } else if (role === 'Admin' || role === 'Authority') {
+        if (!req.files?.signature) {
+          return res.status(400).json({ message: 'Signature is required for admin/authority users' });
+        }
+      } else {
+        return res.status(400).json({ message: 'Invalid user role' });
       }
 
-      // Upload logo to Vercel Blob
+      // Upload logo
       const logoBlob = await put(
-        `user-logo-${Date.now()}`,
+        `user-${Date.now()}-logo`,
         req.files.logo[0].buffer,
         { access: 'public' }
       );
 
-      // Upload signature to Vercel Blob
-      const signatureBlob = await put(
-        `user-signature-${Date.now()}`,
-        req.files.signature[0].buffer,
-        { access: 'public' }
-      );
-
-      // Validate role-specific requirements
-      if (role === 'Organization' && !req.body.presidentName) {
-        return res.status(400).json({ message: 'President name is required for organizations' });
+      // Upload appropriate signature(s)
+      let signatureUrl, presidentSignatureUrl;
+      
+      if (role === 'Organization') {
+        const presidentSigBlob = await put(
+          `org-${Date.now()}-presig`,
+          req.files.presidentSignature[0].buffer,
+          { access: 'public' }
+        );
+        presidentSignatureUrl = presidentSigBlob.url;
+      } else {
+        const sigBlob = await put(
+          `user-${Date.now()}-sig`,
+          req.files.signature[0].buffer,
+          { access: 'public' }
+        );
+        signatureUrl = sigBlob.url;
       }
 
-      if ((role === 'Admin' || role === 'Authority') && (!req.body.firstName || !req.body.lastName)) {
-        return res.status(400).json({ 
-          message: 'First name and last name are required for Admin and Authority roles' 
-        });
-      }
-
-      // Add user with logo and signature URLs
-      const newUser = await addUser(
-        req.body, 
-        logoBlob.url, 
-        signatureBlob.url
+      // Create user
+      const newUser = await usersController.addUser(
+        req.body,
+        logoBlob.url,
+        signatureUrl,
+        presidentSignatureUrl
       );
 
-      res.status(201).json({ 
-        message: 'User added successfully', 
-        user: newUser 
+      res.status(201).json({
+        message: 'User created successfully',
+        user: {
+          ...newUser.toObject(),
+          signature: role === 'Organization' ? presidentSignatureUrl : signatureUrl
+        }
       });
     } catch (error) {
-      console.error('Error adding user:', error);
+      console.error('User creation error:', error);
       res.status(500).json({ 
-        message: 'Error adding user', 
+        message: 'User creation failed',
         error: error.message 
       });
     }
   }
+);
+
+// Update user route with dual signature support
+router.patch('/:id',
+  authenticateToken,
+  upload.fields([
+    { name: 'logo', maxCount: 1 },
+    { name: 'signature', maxCount: 1 },
+    { name: 'presidentSignature', maxCount: 1 }
+  ]),
+  handleUploadErrors,
+  usersController.updateUser
 );
 
 module.exports = router;

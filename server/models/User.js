@@ -55,7 +55,12 @@ const userSchema = new Schema({
     }
   },
   logo: String, // Optional for all roles
-  signature: String, // NEW: Signature URL for Admin and Authority
+  signature: {
+    type: String,
+    required: function() {
+      return this.role === 'Admin' || this.role === 'Authority';
+    }
+  },
   status: {
     type: String,
     default: 'Active'

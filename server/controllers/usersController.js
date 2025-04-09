@@ -1,12 +1,9 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const cloudinary = require('cloudinary').v2;
 
+// Helper function to create JWT token
 const createToken = (user) => {
-  if (!process.env.JWT_SECRET) {
-    console.error("JWT_SECRET is not defined");
-    throw new Error("JWT_SECRET must be set in environment variables");
-  }
-
   return jwt.sign(
     {
       _id: user._id,
@@ -17,10 +14,11 @@ const createToken = (user) => {
       lastName: user.lastName || '',
       organizationType: user.organizationType || '',
       organizationName: user.organizationName || '',
-      presidentName: user.presidentName || '', // Added presidentName
-      status: user.status || '',
+      presidentName: user.presidentName || '',
+      status: user.status || 'Active',
       logo: user.logo || '',
-      signature: user.signature || '' // Ensure signature is included
+      signature: user.signature || '',
+      presidentSignature: user.presidentSignature || ''
     },
     process.env.JWT_SECRET,
     { expiresIn: "3d" }
@@ -51,9 +49,9 @@ const login = async (req, res) => {
       }
 
       if (user.role === 'Organization') {
-        if (!user.organizationType || !user.organizationName || !user.presidentName || !user.signature) {
+        if (!user.organizationType || !user.organizationName || !user.presidentName || !user.presidentSignature) {
           return res.status(400).json({ 
-            message: 'Organization type, name, president name, and signature are required for Organization roles.' 
+            message: 'Organization type, name, president name, and president signature are required for Organization roles.' 
           });
         }
       }
@@ -71,10 +69,10 @@ const login = async (req, res) => {
           lastName: user.lastName,
           organizationType: user.organizationType,
           organizationName: user.organizationName,
-          presidentName: user.presidentName, // Added presidentName
+          presidentName: user.presidentName,
           faculty: user.faculty,
           status: user.status,
-          signature: user.signature
+          signature: user.role === 'Organization' ? user.presidentSignature : user.signature
         }
       });
     } else {
@@ -101,15 +99,18 @@ const getCurrentUser = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.status(200).json(user);
+    res.status(200).json({
+      ...user.toObject(),
+      signature: user.role === 'Organization' ? user.presidentSignature : user.signature
+    });
   } catch (error) {
     console.error('Error getting current user:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Add user with signature handling
-const addUser = async (userData, logoUrl, signatureUrl) => {
+// Add user with dual signature handling
+const addUser = async (userData, logoUrl, signatureUrl, presidentSignatureUrl) => {
   try {
     if (!userData.email || !userData.password) {
       throw new Error('Email and password are required');
@@ -124,20 +125,23 @@ const addUser = async (userData, logoUrl, signatureUrl) => {
       role: userData.role,
       status: 'Active',
       logo: logoUrl,
-      signature: signatureUrl, // Store signature URL
     });
 
+    // Handle role-specific fields
     if (userData.role === 'Authority') {
       newUser.firstName = userData.firstName;
       newUser.lastName = userData.lastName;
       newUser.faculty = userData.faculty;
+      newUser.signature = signatureUrl;
     } else if (userData.role === 'Admin') {
       newUser.firstName = userData.firstName;
       newUser.lastName = userData.lastName;
+      newUser.signature = signatureUrl;
     } else if (userData.role === 'Organization') {
       newUser.organizationType = userData.organizationType;
       newUser.organizationName = userData.organizationName;
-      newUser.presidentName = userData.presidentName; // Store president name
+      newUser.presidentName = userData.presidentName;
+      newUser.presidentSignature = presidentSignatureUrl;
     }
 
     await newUser.save();
@@ -148,19 +152,40 @@ const addUser = async (userData, logoUrl, signatureUrl) => {
   }
 };
 
-// Update user with signature handling
+// Update user with dual signature handling
 const updateUser = async (req, res) => {
   const userId = req.params.id;
   const updatedData = req.body;
 
   try {
-    // If updating signature, handle file upload first
-    if (req.files?.signature) {
-      const signatureFile = req.files.signature;
-      const result = await cloudinary.uploader.upload(signatureFile.tempFilePath, {
-        folder: 'signatures',
-      });
-      updatedData.signature = result.secure_url;
+    // Handle file uploads if provided
+    if (req.files) {
+      if (req.files.logo) {
+        const logoBlob = await put(
+          `user-${userId}-logo-${Date.now()}`,
+          req.files.logo[0].buffer,
+          { access: 'public' }
+        );
+        updatedData.logo = logoBlob.url;
+      }
+
+      if (req.files.signature) {
+        const signatureBlob = await put(
+          `user-${userId}-sig-${Date.now()}`,
+          req.files.signature[0].buffer,
+          { access: 'public' }
+        );
+        updatedData.signature = signatureBlob.url;
+      }
+
+      if (req.files.presidentSignature) {
+        const presidentSigBlob = await put(
+          `user-${userId}-presig-${Date.now()}`,
+          req.files.presidentSignature[0].buffer,
+          { access: 'public' }
+        );
+        updatedData.presidentSignature = presidentSigBlob.url;
+      }
     }
 
     const user = await User.findByIdAndUpdate(userId, updatedData, { 
@@ -172,7 +197,10 @@ const updateUser = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
     
-    res.status(200).json(user);
+    res.status(200).json({
+      ...user.toObject(),
+      signature: user.role === 'Organization' ? user.presidentSignature : user.signature
+    });
   } catch (error) {
     console.error('Error updating user:', error);
     res.status(500).json({ message: 'Server error' });
@@ -186,7 +214,10 @@ const getUserById = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.status(200).json(user);
+    res.status(200).json({
+      ...user.toObject(),
+      signature: user.role === 'Organization' ? user.presidentSignature : user.signature
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
@@ -205,11 +236,11 @@ const deleteUserById = async (req, res) => {
   }
 };
 
-// Get all organizations with their signatures
+// Get all organizations with their president signatures
 const getOrganizations = async (req, res) => {
   try {
     const organizations = await User.find({ role: 'Organization' })
-      .select('organizationName organizationType presidentName signature status');
+      .select('organizationName organizationType presidentName presidentSignature status logo');
     res.status(200).json(organizations);
   } catch (error) {
     console.error('Error fetching organizations:', error);
