@@ -40,6 +40,12 @@ const Forms = ({ role }) => {
       icon: <FaMapMarkedAlt />,
       path: '/localoffcampus',
     },
+    {
+      name: 'Liquidation Form',
+      description: 'After Event Form.',
+      icon: <FaMoneyBillWave />,
+      path: '/liquidation',
+    },
   ];
 
   return (

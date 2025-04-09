@@ -149,7 +149,7 @@
 }
 
 /* Submit Button - More Prominent */
-.submit-btn {
+.submit-btn-bdg {
   background: #34a853;
   color: white;
   border: none;
@@ -164,7 +164,7 @@
   letter-spacing: 0.5px;
 }
 
-.submit-btn:hover {
+.submit-btn-bdg:hover {
   background: #2d9248;
   box-shadow: 0 4px 12px rgba(52, 168, 83, 0.2);
 }
@@ -279,16 +279,16 @@
   background-color: #339af0;
 }
 
-.submit-btn {
+.submit-btn-bdg {
   background-color: #51cf66;
   color: white;
 }
 
-.submit-btn:hover {
+.submit-btn-bdg:hover {
   background-color: #40c057;
 }
 
-.submit-btn:disabled {
+.submit-btn-bdg:disabled {
   background-color: #adb5bd;
   cursor: not-allowed;
 }

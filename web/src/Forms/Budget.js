@@ -458,7 +458,7 @@ const Budget = () => {
         type="button" 
         onClick={handleSubmit} 
         disabled={loading}
-        className="submit-btn"
+        className="submit-btn-bdg"
       >
         {loading ? 'Processing...' : isEditMode ? 'Update Budget' : 'Submit Budget'}
       </button>

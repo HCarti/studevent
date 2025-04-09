@@ -19,6 +19,7 @@ import { signedIn } from './hooks/isSignedIn';
 import { getUserRole } from './hooks/useUser';
 import Budget from './Forms/Budget';
 import Project from './Forms/Project';
+import Liquidation from './Forms/Liquidation';
 import Proposal from './Adm/Proposal';
 import AdminProfile from './Adm/AdminProfile';
 import SuperAdminHome from './SuperAdmin/SuperAdmnHome';
@@ -36,6 +37,7 @@ import OrgTrackerViewer from './OrgMems/OrgTrackerViewer';
 import Footer from './Components/footer';
 import EventTrackerList from './Components/EventTrackerList';
 import OrgSubmittedForms from './OrgMems/OrgSubmittedForms';
+
 
 // Protected Route Components
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -245,6 +247,12 @@ const App = () => {
           <Route path="/localoffcampus" element={
             <MemberLayout>
               <LocalOffCampus />
+            </MemberLayout>
+          } />
+
+          <Route path="/liquidation" element={
+            <MemberLayout>
+              <Liquidation />
             </MemberLayout>
           } />
 
