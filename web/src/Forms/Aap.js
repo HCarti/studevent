@@ -19,6 +19,8 @@ const Aap = () => {
 
   // Initialize form state
   const [formData, setFormData] = useState({
+    presidentName: "",
+    presidentSignature: "", // Will store the URL from userData
     eventLocation: "",
     applicationDate: new Date().toISOString().split('T')[0],
     studentOrganization: "",
@@ -119,6 +121,18 @@ const Aap = () => {
        'transportationandParking', 'more', 'houseKeeping', 'wasteManagement','eventManagementHead', 'eventCommitteesandMembers', 'health', 'safetyAttendees', 
        'emergencyFirstAid', 'fireSafety', 'weather'
     ];
+
+    // For organization forms, ensure we have president info
+  if (formData.studentOrganization) {
+    if (!formData.presidentName) {
+      setFieldErrors(prev => ({ ...prev, presidentName: true }));
+      return false;
+    }
+    if (!formData.presidentSignature) {
+      alert("Missing president signature in organization data");
+      return false;
+    }
+  }
   
     let isValid = true;
     requiredFields.forEach(field => {
@@ -188,14 +202,22 @@ const fetchFormData = async () => {
     // Pre-fill user data
     const userData = JSON.parse(localStorage.getItem('user'));
     if (userData) {
-      setFormData(prev => ({
-        ...prev,
+      const newFormData = {
+        ...formData,
         studentOrganization: userData.role === 'Organization' ? userData.organizationName || "" : "",
         emailAddress: userData.email || "",
         applicationDate: new Date().toISOString().split('T')[0]
-      }));
+      };
+  
+      // Automatically include president info for organizations
+      if (userData.role === 'Organization') {
+        newFormData.presidentName = userData.presidentName || "";
+        newFormData.presidentSignature = userData.presidentSignature || "";
+      }
+  
+      setFormData(newFormData);
     }
-
+  
     fetchFormData();
   }, [formId, isEditMode, navigate]);
 
@@ -344,6 +366,11 @@ const isOccupied = (date) => {
       'fireSafety', 'weather'
     ];
 
+    if (formData.studentOrganization && (!formData.presidentName || !formData.presidentSignature)) {
+      alert("Organization information is incomplete - please refresh the page");
+      return;
+    }
+
     for (const field of requiredFields) {
       if (!formData[field]) {
         alert(`${field} is required.`);
@@ -418,6 +445,9 @@ const isOccupied = (date) => {
       // Reset form if creating new
       if (!isEditMode) {
         setFormData({
+          presidentName: "",
+          presidentSignature: null,
+          presidentSignatureUrl: "",
           eventLocation: "",
           applicationDate: new Date().toISOString().split('T')[0],
           studentOrganization: "",

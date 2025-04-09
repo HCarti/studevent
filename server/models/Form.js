@@ -269,6 +269,21 @@ const formSchema = new mongoose.Schema({
     emergencyFirstAid: { type: String,  required: function() { return this.formType === 'Activity'; } },
     fireSafety: { type: String, required: function() { return this.formType === 'Activity'; } },
     weather: { type: String, required: function() { return this.formType === 'Activity'; } },
+    // ===== PRESIDENT SIGNATURE FIELDS =====
+    presidentName: {
+        type: String,
+        required: function() {
+          // Required for all forms submitted by organizations
+          return this.studentOrganization || this.formType === 'Activity';
+        }
+      },
+      presidentSignature: {
+        type: String, // This will store the URL/path to the signature image
+        required: function() {
+          // Required for all forms submitted by organizations
+          return this.studentOrganization || this.formType === 'Activity';
+        }
+      },
 
      // ===== BUDGET FIELDS =====
     nameOfRso: { 

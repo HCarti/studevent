@@ -220,6 +220,30 @@ exports.createForm = async (req, res) => {
       req.body.emailAddress = req.user.email;
     }
 
+    // Get the organization's president signature if this is an organization form
+    if (req.body.studentOrganization) {
+      const organization = await User.findOne({
+        organizationName: req.body.studentOrganization,
+        role: "Organization",
+      });
+      
+      if (!organization) {
+        return res.status(400).json({ error: "Organization not found" });
+      }
+      
+      // Add president info to the form
+      req.body.studentOrganization = organization._id;
+      req.body.presidentName = organization.presidentName;
+      req.body.presidentSignature = organization.presidentSignature;
+      
+      // Validate president signature exists
+      if (!organization.presidentSignature) {
+        return res.status(400).json({ 
+          error: "Organization president signature is required" 
+        });
+      }
+    }
+
     // Form type specific validation
     switch (req.body.formType) {
       case 'Activity':
@@ -329,7 +353,14 @@ exports.createForm = async (req, res) => {
       });
     }
 
-    res.status(201).json({ form, tracker });
+    res.status(201).json({ 
+      form: {
+        ...form.toObject(),
+        presidentName: form.presidentName,
+        presidentSignature: form.presidentSignature
+      }, 
+      tracker 
+    });
 
   } catch (error) {
     console.error("Form Creation Error:", error);
