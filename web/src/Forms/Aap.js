@@ -19,8 +19,6 @@ const Aap = () => {
 
   // Initialize form state
   const [formData, setFormData] = useState({
-    presidentName: "",
-    presidentSignature: "", // Will store the URL from userData
     eventLocation: "",
     applicationDate: new Date().toISOString().split('T')[0],
     studentOrganization: "",
@@ -134,15 +132,15 @@ const Aap = () => {
     }
   }
   
-    let isValid = true;
-    requiredFields.forEach(field => {
-      if (!formData[field] || formData[field].trim() === '') {
-        setFieldErrors(prev => ({ ...prev, [field]: true }));
-        isValid = false;
-      }
-    });
-    return isValid;
-  };
+  let isValid = true;
+  requiredFields.forEach(field => {
+    if (!formData[field]) {
+      setFieldErrors(prev => ({ ...prev, [field]: true }));
+      isValid = false;
+    }
+  });
+  return isValid;
+};
 
   // Fetch form data if in edit mode
   useEffect(() => {
@@ -388,6 +386,8 @@ const isOccupied = (date) => {
 
     // Prepare submission data
     const submissionData = {
+      presidentName: "",
+      presidentSignature: "", // Will store the URL from userData
       formType: 'Activity',
       ...formData,
       eventStartDate: new Date(formData.eventStartDate),
@@ -445,9 +445,6 @@ const isOccupied = (date) => {
       // Reset form if creating new
       if (!isEditMode) {
         setFormData({
-          presidentName: "",
-          presidentSignature: null,
-          presidentSignatureUrl: "",
           eventLocation: "",
           applicationDate: new Date().toISOString().split('T')[0],
           studentOrganization: "",

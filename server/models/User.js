@@ -48,6 +48,12 @@ const userSchema = new Schema({
       return this.role === 'Organization'; // Required for Organization
     }
   },
+  presidentName: {
+    type: String,
+    required: function() {
+      return this.role === 'Organization'; // Required for Organization
+    }
+  },
   faculty: {
     type: String,
     required: function() {
