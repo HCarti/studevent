@@ -73,7 +73,8 @@ const login = async (req, res) => {
           presidentName: user.presidentName,
           faculty: user.faculty,
           status: user.status,
-          signature: user.role === 'Organization' ? user.presidentSignature : user.signature
+          signature: user.signature,
+          presidentSignature: user.presidentSignature
         }
       });
     } else {
