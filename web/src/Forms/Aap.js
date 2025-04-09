@@ -353,6 +353,7 @@ const isOccupied = (date) => {
 
   // Form submission
   const handleSubmit = async () => {
+    console.log("Submitting form with data:", formData); // Debug log
 
     if (!validateAllFields()) {
       alert("Please fill out all required fields");
@@ -459,50 +460,55 @@ const isOccupied = (date) => {
         navigate('/'); // Redirect to homepage
       }, 3000);
 
-      // Reset form if creating new
-      if (!isEditMode) {
-        setFormData({
-          eventLocation: "",
-          applicationDate: new Date().toISOString().split('T')[0],
-          studentOrganization: "",
-          contactPerson: "",
-          contactNo: "",
-          emailAddress: "",
-          eventTitle: "",
-          eventType: "",
-          venueAddress: "",
-          eventStartDate: "",
-          eventEndDate: "",
-          organizer: "",
-          budgetAmount: "",
-          budgetFrom: "",
-          coreValuesIntegration: "",
-          objectives: "",
-          marketingCollaterals: "",
-          pressRelease: "",
-          others: "",
-          eventFacilities: "",
-          holdingArea: "",
-          toilets: "",
-          transportationandParking: "",
-          more: "",
-          houseKeeping: "",
-          wasteManagement: "",
-          eventManagementHead: "",
-          eventCommitteesandMembers: "",
-          health: "",
-          safetyAttendees: "",
-          emergencyFirstAid: "",
-          fireSafety: "",
-          weather: ""
-        });
-      }
-
-    } catch (error) {
-      console.error('Error:', error);
-      alert(error.message || 'An error occurred');
+      // Reset form if new submission (preserve organization info)
+    if (!isEditMode) {
+      const userData = JSON.parse(localStorage.getItem('user'));
+      setFormData({
+        // Reset all fields except organization info
+        presidentName: userData?.presidentName || "",
+        presidentSignature: userData?.presidentSignature || "",
+        studentOrganization: userData?.organizationName || "",
+        emailAddress: userData?.email || "",
+        // Reset all other fields
+        eventLocation: "",
+        applicationDate: new Date().toISOString().split('T')[0],
+        contactPerson: "",
+        contactNo: "",
+        eventTitle: "",
+        eventType: "",
+        venueAddress: "",
+        eventStartDate: "",
+        eventEndDate: "",
+        organizer: "",
+        budgetAmount: "",
+        budgetFrom: "",
+        coreValuesIntegration: "",
+        objectives: "",
+        marketingCollaterals: "",
+        pressRelease: "",
+        others: "",
+        eventFacilities: "",
+        holdingArea: "",
+        toilets: "",
+        transportationandParking: "",
+        more: "",
+        houseKeeping: "",
+        wasteManagement: "",
+        eventManagementHead: "",
+        eventCommitteesandMembers: "",
+        health: "",
+        safetyAttendees: "",
+        emergencyFirstAid: "",
+        fireSafety: "",
+        weather: ""
+      });
     }
-  };
+
+  } catch (error) {
+    console.error('Submission error:', error);
+    alert(error.message || 'An error occurred');
+  }
+};
 
 
   const renderFormHeader = () => (
