@@ -19,6 +19,8 @@ const Aap = () => {
 
   // Initialize form state
   const [formData, setFormData] = useState({
+    presidentSignature: "",
+    presidentName: "",
     eventLocation: "",
     applicationDate: new Date().toISOString().split('T')[0],
     studentOrganization: "",
@@ -119,28 +121,24 @@ const Aap = () => {
        'transportationandParking', 'more', 'houseKeeping', 'wasteManagement','eventManagementHead', 'eventCommitteesandMembers', 'health', 'safetyAttendees', 
        'emergencyFirstAid', 'fireSafety', 'weather'
     ];
-
-    // For organization forms, ensure we have president info
-  if (formData.studentOrganization) {
-    if (!formData.presidentName) {
-      setFieldErrors(prev => ({ ...prev, presidentName: true }));
-      return false;
-    }
-    if (!formData.presidentSignature) {
-      alert("Missing president signature in organization data");
-      return false;
-    }
-  }
   
-  let isValid = true;
-  requiredFields.forEach(field => {
-    if (!formData[field]) {
-      setFieldErrors(prev => ({ ...prev, [field]: true }));
-      isValid = false;
+    let isValid = true;
+    requiredFields.forEach(field => {
+      if (!validateField(field, formData[field])) {
+        isValid = false;
+      }
+    });
+  
+    // Additional validation for organization forms
+    if (formData.studentOrganization) {
+      if (!formData.presidentName || !formData.presidentSignature) {
+        alert("Organization information is incomplete - missing president details");
+        isValid = false;
+      }
     }
-  });
-  return isValid;
-};
+  
+    return isValid;
+  };
 
   // Fetch form data if in edit mode
   useEffect(() => {
@@ -199,25 +197,25 @@ const fetchFormData = async () => {
 
     // Pre-fill user data
     const userData = JSON.parse(localStorage.getItem('user'));
-    if (userData) {
-      const newFormData = {
-        ...formData,
-        studentOrganization: userData.role === 'Organization' ? userData.organizationName || "" : "",
-        emailAddress: userData.email || "",
-        applicationDate: new Date().toISOString().split('T')[0]
-      };
-  
-      // Automatically include president info for organizations
-      if (userData.role === 'Organization') {
-        newFormData.presidentName = userData.presidentName || "";
-        newFormData.presidentSignature = userData.presidentSignature || "";
-      }
-  
-      setFormData(newFormData);
+  if (userData) {
+    const newData = {
+      ...formData,
+      studentOrganization: userData.role === 'Organization' ? userData.organizationName || "" : "",
+      emailAddress: userData.email || "",
+      applicationDate: new Date().toISOString().split('T')[0]
+    };
+
+    // Add president info for organization users
+    if (userData.role === 'Organization') {
+      newData.presidentName = userData.presidentName || "";
+      newData.presidentSignature = userData.presidentSignature || "";
     }
-  
-    fetchFormData();
-  }, [formId, isEditMode, navigate]);
+
+    setFormData(newData);
+  }
+
+  fetchFormData();
+}, [formId, isEditMode, navigate]);
 
 // Modify the fetchOccupiedDates function
 const fetchOccupiedDates = async () => {
@@ -354,6 +352,13 @@ const isOccupied = (date) => {
       alert("Please fill out all required fields");
       return;
     }
+
+      // For organization forms, verify we have president info
+  if (formData.studentOrganization && (!formData.presidentName || !formData.presidentSignature)) {
+    alert("Organization information is incomplete - please refresh the page");
+    return;
+  }
+
     // Validate required fields
     const requiredFields = [
       'eventLocation', 'applicationDate', 'studentOrganization', 'contactPerson', 'contactNo', 'emailAddress', 
@@ -363,11 +368,6 @@ const isOccupied = (date) => {
       'eventManagementHead', 'eventCommitteesandMembers', 'health', 'safetyAttendees', 'emergencyFirstAid', 
       'fireSafety', 'weather'
     ];
-
-    if (formData.studentOrganization && (!formData.presidentName || !formData.presidentSignature)) {
-      alert("Organization information is incomplete - please refresh the page");
-      return;
-    }
 
     for (const field of requiredFields) {
       if (!formData[field]) {
@@ -386,8 +386,6 @@ const isOccupied = (date) => {
 
     // Prepare submission data
     const submissionData = {
-      presidentName: "",
-      presidentSignature: "", // Will store the URL from userData
       formType: 'Activity',
       ...formData,
       eventStartDate: new Date(formData.eventStartDate),
@@ -397,6 +395,12 @@ const isOccupied = (date) => {
       budgetAmount: Number(formData.budgetAmount),
       length: moment(formData.eventEndDate).diff(moment(formData.eventStartDate), 'hours')
     };
+
+      // Include president info if this is an organization form
+  if (formData.studentOrganization) {
+    submissionData.presidentName = formData.presidentName;
+    submissionData.presidentSignature = formData.presidentSignature;
+  }
 
     const token = localStorage.getItem('token');
     if (!token) {
@@ -445,6 +449,8 @@ const isOccupied = (date) => {
       // Reset form if creating new
       if (!isEditMode) {
         setFormData({
+          presidentName: "",
+          presidentSignature: "",
           eventLocation: "",
           applicationDate: new Date().toISOString().split('T')[0],
           studentOrganization: "",

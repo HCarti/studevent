@@ -18,7 +18,8 @@ const createToken = (user) => {
       status: user.status || 'Active',
       logo: user.logo || '',
       signature: user.signature || '',
-      presidentSignature: user.presidentSignature || ''
+      presidentSignature: user.presidentSignature || '',
+      presidentName: user.presidentName || ''
     },
     process.env.JWT_SECRET,
     { expiresIn: "3d" }
