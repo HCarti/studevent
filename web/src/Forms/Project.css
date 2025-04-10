@@ -375,3 +375,43 @@
   border: 1px solid #ff4444;
 }
 
+/* Sidebar error styles */
+.sidebar ul li.has-error {
+  color: #ff4444;
+  font-weight: bold;
+}
+
+.error-icon {
+  margin-right: 8px;
+  color: #ff4444;
+}
+
+.check-icon.green {
+  color: #4CAF50;
+}
+
+/* Validation Styles */
+.invalid-field {
+  border: 2px solid #ff4444 !important;
+  background-color: #fff6f6;
+}
+
+.validation-error {
+  color: #ff4444;
+  font-size: 0.85rem;
+  margin-top: 5px;
+}
+
+.error-notification {
+  background-color: #ff4444;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}

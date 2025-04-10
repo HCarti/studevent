@@ -252,7 +252,7 @@ const OrganizationEvents = () => {
                   {event.type === 'Project' ? (
                     <>Project: <span className="event-title">{event.projectTitle}</span></>
                   ) : (
-                    <>Event: <span className="event-title">{event.eventTitle}</span></>
+                    <>Activity: <span className="event-title">{event.eventTitle}</span></>
                   )}
                 </h3>
                 <p><strong>Type:</strong> {event.type}</p>

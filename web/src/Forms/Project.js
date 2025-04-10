@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import './Project.css';
 import moment from 'moment';
-import { FaCheck } from 'react-icons/fa';
+import { FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 import "react-datepicker/dist/react-datepicker.css";
 import DatePicker from 'react-datepicker';
 
@@ -127,6 +127,11 @@ const Project = () => {
   const [eventsPerDate, setEventsPerDate] = useState({});
   const [loading, setLoading] = useState(false);
   const [loadingDates, setLoadingDates] = useState(false);
+  const [notification, setNotification] = useState({
+    visible: false,
+    message: '',
+    type: 'success'
+  });
 
   const Notification = ({ message }) => (
     <div className="notification">
@@ -142,27 +147,51 @@ const Project = () => {
 
 const validateCurrentStep = () => {
   const stepFields = getFieldsForStep(currentStep);
-  let isValid = true;
+  let hasErrors = false;
   const newErrors = {...fieldErrors};
 
+  stepFields.forEach(field => {
+    if (Array.isArray(formData[field])) {
+      newErrors[field] = formData[field].map((item, index) => {
+        const itemErrors = {};
+        Object.keys(item).forEach(key => {
+          const isEmpty = !item[key] || (typeof item[key] === 'string' && item[key].trim() === '');
+          itemErrors[key] = isEmpty;
+          if (isEmpty) hasErrors = true;
+        });
+        return itemErrors;
+      });
+    } else {
+      const isEmpty = !formData[field] || (typeof formData[field] === 'string' && formData[field].trim() === '');
+      newErrors[field] = isEmpty;
+      if (isEmpty) hasErrors = true;
+    }
+  });
+
+  setFieldErrors(newErrors);
+  return !hasErrors;
+};
+
+
+const showFieldErrors = (step) => {
+  const stepFields = getFieldsForStep(step);
+  const newErrors = {...fieldErrors};
+  
   stepFields.forEach(field => {
     if (Array.isArray(formData[field])) {
       newErrors[field] = formData[field].map(item => {
         const itemErrors = {};
         Object.keys(item).forEach(key => {
           itemErrors[key] = !item[key];
-          if (!item[key]) isValid = false;
         });
         return itemErrors;
       });
     } else {
       newErrors[field] = !formData[field];
-      if (!formData[field]) isValid = false;
     }
   });
 
   setFieldErrors(newErrors);
-  return isValid;
 };
   
 
@@ -320,7 +349,11 @@ const formatTimeDisplay = (timeStr) => {
     if (validateCurrentStep()) {
       setCurrentStep(currentStep + 1);
     } else {
-      alert("Please complete all required fields in this section before proceeding.");
+      // Show error notification
+      setTimeout(() => setNotification({ visible: false }), 3000);
+      
+      // Highlight all errors in current step
+      showFieldErrors(currentStep);
     }
   };
 
@@ -395,13 +428,23 @@ const formatTimeDisplay = (timeStr) => {
         startDate: true,
         endDate: true
       }));
-      alert("End date must be after start date");
+      setNotification({
+        visible: true,
+        message: 'End date must be after start date',
+        type: 'error'
+      });
+      setTimeout(() => setNotification({ visible: false }), 3000);
       return;
     }
 
     const token = localStorage.getItem('token');
     if (!token) {
-      alert('Authentication token not found. Please log in again.');
+      setNotification({
+        visible: true,
+        message: 'Authentication token not found. Please log in again.',
+        type: 'error'
+      });
+      setTimeout(() => setNotification({ visible: false }), 3000);
       return;
     }
 
@@ -455,12 +498,17 @@ setFormData({
   }],
 });
 
-      setTimeout(() => setNotificationVisible(false), 3000);
-    } catch (error) {
-      console.error('Error:', error);
-      alert(error.message || 'An error occurred while submitting the form.');
-    }
-  };
+setTimeout(() => setNotification({ visible: false }), 3000);
+} catch (error) {
+  console.error('Error:', error);
+  setNotification({
+    visible: true,
+    message: error.message || 'An error occurred while submitting the form.',
+    type: 'error'
+  });
+  setTimeout(() => setNotification({ visible: false }), 3000);
+}
+};
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -1146,7 +1194,9 @@ setFormData({
 
   return (
     <div className="form-ubox-1">
-      {notificationVisible && <Notification message="Form submitted successfully!" />}
+     {notification.visible && (
+  <Notification message={notification.message} type={notification.type} />
+)}
       <div className="sidebar">
         <ul>
           {[

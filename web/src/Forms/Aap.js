@@ -97,21 +97,49 @@ const Aap = () => {
   const [notificationVisible, setNotificationVisible] = useState(false);
   const [loading, setLoading] = useState(isEditMode);
   const [eventsPerDate, setEventsPerDate] = useState({});
+  const [validationErrorVisible, setValidationErrorVisible] = useState(false);
+  const [submitSuccessVisible, setSubmitSuccessVisible] = useState(false);
 
   // Notification component
-  const Notification = ({ message }) => (
-    <div className="notification">
-      {message}
-    </div>
-  );
+  const Notification = ({ message, type = "success" }) => {
+    const bgColor = type === "success" ? "#4CAF50" : type === "error" ? "#f44336" : "#2196F3";
+    
+    return (
+      <div className="notification" style={{ backgroundColor: bgColor }}>
+        <div className="notification-content">
+          {type === "success" && <FaCheck style={{ marginRight: '8px' }} />}
+          {message}
+        </div>
+      </div>
+    );
+  };
 
   const validateField = (name, value) => {
-    if (!value || value.trim() === '') {
-      setFieldErrors(prev => ({ ...prev, [name]: true }));
-      return false;
+    let isValid = true;
+    
+    // Basic required validation
+    if (!value || (typeof value === 'string' && value.trim() === '')) {
+      isValid = false;
     }
-    setFieldErrors(prev => ({ ...prev, [name]: false }));
-    return true;
+    
+    // Special validations
+    if (name === 'emailAddress' && value) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      isValid = emailRegex.test(value);
+    }
+    
+    if (name === 'contactNo' && value) {
+      const phoneRegex = /^[0-9]{10,15}$/;
+      isValid = phoneRegex.test(value);
+    }
+    
+    if (name === 'budgetAmount' && value) {
+      isValid = !isNaN(value) && Number(value) >= 0;
+    }
+    
+    // Always show error state after validation
+    setFieldErrors(prev => ({ ...prev, [name]: !isValid }));
+    return isValid;
   };
 
   const validateAllFields = () => {
@@ -285,12 +313,39 @@ const isOccupied = (date) => {
     }));
   };
 
+  const CustomAlert = ({ message, type = 'error', onClose }) => (
+    <div className={`custom-alert ${type}`}>
+      {type === 'success' ? <FaCheck /> : '⚠️'}
+      <span>{message}</span>
+      <button onClick={onClose} className="alert-close-btn">
+        ×
+      </button>
+    </div>
+  );
+
   // Form navigation
   const handleNext = () => {
-    if (isSectionComplete(currentStep)) {
+    const requiredFields = getFieldsForStep(currentStep);
+    let allValid = true;
+    
+    // Validate all fields in current step
+    requiredFields.forEach(field => {
+      const isValid = validateField(field, formData[field]);
+      if (!isValid) allValid = false;
+    });
+  
+    if (allValid) {
       setCurrentStep(currentStep + 1);
     } else {
-      alert("Please complete all required fields in this section before proceeding.");
+      // Show inline errors for all invalid fields
+      requiredFields.forEach(field => {
+        validateField(field, formData[field]);
+      });
+      // Scroll to the first invalid field
+      const firstInvalidField = document.querySelector('.invalid-field');
+      if (firstInvalidField) {
+        firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     }
   };
 
@@ -356,9 +411,9 @@ const isOccupied = (date) => {
   // Form submission
   const handleSubmit = async () => {
     
-
     if (!validateAllFields()) {
-      alert("Please fill out all required fields");
+      setValidationErrorVisible(true);
+      setTimeout(() => setValidationErrorVisible(false), 3000);
       return;
     }
 
@@ -460,9 +515,10 @@ const isOccupied = (date) => {
       setFormSent(true);
       setNotificationVisible(true);
       
+      setSubmitSuccessVisible(true);
       setTimeout(() => {
-        setNotificationVisible(false);
-        navigate('/'); // Redirect to homepage
+        setSubmitSuccessVisible(false);
+        navigate('/');
       }, 3000);
 
       // Reset form if new submission (preserve organization info)
@@ -515,6 +571,39 @@ const isOccupied = (date) => {
   }
 };
 
+const renderNavigationButtons = () => (
+  <div className="form-navigation">
+    {currentStep > 0 && (
+      <button className="prev-btn" onClick={() => setCurrentStep(currentStep - 1)}>
+        Back
+      </button>
+    )}
+    {currentStep < 4 ? (
+      <button className="next-btn" onClick={handleNext}>
+        Next
+      </button>
+    ) : (
+      renderSubmitButton()
+    )}
+  </div>
+);
+
+const renderSidebar = () => (
+  <div className="sidebar">
+    <ul>
+      {['Event Specifics', 'Organization Info', 'Event Details', 'Event Management Team', 'Risk Assessments'].map((label, index) => (
+        <li 
+          key={index}
+          className={currentStep === index ? 'active' : ''}
+          onClick={() => isSectionComplete(index) && setCurrentStep(index)}
+        >
+          {isSectionComplete(index) && <FaCheck className="check-icon green" />}
+          {label}
+        </li>
+      ))}
+    </ul>
+  </div>
+);
 
   const renderFormHeader = () => (
     <div className="form-header">
@@ -548,9 +637,9 @@ const isOccupied = (date) => {
               <option value="On Campus">On Campus</option>
               <option value="Off Campus">Off Campus</option>
             </select>
-            <div className="validation-error">
-              Please select an event location
-            </div>
+            {fieldErrors.eventLocation && (
+              <div className="validation-error">Please Pick A Event Location</div>
+            )}
 
             <label>Date of Application:</label>
             <input
@@ -573,9 +662,6 @@ const isOccupied = (date) => {
               readOnly
               className={fieldErrors.studentOrganization ? 'invalid-field' : ''}
             />
-            <div className="validation-error">
-              Student organization is required
-            </div>
 
             <label className="required-field">Contact Person:</label>
             <input 
@@ -585,9 +671,9 @@ const isOccupied = (date) => {
               onChange={handleChange}
               className={fieldErrors.contactPerson ? 'invalid-field' : ''}
             />
-            <div className="validation-error">
-              Please enter a contact person
-            </div>
+            {fieldErrors.contactPerson && (
+              <div className="validation-error">Please enter a contact person</div>
+            )}
 
             <label className="required-field">Contact No:</label>
             <input 
@@ -597,9 +683,9 @@ const isOccupied = (date) => {
               onChange={handleChange}
               className={fieldErrors.contactNo ? 'invalid-field' : ''}
             />
-            <div className="validation-error">
-              Please enter a contact number
-            </div>
+            {fieldErrors.contactNo && (
+              <div className="validation-error">Please enter a contact number</div>
+            )}
 
             <label className="required-field">Email Address:</label>
             <input
@@ -609,9 +695,6 @@ const isOccupied = (date) => {
               readOnly
               className={fieldErrors.emailAddress ? 'invalid-field' : ''}
             />
-            <div className="validation-error">
-              Email address is required
-            </div>
           </div>
         );
 
@@ -626,9 +709,9 @@ const isOccupied = (date) => {
               onChange={handleChange}
               className={fieldErrors.eventTitle ? 'invalid-field' : ''}
             />
-            <div className="validation-error">
-              Please enter an event title
-            </div>
+            {fieldErrors.eventTitle && (
+              <div className="validation-error">Please enter a event title</div>
+            )}
 
             <label className="required-field">Event Type:</label>
             <select 
@@ -643,9 +726,9 @@ const isOccupied = (date) => {
               <option value="University/School Activity">University/School Activity</option>
               <option value="Other">Other</option>
             </select>
-            <div className="validation-error">
-              Please select an event type
-            </div>
+            {fieldErrors.eventType && (
+              <div className="validation-error">Please Pick A Event Type</div>
+            )}
 
             <label className="required-field">Venue Address:</label>
             <input 
@@ -655,9 +738,9 @@ const isOccupied = (date) => {
               onChange={handleChange}
               className={fieldErrors.venueAddress ? 'invalid-field' : ''}
             />
-            <div className="validation-error">
-              Please enter a venue address
-            </div>
+            {fieldErrors.venueAddress && (
+              <div className="validation-error">Please Enter A Venue Address</div>
+            )}
             <p className="venue-note">
               Note: Venue availability is not automatically checked by this system. Please confirm 
               availability separately with the venue management before submission.
@@ -742,9 +825,9 @@ const isOccupied = (date) => {
               onChange={handleChange}
               className={fieldErrors.organizer ? 'invalid-field' : ''}
             />
-            <div className="validation-error">
-              Please enter an organizer
-            </div>
+            {fieldErrors.organizer && (
+              <div className="validation-error">Please Enter A Organizer</div>
+            )}
 
             <label className="required-field">Budget Amount:</label>
             <input 
@@ -755,9 +838,9 @@ const isOccupied = (date) => {
               className={fieldErrors.budgetAmount ? 'invalid-field' : ''}
               min="0"
             />
-            <div className="validation-error">
-              Please enter a valid budget amount
-            </div>
+            {fieldErrors.budgetAmount && (
+              <div className="validation-error">Please Enter A Budget Amount</div>
+            )}
 
             <label className="required-field">Budget From:</label>
             <select 
@@ -771,9 +854,9 @@ const isOccupied = (date) => {
               <option value="Org">Organization</option>
               <option value="SDAO">SDAO</option>
             </select>
-            <div className="validation-error">
-              Please select a budget source
-            </div>
+            {fieldErrors.budgetFrom && (
+              <div className="validation-error">Please Pick An Option</div>
+            )}
             <p className="venue-note">
               Note: Budget amount is not automatically approved by this system. Please confirm
               budget availability separately with the budget management before submission. It will be checked by the SDAO.
@@ -786,9 +869,9 @@ const isOccupied = (date) => {
               onChange={handleChange}
               className={fieldErrors.coreValuesIntegration ? 'invalid-field' : ''}
             />
-            <div className="validation-error">
-              Please describe the core values integration
-            </div>
+            {fieldErrors.coreValuesIntegration && (
+              <div className="validation-error">Please fill out the field</div>
+            )}
 
             <label className="required-field">Objectives:</label>
             <textarea 
@@ -797,41 +880,71 @@ const isOccupied = (date) => {
               onChange={handleChange}
               className={fieldErrors.objectives ? 'invalid-field' : ''}
             />
-            <div className="validation-error">
-              Please enter the event objectives
-            </div>
+            {fieldErrors.objectives && (
+              <div className="validation-error">Please fill out the field</div>
+            )}
 
             <h3 className="communications">COMMUNICATIONS AND PROMOTIONS REQUIRED</h3>
             <label>Marketing Collaterals:</label>
-            <input type="text" name="marketingCollaterals" value={formData.marketingCollaterals} onChange={handleChange} />
+            <input type="text" name="marketingCollaterals" value={formData.marketingCollaterals} onChange={handleChange} /> 
+            {fieldErrors.marketingCollaterals && (
+              <div className="validation-error">Please fill out the field</div>
+            )}
             
             <label>Press Release:</label>
             <input type="text" name="pressRelease" value={formData.pressRelease} onChange={handleChange} />
+            {fieldErrors.pressRelease && (
+              <div className="validation-error">Please fill out the field</div>
+            )}
             
             <label>Others:</label>
             <input type="text" name="others" value={formData.others} onChange={handleChange} />
+            {fieldErrors.others && (
+              <div className="validation-error">Please fill out the field</div>
+            )}
 
             <h3>Facilities Considerations</h3>
             <label>Event Facilities:</label>
             <input type="text" name="eventFacilities" value={formData.eventFacilities} onChange={handleChange} />
+            {fieldErrors.eventFacilities && (
+              <div className="validation-error">Please fill out the field</div>
+            )}
             
             <label>Holding Area:</label>
             <input type="text" name="holdingArea" value={formData.holdingArea} onChange={handleChange} />
+            {fieldErrors.holdingArea && (
+              <div className="validation-error">Please fill out the field</div>
+            )}
             
             <label>Toilets:</label>
             <input type="text" name="toilets" value={formData.toilets} onChange={handleChange} />
+            {fieldErrors.toilets && (
+              <div className="validation-error">Please fill out the field</div>
+            )}
             
             <label>Transportation & Parking:</label>
             <input type="text" name="transportationandParking" value={formData.transportationandParking} onChange={handleChange} />
+            {fieldErrors.transportationandParking && (
+              <div className="validation-error">Please fill out the field</div>
+            )}
             
             <label>Other Facilities:</label>
             <input type="text" name="more" value={formData.more} onChange={handleChange} />
+            {fieldErrors.more && (
+              <div className="validation-error">Please fill out the field</div>
+            )}
             
             <label>Housekeeping:</label>
             <input type="text" name="houseKeeping" value={formData.houseKeeping} onChange={handleChange} />
+            {fieldErrors.houseKeeping && (
+              <div className="validation-error">Please fill out the field</div>
+            )}
             
             <label>Waste Management:</label>
             <input type="text" name="wasteManagement" value={formData.wasteManagement} onChange={handleChange} />
+            {fieldErrors.wasteManagement && (
+              <div className="validation-error">Please fill out the field</div>
+            )}
           </div>
         );
 
@@ -840,15 +953,15 @@ const isOccupied = (date) => {
           <div>
             <label className="required-field">Event Management Head:</label>
             <input type="text" name="eventManagementHead" value={formData.eventManagementHead} onChange={handleChange} className={fieldErrors.eventManagementHead ? 'invalid-field' : ''}/>
-            <div className="validation-error">
-              Please enter the event management head
-            </div>
+            {fieldErrors.eventManagementHead && (
+              <div className="validation-error">Please fill out the Event Management Head</div>
+            )}
 
             <label className="required-field">Event Committees & Members:</label>
             <input type="text" name="eventCommitteesandMembers" value={formData.eventCommitteesandMembers} onChange={handleChange}className={fieldErrors.eventCommitteesandMembers ? 'invalid-field' : ''}/>
-            <div className="validation-error">
-              Please enter the event committees and members
-            </div>
+            {fieldErrors.eventCommitteesandMembers && (
+              <div className="validation-error">Please Fill out the Event Committees & Members</div>
+            )}
           </div>
         );
 
@@ -857,21 +970,21 @@ const isOccupied = (date) => {
           <div>
             <label className="required-field">Health:</label>
             <textarea name="health" value={formData.health} onChange={handleChange}className={fieldErrors.health ? 'invalid-field' : ''}/>
-            <div className="validation-error">
-              Please describe health considerations
-            </div>
+            {fieldErrors.health && (
+              <div className="validation-error">Please fill out the field</div>
+            )}
 
             <label className="required-field">Safety of Attendees:</label>
             <textarea name="safetyAttendees" value={formData.safetyAttendees} onChange={handleChange} className={fieldErrors.safetyAttendees ? 'invalid-field' : ''}/>
-            <div className="validation-error">
-              Please describe safety measures
-            </div>
+            {fieldErrors.safetyAttendees && (
+              <div className="validation-error">Please fill out the field</div>
+            )}
 
             <label className="required-field">Emergency/First Aid:</label>
             <textarea name="emergencyFirstAid" value={formData.emergencyFirstAid} onChange={handleChange} className={fieldErrors.emergencyFirstAid ? 'invalid-field' : ''}/>
-            <div className="validation-error">
-              Please describe emergency procedures
-            </div>
+            {fieldErrors.emergencyFirstAid && (
+              <div className="validation-error">Please fill out the field</div>
+            )}
 
             <label className="required-field">Fire Safety:</label>
             <textarea name="fireSafety" 
@@ -879,9 +992,9 @@ const isOccupied = (date) => {
               onChange={handleChange}
               className={fieldErrors.fireSafety ? 'invalid-field' : ''}
             />
-            <div className="validation-error">
-              Please describe fire safety measures
-            </div>
+            {fieldErrors.fireSafety && (
+              <div className="validation-error">Please fill out the field</div>
+            )}
 
             <label className="required-field">Weather:</label>
             <textarea 
@@ -890,9 +1003,9 @@ const isOccupied = (date) => {
               onChange={handleChange}
               className={fieldErrors.weather ? 'invalid-field' : ''}
             />
-            <div className="validation-error">
-              Please describe weather considerations
-            </div>
+            {fieldErrors.weather && (
+              <div className="validation-error">Please fill out the field</div>
+            )}
           </div>
         );
 
@@ -901,51 +1014,31 @@ const isOccupied = (date) => {
     }
   };
 
-    return (
-      <div className="form-ubox-1">
-         {notificationVisible && (
-        <Notification message={`Form ${isEditMode ? 'updated' : 'submitted'} successfully!`} />
+  return (
+    <div className="form-ubox-1">
+      {validationErrorVisible && (
+        <CustomAlert 
+          message="Please complete all required fields before proceeding." 
+          onClose={() => setValidationErrorVisible(false)} 
+        />
       )}
-        <div className="sidebar">
-          <ul>
-            <li className={currentStep === 0 ? 'active' : ''}>
-              {isSectionComplete(0) ? <FaCheck className="check-icon green" /> : null}
-              Event Specifics
-            </li>
-            <li className={currentStep === 1 ? 'active' : ''}>
-              {isSectionComplete(1) ? <FaCheck className="check-icon green" /> : null}
-              Organization Info
-            </li>
-            <li className={currentStep === 2 ? 'active' : ''}>
-              {isSectionComplete(2) ? <FaCheck className="check-icon green" /> : null}
-              Event Details
-            </li>
-            <li className={currentStep === 3 ? 'active' : ''}>
-              {isSectionComplete(3) ? <FaCheck className="check-icon green" /> : null}
-              Event Management Team
-            </li>
-            <li className={currentStep === 4 ? 'active' : ''}>
-              {isSectionComplete(4) ? <FaCheck className="check-icon green" /> : null}
-              Risk Assessments
-            </li>
-          </ul>
-        </div>
-        <div className="inner-forms-1">
-          {renderFormHeader()}
-          {renderStepContent()}
-          <div className="form-navigation">
-            {currentStep > 0 && (
-              <button onClick={() => setCurrentStep(currentStep - 1)}>Back</button>
-            )}
-            {currentStep < 4 ? (
-              <button onClick={handleNext}>Next</button>
-            ) : (
-              renderSubmitButton()
-            )}
-          </div>
-        </div>
+      {submitSuccessVisible && (
+        <CustomAlert 
+          message={`Form ${isEditMode ? 'updated' : 'submitted'} successfully!`}
+          type="success"
+          onClose={() => setSubmitSuccessVisible(false)} 
+        />
+      )}
+      
+      {renderSidebar()}
+      
+      <div className="inner-forms-1">
+        {renderFormHeader()}
+        {renderStepContent()}
+        {renderNavigationButtons()}
       </div>
-    );
+    </div>
+  );
 };
 
 export default Aap; 
