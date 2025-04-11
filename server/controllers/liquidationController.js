@@ -24,6 +24,15 @@ exports.submitLiquidation = async (req, res) => {
       submittedBy: req.user?.id,
     });
 
+    // Create notification for admin
+    const adminEmail = 'nnnavarro@nu-moa.edu.ph'; // Replace with actual admin email or get from DB
+    const notificationMessage = `New liquidation submitted by ${req.body.organization || 'Unknown Organization'}`;
+    
+    await Notification.create({
+      userEmail: adminEmail,
+      message: notificationMessage,
+    });
+
     res.status(201).json({
       success: true,
       message: 'Liquidation submitted',
@@ -38,7 +47,6 @@ exports.submitLiquidation = async (req, res) => {
     });
   }
 };
-
 // Get all liquidations
 exports.getLiquidations = async (req, res) => {
   try {

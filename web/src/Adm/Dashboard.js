@@ -41,7 +41,7 @@ const Dashboard = () => {
           fetch('https://studevent-server.vercel.app/api/feedback/latest', {
             headers: { "Authorization": `Bearer ${token}` },
           }),
-          fetch('https://studevent-server.vercel.app/api/liquidations', {
+          fetch('https://studevent-server.vercel.app/api/liquidation', {
             headers: { "Authorization": `Bearer ${token}` },
           })
         ]);

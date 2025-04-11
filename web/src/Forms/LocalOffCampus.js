@@ -697,14 +697,14 @@ const isBeforeComplete = useMemo(() => {
                   {/* Handbook or Manual */}
                   <ComplianceRow
                     label="3. Handbook or Manual"
-                    value={formData.activitiesOffCampus[0].handbook?.compliance || ""}
-                    remarks={formData.activitiesOffCampus[0].handbook?.remarks || ""}
+                    value={formData.activitiesOffCampus[0].handbook?.compliance }
+                    remarks={formData.activitiesOffCampus[0].handbook?.remarks }
                     onChange={(compliance, remarks) => 
                       handleActivityChange(null, 'handbook', compliance, remarks)
                     }
                     hasError={getFieldError('activitiesOffCampus')}
                   />
-      
+
                   {/* Students Section */}
                   <ComplianceRow
                     label="4. Consent of Parents/Guardians"
