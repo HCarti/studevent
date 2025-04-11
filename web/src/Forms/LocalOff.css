@@ -174,9 +174,232 @@
   .form-row input[type="radio"] {
     margin-top: 2px;
   }
+
+  .table-container {
+    overflow-x: auto;
+    margin: 1rem 0;
+  }
+  
+  .basic-info-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+  }
+  
+  .basic-info-table th,
+  .basic-info-table td {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    text-align: left;
+  }
+  
+  .basic-info-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+  }
+  
+  .basic-info-table input {
+    width: 100%;
+    padding: 0.3rem;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+  }
+  
+  .basic-info-table .react-datepicker-wrapper {
+    width: 100%;
+  }
+  
+  .add-row-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 0.5rem;
+  }
+  
+  .add-row-btn:hover {
+    background-color: #45a049;
+  }
+  
+  .remove-row-btn {
+    background-color: #f44336;
+    color: white;
+    padding: 0.3rem 0.6rem;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  
+  .remove-row-btn:hover {
+    background-color: #d32f2f;
+  }
+
+  .compliance-table-container {
+    overflow-x: auto;
+    margin: 1rem 0;
+  }
+  
+  .compliance-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+  }
+  
+  .compliance-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+    text-align: left;
+    padding: 0.75rem;
+  }
+  
+  .compliance-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #ddd;
+    vertical-align: top;
+  }
+  
+  .compliance-row:hover {
+    background-color: #f9f9f9;
+  }
+  
+  .activity-label {
+    width: 40%;
+    font-weight: 500;
+  }
+  
+  .compliance-cell {
+    width: 20%;
+  }
+  
+  .remarks-cell {
+    width: 40%;
+  }
+  
+  .compliance-options {
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .compliance-options label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+  }
+  
+  .remarks-cell input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+  
+  .section-header {
+    background-color: #e6f2ff;
+    font-weight: bold;
+  }
+  
+  .section-header td {
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .nested-row {
+    background-color: #fafafa;
+  }
+  
+  .indent-row .activity-label {
+    padding-left: 2rem;
+  }
+
+  /* Error states */
+.input-error {
+  border-color: #ff4444 !important;
+  box-shadow: 0 0 0 1px #ff4444;
+}
+
+.error-message {
+  color: #ff4444;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+/* Notifications */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px 20px;
+  border-radius: 4px;
+  color: white;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out;
+}
+
+.notification.error {
+  background-color: #ff4444;
+}
+
+.notification.success {
+  background-color: #00C851;
+}
+
+.notification-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.notification svg {
+  flex-shrink: 0;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Compliance table error states */
+.compliance-error .activity-label {
+  color: #ff4444;
+  font-weight: bold;
+}
+
+.compliance-error .compliance-options {
+  outline: 2px solid #ff4444;
+  border-radius: 4px;
+  padding: 2px;
+}
+  
+  @media (max-width: 768px) {
+    .compliance-table {
+      display: block;
+      overflow-x: auto;
+    }
+    
+    .activity-label,
+    .compliance-cell,
+    .remarks-cell {
+      white-space: nowrap;
+      min-width: 150px;
+    }
+  }
   
   /* Responsive Design */
   @media (max-width: 768px) {
+    .table-container {
+      display: block;
+    }
+    
+    .basic-info-table {
+      display: block;
+      overflow-x: auto;
+    }
+
     .form-row {
       flex-direction: column;
     }

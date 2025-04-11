@@ -419,8 +419,60 @@ const formatTimeDisplay = (timeStr) => {
     }
   };
 
+  const validateAllSections = () => {
+    let isValid = true;
+    const newErrors = {...fieldErrors};
+  
+    // Check all sections (0-7)
+    for (let step = 0; step <= 7; step++) {
+      const stepFields = getFieldsForStep(step);
+      
+      stepFields.forEach(field => {
+        if (Array.isArray(formData[field])) {
+          newErrors[field] = formData[field].map((item, index) => {
+            const itemErrors = {};
+            Object.keys(item).forEach(key => {
+              const isEmpty = !item[key] || (typeof item[key] === 'string' && item[key].trim() === '');
+              itemErrors[key] = isEmpty;
+              if (isEmpty) isValid = false;
+            });
+            return itemErrors;
+          });
+        } else {
+          const isEmpty = !formData[field] || (typeof formData[field] === 'string' && formData[field].trim() === '');
+          newErrors[field] = isEmpty;
+          if (isEmpty) isValid = false;
+        }
+      });
+    }
+  
+    setFieldErrors(newErrors);
+    return isValid;
+  };
+
 
   const handleSubmit = async () => {
+
+    // First validate all sections
+  if (!validateAllSections()) {
+    setNotification({
+      visible: true,
+      message: 'Please complete all required fields in all sections before submitting',
+      type: 'error'
+    });
+    setTimeout(() => setNotification({ visible: false }), 3000);
+    
+    // Scroll to the first error
+    setTimeout(() => {
+      const firstErrorElement = document.querySelector('.invalid-field');
+      if (firstErrorElement) {
+        firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+    
+    return;
+  }
+
     // Validate dates
     if (moment(formData.endDate).isBefore(moment(formData.startDate))) {
       setFieldErrors(prev => ({
@@ -507,6 +559,8 @@ setTimeout(() => setNotification({ visible: false }), 3000);
     type: 'error'
   });
   setTimeout(() => setNotification({ visible: false }), 3000);
+} finally {
+  setLoading(false);
 }
 };
 
@@ -516,7 +570,7 @@ setTimeout(() => setNotification({ visible: false }), 3000);
       return (
         <div className="form-section">
           <div className="form-group">
-            <label>Project Title:</label>
+            <label className="required-field">Project Title:</label>
             <input
               type="text"
               name="projectTitle"
@@ -531,7 +585,7 @@ setTimeout(() => setNotification({ visible: false }), 3000);
           </div>
 
           <div className="form-group">
-            <label>Project Description:</label>
+            <label className="required-field">Project Description:</label>
             <textarea
               name="projectDescription"
               value={formData.projectDescription}
@@ -546,7 +600,7 @@ setTimeout(() => setNotification({ visible: false }), 3000);
           </div>
 
           <div className="form-group">
-            <label>Objectives:</label>
+            <label className="required-field">Objectives:</label>
             <textarea
               name="projectObjectives"
               value={formData.projectObjectives}
@@ -655,7 +709,7 @@ setTimeout(() => setNotification({ visible: false }), 3000);
           </div>
 
           <div className="form-group">
-            <label>Venue:</label>
+            <label className="required-field">Venue:</label>
             <input
               type="text"
               name="venue"
@@ -670,7 +724,7 @@ setTimeout(() => setNotification({ visible: false }), 3000);
           </div>
 
           <div className="form-group">
-            <label>Target Participants:</label>
+            <label className="required-field">Target Participants:</label>
             <input
               type="text"
               name="targetParticipants"
@@ -692,7 +746,7 @@ setTimeout(() => setNotification({ visible: false }), 3000);
           <div className="form-section">
             <h2>Project Guidelines</h2>
             <div className="form-group">
-              <label>Guidelines:</label>
+              <label className="required-field">Guidelines:</label>
               <textarea
                 name="projectGuidelines"
                 value={formData.projectGuidelines}
@@ -806,7 +860,7 @@ setTimeout(() => setNotification({ visible: false }), 3000);
                 <div key={`head-${index}`} className="array-item">
                   <div className="form-row">
                     <div className="form-group">
-                      <label>Name:</label>
+                      <label className="required-field">Name:</label>
                       <input
                         type="text"
                         name="headName"
@@ -821,7 +875,7 @@ setTimeout(() => setNotification({ visible: false }), 3000);
                     </div>
         
                     <div className="form-group">
-                      <label>Designated Office:</label>
+                      <label className="required-field">Designated Office:</label>
                       <input
                         type="text"
                         name="designatedOffice"
@@ -861,7 +915,7 @@ setTimeout(() => setNotification({ visible: false }), 3000);
                 <div key={`committee-${index}`} className="array-item">
                   <div className="form-row">
                     <div className="form-group">
-                      <label>Name:</label>
+                      <label className="required-field">Name:</label>
                       <input
                         type="text"
                         name="workingName"
@@ -876,7 +930,7 @@ setTimeout(() => setNotification({ visible: false }), 3000);
                     </div>
         
                     <div className="form-group">
-                      <label>Designated Task:</label>
+                      <label className="required-field">Designated Task:</label>
                       <input
                         type="text"
                         name="designatedTask"
@@ -921,7 +975,7 @@ setTimeout(() => setNotification({ visible: false }), 3000);
                 <div key={index} className="array-item">
                   <div className="form-row">
                     <div className="form-group">
-                      <label>Task List:</label>
+                      <label className="required-field">Task List:</label>
                       <input
                         type="text"
                         name="taskList"
@@ -936,7 +990,7 @@ setTimeout(() => setNotification({ visible: false }), 3000);
                     </div>
         
                     <div className="form-group">
-                      <label>Deadline:</label>
+                      <label className="required-field">Deadline:</label>
                       <input
                         type="date"
                         name="deadline"
@@ -981,7 +1035,7 @@ setTimeout(() => setNotification({ visible: false }), 3000);
               <div key={index} className="array-item">
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Publication Materials:</label>
+                    <label className="required-field">Publication Materials:</label>
                     <input
                       type="text"
                       name="publicationMaterials"
@@ -995,7 +1049,7 @@ setTimeout(() => setNotification({ visible: false }), 3000);
                   </div>
 
                   <div className="form-group">
-                    <label>Tentative date of Posting</label>
+                    <label className="required-field">Tentative date of Posting</label>
                     <input
                       type="date"
                       name="schedule"
@@ -1040,7 +1094,7 @@ setTimeout(() => setNotification({ visible: false }), 3000);
               <div key={index} className="array-item">
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Equipment:</label>
+                    <label className="required-field">Equipment:</label>
                     <input
                       type="text"
                       name="equipments"
@@ -1054,7 +1108,7 @@ setTimeout(() => setNotification({ visible: false }), 3000);
                   </div>
 
                   <div className="form-group">
-                    <label>Estimated Quantity:</label>
+                    <label className="required-field">Estimated Quantity:</label>
                     <input
                       type="text"
                       name="estimatedQuantity"
@@ -1098,7 +1152,7 @@ setTimeout(() => setNotification({ visible: false }), 3000);
             {formData.budgetProposal.map((item, index) => (
               <div key={index} className="array-item">
                 <div className="form-group">
-                  <label>Budget Item:</label>
+                  <label className="required-field">Budget Item:</label>
                   <input
                     type="text"
                     name="budgetItems"
@@ -1113,7 +1167,7 @@ setTimeout(() => setNotification({ visible: false }), 3000);
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Estimated Quantity:</label>
+                    <label className="required-field">Estimated Quantity:</label>
                     <input
                       type="number"
                       name="budgetEstimatedQuantity"
@@ -1128,7 +1182,7 @@ setTimeout(() => setNotification({ visible: false }), 3000);
                   </div>
 
                   <div className="form-group">
-                    <label>Cost Per Unit ($):</label>
+                    <label className="required-field">Cost Per Unit ($):</label>
                     <input
                       type="number"
                       name="budgetPerUnit"
@@ -1144,7 +1198,7 @@ setTimeout(() => setNotification({ visible: false }), 3000);
                   </div>
 
                   <div className="form-group">
-                    <label>Estimated Amount ($):</label>
+                    <label className="required-field">Estimated Amount ($):</label>
                     <input
                       type="number"
                       name="budgetEstimatedAmount"

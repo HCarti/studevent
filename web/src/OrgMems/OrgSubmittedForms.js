@@ -8,6 +8,9 @@ const OrgSubmittedForms = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [filter, setFilter] = useState("all");
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [formToDelete, setFormToDelete] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         const fetchForms = async () => {
@@ -54,14 +57,18 @@ const OrgSubmittedForms = () => {
       return deanStepIndex === -1 || form.currentStep < deanStepIndex;
     };
 
+    const isFormDeletable = (form) => {
+        // Only allow deletion if form is pending and not yet approved
+        return form.finalStatus?.trim().toLowerCase() === "pending" && 
+               isFormEditable(form);
+    };
+
     const getFilteredForms = () => {
         switch (filter) {
             case "pending":
                 return forms.filter((form) => form.finalStatus?.trim().toLowerCase() === "pending");
             case "approved":
                 return forms.filter((form) => form.finalStatus?.trim().toLowerCase() === "approved");
-            case "declined":
-                return forms.filter((form) => form.finalStatus?.trim().toLowerCase() === "declined");
             default:
                 return forms;
         }
@@ -70,6 +77,77 @@ const OrgSubmittedForms = () => {
     const handleFilterClick = (filterType) => {
         setFilter(filterType);
     };
+
+    const handleDeleteClick = (e, formId) => {
+        e.stopPropagation();
+        const form = forms.find(f => f._id === formId);
+        if (form) {
+            setFormToDelete(form);
+            setShowDeleteModal(true);
+        }
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!formToDelete) return;
+        
+        setIsDeleting(true);
+        setError(null); // Reset any previous errors
+        
+        try {
+          const token = localStorage.getItem("token");
+          if (!token) {
+            throw new Error("Authentication token not found. Please log in again.");
+          }
+      
+          const response = await fetch(
+            `https://studevent-server.vercel.app/api/forms/${formToDelete._id}`, 
+            {
+              method: "DELETE",
+              headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+      
+          const responseData = await response.json(); // Always parse the response
+      
+          if (!response.ok) {
+            // Handle specific error messages from server if available
+            throw new Error(responseData.message || 
+              `Failed to delete form (Status: ${response.status})`);
+          }
+      
+          // Success case:
+          // 1. Remove the deleted form from state
+          setForms(forms.filter(form => form._id !== formToDelete._id));
+          
+          // 2. Show success message (optional)
+          setError({ type: 'success', message: 'Form deleted successfully!' });
+          
+          // 3. Close modal and reset
+          setShowDeleteModal(false);
+          setFormToDelete(null);
+      
+          // Optional: Auto-hide success message after delay
+          setTimeout(() => setError(null), 3000);
+      
+        } catch (error) {
+          console.error("Error deleting form:", error);
+          setError({ 
+            type: 'error', 
+            message: error.message || "Failed to delete form. Please try again." 
+          });
+        } finally {
+          setIsDeleting(false);
+        }
+      };
+      
+      const handleCancelDelete = () => {
+        setShowDeleteModal(false);
+        setFormToDelete(null);
+        setError(null); // Clear any errors when canceling
+      };
 
     return (
         <div className="org-submitted-forms-container">
@@ -102,12 +180,6 @@ const OrgSubmittedForms = () => {
                         >
                             Approved
                         </button>
-                        <button
-                            className={`filter-button ${filter === "declined" ? "active" : ""}`}
-                            onClick={() => handleFilterClick("declined")}
-                        >
-                            Declined
-                        </button>
                     </div>
 
                     <div className="table-wrapper">
@@ -139,39 +211,49 @@ const OrgSubmittedForms = () => {
                                             </td>
                                             <td>{form.applicationDate ? new Date(form.applicationDate).toLocaleDateString() : 'No Date'}</td>
                                             <td>
-                                                {isFormEditable(form) && (
-                                                    <button 
-                                                        className="edit-button"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            const formDataForEdit = {
-                                                                ...form,
-                                                                ...(form.eventStartDate && { 
-                                                                  eventStartDate: new Date(form.eventStartDate).toISOString() 
-                                                                }),
-                                                                ...(form.eventEndDate && { 
-                                                                  eventEndDate: new Date(form.eventEndDate).toISOString() 
-                                                                }),
-                                                                ...(form.applicationDate && { 
-                                                                  applicationDate: new Date(form.applicationDate).toISOString().split('T')[0] 
-                                                                })
-                                                            };
-                                                            
-                                                            const editRoute = form.formType === 'Budget' 
-                                                              ? `/edit-budget/${form._id}`
-                                                              : `/edit-form/${form._id}`;
-                                                            
-                                                            navigate(editRoute, { 
-                                                              state: { 
-                                                                formData: formDataForEdit,
-                                                                from: 'submitted-forms' 
-                                                              } 
-                                                            });
-                                                        }}
-                                                    >
-                                                        Edit Form
-                                                    </button>
-                                                )}
+                                                <div className="action-buttons">
+                                                    {isFormEditable(form) && (
+                                                        <button 
+                                                            className="edit-button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                const formDataForEdit = {
+                                                                    ...form,
+                                                                    ...(form.eventStartDate && { 
+                                                                      eventStartDate: new Date(form.eventStartDate).toISOString() 
+                                                                    }),
+                                                                    ...(form.eventEndDate && { 
+                                                                      eventEndDate: new Date(form.eventEndDate).toISOString() 
+                                                                    }),
+                                                                    ...(form.applicationDate && { 
+                                                                      applicationDate: new Date(form.applicationDate).toISOString().split('T')[0] 
+                                                                    })
+                                                                };
+                                                                
+                                                                const editRoute = form.formType === 'Budget' 
+                                                                  ? `/edit-budget/${form._id}`
+                                                                  : `/edit-form/${form._id}`;
+                                                                
+                                                                navigate(editRoute, { 
+                                                                  state: { 
+                                                                    formData: formDataForEdit,
+                                                                    from: 'submitted-forms' 
+                                                                  } 
+                                                                });
+                                                            }}
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                    )}
+                                                    {isFormDeletable(form) && (
+                                                        <button 
+                                                            className="delete-button"
+                                                            onClick={(e) => handleDeleteClick(e, form._id)}
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -179,10 +261,37 @@ const OrgSubmittedForms = () => {
                             </table>
                         )}
                     </div>
+
+                    {/* Delete Confirmation Modal */}
+                    {showDeleteModal && (
+                        <div className="modal-overlay">
+                            <div className="delete-modal">
+                                <h3>Confirm Deletion</h3>
+                                <p>Are you sure you want to delete the "{formToDelete?.eventTitle || formToDelete?.nameOfRso || 'this event'}" proposal? This action cannot be undone.</p>
+                                <p>This will also remove any associated calendar events.</p>
+                                <div className="modal-buttons">
+                                    <button 
+                                        className="cancel-button"
+                                        onClick={handleCancelDelete}
+                                        disabled={isDeleting}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button 
+                                        className="confirm-delete-button"
+                                        onClick={handleConfirmDelete}
+                                        disabled={isDeleting}
+                                    >
+                                        {isDeleting ? 'Deleting...' : 'Delete'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </>
             )}
         </div>
     );
 };
 
-export default OrgSubmittedForms;   
+export default OrgSubmittedForms;

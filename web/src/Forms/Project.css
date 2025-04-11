@@ -415,3 +415,9 @@
   from { opacity: 1; }
   to { opacity: 0; }
 }
+/* Required field asterisk styles */
+.required-field::after {
+  content: ' *';
+  color: #ff4444;
+  font-size: 1.1em;
+}

@@ -157,12 +157,108 @@ const projectBudgetSchema = new mongoose.Schema({
     },
 });
 
+const basicInformationSchema = new mongoose.Schema({
+    programName: {
+        type: String,
+        required: function() { return this.formType === 'LocalOffCampus'; }
+    },
+    course:{
+        type: String,
+        required: function() { return this.formType === 'LocalOffCampus'; }
+    },
+    destinationAndVenue:{
+        type: String,
+        required: function() { return this.formType === 'LocalOffCampus'; }
+    },
+    inclusiveDates:{ 
+        type: String,
+        required: function() { return this.formType === 'LocalOffCampus'; }
+    },
+    numberOfStudents:{
+        type: Number,
+        required: function() { return this.formType === 'LocalOffCampus'; },
+        min: 0
+    },
+    listOfPersonnelIncharge:{
+        type: String,
+        required: function() { return this.formType === 'LocalOffCampus'; }
+    },
+});
+
+const activitiesOffCampusSchema = new mongoose.Schema({
+    curriculumRequirement:{
+        type: String,
+        required: function() { return this.formType === 'LocalOffCampus'; }
+    },
+    destination:{
+        type: String,
+        required: function() { return this.formType === 'LocalOffCampus'; }
+    },
+    handbook:{
+        type: String,
+        required: function() { return this.formType === 'LocalOffCampus'; }
+    },
+    guardianConsent:{
+        type: String,
+        required: function() { return this.formType === 'LocalOffCampus'; }
+    },
+    personnelInCharge:{
+        type: String,
+        required: function() { return this.formType === 'LocalOffCampus'; }
+    },
+    firstAidKit:{
+        type: String,
+        required: function() { return this.formType === 'LocalOffCampus'; }
+    },
+    feesFunds:{
+        type: String,
+        required: function() { return this.formType === 'LocalOffCampus'; }
+    },
+    insurance:{
+        type: String,
+        required: function() { return this.formType === 'LocalOffCampus'; }
+    },
+    studentVehicles:{
+        type: String,
+        required: function() { return this.formType === 'LocalOffCampus'; }
+    },
+    lgusNgos:{
+        type: String,
+        required: function() { return this.formType === 'LocalOffCampus'; }
+    },
+    consultationAnnouncements:{
+        type: String,
+        required: function() { return this.formType === 'LocalOffCampus'; }
+    }
+});
+
+const afterActivitySchema = new mongoose.Schema({
+    programs:{
+        type: String,
+        required: function() { return this.formType === 'LocalOffCampus'; }
+    },
+    destinations:{
+        type: String,
+        required: function() { return this.formType === 'LocalOffCampus'; }
+    },
+    noofStudents:{
+        type: Number,
+        required: function() { return this.formType === 'LocalOffCampus'; },
+        min: 0
+    },
+    noofHeiPersonnel:{
+        type: Number,
+        required: function() { return this.formType === 'LocalOffCampus'; },
+        min: 0
+    },
+});
+
 const formSchema = new mongoose.Schema({
     // --- Form Type Discriminator ---
     formType: { 
         type: String, 
         required: true, 
-        enum: ['Activity', 'Budget', 'Project'],
+        enum: ['Activity', 'Budget', 'Project', 'LocalOffCampus'],
         default: 'Activity'
     },
 
@@ -381,6 +477,43 @@ const formSchema = new mongoose.Schema({
     budgetProposal: { 
         type: [projectBudgetSchema],
         required: function() { return this.formType === 'Project'; }
+    },
+
+    //Local Off Campus Form
+    nameOfHei:{ 
+        type: String, 
+        required: function() { return this.formType === 'LocalOffCampus'; } 
+    },
+    region:{ 
+        type: String, 
+        required: function() { return this.formType === 'LocalOffCampus'; } 
+    },
+    address:{ 
+        type: String, 
+        required: function() { return this.formType === 'LocalOffCampus'; } 
+    },
+    //basicinfos
+    basicInformation:{
+        type: [basicInformationSchema],
+        required: function() { return this.formType === 'LocalOffCampus'; }
+    },
+    //before the activity
+    activitiesOffCampus:{
+        type: [activitiesOffCampusSchema],
+        required: function() { return this.formType === 'LocalOffCampus'; }
+    },
+    //after the activity
+    afterActivity:{
+        type: [afterActivitySchema],
+        required: function() { return this.formType === 'LocalOffCampus'; }
+    },
+    problemsEncountered:{
+        type: String,
+        required: function() { return this.formType === 'LocalOffCampus'; } 
+    },
+    recommendation:{
+        type: String,
+        required: function() { return this.formType === 'LocalOffCampus'; } 
     },
 
     // ===== COMMON FIELDS =====

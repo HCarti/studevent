@@ -1,335 +1,373 @@
-import React, {useState, useEffect} from "react";
-import axios from 'axios';
+import React, {useState, useEffect, useCallback, useMemo} from "react";
 import './LocalOff.css';
 import moment from 'moment';
 import { FaCheck } from 'react-icons/fa'; // Import check icon from react-icons
-import { Document, Page, Text, View, StyleSheet, Image, PDFDownloadLink } from "@react-pdf/renderer";
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import NU_logo from "../Images/NU_logo.png";
-import { useNavigate } from 'react-router-dom';
-import { MdOutlineContactPage } from "react-icons/md";
-
-const localoffcampusPDF = ({ formData }) => (
-  <Document>
-    <Page style={styles.body}>
-      {/* Logo and Header */}
-      <View style={styles.header}>
-        <Image src={NU_logo} style={styles.logo} />
-        <View style={styles.headerText}>
-          <Text style={styles.title}>NU MOA</Text>
-          <Text>Student Development and Activities Office</Text>
-        </View>
-      </View>
-
-      <Text style={styles.formTitle}>STUDENT ORGANIZATION ACTIVITY APPLICATION FORM</Text>
-      <Text></Text>
-
-      {/* Event Location and Date */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>EVENT LOCATION</Text>
-        <View style={styles.formRow}>
-          <Text>Location: {formData.eventLocation}</Text>
-          <Text>Date of Application: {formData.applicationDate}</Text>
-        </View>
-        <View style={styles.formRow}>
-          <Text>On Campus: {formData.isOnCampus === "on-campus" ? "Yes" : "No"}</Text>
-        </View>
-      </View>
-
-      {/* Contact Information */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>1. CONTACT INFORMATION</Text>
-        <View style={styles.formRow}>
-          <Text>Student Organization: {formData.studentOrganization}</Text>
-          <Text>Contact Person: {formData.contactPerson}</Text>
-        </View>
-        <View style={styles.formRow}>
-          <Text>Contact No: {formData.contactNo}</Text>
-          <Text>Email Address: {formData.emailAddress}</Text>
-        </View>
-      </View>
-
-      {/* Event Details */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>2. EVENT DETAILS</Text>
-        <View style={styles.formRow}>
-          <Text>Event Title: {formData.eventTitle}</Text>
-          <Text>Event Type: {formData.eventType}</Text>
-        </View>
-        <View style={styles.formRow}>
-          <Text>Venue Address: {formData.venueAddress}</Text>
-          <Text>Event Start Date: {formData.eventStartDate}</Text>
-          <Text>Event End Date: {formData.eventEndDate}</Text>
-        </View>
-        <View style={styles.formRow}>
-          <Text>Event Time: {formData.eventTime}</Text>
-        </View>
-        <View style={styles.formRow}>
-          <Text>Organizer: {formData.organizer}</Text>
-          <Text>Budget Amount: {formData.budgetAmount}</Text>
-        </View>
-      </View>
-
-      {/* Core Values Integration */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>CORE VALUES INTEGRATION</Text>
-        <Text>{formData.coreValuesIntegration}</Text>
-      </View>
-
-      {/* Objectives */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>OBJECTIVES</Text>
-        <Text>{formData.objectives}</Text>
-      </View>
-
-      {/* Communications and Promotions */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>COMMUNICATIONS AND PROMOTIONS REQUIRED</Text>
-        <View style={styles.table}>
-          <View style={styles.tableRow}>
-            <Text>Marketing Collaterals</Text>
-            <Text>{formData.marketing ? "Yes" : "No"}</Text>
-          </View>
-          <View style={styles.tableRow}>
-            <Text>Press Release</Text>
-            <Text>{formData.pressRelease ? "Yes" : "No"}</Text>
-          </View>
-          <View style={styles.tableRow}>
-            <Text>Others</Text>
-            <Text>{formData.others ? formData.others : "N/A"}</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Facilities Considerations */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>FACILITIES CONSIDERATIONS</Text>
-        <View style={styles.table}>
-          <View style={styles.tableRow}>
-            <Text>Event Facilities</Text>
-            <Text>{formData.eventFacilities ? "Yes" : "No"}</Text>
-          </View>
-          <View style={styles.tableRow}>
-            <Text>Holding Area</Text>
-            <Text>{formData.holdingArea ? "Yes" : "No"}</Text>
-          </View>
-          <View style={styles.tableRow}>
-            <Text>Toilets</Text>
-            <Text>{formData.toilets ? "Yes" : "No"}</Text>
-          </View>
-          <View style={styles.tableRow}>
-            <Text>Transportation & Parking</Text>
-            <Text>{formData.transportation ? "Yes" : "No"}</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Event Management Team */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>3. EVENT MANAGEMENT TEAM</Text>
-        <Text>Event Management Head: {formData.eventManagementHead}</Text>
-        <Text>Event Committees and Members: {formData.eventCommitteesandMembers}</Text>
-      </View>
-      
-
-      {/* Risk Assessments */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>4. RISK ASSESSMENTS</Text>
-        <View style={styles.table}>
-          <View style={styles.tableRow}>
-            <Text>Health</Text>
-            <Text>{formData.health ? formData.health : "N/A"}</Text>
-          </View>
-          <View style={styles.tableRow}>
-            <Text>Safety of Attendees</Text>
-            <Text>{formData.safetyAttendees ? formData.safetyAttendees : "N/A"}</Text>
-          </View>
-          <View style={styles.tableRow}>
-            <Text>Emergency/First Aid</Text>
-            <Text>{formData.emergencyFirstAid ? formData.emergencyFirstAid : "N/A"}</Text>
-          </View>
-          <View style={styles.tableRow}>
-            <Text>Fire Safety</Text>
-            <Text>{formData.fireSafety ? formData.fireSafety : "N/A"}</Text>
-          </View>
-          <View style={styles.tableRow}>
-            <Text>Weather</Text>
-            <Text>{formData.weather ? formData.weather : "N/A"}</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Signatures/Endorsements */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>5. SIGNATURES / ENDORSEMENTS</Text>
-        <View style={styles.signatureRow}>
-          <Text>Applicant Organization: {formData.applicantSignature}</Text>
-          <Text>Faculty Adviser/College Dean: {formData.facultySignature}</Text>
-        </View>
-        <View style={styles.signatureRow}>
-          <Text>Date: {formData.applicantDate}</Text>
-          <Text>Date: {formData.facultyDate}</Text>
-        </View>
-      </View>
-
-      {/* Approvals */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>6. APPROVALS</Text>
-        <View style={styles.table}>
-          <View style={styles.tableRow}>
-            <Text>Student Development Office: {formData.studentDevApproval}</Text>
-            <Text>Approved / Disapproved: {formData.studentDevApproved}</Text>
-          </View>
-          <View style={styles.tableRow}>
-            <Text>Academic Services Director: {formData.academicServicesApproval}</Text>
-            <Text>Approved / Disapproved: {formData.academicServicesApproved}</Text>
-          </View>
-          <View style={styles.tableRow}>
-            <Text>Academic Director: {formData.academicDirectorApproval}</Text>
-            <Text>Approved / Disapproved: {formData.academicDirectorApproved}</Text>
-          </View>
-          <View style={styles.tableRow}>
-            <Text>Executive Director: {formData.executiveDirectorApproval}</Text>
-            <Text>Approved / Disapproved: {formData.executiveDirectorApproved}</Text>
-          </View>
-        </View>
-      </View>
-
-    </Page>
-  </Document>
-);
 
 const Localoffcampus = () => {
   const [formData, setFormData] = useState({
-    eventLocation: "",
-    applicationDate: new Date().toISOString().split('T')[0], // Sets today's date in YYYY-MM-DD format
-    studentOrganization: "", // Ensure this is an ObjectId or can be handled as one
-    contactPerson: "",
-    contactNo: "", // Contact number as string to prevent issues with leading zeros
-    emailAddress: "",
-    eventTitle: "",
-    eventType: "",
-    venueAddress: "",
-    eventStartDate: "",
-    eventEndDate: "",
-    organizer: "",
-    budgetAmount: "", // Use a number input, but store as string and convert when submitting
-    budgetFrom: "",
-    coreValuesIntegration: "",
-    objectives: "",
-    marketingCollaterals: "",
-    pressRelease: "",
-    others: "",
-    eventFacilities: "",
-    holdingArea: "",
-    toilets: "",
-    transportationandParking: "",
-    more: "",
-    licensesRequired: "",
-    houseKeeping: "",
-    wasteManagement: "",
-    eventManagementHead: "",
-    eventCommitteesandMembers: "",
-    health: "",
-    safetyAttendees: "",
-    emergencyFirstAid: "",
-    fireSafety: "",
-    weather: ""
+    nameOfHei: "",
+    region: "",
+    address: "",
+    basicInformation: [{
+      programName: "", 
+      course: "", 
+      destinationAndVenue: "", 
+      inclusiveDates: "", 
+      numberOfStudents: "", 
+      listOfPersonnelIncharge: ""
+    }],
+    activitiesOffCampus: [{
+      curriculumRequirement: { compliance: "", remarks: "" },
+      destination: { compliance: "", remarks: "" },
+      handbook: { compliance: "", remarks: "" },
+      guardianConsent: { compliance: "", remarks: "" },
+      personnelInCharge: { compliance: "", remarks: "" },
+      firstAidKit: { compliance: "", remarks: "" },
+      feesFunds: { compliance: "", remarks: "" },
+      insurance: { compliance: "", remarks: "" },
+      studentVehicles: { compliance: "", remarks: "" },
+      lgusNgos: { compliance: "", remarks: "" },
+      consultationAnnouncements: { compliance: "", remarks: "" },
+    }],
+    // We'll leave afterActivity and other fields as is for now
+    afterActivity: [{
+      programs: "",
+      destination: "",
+      noOfStudents: "",
+      noofHeiPersonnel: ""
+    }],
+    problemsEncountered: "",
+    recommendation: "",
   });
 
   const [currentStep, setCurrentStep] = useState(0);
   const [formSent, setFormSent] = useState(false);
   const [eventId, setEventId] = useState(null);
   const [notificationVisible, setNotificationVisible] = useState(false); // State to control notification visibility
+  const [validationTrigger, setValidationTrigger] = useState(0);
+  const [shouldValidate, setShouldValidate] = useState(false);
+  const [formPhase, setFormPhase] = useState('BEFORE'); // 'BEFORE' or 'AFTER'
+  const [beforeCompleted, setBeforeCompleted] = useState(false);
 
-  const Notification = ({ message }) => (
-    <div className="notification">
-      {message}
+  const Notification = ({ message, type = 'error' }) => (
+    <div className={`notification ${type}`}>
+      <div className="notification-content">
+        {type === 'error' ? (
+          <svg viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+        )}
+        <span>{message}</span>
+      </div>
     </div>
   );
+  const [fieldErrors, setFieldErrors] = useState({
+    nameOfHei: false,
+    region: false,
+    address: false,
+    basicInformation: [],
+    activitiesOffCampus: []
+  });
 
-  const handleChange = (e) => {
+  // Check if BEFORE sections are complete
+const isBeforeComplete = useMemo(() => {
+  return (
+    formData.nameOfHei.trim() &&
+    formData.region.trim() &&
+    formData.address.trim() &&
+    formData.basicInformation.every(info => (
+      info.programName.trim() && 
+      info.course.trim() && 
+      info.destinationAndVenue.trim() && 
+      info.inclusiveDates && 
+      info.numberOfStudents && 
+      info.listOfPersonnelIncharge.trim()
+    )) &&
+    Object.values(formData.activitiesOffCampus[0]).every(
+      field => field.compliance // Check all compliance fields
+    )
+  );
+}, [formData]);
+
+  const validationResults = useMemo(() => {
+    const results = {
+      nameOfHei: !!formData.nameOfHei.trim(),
+      region: !!formData.region.trim(),
+      address: !!formData.address.trim(),
+      basicInformation: formData.basicInformation.map(info => ({
+        programName: !!info.programName.trim(),
+        course: !!info.course.trim(),
+        destinationAndVenue: !!info.destinationAndVenue.trim(),
+        inclusiveDates: !!info.inclusiveDates,
+        numberOfStudents: !!info.numberOfStudents,
+        listOfPersonnelIncharge: !!info.listOfPersonnelIncharge.trim()
+      })),
+      activitiesOffCampus: formData.activitiesOffCampus.map(activity => ({
+        curriculumRequirement: !!activity.curriculumRequirement.compliance,
+        destination: !!activity.destination.compliance,
+        handbook: !!activity.handbook?.compliance,
+        guardianConsent: !!activity.guardianConsent.compliance,
+        personnelInCharge: !!activity.personnelInCharge.compliance,
+        firstAidKit: !!activity.firstAidKit.compliance,
+        feesFunds: !!activity.feesFunds.compliance,
+        insurance: !!activity.insurance.compliance,
+        studentVehicles: !!activity.studentVehicles.compliance,
+        lgusNgos: !!activity.lgusNgos.compliance,
+        consultationAnnouncements: !!activity.consultationAnnouncements.compliance
+      }))
+    };
+    return results;
+  }, [formData, validationTrigger]);
+
+  const handleChange = (e, index, fieldType) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value
+    
+    if (fieldType === 'basicInformation') {
+      const updatedBasicInfo = [...formData.basicInformation];
+      updatedBasicInfo[index][name] = type === "checkbox" ? checked : value;
+      setFormData({
+        ...formData,
+        basicInformation: updatedBasicInfo
+      });
+    } else if (fieldType === 'activitiesOffCampus') {
+      const updatedActivities = [...formData.activitiesOffCampus];
+      updatedActivities[index][name] = type === "checkbox" ? checked : value;
+      setFormData({
+        ...formData,
+        activitiesOffCampus: updatedActivities
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: type === "checkbox" ? checked : value
+      });
+    }
+  };
+
+  const handleActivityChange = (section, field, value, remarks = "", index = 0) => {
+    setFormData(prev => {
+      const updatedActivities = [...prev.activitiesOffCampus];
+      
+      if (section && field) {
+        if (!updatedActivities[index][section]) {
+          updatedActivities[index][section] = {};
+        }
+        updatedActivities[index][section][field] = { 
+          compliance: value, 
+          remarks: remarks 
+        };
+      } else {
+        updatedActivities[index][field] = { 
+          compliance: value, 
+          remarks: remarks 
+        };
+      }
+      
+      return {
+        ...prev,
+        activitiesOffCampus: updatedActivities
+      };
     });
   };
+  
+  const ComplianceRow = ({ 
+    label, 
+    value, 
+    remarks, 
+    onChange, 
+    nested = false,
+    indent = false,
+    hasError = false
+  }) => (
+    <tr className={`compliance-row ${nested ? 'nested-row' : ''} ${indent ? 'indent-row' : ''} ${hasError ? 'compliance-error' : ''}`}>
+      <td className="activity-label">
+        {label}
+        {hasError && <span className="required-asterisk">*</span>}
+      </td>
+      <td className="compliance-cell">
+        <div className="compliance-options">
+          <label>
+            <input
+              type="radio"
+              name={`${label}-compliance`}
+              checked={value === "yes"}
+              onChange={() => onChange("yes", remarks)}
+            /> Yes
+          </label>
+          <label>
+            <input
+              type="radio"
+              name={`${label}-compliance`}
+              checked={value === "no"}
+              onChange={() => onChange("no", remarks)}
+            /> No
+          </label>
+        </div>
+      </td>
+      <td className="remarks-cell">
+        <input
+          type="text"
+          value={remarks || ""}
+          onChange={(e) => onChange(value, e.target.value)}
+          placeholder="Enter remarks..."
+        />
+      </td>
+    </tr>
+  );
 
-  const [occupiedDates, setOccupiedDates] = useState([]);
-
-  const handleDateChange = (date, field) => {
-    setFormData(prevData => ({
-      ...prevData,
-      [field]: date.toISOString(), // Store as ISO string for backend compatibility
-    }));
-  };
-
-  useEffect(() => {
-    // Fetch occupied dates from backend
-    const fetchOccupiedDates = async () => {
-      try {
-        const response = await fetch('https://studevent-server.vercel.app/api/occupied-dates');
-        const data = await response.json();
-        if (data && data.occupiedDates) {
-          setOccupiedDates(data.occupiedDates); // Ensure `occupiedDates` exists
-        } else {
-          console.error("Occupied dates data is undefined or malformed:", data);
-        }
-      } catch (error) {
-        console.error('Error fetching occupied dates:', error);
-      }
+  const validateSection = useCallback((step) => {
+    let isValid = true;
+    const newErrors = {
+      nameOfHei: false,
+      region: false,
+      address: false,
+      basicInformation: [],
+      activitiesOffCampus: [],
+      afterActivity: [],
+      problemsEncountered: false,
+      recommendation: false
     };
-    
   
-    fetchOccupiedDates();
-  }, []);
+    if (step === 0) {
+      newErrors.nameOfHei = !formData.nameOfHei.trim();
+      newErrors.region = !formData.region.trim();
+      newErrors.address = !formData.address.trim();
+      isValid = !newErrors.nameOfHei && !newErrors.region && !newErrors.address;
+    } 
+    else if (step === 1) {
+      formData.basicInformation.forEach((info, index) => {
+        newErrors.basicInformation[index] = {
+          programName: !info.programName.trim(),
+          course: !info.course.trim(),
+          destinationAndVenue: !info.destinationAndVenue.trim(),
+          inclusiveDates: !info.inclusiveDates,
+          numberOfStudents: !info.numberOfStudents,
+          listOfPersonnelIncharge: !info.listOfPersonnelIncharge.trim()
+        };
   
+        if (Object.values(newErrors.basicInformation[index]).some(error => error)) {
+          isValid = false;
+        }
+      });
+    }
+    else if (step === 2) {
+      const activity = formData.activitiesOffCampus[0];
+      newErrors.activitiesOffCampus = [{
+        curriculumRequirement: !activity.curriculumRequirement.compliance,
+        destination: !activity.destination.compliance,
+        handbook: !activity.handbook?.compliance,
+        guardianConsent: !activity.guardianConsent.compliance,
+        personnelInCharge: !activity.personnelInCharge.compliance,
+        firstAidKit: !activity.firstAidKit.compliance,
+        feesFunds: !activity.feesFunds.compliance,
+        insurance: !activity.insurance.compliance,
+        studentVehicles: !activity.studentVehicles.compliance,
+        lgusNgos: !activity.lgusNgos.compliance,
+        consultationAnnouncements: !activity.consultationAnnouncements.compliance
+      }];
+      isValid = !Object.values(newErrors.activitiesOffCampus[0]).some(error => error);
+    }
+  
+    setFieldErrors(newErrors);
+    return isValid;
+  }, [formData]);
 
-  const isOccupied = (date) => {
-    const formattedDate = date.toISOString().split('T')[0]; // YYYY-MM-DD format
-    return occupiedDates.includes(formattedDate); // Directly check if the formatted date is in the array
-  };
-  
-
-  // Adjust highlighting logic
-  const getHighlightedDates = () => {
-    return occupiedDates.map(d => new Date(d));
-  };
-  
-
+  // Update handleNext
   const handleNext = () => {
-    if (isSectionComplete()) {
-      setCurrentStep(currentStep + 1);
+    setShouldValidate(true);
+    setValidationTrigger(prev => prev + 1);
+    
+    const isValid = validateSection(currentStep);
+    
+    if (isValid) {
+      if (currentStep < 5) {
+        setCurrentStep(prev => prev + 1);
+      }
     } else {
-      alert("Please complete all required fields in this section before proceeding.");
+      Notification({
+        visible: true,
+        message: `Please complete all required fields in this section`,
+        type: 'error'
+      });
+      setTimeout(() => Notification(prev => ({...prev, visible: false})), 3000);
     }
   };
 
-  
-  const isSectionComplete = (step) => {
-    const requiredFields = getFieldsForStep(step);
-    for (const field of requiredFields) {
-      if (!formData[field]) return false;
+  const handleBack = () => {
+    if (currentStep === 3 && formPhase === 'AFTER') {
+      // If going back from AFTER to BEFORE
+      setCurrentStep(2); // Last step of BEFORE
+      setFormPhase('BEFORE');
+    } else {
+      setCurrentStep(prev => prev - 1);
+    }
+  };
+
+  const getFieldError = (field, index = 0) => {
+    if (!shouldValidate) return false;
+    
+    if (currentStep === 0) {
+      return !validationResults[field];
+    } else if (currentStep === 1) {
+      return !validationResults.basicInformation[index][field];
+    } else if (currentStep === 2) {
+      return !validationResults.activitiesOffCampus[index][field];
+    }
+    return false;
+  };
+
+  const isCurrentSectionValid = useMemo(() => {
+    if (currentStep === 0) {
+      return (
+        validationResults.nameOfHei &&
+        validationResults.region &&
+        validationResults.address
+      );
+    } else if (currentStep === 1) {
+      return validationResults.basicInformation.every(field => 
+        field.programName &&
+        field.course &&
+        field.destinationAndVenue &&
+        field.inclusiveDates &&
+        field.numberOfStudents &&
+        field.listOfPersonnelIncharge
+      );
+    } else if (currentStep === 2) {
+      return Object.values(validationResults.activitiesOffCampus[0]).every(Boolean);
     }
     return true;
+  }, [currentStep, validationResults]);
+
+
+  const addBasicInfoRow = () => {
+    setFormData(prev => ({
+      ...prev,
+      basicInformation: [
+        ...prev.basicInformation,
+        {
+          programName: "",
+          course: "",
+          destinationAndVenue: "",
+          inclusiveDates: "",
+          numberOfStudents: "",
+          listOfPersonnelIncharge: ""
+        }
+      ]
+    }));
   };
   
-  const getFieldsForStep = (step) => {
-    const sections = [
-      ['eventLocation', 'applicationDate'],
-      ['studentOrganization', 'contactPerson', 'contactNo', 'emailAddress'],
-      [
-        'eventTitle', 'eventType', 'venueAddress', 'eventStartDate', 'eventEndDate', 'organizer',
-        'budgetAmount', 'budgetFrom', 'coreValuesIntegration', 'objectives', 'marketingCollaterals',
-        'pressRelease', 'others', 'eventFacilities', 'holdingArea', 'toilets', 'transportationandParking',
-        'more', 'licensesRequired', 'houseKeeping', 'wasteManagement'
-      ],
-      ['eventManagementHead', 'eventCommitteesandMembers'],
-      ['health', 'safetyAttendees', 'emergencyFirstAid', 'fireSafety', 'weather']
-    ];
-    return sections[step] || [];
+  const removeBasicInfoRow = (index) => {
+    if (formData.basicInformation.length <= 1) return; // Don't remove the last row
+    setFormData(prev => ({
+      ...prev,
+      basicInformation: prev.basicInformation.filter((_, i) => i !== index)
+    }));
   };
 
    // Fetch the logged-in user's organization name on component mount
@@ -378,298 +416,464 @@ const Localoffcampus = () => {
       return;
     }
 
-    const token = localStorage.getItem('token'); // Ensure you have previously set this during login
-
-    if (!token) {
-      alert('Authentication token not found. Please log in again.');
-      return;
-    }
-
-    console.log('Token:', token); // Check if token is defined
-
-
-    // Convert fields to expected data types for the backend schema
-    const eventData = {
-      ...formData,
-      eventLocation: formData.eventLocation,
-      applicationDate: new Date(formData.applicationDate),
-      studentOrganization: formData.studentOrganization, // Ensure this field is properly formatted as an ObjectId or handled by the backend
-      contactPerson: formData.contactPerson,
-      contactNo: Number(formData.contactNo), // Ensure it's converted to a number if necessary
-      emailAddress: formData.emailAddress,
-      eventTitle: formData.eventTitle,
-      eventType: formData.eventType,
-      venueAddress: formData.venueAddress,
-      eventStartDate: new Date(formData.eventStartDate), // Convert to Date object
-      eventEndDate: new Date(formData.eventEndDate), // Convert to Date object
-      organizer: formData.organizer,
-      budgetAmount: Number(formData.budgetAmount), // Convert to number
-      budgetFrom: formData.budgetFrom,
-      coreValuesIntegration: formData.coreValuesIntegration,
-      objectives: formData.objectives,
-      marketingCollaterals: formData.marketingCollaterals,
-      pressRelease: formData.pressRelease,
-      others: formData.others,
-      eventFacilities: formData.eventFacilities,
-      holdingArea: formData.holdingArea,
-      toilets: formData.toilets,
-      transportationandParking: formData.transportationandParking,
-      more: formData.more,
-      licensesRequired: formData.licensesRequired,
-      houseKeeping: formData.houseKeeping,
-      wasteManagement: formData.wasteManagement,
-      eventManagementHead: formData.eventManagementHead,
-      eventCommitteesandMembers: formData.eventCommitteesandMembers,
-      health: formData.health,
-      safetyAttendees: formData.safetyAttendees,
-      emergencyFirstAid: formData.emergencyFirstAid,
-      fireSafety: formData.fireSafety,
-      weather: formData.weather,
-      length: moment(formData.eventEndDate).diff(moment(formData.eventStartDate), 'hours') // Calculate event length in hours
-    };
-    
-
     try {
-      const response = await fetch('https://studevent-server.vercel.app/api/forms', {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Authentication token not found. Please log in again.');
+        return;
+      }
+  
+      const response = await fetch('https://studevent-server.vercel.app/api/forms/local-off-campus', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, // Uncomment if needed
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(eventData),
+        body: JSON.stringify({
+          ...formData,
+          formType: "LocalOffCampus"
+        }),
       });
-    
+  
       if (!response.ok) {
-        // Check if the response is JSON before trying to parse it
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const errorData = await response.json();
-          alert(`Error: ${errorData.error || 'Submission failed'}`);
-        } else {
-          const text = await response.text();
-          alert(`Error: ${text}`);
-        }
+        const errorData = await response.json();
+        alert(`Error: ${errorData.error || 'Submission failed'}`);
         return;
       }
-    
+  
       const result = await response.json();
-    
-      if (result._id) {
-        setEventId(result._id);
-      }
+      setEventId(result._id);
       setFormSent(true);
-
-      setFormSent(true); // Mark form as submitted
-      setNotificationVisible(true); // Show notification
-      setTimeout(() => {
-        setNotificationVisible(false); // Hide notification after 3 seconds
-      }, 3000);
-    
-      // Reset form data
+      setNotificationVisible(true);
+      setTimeout(() => setNotificationVisible(false), 3000);
+  
+      // Reset form
       setFormData({
-        eventLocation: "",
-        applicationDate: "",
-        studentOrganization: "",
-        contactPerson: "",
-        contactNo: "",
-        emailAddress: "",
-        eventTitle: "",
-        eventType: "",
-        venueAddress: "",
-        eventStartDate: "",
-        eventEndDate: "",
-        organizer: "",
-        budgetAmount: "",
-        budgetFrom: "",
-        coreValuesIntegration: "",
-        objectives: "",
-        marketingCollaterals: "",
-        pressRelease: "",
-        others: "",
-        eventFacilities: "",
-        holdingArea: "",
-        toilets: "",
-        transportationandParking: "",
-        more: "",
-        licensesRequired: "",
-        houseKeeping: "",
-        wasteManagement: "",
-        eventManagementHead: "",
-        eventCommitteesandMembers: "",
-        health: "",
-        safetyAttendees: "",
-        emergencyFirstAid: "",
-        fireSafety: "",
-        weather: ""
+        nameOfHei: "",
+        region: "",
+        address: "",
+        basicInformation: [{
+          programName: "", 
+          course: "", 
+          destinationAndVenue: "", 
+          inclusiveDates: "", 
+          numberOfStudents: "", 
+          listOfPersonnelIncharge: ""
+        }],
+        activitiesOffCampus: [{
+          curriculumRequirement: { compliance: "", remarks: "" },
+          destination: { compliance: "", remarks: "" },
+          handbook: { compliance: "", remarks: "" },
+          guardianConsent: { compliance: "", remarks: "" },
+          personnelInCharge: { compliance: "", remarks: "" },
+          firstAidKit: { compliance: "", remarks: "" },
+          feesFunds: { compliance: "", remarks: "" },
+          insurance: { compliance: "", remarks: "" },
+          studentVehicles: { compliance: "", remarks: "" },
+          lgusNgos: { compliance: "", remarks: "" },
+          consultationAnnouncements: { compliance: "", remarks: "" },
+        }],
+        afterActivity: [{
+          programs: "",
+          destination: "",
+          noOfStudents: "",
+          noofHeiPersonnel: ""
+        }],
+        problemsEncountered: "",
+        recommendation: "",
       });
-    
+  
     } catch (error) {
       console.error('Error:', error);
       alert('An error occurred while submitting the form.');
     }
-  };    
+  };
 
 
   const renderStepContent = () => {
     switch (currentStep) {
-      case 0:
+      case 0: // School Information
         return (
-          <div>
-            <label>Event Location:</label>
-            <select name="eventLocation" value={formData.eventLocation} onChange={handleChange}>
-              <option value="">Select An Option...</option>
-              <option value="On Campus">On Campus</option>
-              <option value="Off Campus">Off Campus</option>
-            </select>
-
-            <label>Date of Application:</label>
-            <input
-            type="date"
-            name="applicationDate"
-            value={formData.applicationDate}
-            readOnly
-          />
-          </div>
-        );
-
-      case 1:
-        return (
-          <div>
-            <label>Student Organization:</label>
+          <div className="form-section">
+            <h2>School Information</h2>
+            <div className="form-group">
+            <label className={fieldErrors.nameOfHei ? 'required-field' : ''}>Name of HEI:</label>
             <input
               type="text"
-              name="studentOrganization"
-              value={formData.studentOrganization}
-              readOnly
+              name="nameOfHei"
+              value={formData.nameOfHei}
+              onChange={(e) => handleChange(e)}
+              className={fieldErrors.nameOfHei ? 'input-error' : ''}
             />
+            {fieldErrors.nameOfHei && <div className="error-message">This field is required</div>}
+                    </div>
+            {/* In case 0 of renderStepContent */}
+            <div className="form-group">
+              <label className={fieldErrors.region ? 'required-field' : ''}>Region:</label>
+              <input
+                type="text"
+                name="region"
+                value={formData.region}
+                onChange={(e) => handleChange(e)}
+                className={fieldErrors.region ? 'input-error' : ''}
+              />
+              {fieldErrors.region && <div className="error-message">This field is required</div>}
+            </div>
+            <div className="form-group">
+              <label className={fieldErrors.address ? 'required-field' : ''}>Address:</label>
+              <input
+                type="text"
+                name="address"
+                value={formData.address}
+                onChange={(e) => handleChange(e)}
+                className={fieldErrors.address ? 'input-error' : ''}
+              />
+              {fieldErrors.address && <div className="error-message">This field is required</div>}
+            </div>
+          </div>
+        );
+  
+        case 1: // Basic Information
+  return (
+    <div className="form-section">
+      <h2>Basic Information</h2>
+      <div className="table-container">
+        <table className="basic-info-table">
+          <thead>
+            <tr>
+              <th>Program Name</th>
+              <th>Course</th>
+              <th>Destination & Venue</th>
+              <th>Inclusive Dates</th>
+              <th>No. of Students</th>
+              <th>Personnel In-Charge</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {formData.basicInformation.map((info, index) => (
+              <tr key={index}>
+                <td>
+                  <input
+                    type="text"
+                    name="programName"
+                    value={info.programName}
+                    onChange={(e) => handleChange(e, index, 'basicInformation')}
+                    className={fieldErrors.basicInformation[index]?.programName ? 'input-error' : ''}
+                  />
+                  {fieldErrors.basicInformation[index]?.programName && (
+                    <div className="error-message">This field is required</div>
+                  )}
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    name="course"
+                    value={info.course}
+                    onChange={(e) => handleChange(e, index, 'basicInformation')}
+                    className={fieldErrors.basicInformation[index]?.course ? 'input-error' : ''}
+                  />
+                  {fieldErrors.basicInformation[index]?.course && (
+                    <div className="error-message">This field is required</div>
+                  )}
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    name="destinationAndVenue"
+                    value={info.destinationAndVenue}
+                    onChange={(e) => handleChange(e, index, 'basicInformation')}
+                    className={fieldErrors.basicInformation[index]?.destinationAndVenue ? 'input-error' : ''}
+                  />
+                  {fieldErrors.basicInformation[index]?.destinationAndVenue && (
+                    <div className="error-message">This field is required</div>
+                  )}
+                </td>
+                <td>
+                  <DatePicker
+                    selected={info.inclusiveDates ? new Date(info.inclusiveDates) : null}
+                    onChange={(date) => {
+                      const updatedBasicInfo = [...formData.basicInformation];
+                      updatedBasicInfo[index].inclusiveDates = date.toISOString();
+                      setFormData({
+                        ...formData,
+                        basicInformation: updatedBasicInfo
+                      });
+                    }}
+                    dateFormat="yyyy-MM-dd"
+                    minDate={new Date()}
+                    className={fieldErrors.basicInformation[index]?.inclusiveDates ? 'input-error' : ''}
+                  />
+                  {fieldErrors.basicInformation[index]?.inclusiveDates && (
+                    <div className="error-message">This field is required</div>
+                  )}
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    name="numberOfStudents"
+                    value={info.numberOfStudents}
+                    onChange={(e) => handleChange(e, index, 'basicInformation')}
+                    className={fieldErrors.basicInformation[index]?.numberOfStudents ? 'input-error' : ''}
+                  />
+                  {fieldErrors.basicInformation[index]?.numberOfStudents && (
+                    <div className="error-message">This field is required</div>
+                  )}
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    name="listOfPersonnelIncharge"
+                    value={info.listOfPersonnelIncharge}
+                    onChange={(e) => handleChange(e, index, 'basicInformation')}
+                    className={fieldErrors.basicInformation[index]?.listOfPersonnelIncharge ? 'input-error' : ''}
+                  />
+                  {fieldErrors.basicInformation[index]?.listOfPersonnelIncharge && (
+                    <div className="error-message">This field is required</div>
+                  )}
+                </td>
+                <td>
+                  {formData.basicInformation.length > 1 && (
+                    <button 
+                      type="button"
+                      className="remove-row-btn"
+                      onClick={() => removeBasicInfoRow(index)}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <button
+          type="button"
+          className="add-row-btn"
+          onClick={addBasicInfoRow}
+        >
+          Add Row
+        </button>
+      </div>
+    </div>
+  );
+  
+        case 2: // Activities Off Campus
+        return (
+          <div className="form-section">
+            <h2>Activities Off Campus Compliance</h2>
+            <div className="compliance-table-container">
+              <table className="compliance-table">
+                <thead>
+                  <tr>
+                    <th>ACTIVITIES</th>
+                    <th>COMPLIANCE</th>
+                    <th>REMARKS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* Curriculum Requirement */}
+                  <ComplianceRow
+                  label="1. Curriculum Requirement"
+                  value={formData.activitiesOffCampus[0].curriculumRequirement.compliance}
+                  remarks={formData.activitiesOffCampus[0].curriculumRequirement.remarks}
+                  onChange={(compliance, remarks) => 
+                    handleActivityChange(null, 'curriculumRequirement', compliance, remarks)
+                  }
+                  hasError={getFieldError('curriculumRequirement')}
+                />
+      
+                  {/* Destination */}
+                  <ComplianceRow
+                    label="2. Destination"
+                    value={formData.activitiesOffCampus[0].destination.compliance}
+                    remarks={formData.activitiesOffCampus[0].destination.remarks}
+                    onChange={(compliance, remarks) => 
+                      handleActivityChange(null, 'destination', compliance, remarks)
+                    }
+                    hasError={getFieldError('destination')}
+                  />
+      
+                  {/* Handbook or Manual */}
+                  <ComplianceRow
+                    label="3. Handbook or Manual"
+                    value={formData.activitiesOffCampus[0].handbook?.compliance || ""}
+                    remarks={formData.activitiesOffCampus[0].handbook?.remarks || ""}
+                    onChange={(compliance, remarks) => 
+                      handleActivityChange(null, 'handbook', compliance, remarks)
+                    }
+                    hasError={getFieldError('activitiesOffCampus')}
+                  />
+      
+                  {/* Students Section */}
+                  <ComplianceRow
+                    label="4. Consent of Parents/Guardians"
+                    value={formData.activitiesOffCampus[0].guardianConsent.compliance}
+                    remarks={formData.activitiesOffCampus[0].guardianConsent.remarks}
+                    onChange={(compliance, remarks) => 
+                      handleActivityChange(null, 'guardianConsent', compliance, remarks)
+                    }
+                    hasError={getFieldError('guardianConsent')}
+                  />
+                  {/* Personnel In-Charge */}
+                  <ComplianceRow
+                    label="5. Personnel-In-Charge"
+                    value={formData.activitiesOffCampus[0].personnelInCharge.compliance}
+                    remarks={formData.activitiesOffCampus[0].personnelInCharge.remarks}
+                    onChange={(compliance, remarks) => 
+                      handleActivityChange(null, 'personnelInCharge', compliance, remarks)
+                    }
+                    hasError={getFieldError('personnelInCharge')}
+                  />
+      
+                  {/* First Aid Kit */}
+                  <ComplianceRow
+                    label="6. First Aid Kit"
+                    value={formData.activitiesOffCampus[0].firstAidKit.compliance}
+                    remarks={formData.activitiesOffCampus[0].firstAidKit.remarks}
+                    onChange={(compliance, remarks) => 
+                      handleActivityChange(null, 'firstAidKit', compliance, remarks)
+                    }
+                    hasError={getFieldError('firstAidKit')}
+                  />
+      
+                  {/* Fees/Funds */}
+                  <ComplianceRow
+                    label="7. Fees/Funds"
+                    value={formData.activitiesOffCampus[0].feesFunds.compliance}
+                    remarks={formData.activitiesOffCampus[0].feesFunds.remarks}
+                    onChange={(compliance, remarks) => 
+                      handleActivityChange(null, 'feesFunds', compliance, remarks)
+                    }
+                    hasError={getFieldError('feesFunds')}
+                  />
+      
+                  {/* Insurance */}
+                  <ComplianceRow
+                    label="8. Insurance"
+                    value={formData.activitiesOffCampus[0].insurance.compliance}
+                    remarks={formData.activitiesOffCampus[0].insurance.remarks}
+                    onChange={(compliance, remarks) => 
+                      handleActivityChange(null, 'insurance', compliance, remarks)
+                    }
+                    hasError={getFieldError('insurance')}
+                  />
+      
+                  {/* Student Vehicles */}
+                  <ComplianceRow
+                    label="9. Student Vehicles"
+                    value={formData.activitiesOffCampus[0].studentVehicles.compliance}
+                    remarks={formData.activitiesOffCampus[0].studentVehicles.remarks}
+                    onChange={(compliance, remarks) => 
+                      handleActivityChange(null, 'studentVehicles', compliance, remarks)
+                    }
+                    hasError={getFieldError('studentVehicles')}
+                  />
+      
+                  {/* LGUs/NGOs */}
+                  <ComplianceRow
+                    label="10. LGUs/NGOs"
+                    value={formData.activitiesOffCampus[0].lgusNgos.compliance}
+                    remarks={formData.activitiesOffCampus[0].lgusNgos.remarks}
+                    onChange={(compliance, remarks) => 
+                      handleActivityChange(null, 'lgusNgos', compliance, remarks)
+                    }
+                    hasError={getFieldError('lgusNgos')}
+                  />
+      
+                  {/* Activities Orientation Section */}
+                  <ComplianceRow
+                    label="11. Consulations and Announcements"
+                    value={formData.activitiesOffCampus[0].consultationAnnouncements.compliance}
+                    remarks={formData.activitiesOffCampus[0].consultationAnnouncements.remarks}
+                    onChange={(compliance, remarks) => 
+                      handleActivityChange(null, 'consultationAnnouncements', compliance, remarks)
+                    }
+                    hasError={getFieldError('consultationAnnouncements')}
+                  />
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
 
-            <label>Contact Person:</label>
-            <input type="text" name="contactPerson" value={formData.contactPerson} onChange={handleChange} />
-            <label>Contact No:</label>
-            <input type="text" name="contactNo" value={formData.contactNo} onChange={handleChange} />
-            <label>Email Address:</label>
+        case 3: // After Activity
+  return (
+    <div className="form-section">
+      <h2>After Activity Report</h2>
+      {formData.afterActivity.map((activity, index) => (
+        <div key={index} className="after-activity-group">
+          <div className="form-group">
+            <label>Programs:</label>
             <input
-              type="email"
-              name="emailAddress"
-              value={formData.emailAddress}
-              readOnly
+              type="text"
+              name="programs"
+              value={activity.programs}
+              onChange={(e) => handleChange(e, index, 'afterActivity')}
             />
           </div>
-        );
-
-      case 2:
-        return (
-          <div>
-            <label>Event Title:</label>
-            <input type="text" name="eventTitle" value={formData.eventTitle} onChange={handleChange} />
-            <label>Event Type:</label>
-            <select name="eventType" value={formData.eventType} onChange={handleChange}>
-              <option value="">Select An Option...</option>
-              <option value="Student Organization Activity">Student Organization Activity</option>
-              <option value="Special Event">Special Event</option>
-              <option value="University/School Activity">University/School Activity</option>
-              <option value="Other">Other</option>
-            </select>
-
-            <label>Venue Address:</label>
-            <input type="text" name="venueAddress" value={formData.venueAddress} onChange={handleChange} />
-            <label>Event Start Date:</label>
-            <DatePicker
-              selected={formData.eventStartDate ? new Date(formData.eventStartDate) : null}
-              onChange={(date) => handleDateChange(date, 'eventStartDate')}
-              minDate={new Date()}
-              highlightDates={getHighlightedDates()}
-              dayClassName={date => isOccupied(date) ? 'occupied' : 'available'}
-              dateFormat="yyyy-MM-dd HH:mm"
-              showTimeSelect
+          <div className="form-group">
+            <label>Destination:</label>
+            <input
+              type="text"
+              name="destination"
+              value={activity.destination}
+              onChange={(e) => handleChange(e, index, 'afterActivity')}
             />
-            <label>Event End Date:</label>
-            <DatePicker
-              selected={formData.eventEndDate ? new Date(formData.eventEndDate) : null}
-              onChange={(date) => handleDateChange(date, 'eventEndDate')}
-              minDate={new Date()}
-              highlightDates={getHighlightedDates()}
-              dayClassName={date => isOccupied(date) ? 'occupied' : 'available'}
-              dateFormat="yyyy-MM-dd HH:mm"
-              showTimeSelect
+          </div>
+          <div className="form-group">
+            <label>Number of Students:</label>
+            <input
+              type="number"
+              name="noOfStudents"
+              value={activity.noOfStudents}
+              onChange={(e) => handleChange(e, index, 'afterActivity')}
             />
-            <label>Organizer:</label>
-            <input type="text" name="organizer" value={formData.organizer} onChange={handleChange} />
-            <label>Budget Amount:</label>
-            <input 
-            type="number" 
-            name="budgetAmount" 
-            value={formData.budgetAmount} 
-            onChange={handleChange} 
-            required
-          />
-            <label>Budget From:</label>
-            <select name="budgetFrom" value={formData.budgetFrom} onChange={handleChange}>
-              <option value="">Select An Option...</option>
-              <option value="College/Department">College/Department</option>
-              <option value="Org">Organization</option>
-              <option value="SDAO">SDAO</option>
-            </select>
-
-            <label>Core Values Integration:</label>
-            <textarea name="coreValuesIntegration" value={formData.coreValuesIntegration} onChange={handleChange} />
-            <label>Objectives:</label>
-            <textarea name="objectives" value={formData.objectives} onChange={handleChange} />
-
-            <h3 className="communications">COMMUNICATIONS AND PROMOTIONS REQUIRED</h3>
-            <label>Marketing Collaterals:</label>
-            <input type="text" name="marketingCollaterals" value={formData.marketingCollaterals} onChange={handleChange} />
-            <label>Press Release:</label>
-            <input type="text" name="pressRelease" value={formData.pressRelease} onChange={handleChange} />
-            <label>Others:</label>
-            <input type="text" name="others" value={formData.others} onChange={handleChange} />
-
-            <h3>Facilities Considerations</h3>
-            <label>Event Facilities:</label>
-            <input type="text" name="eventFacilities" value={formData.eventFacilities} onChange={handleChange} />
-            <label>Holding Area:</label>
-            <input type="text" name="holdingArea" value={formData.holdingArea} onChange={handleChange} />
-            <label>Toilets:</label>
-            <input type="text" name="toilets" value={formData.toilets} onChange={handleChange} />
-            <label>Transportation & Parking:</label>
-            <input type="text" name="transportationandParking" value={formData.transportationandParking} onChange={handleChange} />
-            <label>Other Facilities:</label>
-            <input type="text" name="more" value={formData.more} onChange={handleChange} />
-            <label>Licenses Required:</label>
-            <input type="text" name="licensesRequired" value={formData.licensesRequired} onChange={handleChange} />
-            <label>Housekeeping:</label>
-            <input type="text" name="houseKeeping" value={formData.houseKeeping} onChange={handleChange} />
-            <label>Waste Management:</label>
-            <input type="text" name="wasteManagement" value={formData.wasteManagement} onChange={handleChange} />
           </div>
-        );
-
-      case 3:
-        return (
-          <div>
-            <label>Event Management Head:</label>
-            <input type="text" name="eventManagementHead" value={formData.eventManagementHead} onChange={handleChange} />
-            <label>Event Committees & Members:</label>
-            <input type="text" name="eventCommitteesandMembers" value={formData.eventCommitteesandMembers} onChange={handleChange} />
+          <div className="form-group">
+            <label>Number of HEI Personnel:</label>
+            <input
+              type="number"
+              name="noofHeiPersonnel"
+              value={activity.noofHeiPersonnel}
+              onChange={(e) => handleChange(e, index, 'afterActivity')}
+            />
           </div>
-        );
+        </div>
+      ))}
+    </div>
+  );
 
-      case 4:
-        return (
-          <div>
-            <label>Health:</label>
-            <textarea name="health" value={formData.health} onChange={handleChange} />
-            <label>Safety of Attendees:</label>
-            <textarea name="safetyAttendees" value={formData.safetyAttendees} onChange={handleChange} />
-            <label>Emergency/First Aid:</label>
-            <textarea name="emergencyFirstAid" value={formData.emergencyFirstAid} onChange={handleChange} />
-            <label>Fire Safety:</label>
-            <textarea name="fireSafety" value={formData.fireSafety} onChange={handleChange} />
-            <label>Weather:</label>
-            <textarea name="weather" value={formData.weather} onChange={handleChange} />
-          </div>
-        );
+case 4: // Problems Encountered
+  return (
+    <div className="form-section">
+      <h2>Problems Encountered</h2>
+      <div className="form-group">
+        <textarea
+          name="problemsEncountered"
+          value={formData.problemsEncountered}
+          onChange={(e) => handleChange(e)}
+          rows={5}
+        />
+      </div>
+    </div>
+  );
 
+case 5: // Recommendations
+  return (
+    <div className="form-section">
+      <h2>Recommendations</h2>
+      <div className="form-group">
+        <textarea
+          name="recommendation"
+          value={formData.recommendation}
+          onChange={(e) => handleChange(e)}
+          rows={5}
+        />
+      </div>
+    </div>
+  );
+        
       default:
         return <div>Unknown step</div>;
     }
@@ -677,109 +881,96 @@ const Localoffcampus = () => {
 
     return (
       <div className="form-ubox-1">
-         {notificationVisible && <Notification message="Form submitted successfully!" />}
-        <div className="sidebar">
-          <ul>
-            <li className={currentStep === 0 ? 'active' : ''}>
-              {isSectionComplete(0) ? <FaCheck className="check-icon green" /> : null}
-              Event Specifics
-            </li>
-            <li className={currentStep === 1 ? 'active' : ''}>
-              {isSectionComplete(1) ? <FaCheck className="check-icon green" /> : null}
-              Organization Info
-            </li>
-            <li className={currentStep === 2 ? 'active' : ''}>
-              {isSectionComplete(2) ? <FaCheck className="check-icon green" /> : null}
-              Event Details
-            </li>
-            <li className={currentStep === 3 ? 'active' : ''}>
-              {isSectionComplete(3) ? <FaCheck className="check-icon green" /> : null}
-              Event Management Team
-            </li>
-            <li className={currentStep === 4 ? 'active' : ''}>
-              {isSectionComplete(4) ? <FaCheck className="check-icon green" /> : null}
-              Risk Assessments
-            </li>
-          </ul>
-        </div>
+         {notificationVisible && !validateSection(currentStep) && (
+      <Notification type="error"message="Please complete all required fields before proceeding" />
+        )}
+<div className="sidebar">
+  <ul>
+    {/* BEFORE Sections - always visible */}
+    <li className={currentStep === 0 ? 'active' : ''}>
+      {validationResults.nameOfHei && validationResults.region && validationResults.address ? (
+        <FaCheck className="check-icon green" />
+      ) : (
+        <span className="error-icon">!</span>
+      )}
+      School Information
+    </li>
+    
+    <li className={currentStep === 1 ? 'active' : ''}>
+      {validationResults.basicInformation.every(field => 
+        field.programName &&
+        field.course &&
+        field.destinationAndVenue &&
+        field.inclusiveDates &&
+        field.numberOfStudents &&
+        field.listOfPersonnelIncharge
+      ) ? (
+        <FaCheck className="check-icon green" />
+      ) : (
+        <span className="error-icon">!</span>
+      )}
+      Basic Information
+    </li>
+    
+    <li className={currentStep === 2 ? 'active' : ''}>
+      {Object.values(validationResults.activitiesOffCampus[0]).every(Boolean) ? (
+        <FaCheck className="check-icon green" />
+      ) : (
+        <span className="error-icon">!</span>
+      )}
+      Activities Off Campus
+    </li>
+
+    {/* AFTER Sections - always visible but grayed out if BEFORE not complete */}
+    <li className={`${currentStep === 3 ? 'active' : ''} ${!beforeCompleted ? 'disabled-section' : ''}`}>
+      {beforeCompleted && formData.afterActivity[0].programs && 
+       formData.afterActivity[0].destination && 
+       formData.afterActivity[0].noOfStudents && 
+       formData.afterActivity[0].noofHeiPersonnel ? (
+        <FaCheck className="check-icon green" />
+      ) : (
+        beforeCompleted && <span className="error-icon">!</span>
+      )}
+      After Activity Report
+    </li>
+    
+    <li className={`${currentStep === 4 ? 'active' : ''} ${!beforeCompleted ? 'disabled-section' : ''}`}>
+      {beforeCompleted && formData.problemsEncountered ? (
+        <FaCheck className="check-icon green" />
+      ) : (
+        beforeCompleted && <span className="error-icon">!</span>
+      )}
+      Problems Encountered
+    </li>
+    
+    <li className={`${currentStep === 5 ? 'active' : ''} ${!beforeCompleted ? 'disabled-section' : ''}`}>
+      {beforeCompleted && formData.recommendation ? (
+        <FaCheck className="check-icon green" />
+      ) : (
+        beforeCompleted && <span className="error-icon">!</span>
+      )}
+      Recommendations
+    </li>
+  </ul>
+</div>
         <div className="inner-forms-1">
-          <h1>Localoffcampus Proposal</h1>
+          <h1>Local off Campus Proposal</h1>
           {renderStepContent()}
           <div className="form-navigation">
-            {currentStep > 0 && (
-              <button onClick={() => setCurrentStep(currentStep - 1)}>Back</button>
-            )}
-            {currentStep < 4 ? (
-              <button onClick={handleNext}>Next</button>
-            ) : (
-              <button onClick={handleSubmit}>Submit</button>
-            )}
-          </div>
+          {currentStep > 0 && (
+            <button onClick={handleBack}>Back</button>
+          )}
+          {currentStep < 5 ? (
+            <button onClick={handleNext}>
+              {currentStep === 5 ? 'Submit' : 'Next'}
+            </button>
+          ) : (
+            <button onClick={handleSubmit}>Submit</button>
+          )}
+        </div>
         </div>
       </div>
     );
 };
 
-const styles = StyleSheet.create({
-  body: {
-    padding: 20,
-    fontSize: 12,
-  },
-  header: {
-    flexDirection: "row",
-    marginBottom: 20,
-  },
-  logo: {
-    width: 60, 
-    height: 60,
-  },
-  headerText: {
-    marginLeft: 10,
-    justifyContent: "center",
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  formTitle: {
-    textAlign: "center",
-    fontSize: 14,
-    marginBottom: 20,
-    fontWeight: "bold",
-  },
-  section: {
-    marginBottom: 15,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: "#000",
-  },
-  sectionTitle: {
-    fontWeight: "bold",
-    backgroundColor: "#D9E8FC",
-    padding: 5,
-  },
-  formRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 5,
-  },
-  signatureRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
-  table: {
-    borderWidth: 1,
-    borderColor: "#000",
-    marginTop: 5,
-  },
-  tableRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    padding: 5,
-    borderBottomWidth: 1,
-    borderBottomColor: "#000",
-  },
-});
-
-export default Localoffcampus; 
+export default Localoffcampus;

@@ -452,3 +452,122 @@
     max-height: 60vh;
   }
 }
+
+/* Add these to your existing Navbar.css */
+
+/* Mobile-first adjustments */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 10px 15px;
+  }
+
+  .navbar-title {
+    font-size: 20px;
+  }
+
+  .navbar-logo img {
+    height: 40px;
+  }
+
+  /* Drawer improvements */
+  .drawer {
+    width: 80%;
+    max-width: 300px;
+    background-color: #1a3ab5;
+    color: white;
+  }
+
+  .drawer-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .drawer-title {
+    color: white;
+    padding-top: 0;
+  }
+
+  .drawer-close-icon {
+    color: white;
+    font-size: 28px;
+  }
+
+  .drawer-list {
+    padding: 0;
+  }
+
+  .drawer-list-item {
+    color: white;
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background-color 0.3s;
+  }
+
+  .drawer-list-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  /* Account dropdown adjustments */
+  .account-dropdown-menu {
+    right: 0;
+    top: 50px;
+    width: 160px;
+  }
+
+  /* Notification dropdown adjustments */
+  .notification-dropdown {
+    right: -50px;
+    width: 280px;
+    max-height: 70vh;
+  }
+
+  /* Icons container spacing */
+  .navbar-icons-container {
+    gap: 20px;
+    margin-right: 15px;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+  .navbar-title {
+    display: none; /* Hide title on very small screens */
+  }
+
+  .navbar-logo img {
+    height: 35px;
+  }
+
+  .mobile-menu-icon {
+    font-size: 24px;
+  }
+
+  .navbar-notification-icon,
+  .navbar-profile-pic {
+    width: 32px;
+    height: 32px;
+  }
+
+  .account-dropdown-menu {
+    width: 140px;
+    font-size: 14px;
+  }
+}
+
+/* Overlay for drawer */
+.drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: none;
+}
+
+.drawer-overlay.open {
+  display: block;
+}
+
+

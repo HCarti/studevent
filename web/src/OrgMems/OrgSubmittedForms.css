@@ -131,7 +131,7 @@
 /* Action Buttons */
 .action-buttons {
   display: flex;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
 .view-button {
@@ -180,6 +180,88 @@
 .loading-spinner p {
   color: #4a5568;
   font-size: 0.9rem;
+}
+
+.delete-button {
+  background-color: #ff4444;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.delete-button:hover {
+  background-color: #cc0000;
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.delete-modal {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.delete-modal h3 {
+  margin-top: 0;
+  color: #ff4444;
+}
+
+.delete-modal p {
+  margin-bottom: 20px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.cancel-button {
+  background-color: #e0e0e0;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cancel-button:hover {
+  background-color: #bdbdbd;
+}
+
+.confirm-delete-button {
+  background-color: #ff4444;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.confirm-delete-button:hover {
+  background-color: #cc0000;
+}
+
+.confirm-delete-button:disabled {
+  background-color: #ff9999;
+  cursor: not-allowed;
 }
 
 @keyframes spin {

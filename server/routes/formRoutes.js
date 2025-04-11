@@ -42,6 +42,9 @@ router.get("/by-email/:email", async (req, res) => {
 // Add this route for calendar events
 // router.get('/forms/events', formController.getFormEvents);
 
+router.delete(
+  '/:formId', formController.deleteForm);
+
 router.get('/all', formController.getAllForms); // ✅ Correct
 
 // Route to get specific form details

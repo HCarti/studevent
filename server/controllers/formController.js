@@ -379,6 +379,102 @@ exports.createForm = async (req, res) => {
   }
 };
 
+// Add this to your formController.js
+
+exports.deleteForm = async (req, res) => {
+  try {
+    const { formId } = req.params;
+    const userEmail = req.user?.email;
+
+    // 1. Validate the form exists and belongs to the user
+    const form = await Form.findById(formId);
+    if (!form) {
+      return res.status(404).json({ message: 'Form not found' });
+    }
+
+    // Check if the current user is the submitter or an admin
+    const isAdmin = req.user?.role === 'Admin';
+    const isSubmitter = form.emailAddress === userEmail;
+    
+    if (!isAdmin && !isSubmitter) {
+      return res.status(403).json({ 
+        message: 'Only the form submitter or admin can delete this form' 
+      });
+    }
+
+    // 2. Check if the form can be deleted (only pending forms can be deleted)
+    const tracker = await EventTracker.findOne({ formId });
+    if (!tracker) {
+      return res.status(404).json({ message: 'Progress tracker not found' });
+    }
+
+    // For non-admins, check if the form is still in editable state
+    if (!isAdmin) {
+      const isEditable = () => {
+        if (!tracker.reviewStages || tracker.currentStep === undefined) return false;
+        const deanStepIndex = tracker.reviewStages.findIndex(step => step.role === 'Dean');
+        return deanStepIndex === -1 || tracker.currentStep < deanStepIndex;
+      };
+
+      if (!isEditable()) {
+        return res.status(403).json({ 
+          message: 'Form cannot be deleted as it has already progressed in the review process' 
+        });
+      }
+    }
+
+    // 3. Start a transaction to ensure all deletions succeed or fail together
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      // Delete the form
+      await Form.findByIdAndDelete(formId).session(session);
+
+      // Delete the associated tracker
+      await EventTracker.deleteOne({ formId }).session(session);
+
+      // Delete associated calendar event if exists
+      await CalendarEvent.deleteOne({ formId }).session(session);
+
+      // Delete any associated notifications
+      await Notification.deleteMany({ 
+        userEmail: form.emailAddress,
+        message: { $regex: form.formType, $options: 'i' } 
+      }).session(session);
+
+      // Commit the transaction
+      await session.commitTransaction();
+      session.endSession();
+
+      res.status(200).json({ 
+        message: 'Form and all associated data deleted successfully',
+        deletedFormId: formId
+      });
+
+    } catch (transactionError) {
+      // If any error occurs, abort the transaction
+      await session.abortTransaction();
+      session.endSession();
+      throw transactionError;
+    }
+
+  } catch (error) {
+    console.error("Form Deletion Error:", error);
+    
+    if (error.name === 'CastError') {
+      return res.status(400).json({ 
+        error: "Invalid form ID format" 
+      });
+    }
+    
+    res.status(500).json({ 
+      error: "Server error during form deletion", 
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
 exports.updateForm = async (req, res) => {
   try {
     const { formId } = req.params;
