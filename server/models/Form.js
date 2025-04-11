@@ -19,25 +19,20 @@ const reviewStageSchema = new mongoose.Schema({
 const budgetItemSchema = new mongoose.Schema({
     quantity: { 
         type: Number, 
-        required: function() { return this.parent().formType === 'Budget'; },
         min: 0
     },
     unit: { 
         type: String, 
-        required: function() { return this.parent().formType === 'Budget'; }
     },
     description: { 
         type: String, 
-        required: function() { return this.parent().formType === 'Budget'; }
     },
     unitCost: { 
         type: Number, 
-        required: function() { return this.parent().formType === 'Budget'; },
         min: 0
     },
     totalCost: { 
         type: Number, 
-        required: function() { return this.parent().formType === 'Budget'; },
         min: 0
     }
 });

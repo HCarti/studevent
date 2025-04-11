@@ -497,8 +497,7 @@ exports.updateForm = async (req, res) => {
     }
 
     // 2. Form type specific validation
-    const payloadFormType = updates.formType || (updates.formData && updates.formData.formType);
-    if (form.formType === 'Budget' || payloadFormType === 'Budget') {
+    if (form.formType === 'Budget' || updates.formType === 'Budget') {
       if (!updates.items || !Array.isArray(updates.items)) {
         return res.status(400).json({ error: "Valid items array is required for Budget forms" });
       }
