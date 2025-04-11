@@ -1,10 +1,6 @@
 const Liquidation = require('../models/Liquidation');
 const { put } = require('@vercel/blob');
 
-// Submit liquidation file (Vercel Blob version)
-const Liquidation = require('../models/Liquidation');
-const { put } = require('@vercel/blob');
-
 exports.submitLiquidation = async (req, res) => {
   try {
     if (!req.file) {
