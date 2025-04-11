@@ -648,11 +648,6 @@ textarea {
   display: block;
 }
 
-.invalid-field {
-  border-color: #d32f2f !important;
-  background-color: #fff9f9;
-}
-
 
 .next-btn {
   background-color: #4CAF50;

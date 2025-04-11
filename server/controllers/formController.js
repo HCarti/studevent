@@ -632,3 +632,181 @@ exports.updateForm = async (req, res) => {
     });
   }
 };
+
+//Local Off campus functionalities
+
+// Submit BEFORE phase
+exports.submitLocalOffCampusBefore = async (req, res) => {
+  try {
+    const { nameOfHei, region, address, basicInformation, activitiesOffCampus } = req.body;
+    
+    // Validate required fields
+    if (!nameOfHei || !region || !address) {
+      return res.status(400).json({ error: "School information is required" });
+    }
+    
+    if (!basicInformation || !Array.isArray(basicInformation) || basicInformation.length === 0) {
+      return res.status(400).json({ error: "At least one basic information entry is required" });
+    }
+    
+    if (!activitiesOffCampus || !Array.isArray(activitiesOffCampus) || activitiesOffCampus.length === 0) {
+      return res.status(400).json({ error: "Activities off campus information is required" });
+    }
+
+    const newForm = new Form({
+      formType: "LocalOffCampus",
+      localOffCampus: {
+        formPhase: "BEFORE",
+        nameOfHei,
+        region,
+        address,
+        basicInformation,
+        activitiesOffCampus,
+        submittedBy: req.user._id,
+        status: "submitted"
+      }
+    });
+
+    const savedForm = await newForm.save();
+    
+    // Create progress tracker
+    const tracker = new EventTracker({
+      formId: savedForm._id,
+      formType: "LocalOffCampus",
+      currentStep: "Initial Submission",
+      currentAuthority: "Adviser",
+      steps: [
+        {
+          stepName: "Initial Submission",
+          reviewerRole: "Adviser",
+          status: "pending",
+          remarks: "",
+          timestamp: null
+        }
+      ]
+    });
+    await tracker.save();
+
+    res.status(201).json({
+      success: true,
+      message: "BEFORE form submitted successfully",
+      form: savedForm,
+      eventId: savedForm._id
+    });
+  } catch (error) {
+    console.error("Error submitting BEFORE form:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error submitting BEFORE form",
+      error: error.message
+    });
+  }
+};
+
+// Submit AFTER phase
+exports.submitLocalOffCampusAfter = async (req, res) => {
+  try {
+    const { eventId, afterActivity, problemsEncountered, recommendation } = req.body;
+    
+    // Validate required fields
+    if (!eventId) {
+      return res.status(400).json({ error: "Event ID is required" });
+    }
+    
+    if (!afterActivity || !Array.isArray(afterActivity) || afterActivity.length === 0) {
+      return res.status(400).json({ error: "After activity information is required" });
+    }
+    
+    if (!problemsEncountered) {
+      return res.status(400).json({ error: "Problems encountered is required" });
+    }
+    
+    if (!recommendation) {
+      return res.status(400).json({ error: "Recommendation is required" });
+    }
+
+    // Verify the BEFORE form exists
+    const beforeForm = await Form.findById(eventId);
+    if (!beforeForm || beforeForm.formType !== "LocalOffCampus") {
+      return res.status(404).json({ error: "Original BEFORE form not found" });
+    }
+
+    // Create new AFTER form
+    const afterForm = new Form({
+      formType: "LocalOffCampus",
+      localOffCampus: {
+        formPhase: "AFTER",
+        eventId: beforeForm._id,
+        afterActivity,
+        problemsEncountered,
+        recommendation,
+        submittedBy: req.user._id,
+        status: "submitted"
+      }
+    });
+
+    const savedForm = await afterForm.save();
+    
+    // Update tracker
+    await EventTracker.updateOne(
+      { formId: beforeForm._id },
+      { 
+        $set: { 
+          currentStep: "After Report Submitted",
+          "steps.$[elem].status": "completed",
+          "steps.$[elem].timestamp": new Date()
+        }
+      },
+      { arrayFilters: [{ "elem.stepName": "Initial Submission" }] }
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "AFTER form submitted successfully",
+      form: savedForm
+    });
+  } catch (error) {
+    console.error("Error submitting AFTER form:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error submitting AFTER form",
+      error: error.message
+    });
+  }
+};
+
+// Get combined form data
+exports.getLocalOffCampusForm = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    
+    // Find both BEFORE and AFTER forms
+    const beforeForm = await Form.findById(eventId);
+    if (!beforeForm || beforeForm.formType !== "LocalOffCampus") {
+      return res.status(404).json({ error: "Form not found" });
+    }
+    
+    const afterForm = await Form.findOne({ 
+      "localOffCampus.eventId": eventId 
+    });
+    
+    // Combine data
+    const responseData = {
+      before: beforeForm,
+      after: afterForm || null,
+      tracker: await EventTracker.findOne({ formId: eventId })
+    };
+    
+    res.status(200).json({
+      success: true,
+      data: responseData
+    });
+  } catch (error) {
+    console.error("Error retrieving form data:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error retrieving form data",
+      error: error.message
+    });
+  }
+};

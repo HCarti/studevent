@@ -152,101 +152,183 @@ const projectBudgetSchema = new mongoose.Schema({
     },
 });
 
-const basicInformationSchema = new mongoose.Schema({
-    programName: {
+// Schema for individual compliance items with remarks
+const complianceItemSchema = new mongoose.Schema({
+    compliance: {
         type: String,
-        required: function() { return this.formType === 'LocalOffCampus'; }
+        enum: ['yes', 'no'],
+        required: true
     },
-    course:{
+    remarks: {
         type: String,
-        required: function() { return this.formType === 'LocalOffCampus'; }
-    },
-    destinationAndVenue:{
-        type: String,
-        required: function() { return this.formType === 'LocalOffCampus'; }
-    },
-    inclusiveDates:{ 
-        type: String,
-        required: function() { return this.formType === 'LocalOffCampus'; }
-    },
-    numberOfStudents:{
-        type: Number,
-        required: function() { return this.formType === 'LocalOffCampus'; },
-        min: 0
-    },
-    listOfPersonnelIncharge:{
-        type: String,
-        required: function() { return this.formType === 'LocalOffCampus'; }
-    },
-});
-
-const activitiesOffCampusSchema = new mongoose.Schema({
-    curriculumRequirement:{
-        type: String,
-        required: function() { return this.formType === 'LocalOffCampus'; }
-    },
-    destination:{
-        type: String,
-        required: function() { return this.formType === 'LocalOffCampus'; }
-    },
-    handbook:{
-        type: String,
-        required: function() { return this.formType === 'LocalOffCampus'; }
-    },
-    guardianConsent:{
-        type: String,
-        required: function() { return this.formType === 'LocalOffCampus'; }
-    },
-    personnelInCharge:{
-        type: String,
-        required: function() { return this.formType === 'LocalOffCampus'; }
-    },
-    firstAidKit:{
-        type: String,
-        required: function() { return this.formType === 'LocalOffCampus'; }
-    },
-    feesFunds:{
-        type: String,
-        required: function() { return this.formType === 'LocalOffCampus'; }
-    },
-    insurance:{
-        type: String,
-        required: function() { return this.formType === 'LocalOffCampus'; }
-    },
-    studentVehicles:{
-        type: String,
-        required: function() { return this.formType === 'LocalOffCampus'; }
-    },
-    lgusNgos:{
-        type: String,
-        required: function() { return this.formType === 'LocalOffCampus'; }
-    },
-    consultationAnnouncements:{
-        type: String,
-        required: function() { return this.formType === 'LocalOffCampus'; }
+        default: ""
     }
 });
 
-const afterActivitySchema = new mongoose.Schema({
-    programs:{
+// Schema for basic information (BEFORE phase)
+const basicInformationSchema = new mongoose.Schema({
+    programName: {
         type: String,
-        required: function() { return this.formType === 'LocalOffCampus'; }
+        required: true
     },
-    destinations:{
+    course: {
         type: String,
-        required: function() { return this.formType === 'LocalOffCampus'; }
+        required: true
     },
-    noofStudents:{
+    destinationAndVenue: {
+        type: String,
+        required: true
+    },
+    inclusiveDates: {
+        type: Date,
+        required: true
+    },
+    numberOfStudents: {
         type: Number,
-        required: function() { return this.formType === 'LocalOffCampus'; },
-        min: 0
+        required: true,
+        min: 1
     },
-    noofHeiPersonnel:{
-        type: Number,
-        required: function() { return this.formType === 'LocalOffCampus'; },
-        min: 0
-    },
+    listOfPersonnelIncharge: {
+        type: String,
+        required: true
+    }
 });
+
+// Schema for activities off campus (BEFORE phase)
+const activitiesOffCampusSchema = new mongoose.Schema({
+    curriculumRequirement: complianceItemSchema,
+    destination: complianceItemSchema,
+    handbook: complianceItemSchema,
+    guardianConsent: complianceItemSchema,
+    personnelInCharge: complianceItemSchema,
+    firstAidKit: complianceItemSchema,
+    feesFunds: complianceItemSchema,
+    insurance: complianceItemSchema,
+    studentVehicles: complianceItemSchema,
+    lgusNgos: complianceItemSchema,
+    consultationAnnouncements: complianceItemSchema
+});
+
+// Schema for after activity report (AFTER phase)
+const afterActivitySchema = new mongoose.Schema({
+    programs: {
+        type: String,
+        required: true
+    },
+    destination: {
+        type: String,
+        required: true
+    },
+    noOfStudents: {
+        type: Number,
+        required: true,
+        min: 0
+    },
+    noofHeiPersonnel: {
+        type: Number,
+        required: true,
+        min: 0
+    }
+});
+
+// Main Local Off Campus schema
+const localOffCampusSchema = new mongoose.Schema({
+    formPhase: {
+        type: String,
+        enum: ['BEFORE', 'AFTER'],
+        required: true
+    },
+    // Common fields (partially required in BEFORE, fully in AFTER)
+    eventId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: function() {
+            return this.formPhase === 'AFTER';
+        }
+    },
+    // BEFORE phase specific fields
+    nameOfHei: {
+        type: String,
+        required: function() {
+            return this.formPhase === 'BEFORE';
+        }
+    },
+    region: {
+        type: String,
+        required: function() {
+            return this.formPhase === 'BEFORE';
+        }
+    },
+    address: {
+        type: String,
+        required: function() {
+            return this.formPhase === 'BEFORE';
+        }
+    },
+    basicInformation: {
+        type: [basicInformationSchema],
+        required: function() {
+            return this.formPhase === 'BEFORE';
+        },
+        validate: {
+            validator: function(v) {
+                return v.length > 0;
+            },
+            message: 'At least one basic information entry is required'
+        }
+    },
+    activitiesOffCampus: {
+        type: [activitiesOffCampusSchema],
+        required: function() {
+            return this.formPhase === 'BEFORE';
+        },
+        validate: {
+            validator: function(v) {
+                return v.length > 0;
+            },
+            message: 'At least one activity entry is required'
+        }
+    },
+    // AFTER phase specific fields
+    afterActivity: {
+        type: [afterActivitySchema],
+        required: function() {
+            return this.formPhase === 'AFTER';
+        },
+        validate: {
+            validator: function(v) {
+                return v.length > 0;
+            },
+            message: 'At least one after activity entry is required'
+        }
+    },
+    problemsEncountered: {
+        type: String,
+        required: function() {
+            return this.formPhase === 'AFTER';
+        }
+    },
+    recommendation: {
+        type: String,
+        required: function() {
+            return this.formPhase === 'AFTER';
+        }
+    },
+    // Common metadata
+    submittedAt: {
+        type: Date,
+        default: Date.now
+    },
+    submittedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    status: {
+        type: String,
+        enum: ['draft', 'submitted', 'approved', 'rejected'],
+        default: 'submitted'
+    }
+}, { _id: true });
 
 const formSchema = new mongoose.Schema({
     // --- Form Type Discriminator ---
@@ -475,40 +557,12 @@ const formSchema = new mongoose.Schema({
     },
 
     //Local Off Campus Form
-    nameOfHei:{ 
-        type: String, 
-        required: function() { return this.formType === 'LocalOffCampus'; } 
-    },
-    region:{ 
-        type: String, 
-        required: function() { return this.formType === 'LocalOffCampus'; } 
-    },
-    address:{ 
-        type: String, 
-        required: function() { return this.formType === 'LocalOffCampus'; } 
-    },
-    //basicinfos
-    basicInformation:{
-        type: [basicInformationSchema],
-        required: function() { return this.formType === 'LocalOffCampus'; }
-    },
-    //before the activity
-    activitiesOffCampus:{
-        type: [activitiesOffCampusSchema],
-        required: function() { return this.formType === 'LocalOffCampus'; }
-    },
-    //after the activity
-    afterActivity:{
-        type: [afterActivitySchema],
-        required: function() { return this.formType === 'LocalOffCampus'; }
-    },
-    problemsEncountered:{
-        type: String,
-        required: function() { return this.formType === 'LocalOffCampus'; } 
-    },
-    recommendation:{
-        type: String,
-        required: function() { return this.formType === 'LocalOffCampus'; } 
+    // Add this new field for LocalOffCampus forms
+    localOffCampus: {
+        type: localOffCampusSchema,
+        required: function() {
+            return this.formType === 'LocalOffCampus';
+        }
     },
 
     // ===== COMMON FIELDS =====

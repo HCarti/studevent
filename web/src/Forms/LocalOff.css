@@ -25,7 +25,7 @@
     width: 100%;
     align-items: center;
     justify-content: center;
-    max-width: 800px;
+    max-width: 1000px;
   }
   
   h1 {
@@ -49,6 +49,12 @@
     margin-top: 30px;
   }
   
+  .form-group {
+    position: relative;
+    margin-bottom: 25px; /* Add more space to accommodate floating error */
+  }
+  
+
   /* Input Labels */
   .inner-forms label {
     font-size: 16px;
@@ -192,6 +198,14 @@
     border: 1px solid #ddd;
     text-align: left;
   }
+
+  .tbody-fields input[type="text"],
+  .tbody-fields input[type="text"]
+  {
+    align-items: center;
+    justify-content: center;
+    display: block;
+  }
   
   .basic-info-table th {
     background-color: #f2f2f2;
@@ -320,9 +334,16 @@
 }
 
 .error-message {
-  color: #ff4444;
-  font-size: 0.8rem;
-  margin-top: 0.25rem;
+  color: #d32f2f;
+  font-size: 0.75rem;
+  position: absolute;
+  top: -20px;
+  left: 0;
+  background-color: #fdecea;
+  border-radius: 4px 4px 0 0;
+  padding: 0.25rem 0.5rem;
+  z-index: 1;
+  white-space: nowrap;
 }
 
 /* Notifications */
@@ -431,3 +452,29 @@
     justify-content: center;
     gap: 400px;
   }
+
+  /* Add to your LocalOff.css */
+.completed-phase {
+  opacity: 0.7;
+  background-color: #f0f0f0;
+}
+
+.disabled-section {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.submit-before-btn {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.submit-before-btn:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}

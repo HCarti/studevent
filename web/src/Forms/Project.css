@@ -24,10 +24,24 @@
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 800px;
+  max-width: 1000px;
   box-sizing: border-box;
   overflow-y: auto;
 }
+
+/* Make all textareas and inputs full width */
+.inner-forms-1 .form-group {
+  width: 100%;
+}
+
+.inner-forms-1 textarea {
+  min-height: 100px;
+  resize: vertical;
+  font-family: inherit;
+  padding: 10px;
+}
+
+
 
 /* Form Elements - Full Width */
 .inner-forms-1 input[type="text"],
@@ -39,7 +53,6 @@
 .inner-forms-1 select {
   width: 100%;
   padding: 12px 15px;
-  margin-bottom: 15px;
   border-radius: 8px;
   border: 2px solid rgb(214, 214, 214);
   background-color: #f9f9f9;
@@ -47,15 +60,18 @@
   color: #495057;
   transition: border-color 0.2s ease-in-out;
   box-sizing: border-box;
-}
+} 
 
 /* Textarea Specific Styles */
 .inner-forms-1 textarea {
-  min-height: 100px;
+  min-height: 200px;
   resize: vertical;
   font-family: inherit;
   padding: 10px;
+  max-width: 2000px;
   overflow-y: auto;
+  border-radius: 10px;
+  resize: none;
 }
 
 /* Focus States */
@@ -67,15 +83,9 @@
   box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
-/* Form Groups and Layout */
-.form-group {
-  margin-bottom: 25px;
-}
-
 .form-row {
   display: flex;
   gap: 20px;
-  margin-bottom: 15px;
 }
 
 .form-row .form-group {
@@ -135,14 +145,12 @@
 .time-inputs .form-group {
   flex: 1;
   margin-bottom: 0;
-  min-width: 0; /* Prevent flex items from overflowing */
 }
 
 .time-inputs label {
   display: block;
   font-size: 12px;
   color: #666;
-  margin-bottom: 4px;
 }
 
 .time-inputs input[type="time"] {
@@ -420,4 +428,12 @@
   content: ' *';
   color: #ff4444;
   font-size: 1.1em;
+}
+
+.array-item {
+  width: 100%;
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
 }

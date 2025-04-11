@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, } from "react";
 import './Project.css';
 import moment from 'moment';
 import { FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 import "react-datepicker/dist/react-datepicker.css";
 import DatePicker from 'react-datepicker';
+import { useNavigate } from "react-router-dom";
 
 const Project = () => {
   const [formData, setFormData] = useState({
@@ -127,6 +128,7 @@ const Project = () => {
   const [eventsPerDate, setEventsPerDate] = useState({});
   const [loading, setLoading] = useState(false);
   const [loadingDates, setLoadingDates] = useState(false);
+  const navigate = useNavigate();
   const [notification, setNotification] = useState({
     visible: false,
     message: '',
@@ -350,7 +352,7 @@ const formatTimeDisplay = (timeStr) => {
       setCurrentStep(currentStep + 1);
     } else {
       // Show error notification
-      setTimeout(() => setNotification({ visible: false }), 3000);
+      setTimeout(() => setNotification({ visible: false }), 3000);navigate('/');
       
       // Highlight all errors in current step
       showFieldErrors(currentStep);
@@ -659,9 +661,7 @@ setTimeout(() => setNotification({ visible: false }), 3000);
               {fieldErrors.startDate && (
                 <div className="validation-error">Start Date is required</div>
               )}
-            </div>
-
-            <div className="form-group">
+              
               <label className="required-field">End Date:</label>
               <DatePicker
                 selected={formData.endDate ? new Date(formData.endDate) : null}

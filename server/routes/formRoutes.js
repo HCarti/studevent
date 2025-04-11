@@ -84,5 +84,18 @@ router.post('/',
 
 // router.get('/submissions', getUserSubmissions);
 
+//local off campus routes
+router.post(
+  '/local-off-campus/before', formController.submitLocalOffCampusBefore
+);
+
+router.post(
+  '/local-off-campus/after', formController.submitLocalOffCampusAfter
+);
+
+router.get(
+  '/local-off-campus/:eventId', formController.getLocalOffCampusForm
+);
+
 
 module.exports = router;

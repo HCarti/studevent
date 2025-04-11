@@ -7,42 +7,45 @@ import "react-datepicker/dist/react-datepicker.css";
 
 const Localoffcampus = () => {
   const [formData, setFormData] = useState({
-    nameOfHei: "",
-    region: "",
-    address: "",
-    basicInformation: [{
-      programName: "", 
-      course: "", 
-      destinationAndVenue: "", 
-      inclusiveDates: "", 
-      numberOfStudents: "", 
-      listOfPersonnelIncharge: ""
-    }],
-    activitiesOffCampus: [{
-      curriculumRequirement: { compliance: "", remarks: "" },
-      destination: { compliance: "", remarks: "" },
-      handbook: { compliance: "", remarks: "" },
-      guardianConsent: { compliance: "", remarks: "" },
-      personnelInCharge: { compliance: "", remarks: "" },
-      firstAidKit: { compliance: "", remarks: "" },
-      feesFunds: { compliance: "", remarks: "" },
-      insurance: { compliance: "", remarks: "" },
-      studentVehicles: { compliance: "", remarks: "" },
-      lgusNgos: { compliance: "", remarks: "" },
-      consultationAnnouncements: { compliance: "", remarks: "" },
-    }],
-    // We'll leave afterActivity and other fields as is for now
-    afterActivity: [{
-      programs: "",
-      destination: "",
-      noOfStudents: "",
-      noofHeiPersonnel: ""
-    }],
-    problemsEncountered: "",
-    recommendation: "",
+    localOffCampus: {
+      formPhase: 'BEFORE',
+      nameOfHei: "",
+      region: "",
+      address: "",
+      basicInformation: [{
+        programName: "", 
+        course: "", 
+        destinationAndVenue: "", 
+        inclusiveDates: "", 
+        numberOfStudents: "", 
+        listOfPersonnelIncharge: ""
+      }],
+      activitiesOffCampus: [{
+        curriculumRequirement: { compliance: "", remarks: "" },
+        destination: { compliance: "", remarks: "" },
+        handbook: { compliance: "", remarks: "" },
+        guardianConsent: { compliance: "", remarks: "" },
+        personnelInCharge: { compliance: "", remarks: "" },
+        firstAidKit: { compliance: "", remarks: "" },
+        feesFunds: { compliance: "", remarks: "" },
+        insurance: { compliance: "", remarks: "" },
+        studentVehicles: { compliance: "", remarks: "" },
+        lgusNgos: { compliance: "", remarks: "" },
+        consultationAnnouncements: { compliance: "", remarks: "" },
+      }],
+      afterActivity: [{
+        programs: "",
+        destination: "",
+        noOfStudents: "",
+        noofHeiPersonnel: ""
+      }],
+      problemsEncountered: "",
+      recommendation: "",
+    }
   });
 
   const [currentStep, setCurrentStep] = useState(0);
+  const [user, setUser] = useState(null); // Add user state
   const [formSent, setFormSent] = useState(false);
   const [eventId, setEventId] = useState(null);
   const [notificationVisible, setNotificationVisible] = useState(false); // State to control notification visibility
@@ -50,6 +53,7 @@ const Localoffcampus = () => {
   const [shouldValidate, setShouldValidate] = useState(false);
   const [formPhase, setFormPhase] = useState('BEFORE'); // 'BEFORE' or 'AFTER'
   const [beforeCompleted, setBeforeCompleted] = useState(false);
+  
 
   const Notification = ({ message, type = 'error' }) => (
     <div className={`notification ${type}`}>
@@ -76,12 +80,13 @@ const Localoffcampus = () => {
   });
 
   // Check if BEFORE sections are complete
+// Update isBeforeComplete
 const isBeforeComplete = useMemo(() => {
   return (
-    formData.nameOfHei.trim() &&
-    formData.region.trim() &&
-    formData.address.trim() &&
-    formData.basicInformation.every(info => (
+    formData.localOffCampus.nameOfHei.trim() &&
+    formData.localOffCampus.region.trim() &&
+    formData.localOffCampus.address.trim() &&
+    formData.localOffCampus.basicInformation.every(info => (
       info.programName.trim() && 
       info.course.trim() && 
       info.destinationAndVenue.trim() && 
@@ -89,18 +94,20 @@ const isBeforeComplete = useMemo(() => {
       info.numberOfStudents && 
       info.listOfPersonnelIncharge.trim()
     )) &&
-    Object.values(formData.activitiesOffCampus[0]).every(
-      field => field.compliance // Check all compliance fields
+    Object.values(formData.localOffCampus.activitiesOffCampus[0]).every(
+      field => field.compliance
     )
   );
 }, [formData]);
 
+// Similarly update validationResults and other validation-related functions
+
   const validationResults = useMemo(() => {
     const results = {
-      nameOfHei: !!formData.nameOfHei.trim(),
-      region: !!formData.region.trim(),
-      address: !!formData.address.trim(),
-      basicInformation: formData.basicInformation.map(info => ({
+      nameOfHei: !!formData.localOffCampus.nameOfHei.trim(),
+      region: !!formData.localOffCampus.region.trim(),
+      address: !!formData.localOffCampus.address.trim(),
+      basicInformation: formData.localOffCampus.basicInformation.map(info => ({
         programName: !!info.programName.trim(),
         course: !!info.course.trim(),
         destinationAndVenue: !!info.destinationAndVenue.trim(),
@@ -108,7 +115,7 @@ const isBeforeComplete = useMemo(() => {
         numberOfStudents: !!info.numberOfStudents,
         listOfPersonnelIncharge: !!info.listOfPersonnelIncharge.trim()
       })),
-      activitiesOffCampus: formData.activitiesOffCampus.map(activity => ({
+      activitiesOffCampus: formData.localOffCampus.activitiesOffCampus.map(activity => ({
         curriculumRequirement: !!activity.curriculumRequirement.compliance,
         destination: !!activity.destination.compliance,
         handbook: !!activity.handbook?.compliance,
@@ -125,34 +132,47 @@ const isBeforeComplete = useMemo(() => {
     return results;
   }, [formData, validationTrigger]);
 
+  //setUser
+  useEffect(() => {
+    const userData = JSON.parse(localStorage.getItem('user'));
+    if (userData) {
+      setUser(userData);
+      setFormData(prevData => ({
+        ...prevData,
+        studentOrganization: userData.role === 'Organization' ? userData.organizationName || "" : "",
+        emailAddress: userData.email || "",
+        applicationDate: new Date().toISOString().split('T')[0]
+      }));
+    }
+  }, []);
+
   const handleChange = (e, index, fieldType) => {
     const { name, value, type, checked } = e.target;
     
-    if (fieldType === 'basicInformation') {
-      const updatedBasicInfo = [...formData.basicInformation];
-      updatedBasicInfo[index][name] = type === "checkbox" ? checked : value;
-      setFormData({
-        ...formData,
-        basicInformation: updatedBasicInfo
-      });
-    } else if (fieldType === 'activitiesOffCampus') {
-      const updatedActivities = [...formData.activitiesOffCampus];
-      updatedActivities[index][name] = type === "checkbox" ? checked : value;
-      setFormData({
-        ...formData,
-        activitiesOffCampus: updatedActivities
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: type === "checkbox" ? checked : value
-      });
-    }
+    setFormData(prev => {
+      const newData = {...prev};
+      
+      if (fieldType === 'basicInformation') {
+        newData.localOffCampus.basicInformation[index][name] = type === "checkbox" ? checked : value;
+      } 
+      else if (fieldType === 'activitiesOffCampus') {
+        newData.localOffCampus.activitiesOffCampus[index][name] = type === "checkbox" ? checked : value;
+      }
+      else if (fieldType === 'afterActivity') {
+        newData.localOffCampus.afterActivity[index][name] = type === "checkbox" ? checked : value;
+      }
+      else {
+        newData.localOffCampus[name] = type === "checkbox" ? checked : value;
+      }
+      
+      return newData;
+    });
   };
 
   const handleActivityChange = (section, field, value, remarks = "", index = 0) => {
     setFormData(prev => {
-      const updatedActivities = [...prev.activitiesOffCampus];
+      const newData = {...prev};
+      const updatedActivities = [...newData.localOffCampus.activitiesOffCampus];
       
       if (section && field) {
         if (!updatedActivities[index][section]) {
@@ -169,10 +189,8 @@ const isBeforeComplete = useMemo(() => {
         };
       }
       
-      return {
-        ...prev,
-        activitiesOffCampus: updatedActivities
-      };
+      newData.localOffCampus.activitiesOffCampus = updatedActivities;
+      return newData;
     });
   };
   
@@ -235,13 +253,13 @@ const isBeforeComplete = useMemo(() => {
     };
   
     if (step === 0) {
-      newErrors.nameOfHei = !formData.nameOfHei.trim();
-      newErrors.region = !formData.region.trim();
-      newErrors.address = !formData.address.trim();
+      newErrors.nameOfHei = !formData.localOffCampus.nameOfHei.trim();
+      newErrors.region = !formData.localOffCampus.region.trim();
+      newErrors.address = !formData.localOffCampus.address.trim();
       isValid = !newErrors.nameOfHei && !newErrors.region && !newErrors.address;
     } 
     else if (step === 1) {
-      formData.basicInformation.forEach((info, index) => {
+      formData.localOffCampus.basicInformation.forEach((info, index) => {
         newErrors.basicInformation[index] = {
           programName: !info.programName.trim(),
           course: !info.course.trim(),
@@ -257,7 +275,7 @@ const isBeforeComplete = useMemo(() => {
       });
     }
     else if (step === 2) {
-      const activity = formData.activitiesOffCampus[0];
+      const activity = formData.localOffCampus.activitiesOffCampus[0];
       newErrors.activitiesOffCampus = [{
         curriculumRequirement: !activity.curriculumRequirement.compliance,
         destination: !activity.destination.compliance,
@@ -363,7 +381,7 @@ const isBeforeComplete = useMemo(() => {
   };
   
   const removeBasicInfoRow = (index) => {
-    if (formData.basicInformation.length <= 1) return; // Don't remove the last row
+    if (formData.localOffCampus.basicInformation.length <= 1) return; // Don't remove the last row
     setFormData(prev => ({
       ...prev,
       basicInformation: prev.basicInformation.filter((_, i) => i !== index)
@@ -384,24 +402,62 @@ const isBeforeComplete = useMemo(() => {
       }
     }, []);
     
+    const handleSubmitBefore = async () => {
+      const isValid = validateSection(2); // Validate Activities Off Campus
+      
+      if (isValid) {
+        try {
+          const token = localStorage.getItem('token');
+          if (!token) {
+            alert('Authentication token not found. Please log in again.');
+            return;
+          }
+    
+          const userData = JSON.parse(localStorage.getItem('user')); // Get user data
+      
+          const response = await fetch('https://studevent-server.vercel.app/api/forms/local-off-campus/before', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              formType: "LocalOffCampus",
+              localOffCampus: {
+                ...formData.localOffCampus,
+                formPhase: 'BEFORE',
+                submittedBy: userData?._id // Use optional chaining
+              }
+            }),
+          });
+    
+    
+          if (!response.ok) {
+            const errorData = await response.json();
+            alert(`Error: ${errorData.error || 'Submission failed'}`);
+            return;
+          }
+    
+          const result = await response.json();
+          setEventId(result._id);
+          setBeforeCompleted(true); // Fixed: should be setBeforeCompleted not beforeCompleted
+          setFormPhase('AFTER');
+          setCurrentStep(3);
+          setNotificationVisible(true);
+          setTimeout(() => setNotificationVisible(false), 3000);
+    
+        } catch (error) {
+          console.error('Error:', error);
+          alert('An error occurred while submitting the form.');
+        }
+      } else {
+        setNotificationVisible(true);
+        setTimeout(() => setNotificationVisible(false), 3000);
+      }
+    };
     
 
   const handleSubmit = async () => {
-    const requiredFields = [
-      'eventLocation', 'applicationDate', 'studentOrganization', 'contactPerson', 'contactNo', 'emailAddress', 
-      'eventTitle', 'eventType', 'venueAddress', 'eventStartDate', 'eventEndDate', 'organizer', 'budgetAmount', 
-      'budgetFrom', 'coreValuesIntegration', 'objectives', 'marketingCollaterals', 'pressRelease', 'others', 'eventFacilities', 
-      'holdingArea', 'toilets', 'transportationandParking', 'more', 'licensesRequired', 'houseKeeping', 'wasteManagement', 
-      'eventManagementHead', 'eventCommitteesandMembers', 'health', 'safetyAttendees', 'emergencyFirstAid', 
-      'fireSafety', 'weather'
-    ];
-
-    for (const field of requiredFields) {
-      if (!formData[field]) {
-        alert(`${field} is required.`);
-        return;
-      }
-    }
 
     const eventStart = moment(formData.eventStartDate);
     const eventEnd = moment(formData.eventEndDate);
@@ -423,17 +479,24 @@ const isBeforeComplete = useMemo(() => {
         return;
       }
   
-      const response = await fetch('https://studevent-server.vercel.app/api/forms/local-off-campus', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          ...formData,
-          formType: "LocalOffCampus"
-        }),
-      });
+    const userData = JSON.parse(localStorage.getItem('user')); // Get user data
+    
+    const response = await fetch('https://studevent-server.vercel.app/api/forms/local-off-campus/after', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        formType: "LocalOffCampus",
+        localOffCampus: {
+          ...formData.localOffCampus,
+          formPhase: 'AFTER',
+          eventId: eventId,
+          submittedBy: userData?._id // Use optional chaining
+        }
+      }),
+    });
   
       if (!response.ok) {
         const errorData = await response.json();
@@ -447,8 +510,10 @@ const isBeforeComplete = useMemo(() => {
       setNotificationVisible(true);
       setTimeout(() => setNotificationVisible(false), 3000);
   
-      // Reset form
-      setFormData({
+      // Reset form - update to match your new structure
+    setFormData({
+      localOffCampus: {
+        formPhase: 'BEFORE',
         nameOfHei: "",
         region: "",
         address: "",
@@ -481,7 +546,11 @@ const isBeforeComplete = useMemo(() => {
         }],
         problemsEncountered: "",
         recommendation: "",
-      });
+      }
+    });
+    setCurrentStep(0); // Reset to first step
+    setFormPhase('BEFORE');
+
   
     } catch (error) {
       console.error('Error:', error);
@@ -501,7 +570,7 @@ const isBeforeComplete = useMemo(() => {
             <input
               type="text"
               name="nameOfHei"
-              value={formData.nameOfHei}
+              value={formData.localOffCampus.nameOfHei}
               onChange={(e) => handleChange(e)}
               className={fieldErrors.nameOfHei ? 'input-error' : ''}
             />
@@ -513,7 +582,7 @@ const isBeforeComplete = useMemo(() => {
               <input
                 type="text"
                 name="region"
-                value={formData.region}
+                value={formData.localOffCampus.region}
                 onChange={(e) => handleChange(e)}
                 className={fieldErrors.region ? 'input-error' : ''}
               />
@@ -524,7 +593,7 @@ const isBeforeComplete = useMemo(() => {
               <input
                 type="text"
                 name="address"
-                value={formData.address}
+                value={formData.localOffCampus.address}
                 onChange={(e) => handleChange(e)}
                 className={fieldErrors.address ? 'input-error' : ''}
               />
@@ -550,21 +619,21 @@ const isBeforeComplete = useMemo(() => {
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody>
-            {formData.basicInformation.map((info, index) => (
+          <tbody className="tbody-fields">
+            {formData.localOffCampus.basicInformation.map((info, index) => (
               <tr key={index}>
                 <td>
-                  <input
-                    type="text"
-                    name="programName"
-                    value={info.programName}
-                    onChange={(e) => handleChange(e, index, 'basicInformation')}
-                    className={fieldErrors.basicInformation[index]?.programName ? 'input-error' : ''}
-                  />
-                  {fieldErrors.basicInformation[index]?.programName && (
-                    <div className="error-message">This field is required</div>
-                  )}
-                </td>
+                <input
+                  type="text"
+                  name="programName"
+                  value={info.programName}
+                  onChange={(e) => handleChange(e, index, 'basicInformation')}
+                  className={fieldErrors.basicInformation[index]?.programName ? 'input-error' : ''}
+                />
+                {fieldErrors.basicInformation[index]?.programName && (
+                  <div className="error-message">This field is required</div>
+                )}
+              </td>
                 <td>
                   <input
                     type="text"
@@ -593,7 +662,7 @@ const isBeforeComplete = useMemo(() => {
                   <DatePicker
                     selected={info.inclusiveDates ? new Date(info.inclusiveDates) : null}
                     onChange={(date) => {
-                      const updatedBasicInfo = [...formData.basicInformation];
+                      const updatedBasicInfo = [...formData.localOffCampus.basicInformation];
                       updatedBasicInfo[index].inclusiveDates = date.toISOString();
                       setFormData({
                         ...formData,
@@ -633,7 +702,7 @@ const isBeforeComplete = useMemo(() => {
                   )}
                 </td>
                 <td>
-                  {formData.basicInformation.length > 1 && (
+                  {formData.localOffCampus.basicInformation.length > 1 && (
                     <button 
                       type="button"
                       className="remove-row-btn"
@@ -674,20 +743,20 @@ const isBeforeComplete = useMemo(() => {
                 <tbody>
                   {/* Curriculum Requirement */}
                   <ComplianceRow
-                  label="1. Curriculum Requirement"
-                  value={formData.activitiesOffCampus[0].curriculumRequirement.compliance}
-                  remarks={formData.activitiesOffCampus[0].curriculumRequirement.remarks}
-                  onChange={(compliance, remarks) => 
-                    handleActivityChange(null, 'curriculumRequirement', compliance, remarks)
-                  }
-                  hasError={getFieldError('curriculumRequirement')}
-                />
+                    label="1. Curriculum Requirement"
+                    value={formData.localOffCampus.activitiesOffCampus[0].curriculumRequirement.compliance}
+                    remarks={formData.localOffCampus.activitiesOffCampus[0].curriculumRequirement.remarks}
+                    onChange={(compliance, remarks) => 
+                      handleActivityChange(null, 'curriculumRequirement', compliance, remarks)
+                    }
+                    hasError={getFieldError('curriculumRequirement')}
+                  />
       
                   {/* Destination */}
                   <ComplianceRow
                     label="2. Destination"
-                    value={formData.activitiesOffCampus[0].destination.compliance}
-                    remarks={formData.activitiesOffCampus[0].destination.remarks}
+                    value={formData.localOffCampus.activitiesOffCampus[0].destination.compliance}
+                    remarks={formData.localOffCampus.activitiesOffCampus[0].destination.remarks}
                     onChange={(compliance, remarks) => 
                       handleActivityChange(null, 'destination', compliance, remarks)
                     }
@@ -696,20 +765,20 @@ const isBeforeComplete = useMemo(() => {
       
                   {/* Handbook or Manual */}
                   <ComplianceRow
-                    label="3. Handbook or Manual"
-                    value={formData.activitiesOffCampus[0].handbook?.compliance }
-                    remarks={formData.activitiesOffCampus[0].handbook?.remarks }
+                    label="3. Handbook Or Manual"
+                    value={formData.localOffCampus.activitiesOffCampus[0].handbook.compliance}
+                    remarks={formData.localOffCampus.activitiesOffCampus[0].handbook.remarks}
                     onChange={(compliance, remarks) => 
                       handleActivityChange(null, 'handbook', compliance, remarks)
                     }
-                    hasError={getFieldError('activitiesOffCampus')}
+                    hasError={getFieldError('handbook')}
                   />
 
                   {/* Students Section */}
                   <ComplianceRow
                     label="4. Consent of Parents/Guardians"
-                    value={formData.activitiesOffCampus[0].guardianConsent.compliance}
-                    remarks={formData.activitiesOffCampus[0].guardianConsent.remarks}
+                    value={formData.localOffCampus.activitiesOffCampus[0].guardianConsent.compliance}
+                    remarks={formData.localOffCampus.activitiesOffCampus[0].guardianConsent.remarks}
                     onChange={(compliance, remarks) => 
                       handleActivityChange(null, 'guardianConsent', compliance, remarks)
                     }
@@ -718,8 +787,8 @@ const isBeforeComplete = useMemo(() => {
                   {/* Personnel In-Charge */}
                   <ComplianceRow
                     label="5. Personnel-In-Charge"
-                    value={formData.activitiesOffCampus[0].personnelInCharge.compliance}
-                    remarks={formData.activitiesOffCampus[0].personnelInCharge.remarks}
+                    value={formData.localOffCampus.activitiesOffCampus[0].personnelInCharge.compliance}
+                    remarks={formData.localOffCampus.activitiesOffCampus[0].personnelInCharge.remarks}
                     onChange={(compliance, remarks) => 
                       handleActivityChange(null, 'personnelInCharge', compliance, remarks)
                     }
@@ -729,8 +798,8 @@ const isBeforeComplete = useMemo(() => {
                   {/* First Aid Kit */}
                   <ComplianceRow
                     label="6. First Aid Kit"
-                    value={formData.activitiesOffCampus[0].firstAidKit.compliance}
-                    remarks={formData.activitiesOffCampus[0].firstAidKit.remarks}
+                    value={formData.localOffCampus.activitiesOffCampus[0].firstAidKit.compliance}
+                    remarks={formData.localOffCampus.activitiesOffCampus[0].firstAidKit.remarks}
                     onChange={(compliance, remarks) => 
                       handleActivityChange(null, 'firstAidKit', compliance, remarks)
                     }
@@ -740,8 +809,8 @@ const isBeforeComplete = useMemo(() => {
                   {/* Fees/Funds */}
                   <ComplianceRow
                     label="7. Fees/Funds"
-                    value={formData.activitiesOffCampus[0].feesFunds.compliance}
-                    remarks={formData.activitiesOffCampus[0].feesFunds.remarks}
+                    value={formData.localOffCampus.activitiesOffCampus[0].feesFunds.compliance}
+                    remarks={formData.localOffCampus.activitiesOffCampus[0].feesFunds.remarks}
                     onChange={(compliance, remarks) => 
                       handleActivityChange(null, 'feesFunds', compliance, remarks)
                     }
@@ -751,8 +820,8 @@ const isBeforeComplete = useMemo(() => {
                   {/* Insurance */}
                   <ComplianceRow
                     label="8. Insurance"
-                    value={formData.activitiesOffCampus[0].insurance.compliance}
-                    remarks={formData.activitiesOffCampus[0].insurance.remarks}
+                    value={formData.localOffCampus.activitiesOffCampus[0].insurance.compliance}
+                    remarks={formData.localOffCampus.activitiesOffCampus[0].insurance.remarks}
                     onChange={(compliance, remarks) => 
                       handleActivityChange(null, 'insurance', compliance, remarks)
                     }
@@ -762,8 +831,8 @@ const isBeforeComplete = useMemo(() => {
                   {/* Student Vehicles */}
                   <ComplianceRow
                     label="9. Student Vehicles"
-                    value={formData.activitiesOffCampus[0].studentVehicles.compliance}
-                    remarks={formData.activitiesOffCampus[0].studentVehicles.remarks}
+                    value={formData.localOffCampus.activitiesOffCampus[0].studentVehicles.compliance}
+                    remarks={formData.localOffCampus.activitiesOffCampus[0].studentVehicles.remarks}
                     onChange={(compliance, remarks) => 
                       handleActivityChange(null, 'studentVehicles', compliance, remarks)
                     }
@@ -773,8 +842,8 @@ const isBeforeComplete = useMemo(() => {
                   {/* LGUs/NGOs */}
                   <ComplianceRow
                     label="10. LGUs/NGOs"
-                    value={formData.activitiesOffCampus[0].lgusNgos.compliance}
-                    remarks={formData.activitiesOffCampus[0].lgusNgos.remarks}
+                    value={formData.localOffCampus.activitiesOffCampus[0].lgusNgos.compliance}
+                    remarks={formData.localOffCampus.activitiesOffCampus[0].lgusNgos.remarks}
                     onChange={(compliance, remarks) => 
                       handleActivityChange(null, 'lgusNgos', compliance, remarks)
                     }
@@ -784,8 +853,8 @@ const isBeforeComplete = useMemo(() => {
                   {/* Activities Orientation Section */}
                   <ComplianceRow
                     label="11. Consulations and Announcements"
-                    value={formData.activitiesOffCampus[0].consultationAnnouncements.compliance}
-                    remarks={formData.activitiesOffCampus[0].consultationAnnouncements.remarks}
+                    value={formData.localOffCampus.activitiesOffCampus[0].consultationAnnouncements.compliance}
+                    remarks={formData.localOffCampus.activitiesOffCampus[0].consultationAnnouncements.remarks}
                     onChange={(compliance, remarks) => 
                       handleActivityChange(null, 'consultationAnnouncements', compliance, remarks)
                     }
@@ -797,7 +866,7 @@ const isBeforeComplete = useMemo(() => {
           </div>
         );
 
-        case 3: // After Activity
+case 3: // After Activity
   return (
     <div className="form-section">
       <h2>After Activity Report</h2>
@@ -880,14 +949,14 @@ case 5: // Recommendations
   };
 
     return (
-      <div className="form-ubox-1">
+      <div className="form-ubox-4">
          {notificationVisible && !validateSection(currentStep) && (
       <Notification type="error"message="Please complete all required fields before proceeding" />
         )}
 <div className="sidebar">
   <ul>
     {/* BEFORE Sections - always visible */}
-    <li className={currentStep === 0 ? 'active' : ''}>
+    <li className={`${currentStep === 0 ? 'active' : ''} ${formPhase === 'AFTER' ? 'completed-phase' : ''}`}>
       {validationResults.nameOfHei && validationResults.region && validationResults.address ? (
         <FaCheck className="check-icon green" />
       ) : (
@@ -953,19 +1022,28 @@ case 5: // Recommendations
     </li>
   </ul>
 </div>
-        <div className="inner-forms-1">
+        <div className="inner-forms-4">
           <h1>Local off Campus Proposal</h1>
           {renderStepContent()}
           <div className="form-navigation">
-          {currentStep > 0 && (
+          {currentStep > 0 && formPhase === 'BEFORE' && (
             <button onClick={handleBack}>Back</button>
           )}
-          {currentStep < 5 ? (
-            <button onClick={handleNext}>
-              {currentStep === 5 ? 'Submit' : 'Next'}
-            </button>
-          ) : (
-            <button onClick={handleSubmit}>Submit</button>
+          
+          {currentStep < 2 && formPhase === 'BEFORE' && (
+            <button onClick={handleNext}>Next</button>
+          )}
+          
+          {currentStep === 2 && formPhase === 'BEFORE' && (
+            <button onClick={handleSubmitBefore}>Submit BEFORE Form</button>
+          )}
+          
+          {formPhase === 'AFTER' && currentStep < 5 && (
+            <button onClick={handleNext}>Next</button>
+          )}
+          
+          {formPhase === 'AFTER' && currentStep === 5 && (
+            <button onClick={handleSubmit}>Submit AFTER Report</button>
           )}
         </div>
         </div>
