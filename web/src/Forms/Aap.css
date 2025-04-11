@@ -395,33 +395,6 @@ textarea {
   background-color: #4CAF50;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .form-row {
-    flex-direction: column;
-  }
-
-  .form-row label {
-    flex-basis: 100%;
-  }
-
-  .inner-forms {
-    padding: 20px;
-  }
-
-  h1 {
-    font-size: 22px;
-  }
-
-  input[type="text"],
-  input[type="email"],
-  input[type="date"],
-  textarea,
-  select {
-    width: 100%;
-  }
-}
-
 /* Event Dates */
 .event-dates {
   display: flex;
@@ -692,4 +665,31 @@ textarea {
 
 .next-btn:hover {
   background-color: #45a049;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+  }
+
+  .form-row label {
+    flex-basis: 100%;
+  }
+
+  .inner-forms {
+    padding: 20px;
+  }
+
+  h1 {
+    font-size: 22px;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="date"],
+  textarea,
+  select {
+    width: 100%;
+  }
 }

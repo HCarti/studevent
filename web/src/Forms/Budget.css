@@ -1,8 +1,8 @@
-/* Budget Form Container - More Professional Styling */
+/* Budget Form Container - Responsive Design */
 .budget-form {
   max-width: 1300px;
-  margin: 2rem auto;
-  padding: 2.5rem;
+  margin: 1rem auto;
+  padding: 1.5rem;
   background: #ffffff;
   border-radius: 12px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
@@ -12,34 +12,34 @@
 /* Form Header */
 .budget-form h1 {
   color: #2c3e50;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   text-align: center;
   font-weight: 600;
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   border-bottom: 2px solid #f0f2f5;
-  padding-bottom: 1rem;
+  padding-bottom: 0.75rem;
 }
 
-/* Main Form Fields - Cleaner Look */
+/* Main Form Fields */
 .budget-form .form-group {
-  margin-bottom: 1.8rem;
+  margin-bottom: 1.5rem;
 }
 
 .budget-form label {
   display: block;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.5rem;
   font-weight: 500;
   color: #34495e;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .budget-form input[type="text"],
 .budget-form input[type="number"] {
   width: 100%;
-  padding: 0.85rem;
+  padding: 0.75rem;
   border: 1px solid #e1e5eb;
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   transition: all 0.3s ease;
   background-color: #f9fafc;
 }
@@ -51,9 +51,9 @@
   background-color: #fff;
 }
 
-/* Budget Items Table - More Structured */
+/* Budget Items Table - Responsive Grid */
 .budget-items {
-  margin: 2.5rem 0;
+  margin: 2rem 0;
   border: 1px solid #e1e5eb;
   border-radius: 10px;
   overflow: hidden;
@@ -62,24 +62,34 @@
 
 .budget-header {
   display: grid;
-  grid-template-columns: 90px 110px 2fr 130px 130px 100px;
+  grid-template-columns: 80px 90px minmax(150px, 2fr) 100px 100px 80px;
   background: #f8fafc;
-  padding: 1rem 1.25rem;
+  padding: 0.75rem 1rem;
   font-weight: 600;
   color: #2c3e50;
   border-bottom: 1px solid #e1e5eb;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   letter-spacing: 0.3px;
+  gap: 40px;
 }
 
 .budget-row {
   display: grid;
-  grid-template-columns: 90px 110px 2fr 130px 130px 100px;
-  padding: 1rem 1.25rem;
+  grid-template-columns: 80px 90px minmax(150px, 2fr) 100px 100px 80px;
+  padding: 0.75rem 1rem;
   align-items: center;
   border-bottom: 1px solid #f0f4f8;
   background: #fff;
-  gap: 50px;
+  gap: 40px;
+  justify-content: center;
+}
+
+.others{
+  margin-left: 5px;
+}
+
+.others2{
+  margin-left: 4px;
 }
 
 .budget-row:last-child {
@@ -87,12 +97,12 @@
 }
 
 .budget-row input {
+  display: flex;
   width: 100%;
-  padding: 0.65rem 0.75rem;
+  padding: 0.6rem 0.5rem;
   border: 1px solid #e1e5eb;
   border-radius: 6px;
-  font-size: 0.9rem;
-  margin-right: 0.5rem;
+  font-size: 0.85rem;
   background-color: #f9fafc;
 }
 
@@ -106,21 +116,22 @@
   color: #4a5568;
 }
 
-/* Buttons - More Professional */
+/* Buttons */
 .add-row-btn {
   background: #4285f4;
   color: white;
   border: none;
-  padding: 0.7rem 1.25rem;
+  padding: 0.6rem 1rem;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 0.95rem;
-  margin-top: 1.25rem;
+  font-size: 0.9rem;
+  margin-top: 1rem;
   transition: all 0.3s ease;
   font-weight: 500;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: auto;
 }
 
 .add-row-btn:hover {
@@ -132,33 +143,34 @@
   transform: translateY(0);
 }
 
-.remove-row-btn {
+.remove-btn {
   background: #f44336;
   color: white;
   border: none;
-  padding: 0.45rem 0.9rem;
+  padding: 0.4rem 0.8rem;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   transition: all 0.2s ease;
   font-weight: 500;
+  width: 100%;
 }
 
-.remove-row-btn:hover {
+.remove-btn:hover {
   background: #d32f2f;
 }
 
-/* Submit Button - More Prominent */
+/* Submit Button */
 .submit-btn-bdg {
   background: #34a853;
   color: white;
   border: none;
-  padding: 1rem 1.75rem;
+  padding: 0.9rem 1.5rem;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 600;
-  margin-top: 2rem;
+  margin-top: 1.5rem;
   transition: all 0.3s ease;
   width: 100%;
   letter-spacing: 0.5px;
@@ -169,49 +181,59 @@
   box-shadow: 0 4px 12px rgba(52, 168, 83, 0.2);
 }
 
-/* Grand Total Section - More Emphasis */
+.submit-btn-bdg:disabled {
+  background: #adb5bd;
+  cursor: not-allowed;
+}
+
+/* Grand Total Section */
 .grand-total {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  margin-top: 1.75rem;
-  padding-top: 1.5rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
   border-top: 2px solid #f0f2f5;
 }
 
 .grand-total label {
-  margin-right: 1.25rem;
+  margin-right: 1rem;
   font-weight: 600;
   color: #2c3e50;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .grand-total input {
-  width: 180px;
-  padding: 0.75rem;
+  width: 150px;
+  padding: 0.7rem;
   border: 2px solid #e1e5eb;
   border-radius: 8px;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
   color: #2c3e50;
   text-align: right;
   background-color: #f8fafc;
 }
 
-.budget-header span{
-  display: flex;
-  
-}
-
+/* Input Groups */
 .input-group-nameofRSO {
   display: flex;
   align-items: center;
-  width: 400px
+  width: 100%;
+  max-width: 400px;
+}
+
+.input-group {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
 }
 
 /* Error Styling */
 .error {
   border: 1px solid #ff6b6b !important;
+  outline-color: #ff6b6b;
 }
 
 .error-message {
@@ -219,12 +241,6 @@
   font-size: 0.8rem;
   margin-top: 0.2rem;
   font-style: italic;
-}
-
-.input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
 }
 
 /* Notification Styling */
@@ -260,51 +276,7 @@
   }
 }
 
-/* Button Styling */
-.remove-btn {
-  background-color: #ff6b6b;
-  color: white;
-}
-
-.remove-btn:hover {
-  background-color: #fa5252;
-}
-
-.add-row-btn {
-  background-color: #4dabf7;
-  color: white;
-}
-
-.add-row-btn:hover {
-  background-color: #339af0;
-}
-
-.submit-btn-bdg {
-  background-color: #51cf66;
-  color: white;
-}
-
-.submit-btn-bdg:hover {
-  background-color: #40c057;
-}
-
-.submit-btn-bdg:disabled {
-  background-color: #adb5bd;
-  cursor: not-allowed;
-}
-
-/* Form Group Styling */
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-}
-
-/* Floating Error Tooltip */
+/* Error Tooltip */
 .error-tooltip {
   position: absolute;
   background-color: #ff6b6b;
@@ -335,12 +307,6 @@
   border-top: 5px solid #ff6b6b;
 }
 
-.input-group {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-}
-
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -352,58 +318,103 @@
   }
 }
 
-/* Make sure inputs have relative positioning */
-input[type="text"],
-input[type="number"] {
-  position: relative;
-}
-
-/* Error state */
-.error {
-  border-color: #ff6b6b !important;
-  outline-color: #ff6b6b;
-}
-/* Responsive Adjustments - More Refined */
-@media (max-width: 900px) {
-  .budget-form {
-    padding: 1.75rem;
-  }
-  
+/* Responsive Adjustments */
+@media (max-width: 1024px) {
   .budget-header,
   .budget-row {
-    grid-template-columns: repeat(3, 1fr);
-    grid-gap: 0.75rem;
+    grid-template-columns: 70px 80px minmax(120px, 2fr) 90px 90px 70px;
+    padding: 0.6rem 0.8rem;
+    gap: 0.4rem;
   }
   
-  .budget-header span:nth-child(n+4),
-  .budget-row input:nth-child(n+4),
-  .budget-row button {
-    grid-column: span 1;
+  .budget-row input {
+    max-width: 100%;
+    padding: 0.5rem;
+    font-size: 0.8rem;
+    overflow: hidden;
   }
   
-  .remove-row-btn {
+  .remove-btn {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .budget-form {
+    padding: 1.25rem;
+  }
+  
+  .budget-header {
+    display: none; /* Hide header on small screens */
+  }
+  
+  .budget-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 1rem;
+    position: relative;
+    border-bottom: 1px solid #e1e5eb;
+  }
+  
+  .budget-row > div {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .budget-row > div::before {
+    content: attr(data-label);
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: #5c6b80;
+    margin-bottom: 0.25rem;
+  }
+  
+  .remove-btn {
+    width: auto;
     margin-top: 0.5rem;
-    width: 100%;
-  }
-}
-
-@media (max-width: 600px) {
-  .budget-form {
-    padding: 1.5rem;
+    align-self: flex-end;
   }
   
-  .budget-header,
-  .budget-row {
-    grid-template-columns: 1fr 1fr;
+  .input-group-nameofRSO {
+    max-width: 100%;
   }
   
   .grand-total {
     flex-direction: column;
-    align-items: flex-end;
+    align-items: flex-start;
   }
   
   .grand-total label {
     margin-right: 0;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .grand-total input {
+    width: 100%;
   }
 }
+
+@media (max-width: 480px) {
+  .budget-form {
+    padding: 1rem;
+    margin: 0.5rem;
+  }
+  
+  .budget-form h1 {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+  }
+  
+  .submit-btn-bdg {
+    padding: 0.8rem;
+    font-size: 0.95rem;
+  }
+  
+  .add-row-btn {
+    width: 100%;
+  }
+}
+

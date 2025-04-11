@@ -96,6 +96,7 @@ const Budget = () => {
         const data = await response.json();
         
         setFormData({
+          formType: "Budget", // Add this line
           nameOfRso: data.nameOfRso || data.formData?.nameOfRso || "",
           eventTitle: data.eventTitle || data.formData?.eventTitle || "",
           grandTotal: data.grandTotal || data.formData?.grandTotal || 0
@@ -429,10 +430,10 @@ const Budget = () => {
       <div className="budget-items">
         <div className="budget-header">
           <span>Quantity</span>
-          <span>Unit</span>
-          <span>Description</span>
-          <span>Unit Cost</span>
-          <span>Total</span>
+          <span className="others">Unit</span>
+          <span className="others">Description</span>
+          <span className="others2">Unit Cost</span>
+          <span className="others2">Total</span>
           <span>Action</span>
         </div>
         
