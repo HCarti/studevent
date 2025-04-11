@@ -381,49 +381,55 @@ exports.createForm = async (req, res) => {
 
 // Add this to your formController.js
 
+
 exports.deleteForm = async (req, res) => {
   try {
     const { formId } = req.params;
     const userEmail = req.user?.email;
+    const isAdmin = req.user?.role === 'Admin';
 
-    // 1. Validate the form exists and belongs to the user
+    // 1. Validate the form exists
     const form = await Form.findById(formId);
     if (!form) {
       return res.status(404).json({ message: 'Form not found' });
     }
 
-    // Check if the current user is the submitter or an admin
-    const isAdmin = req.user?.role === 'Admin';
+    // 2. Check if user is authorized (submitter or admin)
     const isSubmitter = form.emailAddress === userEmail;
-    
     if (!isAdmin && !isSubmitter) {
       return res.status(403).json({ 
         message: 'Only the form submitter or admin can delete this form' 
       });
     }
 
-    // 2. Check if the form can be deleted (only pending forms can be deleted)
+    // 3. Find the associated tracker
     const tracker = await EventTracker.findOne({ formId });
     if (!tracker) {
       return res.status(404).json({ message: 'Progress tracker not found' });
     }
 
-    // For non-admins, check if the form is still in editable state
-    if (!isAdmin) {
-      const isEditable = () => {
-        if (!tracker.reviewStages || tracker.currentStep === undefined) return false;
-        const deanStepIndex = tracker.reviewStages.findIndex(step => step.role === 'Dean');
-        return deanStepIndex === -1 || tracker.currentStep < deanStepIndex;
-      };
+    // 4. Define the restricted review stages
+    const restrictedStages = [
+      'Dean',
+      'Admin',
+      'Academic Services',
+      'Academic Director',
+      'Executive Director'
+    ];
 
-      if (!isEditable()) {
-        return res.status(403).json({ 
-          message: 'Form cannot be deleted as it has already progressed in the review process' 
-        });
-      }
+    // 5. Check if form has passed any restricted stage
+    const hasPassedRestrictedStage = tracker.steps.some(step => {
+      return restrictedStages.includes(step.reviewerRole) && 
+             (step.status === 'approved' || step.status === 'declined');
+    });
+
+    if (hasPassedRestrictedStage && !isAdmin) {
+      return res.status(403).json({
+        message: 'Form cannot be deleted as it has progressed beyond allowed review stages'
+      });
     }
 
-    // 3. Start a transaction to ensure all deletions succeed or fail together
+    // 6. Start transaction for atomic deletion
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -434,16 +440,15 @@ exports.deleteForm = async (req, res) => {
       // Delete the associated tracker
       await EventTracker.deleteOne({ formId }).session(session);
 
-      // Delete associated calendar event if exists
+      // Delete associated calendar event
       await CalendarEvent.deleteOne({ formId }).session(session);
 
-      // Delete any associated notifications
-      await Notification.deleteMany({ 
+      // Delete related notifications
+      await Notification.deleteMany({
         userEmail: form.emailAddress,
-        message: { $regex: form.formType, $options: 'i' } 
+        message: { $regex: form.formType, $options: 'i' }
       }).session(session);
 
-      // Commit the transaction
       await session.commitTransaction();
       session.endSession();
 
@@ -453,7 +458,6 @@ exports.deleteForm = async (req, res) => {
       });
 
     } catch (transactionError) {
-      // If any error occurs, abort the transaction
       await session.abortTransaction();
       session.endSession();
       throw transactionError;
