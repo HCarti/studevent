@@ -445,6 +445,14 @@ const isBeforeComplete = useMemo(() => {
           setCurrentStep(3);
           setNotificationVisible(true);
           setTimeout(() => setNotificationVisible(false), 3000);
+
+          console.log("Submitting:", {
+            nameOfHei: formData.localOffCampus.nameOfHei,
+            region: formData.localOffCampus.region,
+            address: formData.localOffCampus.address,
+            basicInformation: formData.localOffCampus.basicInformation,
+            activitiesOffCampus: formData.localOffCampus.activitiesOffCampus
+          });
     
         } catch (error) {
           console.error('Error:', error);

@@ -638,18 +638,32 @@ exports.updateForm = async (req, res) => {
 // Submit BEFORE phase
 exports.submitLocalOffCampusBefore = async (req, res) => {
   try {
-    const { nameOfHei, region, address, basicInformation, activitiesOffCampus } = req.body;
+    const { localOffCampus } = req.body;
     
-    // Validate required fields
-    if (!nameOfHei || !region || !address) {
-      return res.status(400).json({ error: "School information is required" });
+    if (!localOffCampus) {
+      return res.status(400).json({ error: "Form data is required" });
     }
     
-    if (!basicInformation || !Array.isArray(basicInformation) || basicInformation.length === 0) {
+    const { nameOfHei, region, address, basicInformation, activitiesOffCampus } = localOffCampus;
+    
+    // Validate required fields
+    if (!nameOfHei?.trim()) {
+      return res.status(400).json({ error: "Name of HEI is required" });
+    }
+    
+    if (!region?.trim()) {
+      return res.status(400).json({ error: "Region is required" });
+    }
+    
+    if (!address?.trim()) {
+      return res.status(400).json({ error: "Address is required" });
+    }
+    
+    if (!Array.isArray(basicInformation) || basicInformation.length === 0) {
       return res.status(400).json({ error: "At least one basic information entry is required" });
     }
     
-    if (!activitiesOffCampus || !Array.isArray(activitiesOffCampus) || activitiesOffCampus.length === 0) {
+    if (!Array.isArray(activitiesOffCampus) || activitiesOffCampus.length === 0) {
       return res.status(400).json({ error: "Activities off campus information is required" });
     }
 
