@@ -264,6 +264,24 @@
   cursor: not-allowed;
 }
 
+.status-message {
+  padding: 10px;
+  border-radius: 4px;
+  margin: 10px 0;
+}
+
+.status-message.success {
+  background-color: #e6ffe6;
+  color: green;
+  border: 1px solid #a3e9a4;
+}
+
+.status-message.error {
+  background-color: #ffebee;
+  color: #d32f2f;
+  border: 1px solid #ef9a9a;
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }

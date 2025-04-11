@@ -110,39 +110,33 @@ const OrgSubmittedForms = () => {
             }
           );
       
-          const responseData = await response.json(); // Always parse the response
+          const responseData = await response.json();
       
           if (!response.ok) {
-            // Handle specific error messages from server if available
             throw new Error(responseData.message || 
               `Failed to delete form (Status: ${response.status})`);
           }
       
           // Success case:
-          // 1. Remove the deleted form from state
           setForms(forms.filter(form => form._id !== formToDelete._id));
-          
-          // 2. Show success message (optional)
-          setError({ type: 'success', message: 'Form deleted successfully!' });
-          
-          // 3. Close modal and reset
           setShowDeleteModal(false);
           setFormToDelete(null);
-      
-          // Optional: Auto-hide success message after delay
+          
+          // Set success message (as string)
+          setError("Form deleted successfully!");
+          
+          // Auto-hide success message after delay
           setTimeout(() => setError(null), 3000);
       
         } catch (error) {
           console.error("Error deleting form:", error);
-          setError({ 
-            type: 'error', 
-            message: error.message || "Failed to delete form. Please try again." 
-          });
+          setError(error.message || "Failed to delete form. Please try again.");
         } finally {
           setIsDeleting(false);
         }
       };
-      
+
+
       const handleCancelDelete = () => {
         setShowDeleteModal(false);
         setFormToDelete(null);
@@ -152,7 +146,11 @@ const OrgSubmittedForms = () => {
     return (
         <div className="org-submitted-forms-container">
             <h2>My Submitted Forms</h2>
-            {error && <p className="error-message">{error}</p>}
+            {error && (
+                <p className={`status-message ${error.includes("success") ? "success" : "error"}`}>
+                    {error}
+                </p>
+                )}
 
             {loading ? (
                 <div className="loading-spinner">
