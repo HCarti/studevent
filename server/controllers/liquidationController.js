@@ -1,5 +1,6 @@
 const Liquidation = require('../models/Liquidation');
 const { put } = require('@vercel/blob');
+const Notification = require('../models/Notification');
 
 exports.submitLiquidation = async (req, res) => {
   try {
@@ -18,7 +19,7 @@ exports.submitLiquidation = async (req, res) => {
 
     // Save to database
     const newLiquidation = await Liquidation.create({
-      organization: req.body.organization || 'Unknown Organization', // Provide default
+      organization: req.body.organizationName || 'Unknown Organization', // Provide default
       fileName: req.file.originalname,
       fileUrl: blob.url,
       submittedBy: req.user?.id,

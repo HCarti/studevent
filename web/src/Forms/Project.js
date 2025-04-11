@@ -352,7 +352,7 @@ const formatTimeDisplay = (timeStr) => {
       setCurrentStep(currentStep + 1);
     } else {
       // Show error notification
-      setTimeout(() => setNotification({ visible: false }), 3000);navigate('/');
+      setTimeout(() => setNotification({ visible: false }), 3000);
       
       // Highlight all errors in current step
       showFieldErrors(currentStep);
@@ -561,6 +561,7 @@ setTimeout(() => setNotification({ visible: false }), 3000);
     type: 'error'
   });
   setTimeout(() => setNotification({ visible: false }), 3000);
+  navigate('/')
 } finally {
   setLoading(false);
 }
