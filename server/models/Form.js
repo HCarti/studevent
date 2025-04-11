@@ -292,15 +292,16 @@ const localOffCampusSchema = new mongoose.Schema({
     afterActivity: {
         type: [afterActivitySchema],
         required: function() {
-            return this.formPhase === 'AFTER';
+          return this.formPhase === 'AFTER'; // Only required for AFTER phase
         },
         validate: {
-            validator: function(v) {
-                return v.length > 0;
-            },
-            message: 'At least one after activity entry is required'
+          validator: function(v) {
+            // Only validate array length for AFTER phase
+            return this.formPhase !== 'AFTER' || v.length > 0;
+          },
+          message: 'At least one after activity entry is required for AFTER phase'
         }
-    },
+      },
     problemsEncountered: {
         type: String,
         required: function() {

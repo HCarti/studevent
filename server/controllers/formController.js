@@ -720,46 +720,54 @@ exports.submitLocalOffCampusBefore = async (req, res) => {
 // Submit AFTER phase
 exports.submitLocalOffCampusAfter = async (req, res) => {
   try {
-    const { eventId, afterActivity, problemsEncountered, recommendation } = req.body;
+    const { localOffCampus } = req.body;
+    
+    if (!localOffCampus) {
+      return res.status(400).json({ error: "Form data is required" });
+    }
+    
+    // Only extract BEFORE phase fields
+    const { nameOfHei, region, address, basicInformation, activitiesOffCampus } = localOffCampus;
     
     // Validate required fields
-    if (!eventId) {
-      return res.status(400).json({ error: "Event ID is required" });
+    const errors = [];
+    if (!nameOfHei?.trim()) errors.push("Name of HEI is required");
+    if (!region?.trim()) errors.push("Region is required");
+    if (!address?.trim()) errors.push("Address is required");
+    if (!Array.isArray(basicInformation) || basicInformation.length === 0) {
+      errors.push("At least one basic information entry is required");
+    }
+    if (!Array.isArray(activitiesOffCampus) || activitiesOffCampus.length === 0) {
+      errors.push("Activities off campus information is required");
     }
     
-    if (!afterActivity || !Array.isArray(afterActivity) || afterActivity.length === 0) {
-      return res.status(400).json({ error: "After activity information is required" });
-    }
-    
-    if (!problemsEncountered) {
-      return res.status(400).json({ error: "Problems encountered is required" });
-    }
-    
-    if (!recommendation) {
-      return res.status(400).json({ error: "Recommendation is required" });
+    if (errors.length > 0) {
+      return res.status(400).json({ 
+        error: "Validation failed",
+        details: errors 
+      });
     }
 
-    // Verify the BEFORE form exists
-    const beforeForm = await Form.findById(eventId);
-    if (!beforeForm || beforeForm.formType !== "LocalOffCampus") {
-      return res.status(404).json({ error: "Original BEFORE form not found" });
-    }
-
-    // Create new AFTER form
-    const afterForm = new Form({
+    // Create form with ONLY BEFORE phase data
+    const newForm = new Form({
       formType: "LocalOffCampus",
       localOffCampus: {
-        formPhase: "AFTER",
-        eventId: beforeForm._id,
-        afterActivity,
-        problemsEncountered,
-        recommendation,
+        formPhase: "BEFORE",
+        nameOfHei,
+        region,
+        address,
+        basicInformation,
+        activitiesOffCampus,
         submittedBy: req.user._id,
-        status: "submitted"
+        status: "submitted",
+        // Explicitly set AFTER phase fields to null/empty
+        afterActivity: [],
+        problemsEncountered: null,
+        recommendation: null
       }
     });
 
-    const savedForm = await afterForm.save();
+    const savedForm = await newForm.save();
     
     // Update tracker
     await EventTracker.updateOne(
