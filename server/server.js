@@ -10,6 +10,7 @@ const notificationRoutes = require("./routes/notificationRoutes"); // Import the
 const eventTrackerRoutes = require('./routes/eventTrackerRoutes');
 const calendarRoutes = require('./routes/calendarRoutes'); // Import the calendar routes
 const feedbackRoutes = require('./routes/feedbackRoutes');
+const liquidationRoutes = require('./routes/liquidationRoutes');
 
 const app = express();
 
@@ -59,6 +60,7 @@ app.use("/api", authenticateToken, notificationRoutes); // Apply it
 app.use('/api/calendar', authenticateToken, calendarRoutes);
 app.use('/api/tracker', authenticateToken, eventTrackerRoutes);
 app.use('/api/feedback', authenticateToken, feedbackRoutes);
+app.use('/api/liquidation', authenticateToken, liquidationRoutes);
 app.use('/api/forms', authenticateToken, formRoutes);
 app.use('/api', authenticateToken, emailRoutes); // Protect specific routes
 

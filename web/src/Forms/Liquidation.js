@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
+import axios from 'axios';
 import './Liquidation.css';
 
 const Liquidation = () => {
@@ -7,6 +8,8 @@ const Liquidation = () => {
   const [fileName, setFileName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [fileBlob, setFileBlob] = useState(null);
   
   // State for liquidation data
   const [uploadedData, setUploadedData] = useState(null);
@@ -29,7 +32,9 @@ const Liquidation = () => {
     }
 
     setFileName(file.name);
+    setFileBlob(file);
     setError('');
+    setSuccess('');
     setIsLoading(true);
 
     const reader = new FileReader();
@@ -59,25 +64,54 @@ const Liquidation = () => {
   };
 
   const processLiquidationData = (data) => {
-    // Add your liquidation-specific processing here
-    // This is just an example - modify according to your needs
     const processed = data.map(item => ({
       ...item,
-      // Example transformation: calculate net amount if gross and tax exist
       netAmount: item.grossAmount && item.tax 
         ? item.grossAmount - item.tax 
         : item.grossAmount,
-      // Add other liquidation-specific calculations
-      status: 'Pending' // Default status
+      status: 'Pending'
     }));
-    
     setProcessedData(processed);
   };
 
-  const handleLiquidationSubmit = () => {
-    // Add your submission logic here
-    console.log('Submitting liquidation data:', processedData);
-    alert('Liquidation data submitted successfully!');
+  const handleLiquidationSubmit = async () => {
+    if (!fileBlob) {
+      setError('No file selected');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', fileBlob);
+      formData.append('processedData', JSON.stringify(processedData));
+
+      const response = await axios.post('https://studevent-server.vercel.app/api/liquidation/submit', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.data.success) {
+        setSuccess('Liquidation submitted successfully!');
+        // Reset form
+        setFileName('');
+        setUploadedData(null);
+        setProcessedData(null);
+        setFileBlob(null);
+        document.getElementById('excel-upload').value = '';
+      } else {
+        throw new Error(response.data.message || 'Submission failed');
+      }
+    } catch (error) {
+      setError(error.response?.data?.message || error.message || 'Submission failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -104,6 +138,7 @@ const Liquidation = () => {
           )}
         </div>
         {error && <div className="error-message">{error}</div>}
+        {success && <div className="success-message">{success}</div>}
       </div>
 
       {/* Data Preview Section */}
@@ -123,7 +158,7 @@ const Liquidation = () => {
                 {uploadedData.slice(0, 5).map((row, index) => (
                   <tr key={index}>
                     {Object.values(row).map((value, i) => (
-                      <td key={i}>{value}</td>
+                      <td key={i}>{typeof value === 'number' ? value.toFixed(2) : value}</td>
                     ))}
                   </tr>
                 ))}
@@ -164,8 +199,16 @@ const Liquidation = () => {
           <button 
             onClick={handleLiquidationSubmit}
             className="submit-btn"
+            disabled={isLoading || !fileBlob}
           >
-            Submit Liquidation
+            {isLoading ? (
+              <>
+                <span className="spinner"></span>
+                Submitting...
+              </>
+            ) : (
+              'Submit Liquidation'
+            )}
           </button>
         </div>
       )}
