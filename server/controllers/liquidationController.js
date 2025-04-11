@@ -2,6 +2,9 @@ const Liquidation = require('../models/Liquidation');
 const { put } = require('@vercel/blob');
 
 // Submit liquidation file (Vercel Blob version)
+const Liquidation = require('../models/Liquidation');
+const { put } = require('@vercel/blob');
+
 exports.submitLiquidation = async (req, res) => {
   try {
     if (!req.file) {
@@ -19,10 +22,10 @@ exports.submitLiquidation = async (req, res) => {
 
     // Save to database
     const newLiquidation = await Liquidation.create({
-      organization: req.body.organization,
-      fileName: req.file.originalname, // Use original filename
+      organization: req.body.organization || 'Unknown Organization', // Provide default
+      fileName: req.file.originalname,
       fileUrl: blob.url,
-      submittedBy: req.user?.id, // Optional chaining if auth is optional
+      submittedBy: req.user?.id,
     });
 
     res.status(201).json({
@@ -31,6 +34,7 @@ exports.submitLiquidation = async (req, res) => {
       data: newLiquidation,
     });
   } catch (error) {
+    console.error('Submission error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',

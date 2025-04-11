@@ -79,36 +79,44 @@ const Liquidation = () => {
       setError('No file selected');
       return;
     }
-
+  
     setIsLoading(true);
     setError('');
     setSuccess('');
-
+  
     try {
       const formData = new FormData();
       formData.append('file', fileBlob);
-      formData.append('processedData', JSON.stringify(processedData));
-
-      const response = await axios.post('https://studevent-server.vercel.app/api/liquidation/submit', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (response.data.success) {
-        setSuccess('Liquidation submitted successfully!');
-        // Reset form
-        setFileName('');
-        setUploadedData(null);
-        setProcessedData(null);
-        setFileBlob(null);
-        document.getElementById('excel-upload').value = '';
-      } else {
-        throw new Error(response.data.message || 'Submission failed');
+      formData.append('organization', 'Your Organization Name'); // Add organization
+      
+      // If you have processed data to send:
+      if (processedData) {
+        formData.append('processedData', JSON.stringify(processedData));
       }
+  
+      const response = await fetch('https://studevent-server.vercel.app/api/liquidation/submit', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formData
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Submission failed');
+      }
+  
+      setSuccess('Liquidation submitted successfully!');
+      // Reset form
+      setFileName('');
+      setUploadedData(null);
+      setProcessedData(null);
+      setFileBlob(null);
+      document.getElementById('excel-upload').value = '';
     } catch (error) {
-      setError(error.response?.data?.message || error.message || 'Submission failed');
+      setError(error.message || 'Submission failed');
     } finally {
       setIsLoading(false);
     }
