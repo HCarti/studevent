@@ -66,10 +66,11 @@ const SuperAdminAddUser = () => {
     };
 
     const validateForm = () => {
-        const { firstName, lastName, email, password, confirmPassword, role, organizationType, organizationName, presidentName } = formData;
+        const { role, firstName, lastName, email, password, confirmPassword, organizationType, organizationName, presidentName } = formData;
         let errors = {};
         let isValid = true;
-
+    
+        // Role-specific validations
         if (role === 'Admin' || role === 'Authority') {
             if (!firstName.trim()) {
                 isValid = false;
@@ -80,12 +81,11 @@ const SuperAdminAddUser = () => {
                 errors.lastName = 'Last Name is required.';
             }
         }
-
+    
         if (role === 'Organization') {
             if (!organizationType) {
                 isValid = false;
                 errors.organizationType = 'Organization Type is required.';
-                errors.presidentSignature = 'President signature is required.'; // Specific error key
             }
             if (!organizationName) {
                 isValid = false;
@@ -95,8 +95,18 @@ const SuperAdminAddUser = () => {
                 isValid = false;
                 errors.presidentName = 'President Name is required.';
             }
+            if (!presidentSignature) {
+                isValid = false;
+                errors.presidentSignature = 'President signature is required.';
+            }
+        } else if (role === 'Admin' || role === 'Authority') {
+            if (!signature) {
+                isValid = false;
+                errors.signature = 'Signature is required.';
+            }
         }
-
+    
+        // Common validations
         if (!email) {
             isValid = false;
             errors.email = 'Email is required.';
@@ -104,7 +114,7 @@ const SuperAdminAddUser = () => {
             isValid = false;
             errors.email = 'Enter a valid email address.';
         }
-
+    
         if (!password) {
             isValid = false;
             errors.password = 'Password is required.';
@@ -112,7 +122,7 @@ const SuperAdminAddUser = () => {
             isValid = false;
             errors.password = 'Password must be at least 6 characters.';
         }
-
+    
         if (!confirmPassword) {
             isValid = false;
             errors.confirmPassword = 'Confirm Password is required.';
@@ -120,23 +130,16 @@ const SuperAdminAddUser = () => {
             isValid = false;
             errors.confirmPassword = 'Passwords do not match.';
         }
-
-        // Validate signature for roles that require it
-        if ((role === 'Admin' || role === 'Authority' || role === 'Organization') && !signature) {
+    
+        if (!logo) {
             isValid = false;
-            errors.signature = 'Signature is required.';
+            errors.logo = 'Logo is required.';
         }
-        if (formData.role === 'Organization' && !presidentSignature) {
-            isValid = false;
-            errors.signature = 'President signature is required.';
-        } else if ((formData.role === 'Admin' || formData.role === 'Authority') && !signature) {
-            isValid = false;
-            errors.signature = 'Signature is required.';
-        }
-
+    
         setValidationErrors(errors);
         return isValid;
     };
+    
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -144,31 +147,22 @@ const SuperAdminAddUser = () => {
         setSuccess('');
         setValidationErrors({});
     
-        if (!validateForm()) return;
-    
-        if (!logo) {
-            setError('Logo or photo is required.');
+        if (!validateForm()) {
+            console.log('Validation errors:', validationErrors); // Debugging
             return;
         }
     
         const data = new FormData();
+        // Add common fields
         data.append('role', formData.role);
         data.append('email', formData.email);
         data.append('password', formData.password);
         data.append('logo', logo);
     
-        // Add appropriate signature based on role
+        // Add signature based on role
         if (formData.role === 'Organization') {
-            if (!presidentSignature) {
-                setError('President signature is required');
-                return;
-            }
             data.append('presidentSignature', presidentSignature);
         } else {
-            if (!signature) {
-                setError('Signature is required');
-                return;
-            }
             data.append('signature', signature);
         }
     
@@ -177,6 +171,9 @@ const SuperAdminAddUser = () => {
             data.append('firstName', formData.firstName);
             data.append('lastName', formData.lastName);
             data.append('faculty', formData.faculty);
+            if (formData.faculty === 'Adviser') {
+                data.append('organization', formData.organization);
+            }
         } else if (formData.role === 'Admin') {
             data.append('firstName', formData.firstName);
             data.append('lastName', formData.lastName);
@@ -188,11 +185,14 @@ const SuperAdminAddUser = () => {
     
         try {
             setLoading(true);
+            console.log('Submitting data:', Object.fromEntries(data.entries())); // Debugging
+            
             const response = await axios.post('https://studevent-server.vercel.app/api/users', data, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
             });
+            
             setSuccess('User added successfully!');
             // Reset form
             setFormData({
@@ -212,7 +212,8 @@ const SuperAdminAddUser = () => {
             setSignature(null);
             setPresidentSignature(null);
         } catch (error) {
-            setError(error.response?.data?.message || 'Error adding user.');
+            console.error('Submission error:', error);
+            setError(error.response?.data?.message || 'Error adding user. Please try again.');
         } finally {
             setLoading(false);
         }
