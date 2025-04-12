@@ -2,10 +2,20 @@ import React, { useEffect, useState, useCallback } from 'react';
 import './OrgProf.css';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { PuffLoader } from 'react-spinners'; // Import your preferred loader
+import { css } from '@emotion/react'; // For custom styling
 
 const OrgProf = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Custom CSS for the loader
+  const override = css`
+    display: block;
+    margin: 0 auto;
+    border-color: red;
+  `;
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -15,6 +25,7 @@ const OrgProf = () => {
         return;
       }
 
+      setLoading(true);
       const response = await axios.get('https://studevent-server.vercel.app/api/users/current', {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -22,12 +33,32 @@ const OrgProf = () => {
       setUser(response.data);
     } catch (error) {
       if (error.response?.status === 401) navigate('/');
+    } finally {
+      setLoading(false);
     }
   }, [navigate]);
 
   useEffect(() => {
     fetchUserData();
   }, [fetchUserData]);
+
+  if (loading) {
+    return (
+      <div className="m-container">
+        <div className="sophisticated-loader">
+          <PuffLoader
+            color="#0046ad"
+            loading={loading}
+            css={override}
+            size={100}
+            aria-label="Loading Spinner"
+            data-testid="loader"
+          />
+          <p className="loading-text">Loading your profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="m-container">

@@ -304,31 +304,7 @@ const Dashboard = () => {
           </Paper>
         </Grid>
 
-        {/* Organization Distribution */}
-        <Grid item xs={12}>
-          <Paper className="side-box">
-            <Box className="section-header">
-              <Icon icon={accountGroup} className="section-icon" />
-              <Typography variant="h6" className="section-heading">
-                Organization Distribution
-              </Typography>
-            </Box>
-            <Box className="org-distribution">
-              {orgDistribution.map((org) => (
-                <Box key={org.name} className="org-item">
-                  <Box className="org-info">
-                    <Box 
-                      className="org-color" 
-                      sx={{ backgroundColor: org.color }}
-                    />
-                    <Typography className="org-name">{org.name}</Typography>
-                  </Box>
-                  <Typography className="org-count">{org.count}</Typography>
-                </Box>
-              ))}
-            </Box>
-          </Paper>
-        </Grid>
+
       </Grid>
 
       {/* Notification Snackbar */}

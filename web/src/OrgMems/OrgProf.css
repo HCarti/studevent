@@ -143,3 +143,26 @@
     margin: auto;
   }
 }
+
+/* Sophisticated Loader Styles */
+.sophisticated-loader {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  gap: 20px;
+}
+
+.loading-text {
+  color: #0046ad;
+  font-size: 1.2rem;
+  font-weight: 500;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
