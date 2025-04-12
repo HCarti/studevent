@@ -22,7 +22,7 @@ const createToken = (user) => {
       presidentName: user.presidentName || ''
     },
     process.env.JWT_SECRET,
-    { expiresIn: "3d" }
+    { expiresIn: "1d" }
   );
 };
 
