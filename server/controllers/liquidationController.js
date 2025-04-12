@@ -27,7 +27,7 @@ exports.submitLiquidation = async (req, res) => {
 
     // Create notification for admin
     const adminEmail = 'nnnavarro@nu-moa.edu.ph'; // Replace with actual admin email or get from DB
-    const notificationMessage = `New liquidation submitted by ${req.body.organization || 'Unknown Organization'}`;
+    const notificationMessage = `New liquidation submitted by ${req.body.organizationName || 'Unknown Organization'}`;
     
     await Notification.create({
       userEmail: adminEmail,

@@ -570,4 +570,91 @@
   display: block;
 }
 
+/* Logout Confirmation Modal Styles */
+.logout-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.logout-modal {
+  background-color: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.logout-modal h3 {
+  margin-top: 0;
+  color: #1a3ab5;
+  font-size: 1.5rem;
+}
+
+.logout-modal p {
+  margin-bottom: 25px;
+  font-size: 1rem;
+  color: #333;
+}
+
+.logout-modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.logout-modal-cancel,
+.logout-modal-confirm {
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.logout-modal-cancel {
+  background-color: #f1f1f1;
+  color: #333;
+}
+
+.logout-modal-cancel:hover {
+  background-color: #e0e0e0;
+}
+
+.logout-modal-confirm {
+  background-color: #1a3ab5;
+  color: white;
+}
+
+.logout-modal-confirm:hover {
+  background-color: #122a8a;
+}
+
+/* Mobile responsiveness for modal */
+@media (max-width: 480px) {
+  .logout-modal {
+    padding: 20px;
+  }
+  
+  .logout-modal-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .logout-modal-cancel,
+  .logout-modal-confirm {
+    width: 100%;
+  }
+}
+
 
