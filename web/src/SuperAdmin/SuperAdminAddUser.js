@@ -85,6 +85,7 @@ const SuperAdminAddUser = () => {
             if (!organizationType) {
                 isValid = false;
                 errors.organizationType = 'Organization Type is required.';
+                errors.presidentSignature = 'President signature is required.'; // Specific error key
             }
             if (!organizationName) {
                 isValid = false;
@@ -242,34 +243,37 @@ const SuperAdminAddUser = () => {
 
                     {/* Signature Upload Field for all roles */}
                     {/* Replace the current signature upload field with this */}
-                        {formData.role === 'Organization' ? (
-                            <div className="form-group">
-                                <label htmlFor="presidentSignature">President Signature (PNG/JPEG) <span className="important">*</span></label>
-                                <input
-                                    type="file"
-                                    name="presidentSignature"
-                                    accept="image/png, image/jpeg"
-                                    onChange={handleSignatureChange}
-                                    className={validationErrors.signature ? 'input-error' : ''}
-                                    required={formData.role === 'Organization'}
-                                />
-                                {validationErrors.signature && <small className="error-text">{validationErrors.signature}</small>}
-                            </div>
-                        ) : (
-                            <div className="form-group">
-                                <label htmlFor="signature">Signature (PNG/JPEG) <span className="important">*</span></label>
-                                <input
-                                    type="file"
-                                    name="signature"
-                                    accept="image/png, image/jpeg"
-                                    onChange={handleSignatureChange}
-                                    className={validationErrors.signature ? 'input-error' : ''}
-                                    required={formData.role === 'Admin' || formData.role === 'Authority'}
-                                />
-                                {validationErrors.signature && <small className="error-text">{validationErrors.signature}</small>}
-                            </div>
-                        )}
-
+                    {formData.role === 'Organization' ? (
+                        <div className="form-group">
+                            <label htmlFor="presidentSignature">President Signature (PNG/JPEG) <span className="important">*</span></label>
+                            <input
+                                type="file"
+                                name="presidentSignature"
+                                accept="image/png, image/jpeg"
+                                onChange={handleSignatureChange}
+                                className={validationErrors.presidentSignature ? 'input-error' : ''}
+                                required
+                            />
+                            {validationErrors.presidentSignature && (
+                                <small className="error-text">{validationErrors.presidentSignature}</small>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="form-group">
+                            <label htmlFor="signature">Signature (PNG/JPEG) <span className="important">*</span></label>
+                            <input
+                                type="file"
+                                name="signature"
+                                accept="image/png, image/jpeg"
+                                onChange={handleSignatureChange}
+                                className={validationErrors.signature ? 'input-error' : ''}
+                                required={formData.role === 'Admin' || formData.role === 'Authority'}
+                            />
+                            {validationErrors.signature && (
+                                <small className="error-text">{validationErrors.signature}</small>
+                            )}
+                        </div>
+                    )}
                     <div className="form-fields">
                         <div className="form-group">
                             <label htmlFor="role">Role:</label>
