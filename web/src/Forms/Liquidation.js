@@ -10,10 +10,33 @@ const Liquidation = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [fileBlob, setFileBlob] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
   
   // State for liquidation data
   const [uploadedData, setUploadedData] = useState(null);
   const [processedData, setProcessedData] = useState(null);
+
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileChange({ target: { files: e.dataTransfer.files } });
+    }
+  };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -124,27 +147,73 @@ const Liquidation = () => {
 
   return (
     <div className="liquidation-container">
-      <h2>Liquidation</h2>
-      
       {/* File Upload Section */}
       <div className="upload-section">
-        <h3>Upload Excel File</h3>
-        <div className="file-input-container">
-          <label htmlFor="excel-upload" className="upload-label">
-            {isLoading ? 'Processing...' : 'Select Excel File'}
-            <input
-              id="excel-upload"
-              type="file"
-              accept=".xlsx, .xls, .csv"
-              onChange={handleFileChange}
-              disabled={isLoading}
-              style={{ display: 'none' }}
-            />
-          </label>
-          {fileName && !isLoading && (
-            <div className="file-name">{fileName}</div>
-          )}
+        <h2 className="section-title">Liquidation</h2>
+        <h3 className="section-subtitle">Upload Excel File</h3>
+        
+        <div 
+          className={`dropzone ${isDragging ? 'dragging' : ''} ${fileName ? 'has-file' : ''}`}
+          onDragEnter={handleDragEnter}
+          onDragLeave={handleDragLeave}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+        >
+          <div className="dropzone-content">
+            {isLoading ? (
+              <div className="file-loader">
+                <div className="loader"></div>
+                <p>Processing your file...</p>
+              </div>
+            ) : fileName ? (
+              <div className="file-preview">
+                <div className="file-icon">
+                  <svg viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+                    <path fill="#34A853" d="M14 2v6h6"/>
+                    <path fill="#FBBC05" d="M14 8h6l-6-6v6z"/>
+                  </svg>
+                </div>
+                <div className="file-info">
+                  <p className="file-name">{fileName}</p>
+                  <p className="file-size">{fileBlob && (fileBlob.size / 1024).toFixed(2)} KB</p>
+                </div>
+                <button 
+                  className="change-file-btn"
+                  onClick={() => {
+                    setFileName('');
+                    setFileBlob(null);
+                    document.getElementById('excel-upload').value = '';
+                  }}
+                >
+                  Change File
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="upload-icon">
+                  <svg viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                  </svg>
+                </div>
+                <p className="dropzone-text">Drag & drop your Excel file here or</p>
+                <label htmlFor="excel-upload" className="browse-btn">
+                  Browse Files
+                  <input
+                    id="excel-upload"
+                    type="file"
+                    accept=".xlsx, .xls, .csv"
+                    onChange={handleFileChange}
+                    disabled={isLoading}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+                <p className="file-requirements">Supports: .xlsx, .xls, .csv</p>
+              </>
+            )}
+          </div>
         </div>
+        
         {error && <div className="error-message">{error}</div>}
         {success && <div className="success-message">{success}</div>}
       </div>
@@ -152,7 +221,7 @@ const Liquidation = () => {
       {/* Data Preview Section */}
       {uploadedData && (
         <div className="data-section">
-          <h3>Uploaded Data Preview</h3>
+          <h3 className="section-subtitle">Uploaded Data Preview</h3>
           <div className="data-preview">
             <table>
               <thead>
@@ -179,7 +248,7 @@ const Liquidation = () => {
       {/* Processed Liquidation Data Section */}
       {processedData && (
         <div className="liquidation-results">
-          <h3>Liquidation Results</h3>
+          <h3 className="section-subtitle">Liquidation Results</h3>
           <div className="results-table">
             <table>
               <thead>
@@ -198,7 +267,11 @@ const Liquidation = () => {
                     <td>{item.grossAmount?.toFixed(2) || 'N/A'}</td>
                     <td>{item.tax?.toFixed(2) || '0.00'}</td>
                     <td>{item.netAmount?.toFixed(2) || 'N/A'}</td>
-                    <td>{item.status}</td>
+                    <td>
+                      <span className={`status-badge ${item.status.toLowerCase()}`}>
+                        {item.status}
+                      </span>
+                    </td>
                   </tr>
                 ))}
               </tbody>

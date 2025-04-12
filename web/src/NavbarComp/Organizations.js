@@ -1,5 +1,5 @@
 // OrganizationsPage.js
-import React, { useState } from 'react'; // Import useState
+import React, { useRef, useState } from 'react'; // Import useState
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
@@ -7,6 +7,7 @@ import './Organizations.css';
 import Modal from './Modal'; // Import Link from react-router-dom
 import { Link } from 'react-router-dom'; // Ensure Link is imported
 import Footer from '../Components/footer';
+
 
 // Import images
 import nuOrg1 from '../Images/Orgs/JPCS.png';
@@ -70,6 +71,8 @@ const organizations = [
 const Organizations = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrganization, setSelectedOrganization] = useState(null);
+  const missionVisionRef = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
 
   const openModal = (org) => {
     setSelectedOrganization(org);
@@ -82,7 +85,6 @@ const Organizations = () => {
   };
 
   const settings = {
-    dots: true,
     infinite: true,
     speed: 500,
     slidesToShow: 3,
