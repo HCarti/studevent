@@ -145,78 +145,79 @@ const SuperAdminAddUser = () => {
         setError('');
         setSuccess('');
         setValidationErrors({});
-    
+      
         if (!validateForm()) {
-            console.log('Validation errors:', validationErrors);
-            return;
+          return;
         }
-    
-        const data = new FormData();
-        // Add common fields
-        data.append('role', formData.role);
-        data.append('email', formData.email);
-        data.append('password', formData.password);
-        data.append('logo', logo);
-    
-        // Add signature based on role
-        if (formData.role === 'Organization') {
-            data.append('presidentSignature', presidentSignature);
-        } else if (formData.role === 'Admin' || formData.role === 'Authority') {  // Only add signature for these roles
-            data.append('signature', signature);
-        }
-    
-        // Add role-specific fields
-        if (formData.role === 'Authority') {
-            data.append('firstName', formData.firstName);
-            data.append('lastName', formData.lastName);
-            data.append('faculty', formData.faculty);
-            if (formData.faculty === 'Adviser') {
-                data.append('organization', formData.organization);
-            }
-        } else if (formData.role === 'Admin' || formData.role === 'SuperAdmin') {
-            data.append('firstName', formData.firstName);
-            data.append('lastName', formData.lastName);
-        } else if (formData.role === 'Organization') {
-            data.append('organizationType', formData.organizationType);
-            data.append('organizationName', formData.organizationName);
-            data.append('presidentName', formData.presidentName);
-        }
-    
+      
         try {
-            setLoading(true);
-            console.log('Submitting data:', Object.fromEntries(data.entries()));
-            
-            const response = await axios.post('https://studevent-server.vercel.app/api/users', data, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-            
-            setSuccess('User added successfully!');
-            // Reset form
-            setFormData({
-                role: 'Admin',
-                firstName: '',
-                lastName: '',
-                email: '',
-                faculty: '',
-                organization: '',
-                organizationType: '',
-                organizationName: '',
-                presidentName: '',
-                password: '',
-                confirmPassword: '',
-            });
-            setLogo(null);
-            setSignature(null);
-            setPresidentSignature(null);
+          setLoading(true);
+          
+          // Get token from localStorage
+          const token = localStorage.getItem('token');
+          if (!token) {
+            return;
+          }
+      
+          const data = new FormData();
+          // Add common fields
+          data.append('role', formData.role);
+          data.append('email', formData.email);
+          data.append('password', formData.password);
+          data.append('logo', logo);
+          data.append('firstName', formData.firstName);
+          data.append('lastName', formData.lastName);
+      
+          // Add signature based on role
+          if (formData.role === 'Organization') {
+            data.append('presidentSignature', presidentSignature);
+          } else if (formData.role === 'Admin' || formData.role === 'Authority') {
+            data.append('signature', signature);
+          }
+          // No signature for SuperAdmin
+      
+          // Use different endpoint for SuperAdmin
+          const endpoint = formData.role === 'SuperAdmin' 
+            ? 'https://studevent-server.vercel.app/api/users/superadmin'
+            : 'https://studevent-server.vercel.app/api/users';
+      
+          const response = await axios.post(endpoint, data, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              'Authorization': `Bearer ${token}` // Add authorization header
+            },
+          });
+          
+          setSuccess('User added successfully!');
+          // Reset form
+          setFormData({
+            role: 'Admin',
+            firstName: '',
+            lastName: '',
+            email: '',
+            password: '',
+            confirmPassword: '',
+            faculty: '',
+            organization: '',
+            organizationType: '',
+            organizationName: '',
+            presidentName: '',
+          });
+          setLogo(null);
+          setSignature(null);
+          setPresidentSignature(null);
         } catch (error) {
-            console.error('Submission error:', error);
+          console.error('Submission error:', error);
+          if (error.response && error.response.status === 401) {
+            // Token is invalid or expired
+            localStorage.removeItem('token');
+          } else {
             setError(error.response?.data?.message || 'Error adding user. Please try again.');
+          }
         } finally {
-            setLoading(false);
+          setLoading(false);
         }
-    };
+      };
 
     return (
         <div className="form-container">

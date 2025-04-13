@@ -57,12 +57,11 @@ router.post('/',
     try {
       const { role } = req.body;
       
-      // Validate required files
       if (!req.files?.logo) {
         return res.status(400).json({ message: 'Logo is required' });
       }
 
-      // Role-specific signature validation
+      // Role-specific validation
       if (role === 'Organization') {
         if (!req.files?.presidentSignature) {
           return res.status(400).json({ message: 'President signature is required for organizations' });
@@ -71,7 +70,10 @@ router.post('/',
         if (!req.files?.signature) {
           return res.status(400).json({ message: 'Signature is required for admin/authority users' });
         }
+      } else if (role === 'SuperAdmin') {
+        return res.status(400).json({ message: 'Use /superadmin route for creating SuperAdmin users' });
       }
+      // No signature validation for SuperAdmin
 
       // Upload logo
       const logoBlob = await put(
@@ -80,9 +82,11 @@ router.post('/',
         { access: 'public' }
       );
 
-      // Upload appropriate signature(s)
-      let signatureUrl, presidentSignatureUrl;
-      
+      // Initialize signature URLs
+      let signatureUrl = null;
+      let presidentSignatureUrl = null;
+
+      // Only upload signature if required by role
       if (role === 'Organization') {
         const presidentSigBlob = await put(
           `org-${Date.now()}-presig`,
@@ -90,7 +94,7 @@ router.post('/',
           { access: 'public' }
         );
         presidentSignatureUrl = presidentSigBlob.url;
-      } else {
+      } else if (role === 'Admin' || role === 'Authority') {
         const sigBlob = await put(
           `user-${Date.now()}-sig`,
           req.files.signature[0].buffer,
@@ -118,6 +122,49 @@ router.post('/',
       console.error('User creation error:', error);
       res.status(500).json({ 
         message: 'User creation failed',
+        error: error.message 
+      });
+    }
+  }
+);
+
+router.post('/superadmin',
+  upload.single('logo'), // Only logo is required
+  handleUploadErrors,
+  async (req, res) => {
+    try {
+      const { email, password, firstName, lastName } = req.body;
+      
+      if (!req.file) {
+        return res.status(400).json({ message: 'Logo is required' });
+      }
+
+      // Upload logo
+      const logoBlob = await put(
+        `superadmin-${Date.now()}-logo`,
+        req.file.buffer,
+        { access: 'public' }
+      );
+
+      // Create SuperAdmin user
+      const newUser = await usersController.addUser(
+        {
+          ...req.body,
+          role: 'SuperAdmin'
+        },
+        logoBlob.url,
+        null, // No signature
+        null  // No president signature
+      );
+
+      res.status(201).json({
+        message: 'SuperAdmin created successfully',
+        user: newUser
+      });
+    } catch (error) {
+      console.error('SuperAdmin creation error:', error);
+      res.status(500).json({ 
+        message: 'SuperAdmin creation failed',
         error: error.message 
       });
     }
