@@ -45,26 +45,11 @@ const SuperAdminHome = () => {
     handleButtonClick('events');
     navigate('/calendar');
   };
-
-  const handleProfileClick = () => {
-    handleButtonClick('profile');
-    navigate('/adminprofile');
-  };
-
-  const handleDashboardClick = () => {
-    handleButtonClick('dashboard');
-    navigate('/dashboard');
-  };
-
   const handleControlPanelClick = () => {
     handleButtonClick('controlpanel');
     navigate('/controlpanel');
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    navigate("/");
-  };
 
   return (
     <ParallaxProvider>
@@ -87,10 +72,6 @@ const SuperAdminHome = () => {
           <div className={`menu-superadmin-item ${clickedButton === 'forms' ? 'active' : ''}`} onClick={handleFormsClick}>
             <FaWpforms className="menu-superadmin-icon" />
             <h3>Forms/Signature</h3>
-          </div>
-          <div className={`menu-superadmin-item ${clickedButton === 'profile' ? 'active' : ''}`} onClick={handleProfileClick}>
-            <IoPersonCircleOutline className="menu-superadmin-icon" />
-            <h3>Profile</h3>
           </div>
         </div>
 

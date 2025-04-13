@@ -1,0 +1,18 @@
+/* SuperAdminLayout.css */
+.superadmin-layout {
+  display: flex;
+  min-height: calc(100vh - 60px); /* Adjust based on your navbar height */
+  margin-top: 60px; /* To account for fixed navbar */
+}
+
+.superadmin-content {
+  flex: 1;
+  padding: 20px;
+  margin-left: 60px; /* Same as sidebar collapsed width */
+  transition: margin-left 0.3s ease;
+}
+
+/* When sidebar is expanded */
+.sidebar.expanded ~ .superadmin-content {
+  margin-left: 200px; /* Same as sidebar expanded width */
+}

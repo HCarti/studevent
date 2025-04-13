@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './Navbar.css';
 import StudeventLogo from '../Images/Studevent.png';
@@ -17,6 +17,12 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
+  // Refs for dropdown containers
+  const accountDropdownRef = useRef(null);
+  const notificationDropdownRef = useRef(null);
+  const drawerRef = useRef(null);
+  const mobileMenuIconRef = useRef(null);
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -25,6 +31,38 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Handle clicks outside dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Close account dropdown if clicked outside
+      if (accountMenuOpen && 
+          accountDropdownRef.current && 
+          !accountDropdownRef.current.contains(event.target)) {
+        setAccountMenuOpen(false);
+      }
+      
+      // Close notification dropdown if clicked outside
+      if (notificationMenuOpen && 
+          notificationDropdownRef.current && 
+          !notificationDropdownRef.current.contains(event.target)) {
+        setNotificationMenuOpen(false);
+      }
+      
+      // Close drawer if clicked outside (for mobile)
+      if (drawerOpen && 
+          drawerRef.current && 
+          !drawerRef.current.contains(event.target) &&
+          (!mobileMenuIconRef.current || !mobileMenuIconRef.current.contains(event.target))) {
+        setDrawerOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [drawerOpen, accountMenuOpen, notificationMenuOpen]);
 
   // Notifications
   useEffect(() => {
@@ -191,7 +229,11 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
         </ul>
         {isLoggedIn && user && !isMobile && (
           <div className="navbar-icons-container">
-            <div className="navbar-notifications" onClick={toggleNotificationMenu}>
+            <div 
+              className="navbar-notifications" 
+              onClick={toggleNotificationMenu}
+              ref={notificationDropdownRef}
+            >
               <FiBell className="navbar-icon" />
               {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
               {notificationMenuOpen && (
@@ -231,7 +273,11 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
               )}
             </div>      
 
-            <div className="account-dropdown" onClick={toggleAccountMenu}>
+            <div 
+              className="account-dropdown" 
+              onClick={toggleAccountMenu}
+              ref={accountDropdownRef}
+            >
               {user.logo ? (
                 <img
                   src={user.logo}
@@ -258,11 +304,15 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
         )}
       </div>
       
-      <div className="mobile-menu-icon" onClick={toggleDrawer}>
+      <div 
+        className="mobile-menu-icon" 
+        onClick={toggleDrawer}
+        ref={mobileMenuIconRef}
+      >
         &#9776;
       </div>
       
-      <div className={`drawer ${drawerOpen ? 'open' : ''}`}>
+      <div className={`drawer ${drawerOpen ? 'open' : ''}`} ref={drawerRef}>
         <div className="drawer-header">
           <div className="drawer-title">Menu</div>
           <div className="drawer-close-icon" onClick={toggleDrawer}>
