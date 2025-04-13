@@ -8,6 +8,61 @@ body, html {
   font-family: 'Roboto', sans-serif;
 }
 
+/* Enhanced Loader Styles - Now properly centered on mobile */
+.loader-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(3px);
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.loader-container.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loader {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #0175c8;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  box-sizing: border-box;
+  animation: rotation 1s linear infinite;
+  position: relative;
+  margin: 0 auto;
+}
+
+.loading-text {
+  margin-top: 20px;
+  color: #0175c8;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  width: 100%;
+}
+
+@keyframes rotation {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .admin-home {
   display: flex;
   flex-direction: column;
@@ -21,37 +76,6 @@ body, html {
   width: 100%;
   overflow-x: hidden;
   position: relative;
-}
-
-/* Loader Styles */
-.loader-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(255, 255, 255, 0.9);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  backdrop-filter: blur(3px);
-}
-
-.loader {
-  width: 48px;
-  height: 48px;
-  border: 5px solid #0175c8;
-  border-bottom-color: transparent;
-  border-radius: 50%;
-  display: inline-block;
-  box-sizing: border-box;
-  animation: rotation 1s linear infinite;
-}
-
-@keyframes rotation {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
 }
 
 /* Header Styles */
@@ -162,7 +186,7 @@ body, html {
   font-weight: 400;
 }
 
-/* Image Slider - Fixed Styles */
+/* Image Slider */
 .img-slide {
   width: 90%;
   max-width: 850px;
@@ -178,7 +202,7 @@ body, html {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #000; /* Background for letterboxing */
+  background-color: #000;
 }
 
 .slider-image {
@@ -322,11 +346,6 @@ body, html {
     font-size: 1.1rem;
   }
   
-  /* .img-slide {
-    height: auto;
-    max-height: 600px;
-  }
-   */
   .footer2-container {
     flex-direction: column;
     align-items: center;
@@ -339,6 +358,17 @@ body, html {
   
   .contact-item {
     justify-content: center;
+  }
+
+  /* Mobile-specific loader adjustments */
+  .loader {
+    width: 40px;
+    height: 40px;
+    border-width: 4px;
+  }
+  
+  .loading-text {
+    font-size: 0.9rem;
   }
 }
 
@@ -359,12 +389,36 @@ body, html {
     font-size: 1rem;
     line-height: 1.6;
   }
+
+  /* Extra small devices loader */
+  .loader {
+    width: 32px;
+    height: 32px;
+    border-width: 3px;
+  }
   
-  /* .img-slide {
-    aspect-ratio: 1/1; 
-  } */  
+  .loading-text {
+    font-size: 0.8rem;
+    padding: 0 15px;
+  }
+  
+  /* Ensure no overflow issues on mobile */
+  body, html {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .loader-container {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
 }
-/* Responsive adjustments */
+
+/* Responsive adjustments for image slider */
 @media (min-width: 769px) {
   .img-slide {
     height: auto;

@@ -19,7 +19,7 @@ const AdminHome = () => {
   const [quote, setQuote] = useState('');
   const [currentAuthority, setCurrentAuthority] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // New loading state
+  const [isLoading, setIsLoading] = useState(true);
 
   const quotes = [
     "Your work is going to fill a large part of your life, and the only way to be truly satisfied is to do what you believe is great work... – Steve Jobs",
@@ -120,50 +120,13 @@ const AdminHome = () => {
   
   const images = [image1, image2, image3, image4];
 
-  // CSS for the loader
-  const loaderStyles = `
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    
-    .loader-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      width: 100%;
-      position: fixed;
-      top: 0;
-      left: 0;
-      background-color: rgba(255, 255, 255, 0.9);
-      z-index: 1000;
-      backdrop-filter: blur(3px);
-    }
-    
-    .loader {
-      width: 48px;
-      height: 48px;
-      border: 5px solid #0175c8;
-      border-bottom-color: transparent;
-      border-radius: 50%;
-      display: inline-block;
-      box-sizing: border-box;
-      animation: spin 1s linear infinite;
-    }
-  `;
-
   return (
     <ParallaxProvider> 
-      {/* Add the loader styles */}
-      <style>{loaderStyles}</style>
-      
-      {/* Show loader when loading */}
-      {isLoading && (
-        <div className="loader-container">
-          <div className="loader"></div>
-        </div>
-      )}
+      {/* Responsive Loader */}
+      <div className={`loader-container ${!isLoading ? 'hidden' : ''}`}>
+        <div className="loader"></div>
+        <p className="loading-text">Loading...</p>
+      </div>
 
       <div className="admin-home">
         <header className="header-admin">
