@@ -1,21 +1,23 @@
 .organizations-page {
+  --primary-color: #1a3ab5;
+  --secondary-color: #ffd900;
+  --text-color: #2c3e50;
+  --shadow-color: rgba(0, 0, 0, 0.08);
+  
   max-width: 1200px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 2.5rem 1rem;
   text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   min-height: 100vh;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .organizations-page h1 {
-  font-size: 2.5rem;
-  margin-bottom: 2rem;
-  color: #2c3e50;
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  margin: 0 auto 2rem;
+  color: var(--text-color);
   position: relative;
-  display: inline-block;
+  max-width: 90%;
 }
 
 .organizations-page h1::after {
@@ -26,29 +28,25 @@
   transform: translateX(-50%);
   width: 80px;
   height: 4px;
-  background: linear-gradient(90deg, #1a3ab5, #ffd900);
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
   border-radius: 2px;
 }
 
 .cards-slider {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  padding: 20px 0;
+  padding: 1rem 0;
 }
 
 .cards {
-  background-color: #fff;
+  background: #fff;
   border-radius: 12px;
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6px 15px var(--shadow-color);
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  padding: 20px;
-  width: 280px;
-  height: 380px;
-  margin: 0 15px;
+  padding: 1rem;
+  width: 185%;
+  max-width: 300px;
+  margin: 0 auto;
   overflow: hidden;
-  position: relative;
+  aspect-ratio: 0.75;
 }
 
 .cards:hover {
@@ -59,43 +57,38 @@
 .cards-image {
   border-radius: 8px;
   width: 100%;
-  height: 180px;
-  object-fit: cover;
+  height: 50%;
+  min-height: 180px;
+  object-fit: contain;
   transition: transform 0.3s ease;
-  margin-bottom: 15px;
+  margin-bottom: 1rem;
 }
 
 .cards:hover .cards-image {
   transform: scale(1.03);
 }
 
-.cards-info {
-  margin-top: 10px;
-  padding: 0 10px;
-}
-
 .cards-info h2 {
-  font-size: 1.4rem;
-  color: #2c3e50;
-  margin-bottom: 12px;
+  font-size: clamp(1.2rem, 3vw, 1.4rem);
+  color: var(--text-color);
+  margin: 0.5rem 0;
   font-weight: 600;
 }
 
 .cards-info p {
-  font-size: 0.95rem;
+  font-size: clamp(0.85rem, 2.5vw, 0.95rem);
   color: #7f8c8d;
-  line-height: 1.5;
+  line-height: 1.4;
   font-weight: 400;
 }
 
-/* Slider dots customization */
+/* Slider Customization */
 .slick-slider {
   width: 100%;
-  margin-bottom: 20px;
+  margin-bottom: 2rem;
 }
 
 .slick-list {
-  margin: 0 auto;
   padding: 20px 0 !important;
 }
 
@@ -104,29 +97,28 @@
 }
 
 .slick-dots li button:before {
-  font-size: 10px !important;
+  font-size: 12px !important;
   color: #bdc3c7 !important;
-  opacity: 1 !important;
 }
 
 .slick-dots li.slick-active button:before {
-  color: #3498db !important;
+  color: var(--primary-color) !important;
 }
 
-/* View All Button Styling */
+/* View All Button */
 .view-all-container {
-  margin: 40px 0;
+  margin: 2.5rem 0;
 }
 
 .view-all-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1a3ab5, #ffd900);
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   color: white;
   border: none;
-  padding: 12px 30px;
-  font-size: 1rem;
+  padding: 0.75rem 2rem;
+  font-size: clamp(0.9rem, 2.5vw, 1rem);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -139,159 +131,89 @@
 .view-all-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
-  background: linear-gradient(135deg,  #ffd900,#1a3ab5);
+  background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
 }
 
-/* Mission & Vision Section */
+/* Mission & Vision */
 .mission-vision {
   opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  animation: fadeInUp 0.6s ease-out forwards;
+  animation-delay: 0.3s;
+  margin: 2rem auto;
+  max-width: 800px;
 }
 
 .mission-vision p {
-  transition: all 0.8s ease 0.2s; /* Delayed start for the text */
-  font-size: 1.1rem;
+  font-size: clamp(0.95rem, 2.5vw, 1.1rem);
   color: #34495e;
   line-height: 1.8;
-  font-weight: 400;
+  padding: 1rem;
   position: relative;
-  padding: 20px;
 }
 
-.mission-vision p::before,
-.mission-vision p::after {
-  animation: fadeInQuoteMarks 0.8s ease-out forwards;
-  content: '"';
-  font-size: 2rem;
-  color: #3498db;
-  opacity: 0.3;
-  position: absolute;
-}
-
-
-.mission-vision p::before {
-  top: 0;
-  left: 0;
-}
-
-.mission-vision p::after {
-  bottom: 0;
-  right: 0;
-}
-
-@keyframes fadeInQuoteMarks {
+@keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: scale(0.8);
+    transform: translateY(20px);
   }
   to {
-    opacity: 0.3;
-    transform: scale(1);
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* Responsive Design */
-@media screen and (max-width: 1024px) {
+/* Responsive Breakpoints */
+@media (max-width: 1024px) {
   .cards {
-    width: 240px;
-    height: 360px;
-  }
-  
-  .cards-image {
-    height: 150px;
+    aspect-ratio: 0.8;
   }
 }
 
-@media screen and (max-width: 768px) {
-  .organizations-page h1 {
-    font-size: 2rem;
-  }
-  
-  .cards {
-    width: 220px;
-    height: 340px;
-    margin: 0 10px;
-  }
-  
-  .cards-info h2 {
-    font-size: 1.2rem;
-  }
-  
-  .cards-info p {
-    font-size: 0.9rem;
-  }
-  
-  .view-all-btn {
-    padding: 10px 25px;
-    font-size: 0.9rem;
-  }
-  
-  .mission-vision p {
-    font-size: 1rem;
-  }
-}
-
-@media screen and (max-width: 480px) {
+@media (max-width: 768px) {
   .organizations-page {
-    padding: 30px 15px;
-  }
-  
-  .organizations-page h1 {
-    font-size: 1.8rem;
+    padding: 1.5rem 0.5rem;
   }
   
   .cards {
+    aspect-ratio: 0.85;
     width: 90%;
-    height: auto;
-    margin: 10px auto;
-    padding: 15px;
+    padding: 0.75rem;
+  }
+  
+  .slick-slider {
+    padding: 0 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .cards {
+    aspect-ratio: 0.9;
+    min-height: auto;
   }
   
   .cards-image {
-    height: 120px;
+    height: 70%;
+    min-height: 170px;
   }
   
-  .view-all-btn {
-    padding: 10px 20px;
-    font-size: 0.85rem;
-  }
-  
-  .mission-vision p {
-    font-size: 0.95rem;
-    padding: 15px;
+  .slick-dots {
+    bottom: -25px !important;
   }
 }
 
-@media screen and (max-width: 768px) {
-  .organizations-page {
-    padding: 1.5rem;
-  }
-  
+/* Touch Device Optimization */
+@media (pointer: coarse) {
   .cards {
-    min-height: 340px;
-    padding: 1rem;
+    transition: none;
   }
   
-  .mission-vision {
-    margin: 1.5rem auto;
-  }
-}
-
-@media screen and (max-width: 480px) {
-  .organizations-page {
-    padding: 1rem;
+  .cards:hover {
+    transform: none;
+    box-shadow: 0 6px 15px var(--shadow-color);
   }
   
-  .cards {
-    min-height: 300px;
-  }
-  
-  .view-all-btn {
-    padding: 0.625rem 1.25rem;
-  }
-  
-  .mission-vision p {
-    padding: 1rem;
+  .view-all-btn:hover {
+    transform: none;
+    box-shadow: 0 4px 15px rgba(28, 92, 219, 0.3);
   }
 }
