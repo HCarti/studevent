@@ -23,7 +23,7 @@ const SuperAdminAddUser = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [validationErrors, setValidationErrors] = useState({});
-    const [presidentSignature, setPresidentSignature] = useState(null); // Add this with other state declarations
+    const [presidentSignature, setPresidentSignature] = useState(null);
 
     const faculties = ['Adviser', 'Dean', 'Academic Services', 'Academic Director', 'Executive Director'];
     const typeorganizations = [
@@ -71,7 +71,7 @@ const SuperAdminAddUser = () => {
         let isValid = true;
     
         // Role-specific validations
-        if (role === 'Admin' || role === 'Authority') {
+        if (role === 'Admin' || role === 'Authority' || role === 'SuperAdmin') {
             if (!firstName.trim()) {
                 isValid = false;
                 errors.firstName = 'First Name is required.';
@@ -99,13 +99,12 @@ const SuperAdminAddUser = () => {
                 isValid = false;
                 errors.presidentSignature = 'President signature is required.';
             }
-        } else if (role === 'Admin' || role === 'Authority') {
+        } else if (role === 'Admin' || role === 'Authority') {  // Removed SuperAdmin from this check
             if (!signature) {
                 isValid = false;
                 errors.signature = 'Signature is required.';
             }
         }
-    
         // Common validations
         if (!email) {
             isValid = false;
@@ -148,7 +147,7 @@ const SuperAdminAddUser = () => {
         setValidationErrors({});
     
         if (!validateForm()) {
-            console.log('Validation errors:', validationErrors); // Debugging
+            console.log('Validation errors:', validationErrors);
             return;
         }
     
@@ -162,7 +161,7 @@ const SuperAdminAddUser = () => {
         // Add signature based on role
         if (formData.role === 'Organization') {
             data.append('presidentSignature', presidentSignature);
-        } else {
+        } else if (formData.role === 'Admin' || formData.role === 'Authority') {  // Only add signature for these roles
             data.append('signature', signature);
         }
     
@@ -174,7 +173,7 @@ const SuperAdminAddUser = () => {
             if (formData.faculty === 'Adviser') {
                 data.append('organization', formData.organization);
             }
-        } else if (formData.role === 'Admin') {
+        } else if (formData.role === 'Admin' || formData.role === 'SuperAdmin') {
             data.append('firstName', formData.firstName);
             data.append('lastName', formData.lastName);
         } else if (formData.role === 'Organization') {
@@ -185,7 +184,7 @@ const SuperAdminAddUser = () => {
     
         try {
             setLoading(true);
-            console.log('Submitting data:', Object.fromEntries(data.entries())); // Debugging
+            console.log('Submitting data:', Object.fromEntries(data.entries()));
             
             const response = await axios.post('https://studevent-server.vercel.app/api/users', data, {
                 headers: {
@@ -242,24 +241,23 @@ const SuperAdminAddUser = () => {
                         </label>
                     </div>
 
-                    {/* Signature Upload Field for all roles */}
-                    {/* Replace the current signature upload field with this */}
                     {formData.role === 'Organization' ? (
-                        <div className="form-group">
-                            <label htmlFor="presidentSignature">President Signature (PNG/JPEG) <span className="important">*</span></label>
-                            <input
-                                type="file"
-                                name="presidentSignature"
-                                accept="image/png, image/jpeg"
-                                onChange={handleSignatureChange}
-                                className={validationErrors.presidentSignature ? 'input-error' : ''}
-                                required
-                            />
-                            {validationErrors.presidentSignature && (
-                                <small className="error-text">{validationErrors.presidentSignature}</small>
-                            )}
-                        </div>
-                    ) : (
+                    <div className="form-group">
+                        <label htmlFor="presidentSignature">President Signature (PNG/JPEG) <span className="important">*</span></label>
+                        <input
+                            type="file"
+                            name="presidentSignature"
+                            accept="image/png, image/jpeg"
+                            onChange={handleSignatureChange}
+                            className={validationErrors.presidentSignature ? 'input-error' : ''}
+                            required
+                        />
+                        {validationErrors.presidentSignature && (
+                            <small className="error-text">{validationErrors.presidentSignature}</small>
+                        )}
+                    </div>
+                ) : (
+                    formData.role !== 'SuperAdmin' && (  // Only show signature field if not SuperAdmin
                         <div className="form-group">
                             <label htmlFor="signature">Signature (PNG/JPEG) <span className="important">*</span></label>
                             <input
@@ -274,18 +272,20 @@ const SuperAdminAddUser = () => {
                                 <small className="error-text">{validationErrors.signature}</small>
                             )}
                         </div>
-                    )}
+                    )
+                )}
                     <div className="form-fields">
                         <div className="form-group">
                             <label htmlFor="role">Role:</label>
                             <select name="role" value={formData.role} onChange={handleChange}>
+                                <option value="SuperAdmin">Super Admin</option>
                                 <option value="Admin">Admin</option>
                                 <option value="Authority">Authority</option>
                                 <option value="Organization">Organization</option>
                             </select>
                         </div>
 
-                        {formData.role !== 'Organization' && (
+                        {(formData.role === 'Admin' || formData.role === 'Authority' || formData.role === 'SuperAdmin') && (
                             <>
                                 <div className="form-group">
                                     <label htmlFor="firstName">First Name <span className="important">*</span></label>
@@ -295,7 +295,7 @@ const SuperAdminAddUser = () => {
                                         value={formData.firstName}
                                         onChange={handleChange}
                                         className={validationErrors.firstName ? 'input-error' : ''}
-                                        required={formData.role !== 'Organization'}
+                                        required
                                     />
                                     {validationErrors.firstName && <small className="error-text">{validationErrors.firstName}</small>}
                                 </div>
@@ -308,7 +308,7 @@ const SuperAdminAddUser = () => {
                                         value={formData.lastName}
                                         onChange={handleChange}
                                         className={validationErrors.lastName ? 'input-error' : ''}
-                                        required={formData.role !== 'Organization'}
+                                        required
                                     />
                                     {validationErrors.lastName && <small className="error-text">{validationErrors.lastName}</small>}
                                 </div>

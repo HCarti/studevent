@@ -56,6 +56,13 @@ const login = async (req, res) => {
           });
         }
       }
+      if (user.role === 'SuperAdmin') {
+        if (!user.firstName || !user.lastName) {
+          return res.status(400).json({ 
+            message: 'First name and last name are required for SuperAdmin.' 
+          });
+        }
+      }
 
       const token = createToken(user);
       res.status(200).json({
@@ -139,6 +146,10 @@ const addUser = async (userData, logoUrl, signatureUrl, presidentSignatureUrl) =
       newUser.firstName = userData.firstName;
       newUser.lastName = userData.lastName;
       newUser.signature = signatureUrl;
+    } else if (userData.role === 'SuperAdmin') {
+      newUser.firstName = userData.firstName;
+      newUser.lastName = userData.lastName;
+      // No signature required for SuperAdmin
     } else if (userData.role === 'Organization') {
       newUser.organizationType = userData.organizationType;
       newUser.organizationName = userData.organizationName;

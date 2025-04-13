@@ -71,8 +71,6 @@ router.post('/',
         if (!req.files?.signature) {
           return res.status(400).json({ message: 'Signature is required for admin/authority users' });
         }
-      } else {
-        return res.status(400).json({ message: 'Invalid user role' });
       }
 
       // Upload logo

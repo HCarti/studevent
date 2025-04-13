@@ -180,11 +180,13 @@ const AdminHome = () => {
             <FaWpforms className="menu-icon" />
             <h3>Forms/Signature</h3>
           </div>
+          {isAdmin && (
           <div className={`menu-item ${clickedButton === 'dashboard' ? 'active' : ''}`} onClick={handleDashboardClick}>
             <IoSpeedometerOutline className="menu-icon" />
             <h3>Dashboard</h3>
           </div>
-        </div>
+        )}
+      </div>
 
         <div className="quote-container">
           <p className="quote animated-fade">{quote}</p>

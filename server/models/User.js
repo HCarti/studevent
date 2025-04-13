@@ -14,57 +14,56 @@ const userSchema = new Schema({
   },
   role: {
     type: String,
-    enum: ['Admin', 'Authority', 'Organization'],
+    enum: ['SuperAdmin', 'Admin', 'Authority', 'Organization'], // Added SuperAdmin
     required: true,
   },
   firstName: {
     type: String,
     required: function() {
-      return this.role === 'Admin' || this.role === 'Authority'; // Required for Admin and Authority
+      return this.role === 'SuperAdmin' || this.role === 'Admin' || this.role === 'Authority';
     }
   },
   lastName: {
     type: String,
     required: function() {
-      return this.role === 'Admin' || this.role === 'Authority'; // Required for Admin and Authority
+      return this.role === 'SuperAdmin' || this.role === 'Admin' || this.role === 'Authority';
     }
   },
   organizationType: {
     type: String,
     required: function() {
-      return this.role === 'Organization'; // Required for Organization
+      return this.role === 'Organization';
     }
   },
   organizationName: {
     type: String,
     required: function() {
-      return this.role === 'Organization'; // Required for Organization
+      return this.role === 'Organization';
     }
   },
- // Add president signature field for organizations
   presidentSignature: {
-    type: String, // This will store the URL/path to the signature image
+    type: String,
     required: function() {
-      return this.role === 'Organization'; // Required for Organization
+      return this.role === 'Organization';
     }
   },
   presidentName: {
     type: String,
     required: function() {
-      return this.role === 'Organization'; // Required for Organization
+      return this.role === 'Organization';
     }
   },
   faculty: {
     type: String,
     required: function() {
-      return this.role === 'Authority'; // Required for Authority
+      return this.role === 'Authority';
     }
   },
-  logo: String, // Optional for all roles
+  logo: String,
   signature: {
     type: String,
     required: function() {
-      return this.role === 'Admin' || this.role === 'Authority';
+      return this.role === 'Admin' || this.role === 'Authority'; // Not required for SuperAdmin
     }
   },
   status: {
