@@ -50,20 +50,6 @@ const checkEventCapacity = async (startDate, endDate, currentFormId = null) => {
 // Unified calendar event creator that handles both form types
 const createCalendarEventFromForm = async (form) => {
   try {
-    // Detailed logging of incoming form data
-    console.log('Creating calendar event from form:', {
-      formType: form.formType,
-      formId: form._id,
-      allFormFields: Object.keys(form).filter(key => key !== '_id'), // Log all fields except _id
-      relevantFields: {
-        title: form.eventTitle || form.projectTitle,
-        description: form.description || form.projectDescription,
-        location: form.location || form.venue,
-        startDate: form.startDate || form.eventStartDate,
-        endDate: form.endDate || form.eventEndDate
-      }
-    });
-
     if (!['Activity', 'Project'].includes(form.formType)) {
       console.log(`Skipping calendar event for form type: ${form.formType}`);
       return null;
@@ -100,28 +86,15 @@ const createCalendarEventFromForm = async (form) => {
 
     // Validate required fields
     if (!eventData.title || !eventData.startDate) {
-      console.error('Missing required fields for calendar event:', {
-        hasTitle: !!eventData.title,
-        hasStartDate: !!eventData.startDate,
-        eventData
-      });
+      console.error('Missing required fields for calendar event:', eventData);
       return null;
     }
 
-    console.log('Attempting to create calendar event with:', eventData);
     const calendarEvent = new CalendarEvent(eventData);
     const savedEvent = await calendarEvent.save();
-    console.log('Successfully created calendar event:', savedEvent);
-    
     return savedEvent;
   } catch (error) {
-    console.error('Error creating calendar event:', {
-      error: error.message,
-      stack: error.stack,
-      formId: form._id,
-      formType: form.formType,
-      formData: form // Log entire form for debugging
-    });
+    console.error('Error creating calendar event:', error);
     return null;
   }
 };
@@ -156,27 +129,33 @@ const updateCalendarEventFromForm = async (form) => {
   }
 };
 
-
 // Helper function to get required reviewers based on form type
 const getRequiredReviewers = (formType) => {
-  if (formType === 'Project') {
-    return [
-      { stepName: "Admin", reviewerRole: "Admin" },
-      { stepName: "Academic Services", reviewerRole: "Academic Services" },
-      { stepName: "Executive Director", reviewerRole: "Executive Director" }
-    ];
+  switch(formType) {
+    case 'Project':
+      return [
+        { stepName: "Admin", reviewerRole: "Admin" },
+        { stepName: "Academic Services", reviewerRole: "Academic Services" },
+        { stepName: "Executive Director", reviewerRole: "Executive Director" }
+      ];
+    case 'LocalOffCampus':
+      return [
+        { stepName: "Initial Submission", reviewerRole: "Adviser" }
+      ];
+    case 'Activity':
+    default:
+      return [
+        { stepName: "Adviser", reviewerRole: "Adviser" },
+        { stepName: "Dean", reviewerRole: "Dean" },
+        { stepName: "Admin", reviewerRole: "Admin" },
+        { stepName: "Academic Services", reviewerRole: "Academic Services" },
+        { stepName: "Academic Director", reviewerRole: "Academic Director" },
+        { stepName: "Executive Director", reviewerRole: "Executive Director" }
+      ];
   }
-  // Default reviewers for Activity/Budget forms
-  return [
-    { stepName: "Adviser", reviewerRole: "Adviser" },
-    { stepName: "Dean", reviewerRole: "Dean" },
-    { stepName: "Admin", reviewerRole: "Admin" },
-    { stepName: "Academic Services", reviewerRole: "Academic Services" },
-    { stepName: "Academic Director", reviewerRole: "Academic Director" },
-    { stepName: "Executive Director", reviewerRole: "Executive Director" }
-  ];
 };
 
+// Main controller methods
 exports.getAllForms = async (req, res) => {
   try {
     const { formType } = req.query;
@@ -224,7 +203,6 @@ exports.createForm = async (req, res) => {
     if (req.body.studentOrganization) {
       let organization;
 
-      // First try to find by ID if the value is a valid ObjectId
       if (mongoose.Types.ObjectId.isValid(req.body.studentOrganization)) {
         organization = await User.findOne({
           _id: req.body.studentOrganization,
@@ -232,7 +210,6 @@ exports.createForm = async (req, res) => {
         });
       }
 
-      // If not found by ID or not an ID, try by name
       if (!organization) {
         organization = await User.findOne({
           organizationName: req.body.studentOrganization,
@@ -244,7 +221,6 @@ exports.createForm = async (req, res) => {
         return res.status(400).json({ error: "Organization not found" });
       }
 
-      // Always use the organization's _id
       req.body.studentOrganization = organization._id;
       req.body.presidentName = organization.presidentName;
       req.body.presidentSignature = organization.presidentSignature;
@@ -263,7 +239,6 @@ exports.createForm = async (req, res) => {
           return res.status(400).json({ error: "studentOrganization is required for Activity forms" });
         }
         
-        // Event capacity validation
         if (req.body.eventStartDate) {
           const endDate = req.body.eventEndDate || req.body.eventStartDate;
           await checkEventCapacity(req.body.eventStartDate, endDate);
@@ -271,37 +246,23 @@ exports.createForm = async (req, res) => {
         break;
 
       case 'Budget':
-        if (!req.body.nameOfRso) {
-          return res.status(400).json({ error: "nameOfRso is required for Budget forms" });
-        }
-
-        if (!req.body.items || !Array.isArray(req.body.items) || req.body.items.length === 0) {
-          return res.status(400).json({ error: "At least one budget item is required" });
-        }
-
-        const calculatedTotal = req.body.items.reduce((sum, item) => {
-          return sum + (parseFloat(item.totalCost) || 0);
-        }, 0);
-        
-        if (Math.abs(calculatedTotal - parseFloat(req.body.grandTotal || 0)) > 0.01) {
-          return res.status(400).json({ 
-            error: "Grand total calculation mismatch",
-            details: `Calculated: ${calculatedTotal}, Submitted: ${req.body.grandTotal}`
-          });
-        }
-        break;
+        // Budget forms will be handled separately, no tracker needed
+        return res.status(400).json({ error: "Budget forms should be submitted through a different endpoint" });
 
       case 'Project':
         if (!req.body.projectTitle || !req.body.projectDescription) {
           return res.status(400).json({ error: "Project title and description are required" });
         }
         
-        // Event capacity validation
         if (req.body.eventStartDate) {
           const endDate = req.body.eventEndDate || req.body.eventStartDate;
           await checkEventCapacity(req.body.eventStartDate, endDate);
         }
         break;
+
+      case 'LocalOffCampus':
+        // LocalOffCampus has its own submission flow
+        return res.status(400).json({ error: "Local Off Campus forms should be submitted through their specific endpoints" });
 
       default:
         return res.status(400).json({ error: "Invalid form type" });
@@ -314,33 +275,32 @@ exports.createForm = async (req, res) => {
     // Create calendar event if this is an Activity/Project form with dates
     if (['Activity', 'Project'].includes(req.body.formType)) {
       try {
-        const calendarEvent = await createCalendarEventFromForm(form);
-        if (!calendarEvent) {
-          console.error('Calendar event creation failed for form:', form._id);
-        }
+        await createCalendarEventFromForm(form);
       } catch (eventError) {
         console.error('Error creating calendar event:', eventError);
       }
     }
 
-    // Create progress tracker
-    const requiredReviewers = getRequiredReviewers(req.body.formType);
-    const trackerSteps = requiredReviewers.map(reviewer => ({
-      stepName: reviewer.stepName,
-      reviewerRole: reviewer.reviewerRole,
-      status: "pending",
-      remarks: "",
-      timestamp: null
-    }));
+    // Create progress tracker for relevant form types
+    if (['Activity', 'Project', 'LocalOffCampus'].includes(req.body.formType)) {
+      const requiredReviewers = getRequiredReviewers(req.body.formType);
+      const trackerSteps = requiredReviewers.map(reviewer => ({
+        stepName: reviewer.stepName,
+        reviewerRole: reviewer.reviewerRole,
+        status: "pending",
+        remarks: "",
+        timestamp: null
+      }));
 
-    const tracker = new EventTracker({
-      formId: form._id,
-      formType: req.body.formType,
-      currentStep: trackerSteps[0].stepName,
-      currentAuthority: trackerSteps[0].reviewerRole,
-      steps: trackerSteps
-    });
-    await tracker.save();
+      const tracker = new EventTracker({
+        formId: form._id,
+        formType: req.body.formType,
+        currentStep: trackerSteps[0].stepName,
+        currentAuthority: trackerSteps[0].reviewerRole,
+        steps: trackerSteps
+      });
+      await tracker.save();
+    }
 
     // Send notification
     if (req.body.emailAddress) {
@@ -358,7 +318,7 @@ exports.createForm = async (req, res) => {
         presidentName: form.presidentName,
         presidentSignature: form.presidentSignature
       }, 
-      tracker 
+      tracker: req.body.formType !== 'Budget' ? await EventTracker.findOne({ formId: form._id }) : null
     });
 
   } catch (error) {
@@ -379,22 +339,17 @@ exports.createForm = async (req, res) => {
   }
 };
 
-// Add this to your formController.js
-
-
 exports.deleteForm = async (req, res) => {
   try {
     const { formId } = req.params;
     const userEmail = req.user?.email;
     const isAdmin = req.user?.role === 'Admin';
 
-    // 1. Validate the form exists
     const form = await Form.findById(formId);
     if (!form) {
       return res.status(404).json({ message: 'Form not found' });
     }
 
-    // 2. Check if user is authorized (submitter or admin)
     const isSubmitter = form.emailAddress === userEmail;
     if (!isAdmin && !isSubmitter) {
       return res.status(403).json({ 
@@ -402,13 +357,11 @@ exports.deleteForm = async (req, res) => {
       });
     }
 
-    // 3. Find the associated tracker
     const tracker = await EventTracker.findOne({ formId });
-    if (!tracker) {
+    if (form.formType !== 'Budget' && !tracker) {
       return res.status(404).json({ message: 'Progress tracker not found' });
     }
 
-    // 4. Define the restricted review stages
     const restrictedStages = [
       'Dean',
       'Admin',
@@ -417,33 +370,31 @@ exports.deleteForm = async (req, res) => {
       'Executive Director'
     ];
 
-    // 5. Check if form has passed any restricted stage
-    const hasPassedRestrictedStage = tracker.steps.some(step => {
-      return restrictedStages.includes(step.reviewerRole) && 
-             (step.status === 'approved' || step.status === 'declined');
-    });
-
-    if (hasPassedRestrictedStage && !isAdmin) {
-      return res.status(403).json({
-        message: 'Form cannot be deleted as it has progressed beyond allowed review stages'
+    if (tracker) {
+      const hasPassedRestrictedStage = tracker.steps.some(step => {
+        return restrictedStages.includes(step.reviewerRole) && 
+               (step.status === 'approved' || step.status === 'declined');
       });
+
+      if (hasPassedRestrictedStage && !isAdmin) {
+        return res.status(403).json({
+          message: 'Form cannot be deleted as it has progressed beyond allowed review stages'
+        });
+      }
     }
 
-    // 6. Start transaction for atomic deletion
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-      // Delete the form
       await Form.findByIdAndDelete(formId).session(session);
 
-      // Delete the associated tracker
-      await EventTracker.deleteOne({ formId }).session(session);
+      if (tracker) {
+        await EventTracker.deleteOne({ formId }).session(session);
+      }
 
-      // Delete associated calendar event
       await CalendarEvent.deleteOne({ formId }).session(session);
 
-      // Delete related notifications
       await Notification.deleteMany({
         userEmail: form.emailAddress,
         message: { $regex: form.formType, $options: 'i' }
@@ -484,7 +435,6 @@ exports.updateForm = async (req, res) => {
     const { formId } = req.params;
     const updates = req.body;
 
-    // 1. Find the form and its tracker
     const form = await Form.findById(formId);
     if (!form) {
       return res.status(404).json({ message: 'Form not found' });
@@ -496,44 +446,20 @@ exports.updateForm = async (req, res) => {
       });
     }
 
-    // 2. Form type specific validation
-    if (form.formType === 'Budget' || updates.formType === 'Budget') {
-      if (!updates.items || !Array.isArray(updates.items)) {
-        return res.status(400).json({ error: "Valid items array is required for Budget forms" });
-      }
-      if (form.formType === 'Activity' || form.formType === 'Project') {
-        // Check event capacity if dates are being updated
-        if (updates.eventStartDate) {
-          const endDate = updates.eventEndDate || form.eventEndDate || updates.eventStartDate;
-          await checkEventCapacity(updates.eventStartDate, endDate, formId);
-        }
-      }
-
-      const itemErrors = [];
-      updates.items.forEach((item, index) => {
-        if (item.quantity === undefined || isNaN(item.quantity)) {
-          itemErrors.push(`items.${index}.quantity: Required number`);
-        }
-        if (item.unitCost === undefined || isNaN(item.unitCost)) {
-          itemErrors.push(`items.${index}.unitCost: Required number`);
-        }
-      });
-
-      if (itemErrors.length > 0) {
-        return res.status(400).json({
-          error: "Budget Item Validation Error",
-          details: itemErrors
-        });
+    // Skip budget-specific validation since budget forms will be handled separately
+    if (form.formType === 'Activity' || form.formType === 'Project') {
+      if (updates.eventStartDate) {
+        const endDate = updates.eventEndDate || form.eventEndDate || updates.eventStartDate;
+        await checkEventCapacity(updates.eventStartDate, endDate, formId);
       }
     }
 
     const tracker = await EventTracker.findOne({ formId });
-    if (!tracker) {
+    if (form.formType !== 'Budget' && !tracker) {
       return res.status(404).json({ message: 'Progress tracker not found' });
     }
 
-    // 3. For Project forms, check if editing is allowed (not reviewed by Admin yet)
-    if (form.formType === 'Project') {
+    if (form.formType === 'Project' && tracker) {
       const isUnderReview = tracker.steps.some(
         step => step.status === 'approved' || step.status === 'declined'
       );
@@ -543,9 +469,7 @@ exports.updateForm = async (req, res) => {
           message: 'Project form cannot be edited once review has started' 
         });
       }
-    }
-    // For Activity/Budget forms, check Dean review status
-    else {
+    } else if (tracker) {
       const isDeanReviewing = tracker.currentAuthority === 'Dean';
       const isDeanApproved = tracker.steps.some(
         step => step.stepName === 'Dean' && step.status === 'approved'
@@ -558,7 +482,6 @@ exports.updateForm = async (req, res) => {
       }
     }
 
-    // 4. Perform the update
     const updateOptions = {
       new: true,
       runValidators: true
@@ -573,33 +496,33 @@ exports.updateForm = async (req, res) => {
       updateOptions
     );
 
-    // 5. Reset tracker to first step if needed
-    const firstStep = tracker.steps[0];
-    if (tracker.currentStep !== firstStep.stepName) {
-      await EventTracker.updateOne(
-        { formId },
-        { 
-          $set: { 
-            currentStep: firstStep.stepName,
-            currentAuthority: firstStep.reviewerRole,
-            "steps.$[].status": "pending",
-            "steps.$[].remarks": "",
-            "steps.$[].timestamp": null
-          } 
-        }
-      );
-      await EventTracker.updateOne(
-        { formId, "steps.stepName": firstStep.stepName },
-        { $set: { "steps.$.status": "pending" } }
-      );
+    // Reset tracker if exists
+    if (tracker) {
+      const firstStep = tracker.steps[0];
+      if (tracker.currentStep !== firstStep.stepName) {
+        await EventTracker.updateOne(
+          { formId },
+          { 
+            $set: { 
+              currentStep: firstStep.stepName,
+              currentAuthority: firstStep.reviewerRole,
+              "steps.$[].status": "pending",
+              "steps.$[].remarks": "",
+              "steps.$[].timestamp": null
+            } 
+          }
+        );
+        await EventTracker.updateOne(
+          { formId, "steps.stepName": firstStep.stepName },
+          { $set: { "steps.$.status": "pending" } }
+        );
+      }
     }
 
-        // Update calendar event if this is an Activity/Project form with dates
-        if (['Activity', 'Project'].includes(form.formType) && updates.eventStartDate) {
-          await updateCalendarEventFromForm(updatedForm);
-        }
+    if (['Activity', 'Project'].includes(form.formType) && updates.eventStartDate) {
+      await updateCalendarEventFromForm(updatedForm);
+    }
 
-    // 6. Send notification
     if (form.emailAddress) {
       await Notification.create({
         userEmail: form.emailAddress,
@@ -612,7 +535,7 @@ exports.updateForm = async (req, res) => {
     res.status(200).json({
       message: 'Form updated successfully',
       form: updatedForm,
-      tracker: await EventTracker.findOne({ formId })
+      tracker: form.formType !== 'Budget' ? await EventTracker.findOne({ formId }) : null
     });
 
   } catch (error) {
@@ -633,9 +556,7 @@ exports.updateForm = async (req, res) => {
   }
 };
 
-//Local Off campus functionalities
-
-// Submit BEFORE phase
+// Local Off Campus functionalities (unchanged)
 exports.submitLocalOffCampusBefore = async (req, res) => {
   try {
     const { localOffCampus } = req.body;
@@ -646,7 +567,6 @@ exports.submitLocalOffCampusBefore = async (req, res) => {
     
     const { nameOfHei, region, address, basicInformation, activitiesOffCampus } = localOffCampus;
     
-    // Validate required fields
     if (!nameOfHei?.trim()) {
       return res.status(400).json({ error: "Name of HEI is required" });
     }
@@ -683,7 +603,6 @@ exports.submitLocalOffCampusBefore = async (req, res) => {
 
     const savedForm = await newForm.save();
     
-    // Create progress tracker
     const tracker = new EventTracker({
       formId: savedForm._id,
       formType: "LocalOffCampus",
@@ -717,7 +636,6 @@ exports.submitLocalOffCampusBefore = async (req, res) => {
   }
 };
 
-// Submit AFTER phase
 exports.submitLocalOffCampusAfter = async (req, res) => {
   try {
     const { localOffCampus } = req.body;
@@ -726,10 +644,8 @@ exports.submitLocalOffCampusAfter = async (req, res) => {
       return res.status(400).json({ error: "Form data is required" });
     }
     
-    // Only extract BEFORE phase fields
     const { nameOfHei, region, address, basicInformation, activitiesOffCampus } = localOffCampus;
     
-    // Validate required fields
     const errors = [];
     if (!nameOfHei?.trim()) errors.push("Name of HEI is required");
     if (!region?.trim()) errors.push("Region is required");
@@ -748,7 +664,6 @@ exports.submitLocalOffCampusAfter = async (req, res) => {
       });
     }
 
-    // Create form with ONLY BEFORE phase data
     const newForm = new Form({
       formType: "LocalOffCampus",
       localOffCampus: {
@@ -760,7 +675,6 @@ exports.submitLocalOffCampusAfter = async (req, res) => {
         activitiesOffCampus,
         submittedBy: req.user._id,
         status: "submitted",
-        // Explicitly set AFTER phase fields to null/empty
         afterActivity: [],
         problemsEncountered: null,
         recommendation: null
@@ -769,7 +683,6 @@ exports.submitLocalOffCampusAfter = async (req, res) => {
 
     const savedForm = await newForm.save();
     
-    // Update tracker
     await EventTracker.updateOne(
       { formId: beforeForm._id },
       { 
@@ -797,12 +710,10 @@ exports.submitLocalOffCampusAfter = async (req, res) => {
   }
 };
 
-// Get combined form data
 exports.getLocalOffCampusForm = async (req, res) => {
   try {
     const { eventId } = req.params;
     
-    // Find both BEFORE and AFTER forms
     const beforeForm = await Form.findById(eventId);
     if (!beforeForm || beforeForm.formType !== "LocalOffCampus") {
       return res.status(404).json({ error: "Form not found" });
@@ -812,7 +723,6 @@ exports.getLocalOffCampusForm = async (req, res) => {
       "localOffCampus.eventId": eventId 
     });
     
-    // Combine data
     const responseData = {
       before: beforeForm,
       after: afterForm || null,

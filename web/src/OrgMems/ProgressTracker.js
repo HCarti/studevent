@@ -330,7 +330,7 @@ const ProgressTracker = () => {
                                 <strong>{step.stepName}</strong>
                                 {step.reviewedBy && (
                                     <div className="reviewer-info">
-                                        <small>Reviewed by: {step.reviewedByRole} ({step.reviewedBy})</small>
+                                        <small>Reviewed by: {step.reviewedByRole}</small>
                                     </div>
                                 )}
                                 {step.timestamp && (

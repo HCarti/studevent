@@ -227,10 +227,6 @@ const BudgetPdf = ({ formData, signatures = {} }) => (
         <Text style={styles.formLabel}>Name of RSO:</Text>
         <Text style={styles.formValue}>{formData?.nameOfRso || '_________________________'}</Text>
       </View>
-      <View style={styles.formInfo}>
-        <Text style={styles.formLabel}>Event Title:</Text>
-        <Text style={styles.formValue}>{formData?.eventTitle || '_________________________'}</Text>
-      </View>
 
       {/* Budget Table */}
       <View style={styles.tableContainer}>
