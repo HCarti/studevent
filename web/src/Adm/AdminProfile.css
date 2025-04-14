@@ -4,20 +4,21 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 20px;
   background-image: url('../Images/Nu_building2.png');
   background-size: cover;
   background-position: center;
-  width: 100%; 
-  overflow-x: hidden;
+  background-attachment: fixed;
+  width: 100%;
   min-height: 100vh;
 }
 
 .profile-title {
   color: #3246a8;
-  font-size: 2.5rem; /* Increased font size for better prominence */
-  margin-bottom: 30px;
+  font-size: 2rem;
+  margin-bottom: 20px;
   font-weight: 700;
+  text-align: center;
 }
 
 /* Profile Container */
@@ -25,50 +26,51 @@
   display: flex;
   flex-direction: row;
   width: 100%;
-  max-width: 1000px; /* Increased max-width for better spacing */
+  max-width: 1000px;
   background-color: #ffffff;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1); /* Enhanced shadow for depth */
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
   border-radius: 12px;
   overflow: hidden;
   animation: fadeIn 0.5s ease-in-out;
-  height: 500px;
+  min-height: 500px;
 }
 
 /* Left Section */
 .profile-left {
   flex: 1;
   background-color: #f0f8ff;
-  padding: 40px 30px; /* Increased padding for better spacing */
+  padding: 30px;
   text-align: center;
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .profile-pic {
-  width: 100px; 
-  height: 100px;
-  margin: 0 auto  25px auto;
-  border-radius: 50%; 
-  overflow: hidden; 
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 20px auto;
+  border-radius: 50%;
+  overflow: hidden;
   background-color: #e0e0e0;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .profile-image {
   width: 100%;
   height: 100%;
-  object-fit: cover; 
+  object-fit: cover;
   object-position: center;
-  align-items: center;
 }
 
 .placeholder-pic {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%; 
+  height: 100%;
 }
 
 .upload-input {
@@ -77,15 +79,16 @@
 
 .upload-btn {
   display: inline-block;
-  margin-top: 20px;
+  margin-top: 15px;
   padding: 10px 20px;
   background-color: #3246a8;
   color: #fff;
   border-radius: 25px;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  font-size: 1rem;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
   font-weight: 500;
+  width: fit-content;
 }
 
 .upload-btn:hover {
@@ -95,15 +98,16 @@
 
 .admin-name {
   color: #0046ad;
-  font-size: 1.8rem;
-  margin: 15px 0;
+  font-size: 1.5rem;
+  margin: 15px 0 10px;
   font-weight: 600;
+  word-break: break-word;
 }
 
 .join-date {
   color: #7d7d7d;
-  font-size: 1rem;
-  margin-bottom: 25px;
+  font-size: 0.9rem;
+  margin-bottom: 20px;
 }
 
 .edit-btn {
@@ -113,12 +117,14 @@
   background-color: #28a745;
   color: #fff;
   border: none;
-  padding: 12px 25px;
+  padding: 10px 20px;
   border-radius: 25px;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 500;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  transition: all 0.3s ease;
+  width: fit-content;
+  margin-top: auto;
 }
 
 .edit-btn:hover {
@@ -127,48 +133,53 @@
 }
 
 .edit-btn svg {
-  margin-right: 10px;
+  margin-right: 8px;
 }
 
 /* Right Section */
 .profile-right {
   flex: 2;
-  padding: 40px 50px;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
 }
 
 .view-info,
 .edit-form,
 .password-form {
   width: 100%;
+  height: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .info-group {
-  margin-bottom: 40px;
+  margin-bottom: 30px;
 }
 
 .info-group h3 {
   color: #3246a8;
-  margin-bottom: 20px;
-  font-size: 1.5rem;
+  margin-bottom: 15px;
+  font-size: 1.3rem;
   border-bottom: 2px solid #e0e0e0;
   padding-bottom: 8px;
 }
 
 .info-group p {
-  margin: 15px 0;
-  font-size: 1.1rem;
+  margin: 12px 0;
+  font-size: 1rem;
   color: #555555;
 }
 
 .password-security {
   display: flex;
   align-items: center;
-  padding: 25px;
+  padding: 20px;
   background-color: #eaf4ff;
   border-radius: 10px;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  margin-top: auto;
 }
 
 .password-security:hover {
@@ -178,25 +189,27 @@
 }
 
 .security-icon {
-  font-size: 2.5rem; /* Increased size for better visibility */
-  color:goldenrod;
-  background-color:#24327a;
-  margin-right: 20px;
+  font-size: 2rem;
+  color: goldenrod;
+  background-color: #24327a;
+  margin-right: 15px;
+  border-radius: 50%;
+  padding: 10px;
 }
 
 .security-text p {
   font-weight: 600;
   color: #3246a8;
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
 }
 
 .security-text small {
   color: #707070;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
-/* Forms */
+/* Forms - Desktop Styles */
 .edit-form,
 .password-form {
   display: flex;
@@ -207,7 +220,7 @@
 .password-form h3 {
   color: #3246a8;
   margin-bottom: 20px;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   border-bottom: 2px solid #e0e0e0;
   padding-bottom: 8px;
 }
@@ -215,22 +228,27 @@
 .form-group {
   display: flex;
   flex-direction: column;
-  margin-bottom: 25px;
+  margin-bottom: 20px;
+  width: 100%;
 }
 
 .form-group label {
   margin-bottom: 8px;
   font-weight: 600;
   color: #333333;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .form-group input {
-  padding: 12px 18px;
+  width: 100%;
+  min-width: 0;
+  padding: 10px 15px;
   border: 1px solid #cccccc;
   border-radius: 6px;
-  font-size: 1rem;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  max-width: 400px; /* Added max-width for desktop */
 }
 
 .form-group input:focus {
@@ -246,22 +264,21 @@
 .button-group {
   display: flex;
   justify-content: flex-end;
-  gap: 20px;
+  gap: 15px;
+  margin-top: auto;
 }
 
 .save-btn,
 .cancel-btn {
   display: flex;
   align-items: center;
-  padding: 12px 25px;
+  padding: 10px 20px;
   border: none;
   border-radius: 25px;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 500;
-  height: 50px;
-  margin-top: 20px;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .save-btn {
@@ -275,7 +292,7 @@
 }
 
 .save-btn svg {
-  margin-right: 10px;
+  margin-right: 8px;
 }
 
 .cancel-btn {
@@ -289,62 +306,56 @@
 }
 
 .cancel-btn svg {
-  margin-right: 10px;
+  margin-right: 8px;
 }
 
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .profile-container {
-    flex-direction: column;
-    max-width: 800px;
-  }
-
-  .profile-left {
-    padding: 30px 25px;
-  }
-
-  .profile-right {
-    padding: 30px 35px;
-  }
-}
-
+/* Responsive Design - Tablet */
 @media (max-width: 768px) {
   .profile-container {
     flex-direction: column;
     max-width: 100%;
+    min-height: auto;
   }
 
   .profile-left {
-    padding: 30px 20px;
+    padding: 25px 20px;
     border-right: none;
-    border-bottom: 2px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
   }
 
   .profile-right {
     padding: 25px 20px;
   }
 
+  .profile-pic {
+    width: 100px;
+    height: 100px;
+  }
+
   .button-group {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 10px;
   }
 
   .save-btn,
   .cancel-btn {
-    width: 100%;
+    flex: 1;
     justify-content: center;
+    padding: 10px;
   }
 
   .profile-title {
-    font-size: 2rem;
+    font-size: 1.8rem;
+    margin-bottom: 15px;
   }
 
   .admin-name {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
   }
 
   .security-text p {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 
   .security-text small {
@@ -352,17 +363,125 @@
   }
 
   .password-security {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
+    padding: 15px;
   }
 
   .security-icon {
-    margin-bottom: 10px;
-    margin-right: 0;
+    margin-right: 15px;
+    margin-bottom: 0;
+    font-size: 1.8rem;
+    padding: 8px;
   }
 
-  .security-text p {
-    text-align: left;
+  .form-group {
+    width: 100%;
+    margin-bottom: 15px;
+  }
+
+  .form-group input {
+    width: 100%;
+    padding: 10px 12px;
+    max-width: 100%; /* Full width on tablet */
+  }
+
+  .edit-form,
+  .password-form {
+    padding: 0;
+  }
+}
+
+/* Responsive Design - Mobile */
+@media (max-width: 480px) {
+  .m-container {
+    padding: 15px 10px;
+  }
+
+  .profile-title {
+    font-size: 1.6rem;
+  }
+
+  .profile-left,
+  .profile-right {
+    padding: 20px 15px;
+  }
+
+  .profile-pic {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 15px;
+  }
+
+  .admin-name {
+    font-size: 1.2rem;
+  }
+
+  .join-date {
+    font-size: 0.8rem;
+  }
+
+  .edit-btn,
+  .upload-btn {
+    font-size: 0.85rem;
+    padding: 8px 15px;
+  }
+
+  .info-group h3,
+  .password-form h3 {
+    font-size: 1.1rem;
+  }
+
+  .info-group p {
+    font-size: 0.9rem;
+  }
+
+  /* Mobile-specific input styles */
+  .form-group input {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    max-width: 280px; /* Shorter width for mobile */
+    margin: 0 auto; /* Center the inputs */
+    display: block; /* Ensure inputs take up only needed space */
+  }
+
+  .button-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .save-btn,
+  .cancel-btn {
+    width: 100%;
+    padding: 10px;
+  }
+
+  .password-security {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 15px;
+  }
+
+  .security-icon {
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+
+  .profile-right {
+    padding: 15px 10px;
+  }
+
+  .edit-form,
+  .password-form {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Specific form adjustments for mobile */
+  .edit-form .form-group,
+  .password-form .form-group {
+    width: 100%;
+    max-width: 100%;
   }
 }
 
@@ -388,4 +507,3 @@
     transform: translateX(0);
   }
 }
- 
