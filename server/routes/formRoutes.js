@@ -70,14 +70,14 @@ router.post('/submit',
   }
 );
 
-// New route for creating form with budget
-router.post('/with-budget',
-  upload.fields([
-    { name: 'attachments', maxCount: 4 },
-    { name: 'additionalSignatures', maxCount: 1 }
-  ]),
-  formController.createFormWithBudget
-);
+// // New route for creating form with budget
+// router.post('/with-budget',
+//   upload.fields([
+//     { name: 'attachments', maxCount: 4 },
+//     { name: 'additionalSignatures', maxCount: 1 }
+//   ]),
+//   formController.createFormWithBudget
+// );
 
 // ======================
 // LOCAL OFF-CAMPUS ROUTES
@@ -96,12 +96,7 @@ router.put('/budget-proposals/:budgetId', formController.updateBudgetProposal);
 // router.delete('/budget-proposals/:budgetId', formController.deleteBudgetProposal);
 
 // Get form with budget options
-router.get('/:formId/with-budgets', formController.getFormWithBudgetOptions);
+// router.get('/:formId/with-budgets', formController.getFormWithBudgetOptions);
 
-// ======================
-// CALENDAR EVENT ROUTES
-// ======================
-router.get('/calendar/events', formController.getFormEvents);
-router.get('/calendar/event-counts', formController.getEventCounts);
 
 module.exports = router;
