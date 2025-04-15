@@ -247,34 +247,43 @@ exports.createForm = async (req, res) => {
 
     // Handle budget validation if attached
     if (req.body.attachedBudget) {
-      const validBudget = await BudgetProposal.findOne({
-        _id: req.body.attachedBudget,
-        organization: req.body.studentOrganization || req.user.organizationId,
-        isActive: true
-      }).session(session);
+      try {
+        const validBudget = await BudgetProposal.findOne({
+          _id: req.body.attachedBudget,
+          organization: req.body.studentOrganization || req.user.organizationId,
+          isActive: true
+        }).session(session);
 
-      if (!validBudget) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(400).json({ 
-          error: 'Budget proposal not found or not active for your organization' 
-        });
-      }
+        if (!validBudget) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(400).json({ 
+            error: 'Budget proposal not found or not active for your organization' 
+          });
+        }
 
-      // Auto-populate budget-related fields
-      req.body.budgetAmount = validBudget.grandTotal;
-      req.body.budgetFrom = validBudget.nameOfRso;
-      
-      // Link the budget to this form
-      await BudgetProposal.findByIdAndUpdate(
-        validBudget._id,
-        { 
-          associatedForm: req.body._id, 
-          formType: 'Activity' 
-        },
-        { session }
+        // Auto-populate budget-related fields
+        req.body.budgetAmount = validBudget.grandTotal;
+        req.body.budgetFrom = validBudget.nameOfRso;
+        
+        // Link the budget to this form
+        await BudgetProposal.findByIdAndUpdate(
+          validBudget._id,
+          { 
+            associatedForm: req.body._id, 
+            formType: 'Activity' 
+          },
+          { session }
       );
+    } catch (budgetError) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ 
+        error: 'Budget validation failed',
+        details: budgetError.message 
+      });
     }
+  }
 
     // Form type specific validation
     switch (req.body.formType) {
