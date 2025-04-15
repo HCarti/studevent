@@ -247,43 +247,50 @@ exports.createForm = async (req, res) => {
 
     // Handle budget validation if attached
     // Handle budget validation if attached
+// In the budget validation/creation section of createForm
 if (req.body.attachedBudget) {
-  try {
-    const validBudget = await BudgetProposal.findOne({
-      _id: req.body.attachedBudget,
-      organization: req.body.studentOrganization || req.user.organizationId,
-      isActive: true
-    }).session(session);
+  const validBudget = await BudgetProposal.findOne({
+    _id: req.body.attachedBudget,
+    organization: req.body.studentOrganization || req.user.organizationId,
+    isActive: true
+  }).session(session);
 
-    if (!validBudget) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ 
-        error: 'Budget proposal not found or not active for your organization' 
-      });
-    }
-
-    // Auto-populate budget-related fields
-    req.body.budgetAmount = validBudget.grandTotal;
-    req.body.budgetFrom = validBudget.nameOfRso;
-    
-    // Link the budget to this form
-    await BudgetProposal.findByIdAndUpdate(
-      validBudget._id,
-      { 
-        associatedForm: req.body._id, 
-        formType: 'Activity' 
-      },
-      { session }
-    );  // <-- The missing parenthesis goes here
-  } catch (budgetError) {
+  if (!validBudget) {
     await session.abortTransaction();
     session.endSession();
     return res.status(400).json({ 
-      error: 'Budget validation failed',
-      details: budgetError.message 
+      error: 'Budget proposal not found or not active for your organization' 
     });
   }
+
+  req.body.budgetAmount = validBudget.grandTotal;
+  req.body.budgetFrom = validBudget.nameOfRso;
+  
+  await BudgetProposal.findByIdAndUpdate(
+    validBudget._id,
+    { 
+      associatedForm: form._id,  // Note: Changed from req.body._id to form._id
+      formType: 'Activity' 
+    },
+    { session }
+  );
+} else if (req.body.budgetData) {
+  // Create new budget proposal
+  const budgetProposal = new BudgetProposal({
+    nameOfRso: req.user.organizationName || req.body.studentOrganization?.organizationName,
+    eventTitle: req.body.budgetData.eventTitle || req.body.eventTitle || 'Budget Proposal',
+    items: req.body.budgetData.items,
+    grandTotal: req.body.budgetData.items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0),
+    createdBy: req.user._id,
+    organization: req.body.studentOrganization || req.user.organizationId, // Ensure organization is set
+    formType: 'Activity',
+    isActive: true
+  });
+
+  await budgetProposal.save({ session });
+  req.body.attachedBudget = budgetProposal._id;
+  req.body.budgetAmount = budgetProposal.grandTotal;
+  req.body.budgetFrom = budgetProposal.nameOfRso;
 }
 
     // Form type specific validation

@@ -356,7 +356,7 @@ const BudgetForm = () => {
     try {
       const url = isEditMode 
         ? `https://studevent-server.vercel.app/api/budget-proposals/${formId}`
-        : 'https://studevent-server.vercel.app/api/form/budget-proposals';
+        : 'https://studevent-server.vercel.app/api/forms/budget-proposals';
       
       const method = isEditMode ? 'PUT' : 'POST';
   
