@@ -841,6 +841,12 @@ exports.createBudgetProposal = async (req, res) => {
       return res.status(400).json({ error: 'At least one budget item is required' });
     }
 
+    // Get organization - this is the critical fix
+    const organizationId = req.body.studentOrganization || req.user.organizationId;
+    if (!organizationId) {
+      return res.status(400).json({ error: 'Organization reference is required' });
+    }
+
     // Calculate grand total
     const grandTotal = items.reduce((sum, item) => {
       return sum + (item.quantity * item.unitCost);
@@ -848,25 +854,26 @@ exports.createBudgetProposal = async (req, res) => {
 
     // Create new budget proposal
     const newBudget = new BudgetProposal({
-      nameOfRso: req.user.organizationName,
+      nameOfRso: req.user.organizationName || 'Organization', // Fallback name
       eventTitle: eventTitle || 'Budget Proposal',
       items,
       grandTotal,
       createdBy: req.user._id,
-      organization: req.user.organizationId,
+      organization: organizationId, // This was missing/misconfigured
       associatedForm: targetFormId || null,
-      formType: targetFormType || null
+      formType: targetFormType || null,
+      isActive: true
     });
 
     await newBudget.save();
 
-    // If this is linked to an existing form, update the form
+    // If linked to an existing form, update the form
     if (targetFormId) {
       await Form.findByIdAndUpdate(targetFormId, {
         $set: {
           attachedBudget: newBudget._id,
           budgetAmount: grandTotal,
-          budgetFrom: req.user.organizationName
+          budgetFrom: newBudget.nameOfRso
         }
       });
     }
@@ -875,7 +882,7 @@ exports.createBudgetProposal = async (req, res) => {
       success: true,
       message: 'Budget proposal created successfully',
       budget: newBudget,
-      returnPath: req.body.returnPath // Pass through for frontend redirection
+      returnPath: req.body.returnPath
     });
 
   } catch (error) {
@@ -886,6 +893,7 @@ exports.createBudgetProposal = async (req, res) => {
     });
   }
 };
+
 
 exports.updateBudgetProposal = async (req, res) => {
   try {
