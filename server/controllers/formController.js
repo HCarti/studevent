@@ -833,18 +833,43 @@ exports.getLocalOffCampusForm = async (req, res) => {
 
 // Budget Proposal Controller Methods
 exports.createBudgetProposal = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const { items, eventTitle, targetFormType, targetFormId } = req.body;
     
     // Validate required fields
     if (!items || !Array.isArray(items) || items.length === 0) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(400).json({ error: 'At least one budget item is required' });
     }
 
-    // Get organization - this is the critical fix
-    const organizationId = req.body.studentOrganization || req.user.organizationId;
+    // Get organization - with proper validation
+    let organizationId = req.body.studentOrganization || req.user?.organizationId;
+    let organizationName = req.user?.organizationName || 'Our Organization';
+
+    // If we don't have an ID, try to get it from the user's organization
+    if (!organizationId && req.user) {
+      const userOrg = await User.findById(req.user._id)
+        .select('organization organizationName')
+        .session(session);
+      
+      if (userOrg?.organization) {
+        organizationId = userOrg.organization;
+        organizationName = userOrg.organizationName || organizationName;
+      }
+    }
+
+    // Final validation
     if (!organizationId) {
-      return res.status(400).json({ error: 'Organization reference is required' });
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ 
+        error: 'Organization reference is required',
+        details: 'User is not associated with any organization'
+      });
     }
 
     // Calculate grand total
@@ -854,29 +879,36 @@ exports.createBudgetProposal = async (req, res) => {
 
     // Create new budget proposal
     const newBudget = new BudgetProposal({
-      nameOfRso: req.user.organizationName || 'Organization', // Fallback name
+      nameOfRso: organizationName,
       eventTitle: eventTitle || 'Budget Proposal',
       items,
       grandTotal,
       createdBy: req.user._id,
-      organization: organizationId, // This was missing/misconfigured
+      organization: organizationId,
       associatedForm: targetFormId || null,
       formType: targetFormType || null,
       isActive: true
     });
 
-    await newBudget.save();
+    await newBudget.save({ session });
 
     // If linked to an existing form, update the form
     if (targetFormId) {
-      await Form.findByIdAndUpdate(targetFormId, {
-        $set: {
-          attachedBudget: newBudget._id,
-          budgetAmount: grandTotal,
-          budgetFrom: newBudget.nameOfRso
-        }
-      });
+      await Form.findByIdAndUpdate(
+        targetFormId,
+        {
+          $set: {
+            attachedBudget: newBudget._id,
+            budgetAmount: grandTotal,
+            budgetFrom: organizationName
+          }
+        },
+        { session }
+      );
     }
+
+    await session.commitTransaction();
+    session.endSession();
 
     res.status(201).json({
       success: true,
@@ -886,6 +918,9 @@ exports.createBudgetProposal = async (req, res) => {
     });
 
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    
     console.error('Error creating budget proposal:', error);
     res.status(500).json({ 
       error: 'Failed to create budget proposal',
