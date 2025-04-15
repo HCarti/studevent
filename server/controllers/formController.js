@@ -196,7 +196,7 @@ exports.getFormById = async (req, res) => {
 exports.createForm = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
-  
+
   try {
     // Set default application date if not provided
     if (!req.body.applicationDate) {
@@ -245,39 +245,8 @@ exports.createForm = async (req, res) => {
       }
     }
 
-    // Handle budget creation if included in request
-    let budgetProposal = null;
-    if (req.body.budgetData) {
-      try {
-        // Create budget proposal
-        budgetProposal = new BudgetProposal({
-          nameOfRso: req.user.organizationName || req.body.studentOrganization?.organizationName,
-          eventTitle: req.body.budgetData.eventTitle || req.body.eventTitle || 'Budget Proposal',
-          items: req.body.budgetData.items,
-          grandTotal: req.body.budgetData.items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0),
-          createdBy: req.user._id,
-          organization: req.body.studentOrganization || req.user.organizationId,
-          formType: 'Activity',
-          isActive: true
-        });
-
-        await budgetProposal.save({ session });
-
-        // Attach budget to form
-        req.body.attachedBudget = budgetProposal._id;
-        req.body.budgetAmount = budgetProposal.grandTotal;
-        req.body.budgetFrom = budgetProposal.nameOfRso;
-      } catch (budgetError) {
-        await session.abortTransaction();
-        session.endSession();
-        console.error("Budget creation error:", budgetError);
-        return res.status(400).json({ 
-          error: "Budget creation failed",
-          details: budgetError.message 
-        });
-      }
-    } else if (req.body.attachedBudget) {
-      // Handle existing budget attachment
+    // Handle budget validation if attached
+    if (req.body.attachedBudget) {
       const validBudget = await BudgetProposal.findOne({
         _id: req.body.attachedBudget,
         organization: req.body.studentOrganization || req.user.organizationId,
@@ -292,7 +261,11 @@ exports.createForm = async (req, res) => {
         });
       }
 
-      // Update budget to link with this form
+      // Auto-populate budget-related fields
+      req.body.budgetAmount = validBudget.grandTotal;
+      req.body.budgetFrom = validBudget.nameOfRso;
+      
+      // Link the budget to this form
       await BudgetProposal.findByIdAndUpdate(
         validBudget._id,
         { 
@@ -373,45 +346,24 @@ exports.createForm = async (req, res) => {
       }
     }
 
-    // Create progress tracker for relevant form types
-    let tracker = null;
-    if (['Activity', 'Project', 'LocalOffCampus'].includes(req.body.formType)) {
-      const requiredReviewers = getRequiredReviewers(req.body.formType);
-      const trackerSteps = requiredReviewers.map(reviewer => ({
-        stepName: reviewer.stepName,
-        reviewerRole: reviewer.reviewerRole,
-        status: "pending",
-        remarks: "",
-        timestamp: null
-      }));
+    // Create progress tracker
+    const requiredReviewers = getRequiredReviewers(req.body.formType);
+    const trackerSteps = requiredReviewers.map(reviewer => ({
+      stepName: reviewer.stepName,
+      reviewerRole: reviewer.reviewerRole,
+      status: "pending",
+      remarks: "",
+      timestamp: null
+    }));
 
-      tracker = new EventTracker({
-        formId: form._id,
-        formType: req.body.formType,
-        currentStep: trackerSteps[0].stepName,
-        currentAuthority: trackerSteps[0].reviewerRole,
-        steps: trackerSteps
-      });
-      await tracker.save({ session });
-    }
-
-    // Create tracker for budget if it was created with this form
-    if (budgetProposal) {
-      const budgetTracker = new EventTracker({
-        formId: budgetProposal._id,
-        formType: 'Budget',
-        currentStep: 'Initial Submission',
-        currentAuthority: 'Adviser',
-        steps: [{
-          stepName: 'Initial Submission',
-          reviewerRole: 'Adviser',
-          status: 'pending',
-          remarks: '',
-          timestamp: null
-        }]
-      });
-      await budgetTracker.save({ session });
-    }
+    const tracker = new EventTracker({
+      formId: form._id,
+      formType: req.body.formType,
+      currentStep: trackerSteps[0].stepName,
+      currentAuthority: trackerSteps[0].reviewerRole,
+      steps: trackerSteps
+    });
+    await tracker.save({ session });
 
     // Send notification
     if (req.body.emailAddress) {
@@ -426,23 +378,14 @@ exports.createForm = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    const responseData = {
+    res.status(201).json({ 
       form: {
         ...form.toObject(),
         presidentName: form.presidentName,
         presidentSignature: form.presidentSignature
-      },
-      tracker: tracker ? await EventTracker.findOne({ formId: form._id }) : null
-    };
-
-    if (budgetProposal) {
-      responseData.budget = budgetProposal;
-      responseData.budgetTracker = await EventTracker.findOne({ 
-        formId: budgetProposal._id 
-      });
-    }
-
-    res.status(201).json(responseData);
+      }, 
+      tracker: await EventTracker.findOne({ formId: form._id })
+    });
 
   } catch (error) {
     await session.abortTransaction();
