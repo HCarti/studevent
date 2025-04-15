@@ -54,7 +54,10 @@ const Aap = () => {
     safetyAttendees: "",
     emergencyFirstAid: "",
     fireSafety: "",
-    weather: ""
+    weather: "",
+    attachedBudget: null, // ID of attached budget proposal
+    budgetProposals: [], // List of available budgets for dropdown
+    showBudgetModal: false // Control budget modal visibility
   });
 
   const [fieldErrors, setFieldErrors] = useState({
@@ -141,6 +144,7 @@ const Aap = () => {
     setFieldErrors(prev => ({ ...prev, [name]: !isValid }));
     return isValid;
   };
+  
 
   const validateAllFields = () => {
     const requiredFields = [
@@ -171,6 +175,57 @@ const Aap = () => {
   
     return isValid;
   };
+
+  useEffect(() => {
+    // Check for budget data when returning from budget form
+    const locationState = location.state;
+    if (locationState?.newBudget) {
+      const newBudget = locationState.newBudget;
+      
+      // Update form with new budget data
+      setFormData(prev => ({
+        ...prev,
+        attachedBudget: newBudget._id,
+        budgetAmount: newBudget.grandTotal,
+        budgetFrom: newBudget.nameOfRso,
+        budgetProposals: [...prev.budgetProposals, newBudget]
+      }));
+      
+      // Clear the state to prevent infinite updates
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+    
+    // Check for saved draft data
+    const savedDraft = localStorage.getItem('activityFormDraft');
+    if (savedDraft && !isEditMode) {
+      setFormData(JSON.parse(savedDraft));
+      localStorage.removeItem('activityFormDraft');
+    }
+  }, [location.state, navigate, location.pathname, isEditMode]);
+
+  const fetchBudgetProposals = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('https://studevent-server.vercel.app/api/budget-proposals', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setFormData(prev => ({
+          ...prev,
+          budgetProposals: data
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching budgets:', error);
+    }
+  };
+  
+  // Call this in useEffect when component mounts
+  useEffect(() => {
+    fetchBudgetProposals();
+  }, []);
 
   // Fetch form data if in edit mode
   useEffect(() => {
@@ -452,6 +507,7 @@ const isOccupied = (date) => {
     const submissionData = {
       formType: 'Activity',
       ...formData,
+      attachedBudget: formData.attachedBudget || undefined, // Send undefined instead of null
       studentOrganization: formData.organizationId, // Send the ID instead of name
       eventStartDate: new Date(formData.eventStartDate),
       eventEndDate: new Date(formData.eventEndDate),
@@ -829,24 +885,65 @@ const renderSidebar = () => (
               <div className="validation-error">Please Enter A Organizer</div>
             )}
 
+          <label className="required-field">Budget:</label>
+          <div className="budget-selection">
+            <select
+              value={formData.attachedBudget || ''}
+              onChange={(e) => {
+                const budgetId = e.target.value;
+                const selectedBudget = formData.budgetProposals.find(b => b._id === budgetId);
+                
+                setFormData(prev => ({
+                  ...prev,
+                  attachedBudget: budgetId,
+                  budgetAmount: selectedBudget?.grandTotal || '',
+                  budgetFrom: selectedBudget?.nameOfRso || ''
+                }));
+              }}
+            >
+              <option value="">Select a budget proposal...</option>
+              {formData.budgetProposals.map(budget => (
+                <option key={budget._id} value={budget._id}>
+                  {budget.eventTitle} - ₱{budget.grandTotal}
+                </option>
+              ))}
+            </select>
+            
+            <button 
+              type="button" 
+              className="create-budget-btn"
+              onClick={() => {
+                // Save current form data to localStorage before redirecting
+                localStorage.setItem('activityFormDraft', JSON.stringify(formData));
+                navigate('/budget', { 
+                  state: { 
+                    returnPath: location.pathname,
+                    activityFormData: formData 
+                  } 
+                });
+              }}
+            >
+              + Create New Budget
+            </button>
+          </div>
+            
             <label className="required-field">Budget Amount:</label>
             <input 
               type="number" 
               name="budgetAmount" 
               value={formData.budgetAmount} 
               onChange={handleChange}
+              readOnly={!!formData.attachedBudget}
               className={fieldErrors.budgetAmount ? 'invalid-field' : ''}
               min="0"
             />
-            {fieldErrors.budgetAmount && (
-              <div className="validation-error">Please Enter A Budget Amount</div>
-            )}
-
+            
             <label className="required-field">Budget From:</label>
             <select 
               name="budgetFrom" 
               value={formData.budgetFrom} 
               onChange={handleChange}
+              readOnly={!!formData.attachedBudget}
               className={fieldErrors.budgetFrom ? 'invalid-field' : ''}
             >
               <option value="">Select An Option...</option>
@@ -854,12 +951,10 @@ const renderSidebar = () => (
               <option value="Org">Organization</option>
               <option value="SDAO">SDAO</option>
             </select>
-            {fieldErrors.budgetFrom && (
-              <div className="validation-error">Please Pick An Option</div>
-            )}
+            
             <p className="venue-note">
               Note: Budget amount is not automatically approved by this system. Please confirm
-              budget availability separately with the budget management before submission. It will be checked by the SDAO.
+              budget availability separately with the budget management before submission.
             </p>
 
             <label className="required-field">Core Values Integration:</label>

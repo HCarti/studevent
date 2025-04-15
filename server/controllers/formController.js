@@ -5,6 +5,7 @@ const EventTracker = require("../models/EventTracker");
 const mongoose = require("mongoose");
 const CalendarEvent = require("../models/CalendarEvent");
 const moment = require('moment');
+const BudgetProposal = require("../models/BudgetProposal");
 
 // HELPERS
 
@@ -163,6 +164,7 @@ exports.getAllForms = async (req, res) => {
     
     const forms = await Form.find(filter)
       .populate("studentOrganization")
+      .populate("attachedBudget")
       .lean();
 
     if (!forms.length) {
@@ -175,9 +177,13 @@ exports.getAllForms = async (req, res) => {
   }
 };
 
+// Update getFormById to populate attachedBudget:
 exports.getFormById = async (req, res) => {
   try {
-    const form = await Form.findById(req.params.formId);
+    const form = await Form.findById(req.params.formId)
+      .populate('attachedBudget')
+      .populate('studentOrganization');
+      
     if (!form) {
       return res.status(404).json({ message: 'Form not found' });
     }
@@ -188,6 +194,9 @@ exports.getFormById = async (req, res) => {
 };
 
 exports.createForm = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  
   try {
     // Set default application date if not provided
     if (!req.body.applicationDate) {
@@ -207,17 +216,19 @@ exports.createForm = async (req, res) => {
         organization = await User.findOne({
           _id: req.body.studentOrganization,
           role: "Organization"
-        });
+        }).session(session);
       }
 
       if (!organization) {
         organization = await User.findOne({
           organizationName: req.body.studentOrganization,
           role: "Organization"
-        });
+        }).session(session);
       }
 
       if (!organization) {
+        await session.abortTransaction();
+        session.endSession();
         return res.status(400).json({ error: "Organization not found" });
       }
 
@@ -226,62 +237,144 @@ exports.createForm = async (req, res) => {
       req.body.presidentSignature = organization.presidentSignature;
       
       if (!organization.presidentSignature) {
+        await session.abortTransaction();
+        session.endSession();
         return res.status(400).json({ 
           error: "Organization president signature is required" 
         });
       }
     }
 
+    // Handle budget creation if included in request
+    let budgetProposal = null;
+    if (req.body.budgetData) {
+      try {
+        // Create budget proposal
+        budgetProposal = new BudgetProposal({
+          nameOfRso: req.user.organizationName || req.body.studentOrganization?.organizationName,
+          eventTitle: req.body.budgetData.eventTitle || req.body.eventTitle || 'Budget Proposal',
+          items: req.body.budgetData.items,
+          grandTotal: req.body.budgetData.items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0),
+          createdBy: req.user._id,
+          organization: req.body.studentOrganization || req.user.organizationId,
+          formType: 'Activity',
+          isActive: true
+        });
+
+        await budgetProposal.save({ session });
+
+        // Attach budget to form
+        req.body.attachedBudget = budgetProposal._id;
+        req.body.budgetAmount = budgetProposal.grandTotal;
+        req.body.budgetFrom = budgetProposal.nameOfRso;
+      } catch (budgetError) {
+        await session.abortTransaction();
+        session.endSession();
+        console.error("Budget creation error:", budgetError);
+        return res.status(400).json({ 
+          error: "Budget creation failed",
+          details: budgetError.message 
+        });
+      }
+    } else if (req.body.attachedBudget) {
+      // Handle existing budget attachment
+      const validBudget = await BudgetProposal.findOne({
+        _id: req.body.attachedBudget,
+        organization: req.body.studentOrganization || req.user.organizationId,
+        isActive: true
+      }).session(session);
+
+      if (!validBudget) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ 
+          error: 'Budget proposal not found or not active for your organization' 
+        });
+      }
+
+      // Update budget to link with this form
+      await BudgetProposal.findByIdAndUpdate(
+        validBudget._id,
+        { 
+          associatedForm: req.body._id, 
+          formType: 'Activity' 
+        },
+        { session }
+      );
+    }
+
     // Form type specific validation
     switch (req.body.formType) {
       case 'Activity':
         if (!req.body.studentOrganization) {
+          await session.abortTransaction();
+          session.endSession();
           return res.status(400).json({ error: "studentOrganization is required for Activity forms" });
         }
         
         if (req.body.eventStartDate) {
-          const endDate = req.body.eventEndDate || req.body.eventStartDate;
-          await checkEventCapacity(req.body.eventStartDate, endDate);
+          try {
+            const endDate = req.body.eventEndDate || req.body.eventStartDate;
+            await checkEventCapacity(req.body.eventStartDate, endDate);
+          } catch (capacityError) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ error: capacityError.message });
+          }
         }
         break;
 
       case 'Budget':
-        // Budget forms will be handled separately, no tracker needed
+        await session.abortTransaction();
+        session.endSession();
         return res.status(400).json({ error: "Budget forms should be submitted through a different endpoint" });
 
       case 'Project':
         if (!req.body.projectTitle || !req.body.projectDescription) {
+          await session.abortTransaction();
+          session.endSession();
           return res.status(400).json({ error: "Project title and description are required" });
         }
         
         if (req.body.eventStartDate) {
-          const endDate = req.body.eventEndDate || req.body.eventStartDate;
-          await checkEventCapacity(req.body.eventStartDate, endDate);
+          try {
+            const endDate = req.body.eventEndDate || req.body.eventStartDate;
+            await checkEventCapacity(req.body.eventStartDate, endDate);
+          } catch (capacityError) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ error: capacityError.message });
+          }
         }
         break;
 
       case 'LocalOffCampus':
-        // LocalOffCampus has its own submission flow
+        await session.abortTransaction();
+        session.endSession();
         return res.status(400).json({ error: "Local Off Campus forms should be submitted through their specific endpoints" });
 
       default:
+        await session.abortTransaction();
+        session.endSession();
         return res.status(400).json({ error: "Invalid form type" });
     }
 
     // Create and save the form
     const form = new Form(req.body);
-    await form.save();
+    await form.save({ session });
 
     // Create calendar event if this is an Activity/Project form with dates
     if (['Activity', 'Project'].includes(req.body.formType)) {
       try {
-        await createCalendarEventFromForm(form);
+        await createCalendarEventFromForm(form, session);
       } catch (eventError) {
         console.error('Error creating calendar event:', eventError);
+        // Not fatal - continue without calendar event
       }
     }
 
     // Create progress tracker for relevant form types
+    let tracker = null;
     if (['Activity', 'Project', 'LocalOffCampus'].includes(req.body.formType)) {
       const requiredReviewers = getRequiredReviewers(req.body.formType);
       const trackerSteps = requiredReviewers.map(reviewer => ({
@@ -292,36 +385,69 @@ exports.createForm = async (req, res) => {
         timestamp: null
       }));
 
-      const tracker = new EventTracker({
+      tracker = new EventTracker({
         formId: form._id,
         formType: req.body.formType,
         currentStep: trackerSteps[0].stepName,
         currentAuthority: trackerSteps[0].reviewerRole,
         steps: trackerSteps
       });
-      await tracker.save();
+      await tracker.save({ session });
+    }
+
+    // Create tracker for budget if it was created with this form
+    if (budgetProposal) {
+      const budgetTracker = new EventTracker({
+        formId: budgetProposal._id,
+        formType: 'Budget',
+        currentStep: 'Initial Submission',
+        currentAuthority: 'Adviser',
+        steps: [{
+          stepName: 'Initial Submission',
+          reviewerRole: 'Adviser',
+          status: 'pending',
+          remarks: '',
+          timestamp: null
+        }]
+      });
+      await budgetTracker.save({ session });
     }
 
     // Send notification
     if (req.body.emailAddress) {
-      await Notification.create({
+      await Notification.create([{
         userEmail: req.body.emailAddress,
         message: `Your ${req.body.formType} form has been submitted!`,
         read: false,
         timestamp: new Date(),
-      });
+      }], { session });
     }
 
-    res.status(201).json({ 
+    await session.commitTransaction();
+    session.endSession();
+
+    const responseData = {
       form: {
         ...form.toObject(),
         presidentName: form.presidentName,
         presidentSignature: form.presidentSignature
-      }, 
-      tracker: req.body.formType !== 'Budget' ? await EventTracker.findOne({ formId: form._id }) : null
-    });
+      },
+      tracker: tracker ? await EventTracker.findOne({ formId: form._id }) : null
+    };
+
+    if (budgetProposal) {
+      responseData.budget = budgetProposal;
+      responseData.budgetTracker = await EventTracker.findOne({ 
+        formId: budgetProposal._id 
+      });
+    }
+
+    res.status(201).json(responseData);
 
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    
     console.error("Form Creation Error:", error);
     
     if (error.name === 'ValidationError') {
@@ -556,7 +682,6 @@ exports.updateForm = async (req, res) => {
   }
 };
 
-// Local Off Campus functionalities (unchanged)
 exports.submitLocalOffCampusBefore = async (req, res) => {
   try {
     const { localOffCampus } = req.body;
@@ -742,3 +867,154 @@ exports.getLocalOffCampusForm = async (req, res) => {
     });
   }
 };
+
+
+// === BUDGET PROPOSAL FUNCTIONS ===
+
+// Budget Proposal Controller Methods
+exports.createBudgetProposal = async (req, res) => {
+  try {
+    const { items, eventTitle, targetFormType, targetFormId } = req.body;
+    
+    // Validate required fields
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'At least one budget item is required' });
+    }
+
+    // Calculate grand total
+    const grandTotal = items.reduce((sum, item) => {
+      return sum + (item.quantity * item.unitCost);
+    }, 0);
+
+    // Create new budget proposal
+    const newBudget = new BudgetProposal({
+      nameOfRso: req.user.organizationName,
+      eventTitle: eventTitle || 'Budget Proposal',
+      items,
+      grandTotal,
+      createdBy: req.user._id,
+      organization: req.user.organizationId,
+      associatedForm: targetFormId || null,
+      formType: targetFormType || null
+    });
+
+    await newBudget.save();
+
+    // If this is linked to an existing form, update the form
+    if (targetFormId) {
+      await Form.findByIdAndUpdate(targetFormId, {
+        $set: {
+          attachedBudget: newBudget._id,
+          budgetAmount: grandTotal,
+          budgetFrom: req.user.organizationName
+        }
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Budget proposal created successfully',
+      budget: newBudget,
+      returnPath: req.body.returnPath // Pass through for frontend redirection
+    });
+
+  } catch (error) {
+    console.error('Error creating budget proposal:', error);
+    res.status(500).json({ 
+      error: 'Failed to create budget proposal',
+      details: error.message 
+    });
+  }
+};
+
+exports.updateBudgetProposal = async (req, res) => {
+  try {
+    const { budgetId } = req.params;
+    const { items, eventTitle } = req.body;
+
+    // Find existing budget
+    const budget = await BudgetProposal.findById(budgetId);
+    if (!budget) {
+      return res.status(404).json({ error: 'Budget proposal not found' });
+    }
+
+    // Verify ownership
+    if (budget.organization.toString() !== req.user.organizationId.toString()) {
+      return res.status(403).json({ error: 'Unauthorized to update this budget' });
+    }
+
+    // Validate items
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'At least one budget item is required' });
+    }
+
+    // Calculate new grand total
+    const grandTotal = items.reduce((sum, item) => {
+      return sum + (item.quantity * item.unitCost);
+    }, 0);
+
+    // Update budget
+    budget.items = items;
+    budget.grandTotal = grandTotal;
+    budget.eventTitle = eventTitle || budget.eventTitle;
+    budget.updatedAt = new Date();
+
+    await budget.save();
+
+    // Update any linked forms
+    if (budget.associatedForm) {
+      await Form.findByIdAndUpdate(budget.associatedForm, {
+        $set: {
+          budgetAmount: grandTotal
+        }
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Budget proposal updated successfully',
+      budget
+    });
+
+  } catch (error) {
+    console.error('Error updating budget proposal:', error);
+    res.status(500).json({ 
+      error: 'Failed to update budget proposal',
+      details: error.message 
+    });
+  }
+};
+
+// Get budget proposals for dropdown
+exports.getBudgetProposals = async (req, res) => {
+  try {
+      const budgets = await BudgetProposal.find({
+          organization: req.user.organizationId,
+          status: 'submitted'
+      }).select('_id nameOfRso eventTitle grandTotal createdAt');
+      
+      res.json(budgets);
+  } catch (error) {
+      res.status(500).json({ error: error.message });
+  }
+};
+
+// In createForm, add budget validation:
+if (req.body.attachedBudget) {
+  const validBudget = await BudgetProposal.findOne({
+      _id: req.body.attachedBudget,
+      organization: req.body.studentOrganization
+  });
+  
+  if (!validBudget) {
+      return res.status(400).json({ 
+          error: 'Budget proposal not found or organization mismatch' 
+      });
+  }
+  
+  // Auto-populate budget-related fields
+  if (req.body.formType === 'Activity') {
+      req.body.budgetAmount = validBudget.grandTotal;
+      req.body.budgetFrom = validBudget.nameOfRso;
+  }
+}

@@ -15,27 +15,6 @@ const reviewStageSchema = new mongoose.Schema({
     timestamp: { type: Date }
 });
 
-// Schema for individual budget items
-const budgetItemSchema = new mongoose.Schema({
-    quantity: { 
-        type: Number, 
-        min: 0
-    },
-    unit: { 
-        type: String, 
-    },
-    description: { 
-        type: String, 
-    },
-    unitCost: { 
-        type: Number, 
-        min: 0
-    },
-    totalCost: { 
-        type: Number, 
-        min: 0
-    }
-});
 
 // ===PROJECT PROPOSAL===
 
@@ -459,26 +438,6 @@ const formSchema = new mongoose.Schema({
         }
       },
 
-     // ===== BUDGET FIELDS =====
-    nameOfRso: { 
-        type: String, 
-        required: function() { return this.formType === 'Budget'; } 
-    },
-    eventTitle: { 
-        type: String, 
-        required: function() { return this.formType === 'Budget'; } 
-    },
-    items: { 
-        type: [budgetItemSchema],
-        required: function() { return this.formType === 'Budget'; }
-    },
-    grandTotal: { 
-        type: Number, 
-        required: function() { return this.formType === 'Budget'; },
-        min: 0
-    },
-
-
     //Project Proposal
     // ==== PROJECT OVERVIEW ====
     projectTitle: { 
@@ -563,6 +522,38 @@ const formSchema = new mongoose.Schema({
         type: localOffCampusSchema,
         required: function() {
             return this.formType === 'LocalOffCampus';
+        }
+    },
+
+    // ====BUDGET PROPOSAL====
+
+    // Update the attachedBudget field validation:
+    attachedBudget: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'BudgetProposal',
+        validate: {
+        validator: async function(v) {
+            if (!v) return true; // Optional attachment
+            
+            // Only allow attaching to Activity or Project forms
+            if (!['Activity', 'Project'].includes(this.formType)) return false;
+            
+            const budget = await mongoose.model('BudgetProposal').findOne({
+            _id: v,
+            organization: this.studentOrganization,
+            status: 'submitted' // Only allow submitted budgets
+            });
+            return !!budget;
+        },
+        message: 'Invalid budget proposal - must be submitted and belong to your organization'
+        }
+    },
+    
+    // Consider making budgetProposal optional for Project forms since we have attachedBudget:
+    budgetProposal: { 
+        type: [projectBudgetSchema],
+        required: function() { 
+            return this.formType === 'Project' && !this.attachedBudget; 
         }
     },
 
