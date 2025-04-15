@@ -839,36 +839,56 @@ exports.createBudgetProposal = async (req, res) => {
   try {
     const { items, eventTitle, targetFormType, targetFormId } = req.body;
     
-    // Validate required fields
-    if (!items || !Array.isArray(items) || items.length === 0) {
+    // Validate budget items
+    if (!items?.length) {
       await session.abortTransaction();
       session.endSession();
       return res.status(400).json({ error: 'At least one budget item is required' });
     }
 
-    // Get organization - with proper validation
-    let organizationId = req.body.studentOrganization || req.user?.organizationId;
-    let organizationName = req.user?.organizationName || 'Our Organization';
+    // Resolve organization - comprehensive approach
+    let organizationId, organizationName;
 
-    // If we don't have an ID, try to get it from the user's organization
-    if (!organizationId && req.user) {
-      const userOrg = await User.findById(req.user._id)
-        .select('organization organizationName')
-        .session(session);
+    // Scenario 1: Directly provided in request
+    if (req.body.studentOrganization) {
+      const org = await User.findOne({
+        _id: req.body.studentOrganization,
+        role: 'Organization'
+      }).session(session);
       
-      if (userOrg?.organization) {
-        organizationId = userOrg.organization;
-        organizationName = userOrg.organizationName || organizationName;
+      if (!org) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: 'Specified organization not found' });
       }
+      
+      organizationId = org._id;
+      organizationName = org.organizationName;
     }
-
-    // Final validation
-    if (!organizationId) {
+    // Scenario 2: From authenticated user (organization user)
+    else if (req.user?.role === 'Organization') {
+      organizationId = req.user._id;
+      organizationName = req.user.organizationName;
+    }
+    // Scenario 3: From authenticated user (regular user with organization association)
+    else if (req.user?.organizationId) {
+      const org = await User.findById(req.user.organizationId).session(session);
+      if (!org) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: 'Your associated organization not found' });
+      }
+      
+      organizationId = org._id;
+      organizationName = org.organizationName;
+    }
+    // Scenario 4: No organization could be determined
+    else {
       await session.abortTransaction();
       session.endSession();
       return res.status(400).json({ 
         error: 'Organization reference is required',
-        details: 'User is not associated with any organization'
+        details: 'Please specify an organization or ensure your account is properly associated with one'
       });
     }
 
@@ -879,9 +899,15 @@ exports.createBudgetProposal = async (req, res) => {
 
     // Create new budget proposal
     const newBudget = new BudgetProposal({
-      nameOfRso: organizationName,
+      nameOfRso: organizationName || 'Organization',
       eventTitle: eventTitle || 'Budget Proposal',
-      items,
+      items: items.map(item => ({
+        quantity: Number(item.quantity),
+        unit: item.unit.trim(),
+        description: item.description.trim(),
+        unitCost: Number(item.unitCost),
+        totalCost: Number(item.quantity * item.unitCost)
+      })),
       grandTotal,
       createdBy: req.user._id,
       organization: organizationId,
@@ -924,7 +950,7 @@ exports.createBudgetProposal = async (req, res) => {
     console.error('Error creating budget proposal:', error);
     res.status(500).json({ 
       error: 'Failed to create budget proposal',
-      details: error.message 
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
