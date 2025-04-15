@@ -246,44 +246,45 @@ exports.createForm = async (req, res) => {
     }
 
     // Handle budget validation if attached
-    if (req.body.attachedBudget) {
-      try {
-        const validBudget = await BudgetProposal.findOne({
-          _id: req.body.attachedBudget,
-          organization: req.body.studentOrganization || req.user.organizationId,
-          isActive: true
-        }).session(session);
+    // Handle budget validation if attached
+if (req.body.attachedBudget) {
+  try {
+    const validBudget = await BudgetProposal.findOne({
+      _id: req.body.attachedBudget,
+      organization: req.body.studentOrganization || req.user.organizationId,
+      isActive: true
+    }).session(session);
 
-        if (!validBudget) {
-          await session.abortTransaction();
-          session.endSession();
-          return res.status(400).json({ 
-            error: 'Budget proposal not found or not active for your organization' 
-          });
-        }
-
-        // Auto-populate budget-related fields
-        req.body.budgetAmount = validBudget.grandTotal;
-        req.body.budgetFrom = validBudget.nameOfRso;
-        
-        // Link the budget to this form
-        await BudgetProposal.findByIdAndUpdate(
-          validBudget._id,
-          { 
-            associatedForm: req.body._id, 
-            formType: 'Activity' 
-          },
-          { session }
-      );
-    } catch (budgetError) {
+    if (!validBudget) {
       await session.abortTransaction();
       session.endSession();
       return res.status(400).json({ 
-        error: 'Budget validation failed',
-        details: budgetError.message 
+        error: 'Budget proposal not found or not active for your organization' 
       });
     }
+
+    // Auto-populate budget-related fields
+    req.body.budgetAmount = validBudget.grandTotal;
+    req.body.budgetFrom = validBudget.nameOfRso;
+    
+    // Link the budget to this form
+    await BudgetProposal.findByIdAndUpdate(
+      validBudget._id,
+      { 
+        associatedForm: req.body._id, 
+        formType: 'Activity' 
+      },
+      { session }
+    );  // <-- The missing parenthesis goes here
+  } catch (budgetError) {
+    await session.abortTransaction();
+    session.endSession();
+    return res.status(400).json({ 
+      error: 'Budget validation failed',
+      details: budgetError.message 
+    });
   }
+}
 
     // Form type specific validation
     switch (req.body.formType) {
@@ -950,23 +951,3 @@ exports.getBudgetProposals = async (req, res) => {
       res.status(500).json({ error: error.message });
   }
 };
-
-// In createForm, add budget validation:
-if (req.body.attachedBudget) {
-  const validBudget = await BudgetProposal.findOne({
-      _id: req.body.attachedBudget,
-      organization: req.body.studentOrganization
-  });
-  
-  if (!validBudget) {
-      return res.status(400).json({ 
-          error: 'Budget proposal not found or organization mismatch' 
-      });
-  }
-  
-  // Auto-populate budget-related fields
-  if (req.body.formType === 'Activity') {
-      req.body.budgetAmount = validBudget.grandTotal;
-      req.body.budgetFrom = validBudget.nameOfRso;
-  }
-}
