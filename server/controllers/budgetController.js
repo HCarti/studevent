@@ -17,9 +17,51 @@ exports.createBudgetProposal = async (req, res) => {
       return res.status(400).json({ error: 'At least one budget item is required' });
     }
 
-    // Organization resolution logic (same as your existing code)
+    // Resolve organization - comprehensive approach
     let organizationId, organizationName;
-    // ... (keep your existing organization resolution logic)
+
+    // Scenario 1: Directly provided in request
+    if (req.body.studentOrganization) {
+      const org = await User.findOne({
+        _id: req.body.studentOrganization,
+        role: 'Organization'
+      }).session(session);
+      
+      if (!org) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: 'Specified organization not found' });
+      }
+      
+      organizationId = org._id;
+      organizationName = org.organizationName;
+    }
+    // Scenario 2: From authenticated user (organization user)
+    else if (req.user?.role === 'Organization') {
+      organizationId = req.user._id;
+      organizationName = req.user.organizationName;
+    }
+    // Scenario 3: From authenticated user (regular user with organization association)
+    else if (req.user?.organizationId) {
+      const org = await User.findById(req.user.organizationId).session(session);
+      if (!org) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: 'Your associated organization not found' });
+      }
+      
+      organizationId = org._id;
+      organizationName = org.organizationName;
+    }
+    // Scenario 4: No organization could be determined
+    else {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ 
+        error: 'Organization reference is required',
+        details: 'Please specify an organization or ensure your account is properly associated with one'
+      });
+    }
 
     // Calculate grand total
     const grandTotal = items.reduce((sum, item) => {
@@ -42,8 +84,7 @@ exports.createBudgetProposal = async (req, res) => {
       organization: organizationId,
       associatedForm: targetFormId || null,
       formType: targetFormType || null,
-      isActive: true,
-      status: 'draft' // New field for workflow
+      isActive: true
     });
 
     await newBudget.save({ session });
@@ -69,7 +110,8 @@ exports.createBudgetProposal = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Budget proposal created successfully',
-      budget: newBudget
+      budget: newBudget,
+      returnPath: req.body.returnPath
     });
 
   } catch (error) {
