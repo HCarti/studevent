@@ -95,6 +95,8 @@ router.put('/budget-proposals/:budgetId', formController.updateBudgetProposal);
 // Add these new routes to your formRoutes.js
 router.get('/budget-proposals', async (req, res) => {
   console.log('Entering budget-proposals route');
+  console.log('Request query params:', req.query); // Log query parameters
+  console.log('Authenticated user:', req.user); // Log user object
   try {
     const user = req.user;
     
