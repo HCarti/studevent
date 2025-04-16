@@ -266,14 +266,17 @@ if (req.body.attachedBudget) {
   req.body.budgetAmount = validBudget.grandTotal;
   req.body.budgetFrom = validBudget.nameOfRso;
   
+  // After form is created, associate it with the BudgetProposal if exists
+if (req.body.attachedBudget) {
   await BudgetProposal.findByIdAndUpdate(
-    validBudget._id,
-    { 
-      associatedForm: form._id,  // Note: Changed from req.body._id to form._id
-      formType: 'Activity' 
+    req.body.attachedBudget,
+    {
+      associatedForm: form._id,
+      formType: 'Activity'
     },
     { session }
   );
+}
 } else if (req.body.budgetData) {
   // Create new budget proposal
   const budgetProposal = new BudgetProposal({
