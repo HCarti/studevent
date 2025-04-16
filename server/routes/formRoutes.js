@@ -71,15 +71,6 @@ router.post('/submit',
   }
 );
 
-// // New route for creating form with budget
-// router.post('/with-budget',
-//   upload.fields([
-//     { name: 'attachments', maxCount: 4 },
-//     { name: 'additionalSignatures', maxCount: 1 }
-//   ]),
-//   formController.createFormWithBudget
-// );
-
 // ======================
 // LOCAL OFF-CAMPUS ROUTES
 // ======================
@@ -87,82 +78,6 @@ router.post('/local-off-campus/before', formController.submitLocalOffCampusBefor
 router.post('/local-off-campus/after', formController.submitLocalOffCampusAfter);
 router.get('/local-off-campus/:eventId', formController.getLocalOffCampusForm);
 
-// ======================
-// BUDGET PROPOSAL ROUTES
-// ======================
-router.post('/budget-proposals', formController.createBudgetProposal);
-router.put('/budget-proposals/:budgetId', formController.updateBudgetProposal);
-// Add these new routes to your formRoutes.js
-router.get('/budget-proposals', async (req, res) => {
-  console.log('Entering budget-proposals route');
-  console.log('Request query params:', req.query); // Log query parameters
-  console.log('Authenticated user:', req.user); // Log user object
-  try {
-    const user = req.user;
-    
-    if (!user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    let query = {};
-    if (user.role === 'Organization') {
-      query = { 
-        organization: user._id,
-        status: { $in: ['submitted', 'approved'] }
-      };
-    } else if (user.role === 'Admin') {
-      query = { 
-        status: { $in: ['submitted', 'approved'] }
-      };
-    } else {
-      query = { 
-        createdBy: user._id,
-        status: { $in: ['submitted', 'approved'] }
-      };
-    }
-
-    const budgets = await BudgetProposal.find(query)
-      .select('_id nameOfRso eventTitle grandTotal status createdAt')
-      .sort({ createdAt: -1 })
-      .lean();
-
-    return res.json(budgets);
-  } catch (error) {
-    console.error('Error in /budget-proposals:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch budget proposals',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
-});
-
-
-router.get('/budget-proposals/:id', async (req, res) => {
-  try {
-    const budget = await BudgetProposal.findOne({
-      _id: req.params.id,
-      $or: [
-        { organization: req.user.organizationId || req.user._id },
-        { createdBy: req.user._id }
-      ]
-    });
-
-    if (!budget) {
-      return res.status(404).json({ error: 'Budget proposal not found' });
-    }
-
-    res.json(budget);
-  } catch (error) {
-    console.error('Error fetching budget proposal:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch budget proposal',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
-});
-
-// Get form with budget options
-// router.get('/:formId/with-budgets', formController.getFormWithBudgetOptions);
 
 
 module.exports = router;
