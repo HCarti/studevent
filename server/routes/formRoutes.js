@@ -93,7 +93,7 @@ router.get('/local-off-campus/:eventId', formController.getLocalOffCampusForm);
 router.post('/budget-proposals', formController.createBudgetProposal);
 router.put('/budget-proposals/:budgetId', formController.updateBudgetProposal);
 // Add these new routes to your formRoutes.js
-router.get('/budget-proposals', auth, async (req, res) => {
+router.get('/budget-proposals', async (req, res) => {
   try {
     const user = req.user;
     
@@ -132,7 +132,7 @@ router.get('/budget-proposals', auth, async (req, res) => {
 });
 
 
-router.get('/budget-proposals/:id', auth, async (req, res) => {
+router.get('/budget-proposals/:id', async (req, res) => {
   try {
     const budget = await BudgetProposal.findOne({
       _id: req.params.id,
