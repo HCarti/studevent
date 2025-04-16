@@ -209,10 +209,31 @@ const Aap = () => {
       const token = localStorage.getItem('token');
       const user = JSON.parse(localStorage.getItem('user'));
       
-      // Build the URL with organization filter if user is an organization
-      let url = 'https://studevent-server.vercel.app/api/forms/budget-proposals';
-      if (user?.role === 'Organization' && user?._id) {
-        url += `?organizationId=${user._id}`;
+      if (!token || !user) {
+        throw new Error('User not authenticated');
+      }
+  
+      // Build the URL based on user role
+      let url = 'https://studevent-server.vercel.app/api/budgets';
+      let queryParams = [];
+      
+      // Organization users see their own budgets
+      if (user.role === 'Organization') {
+        queryParams.push(`organization=${user._id}`);
+      } 
+      // Regular users see budgets they created
+      else if (user.role !== 'Admin') {
+        queryParams.push(`createdBy=${user._id}`);
+      }
+      
+      // Only show active budgets by default
+      queryParams.push('isActive=true');
+      
+      // Add status filter if needed (optional)
+      // queryParams.push('status=submitted');
+      
+      if (queryParams.length > 0) {
+        url += `?${queryParams.join('&')}`;
       }
   
       const response = await fetch(url, {
@@ -222,59 +243,62 @@ const Aap = () => {
         }
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        setFormData(prev => ({
-          ...prev,
-          budgetProposals: data
-        }));
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
   
-        // If in edit mode and we have an attached budget, ensure it's in the list
-        if (isEditMode && formData.attachedBudget) {
-          const hasAttachedBudget = data.some(b => b._id === formData.attachedBudget);
-          if (!hasAttachedBudget) {
-            // Fetch the specific budget if it's not in the list
-            fetchSingleBudget(formData.attachedBudget);
-          }
+      const data = await response.json();
+      setFormData(prev => ({
+        ...prev,
+        budgetProposals: data
+      }));
+  
+      // If in edit mode and we have an attached budget, ensure it's in the list
+      if (isEditMode && formData.attachedBudget) {
+        const hasAttachedBudget = data.some(b => b._id === formData.attachedBudget);
+        if (!hasAttachedBudget) {
+          // Fetch the specific budget if it's not in the list
+          fetchSingleBudget(formData.attachedBudget);
         }
-      } else {
-        throw new Error('Failed to fetch budget proposals');
       }
     } catch (error) {
       console.error('Error fetching budgets:', error);
-      setBudgetLoadError('Failed to load budget proposals. Please try again later.');
+      setBudgetLoadError(error.message || 'Failed to load budget proposals. Please try again later.');
     }
-  }
+  };
   
-    // Call this in useEffect when component mounts
-    useEffect(() => {
-      fetchBudgetProposals();
-    }, []);
-  
-
-  // Add this helper function to fetch a single budget
-const fetchSingleBudget = async (budgetId) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`https://studevent-server.vercel.app/api/budget-proposals/${budgetId}`, {
-      headers: { 
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+  // Updated helper function to fetch a single budget
+  const fetchSingleBudget = async (budgetId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://studevent-server.vercel.app/api/budgets/${budgetId}`, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const budget = await response.json();
+        setFormData(prev => ({
+          ...prev,
+          budgetProposals: [...prev.budgetProposals, budget]
+        }));
+      } else {
+        throw new Error(`Failed to fetch budget: ${response.status}`);
       }
-    });
-    
-    if (response.ok) {
-      const budget = await response.json();
-      setFormData(prev => ({
-        ...prev,
-        budgetProposals: [...prev.budgetProposals, budget]
-      }));
+    } catch (error) {
+      console.error('Error fetching single budget:', error);
+      // Optionally set an error state here if needed
     }
-  } catch (error) {
-    console.error('Error fetching single budget:', error);
-  }
-};
+  };
+  
+  // Call this in useEffect when component mounts
+  useEffect(() => {
+    fetchBudgetProposals();
+  }, []);
 
+  
   // Fetch form data if in edit mode
   useEffect(() => {
     // Update the fetchFormData function in your useEffect
