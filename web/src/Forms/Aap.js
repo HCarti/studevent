@@ -245,6 +245,12 @@ const Aap = () => {
       setBudgetLoadError('Failed to load budget proposals. Please try again later.');
     }
   }
+  
+    // Call this in useEffect when component mounts
+    useEffect(() => {
+      fetchBudgetProposals();
+    }, []);
+  
 
   // Add this helper function to fetch a single budget
 const fetchSingleBudget = async (budgetId) => {
@@ -268,11 +274,6 @@ const fetchSingleBudget = async (budgetId) => {
     console.error('Error fetching single budget:', error);
   }
 };
-  
-  // Call this in useEffect when component mounts
-  useEffect(() => {
-    fetchBudgetProposals();
-  }, []);
 
   // Fetch form data if in edit mode
   useEffect(() => {

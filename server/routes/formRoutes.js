@@ -94,41 +94,39 @@ router.post('/budget-proposals', formController.createBudgetProposal);
 router.put('/budget-proposals/:budgetId', formController.updateBudgetProposal);
 // Add these new routes to your formRoutes.js
 router.get('/budget-proposals', async (req, res) => {
-  console.log('Entering budget-proposals route'); // Debug log
+  console.log('Entering budget-proposals route');
   try {
-    // Explicitly check if this is a budget-proposals request
-    if (req.path.includes('budget-proposals')) {
-      const user = req.user;
-      
-      let query = {};
-      if (user.role === 'Organization') {
-        query = { 
-          organization: user._id,
-          status: { $in: ['submitted', 'approved'] }
-        };
-      } else if (user.role === 'Admin') {
-        query = { 
-          status: { $in: ['submitted', 'approved'] }
-        };
-      } else {
-        query = { 
-          createdBy: user._id,
-          status: { $in: ['submitted', 'approved'] }
-        };
-      }
-
-      const budgets = await BudgetProposal.find(query)
-        .select('_id nameOfRso eventTitle grandTotal status createdAt')
-        .sort({ createdAt: -1 })
-        .lean();
-
-      return res.json(budgets);
-    }
+    const user = req.user;
     
-    // If it's not a budget-proposals request, continue with normal flow
-    next();
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    let query = {};
+    if (user.role === 'Organization') {
+      query = { 
+        organization: user._id,
+        status: { $in: ['submitted', 'approved'] }
+      };
+    } else if (user.role === 'Admin') {
+      query = { 
+        status: { $in: ['submitted', 'approved'] }
+      };
+    } else {
+      query = { 
+        createdBy: user._id,
+        status: { $in: ['submitted', 'approved'] }
+      };
+    }
+
+    const budgets = await BudgetProposal.find(query)
+      .select('_id nameOfRso eventTitle grandTotal status createdAt')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.json(budgets);
   } catch (error) {
-    console.error('Full error stack:', error.stack); // This will show where exactly the error occurs
+    console.error('Error in /budget-proposals:', error);
     res.status(500).json({ 
       error: 'Failed to fetch budget proposals',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
