@@ -399,7 +399,7 @@ const BudgetForm = () => {
       } 
       else {
         // Default case - go to submitted forms
-        setTimeout(() => navigate('/submitted-forms'), 1500);
+        setTimeout(() => navigate('/'), 1500);
       }
   
       // Reset form if this is a standalone budget

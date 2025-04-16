@@ -102,6 +102,7 @@ const Aap = () => {
   const [eventsPerDate, setEventsPerDate] = useState({});
   const [validationErrorVisible, setValidationErrorVisible] = useState(false);
   const [submitSuccessVisible, setSubmitSuccessVisible] = useState(false);
+  const [budgetLoadError, setBudgetLoadError] = useState(null);
 
   // Notification component
   const Notification = ({ message, type = "success" }) => {
@@ -206,8 +207,19 @@ const Aap = () => {
   const fetchBudgetProposals = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('https://studevent-server.vercel.app/api/budget-proposals', {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const user = JSON.parse(localStorage.getItem('user'));
+      
+      // Build the URL with organization filter if user is an organization
+      let url = 'https://studevent-server.vercel.app/api/forms/budget-proposals';
+      if (user?.role === 'Organization' && user?._id) {
+        url += `?organizationId=${user._id}`;
+      }
+  
+      const response = await fetch(url, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
       
       if (response.ok) {
@@ -216,11 +228,46 @@ const Aap = () => {
           ...prev,
           budgetProposals: data
         }));
+  
+        // If in edit mode and we have an attached budget, ensure it's in the list
+        if (isEditMode && formData.attachedBudget) {
+          const hasAttachedBudget = data.some(b => b._id === formData.attachedBudget);
+          if (!hasAttachedBudget) {
+            // Fetch the specific budget if it's not in the list
+            fetchSingleBudget(formData.attachedBudget);
+          }
+        }
+      } else {
+        throw new Error('Failed to fetch budget proposals');
       }
     } catch (error) {
       console.error('Error fetching budgets:', error);
+      setBudgetLoadError('Failed to load budget proposals. Please try again later.');
     }
-  };
+  }
+
+  // Add this helper function to fetch a single budget
+const fetchSingleBudget = async (budgetId) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`https://studevent-server.vercel.app/api/budget-proposals/${budgetId}`, {
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (response.ok) {
+      const budget = await response.json();
+      setFormData(prev => ({
+        ...prev,
+        budgetProposals: [...prev.budgetProposals, budget]
+      }));
+    }
+  } catch (error) {
+    console.error('Error fetching single budget:', error);
+  }
+};
   
   // Call this in useEffect when component mounts
   useEffect(() => {
@@ -887,45 +934,53 @@ const renderSidebar = () => (
 
           <label className="required-field">Budget:</label>
           <div className="budget-selection">
-            <select
-              value={formData.attachedBudget || ''}
-              onChange={(e) => {
-                const budgetId = e.target.value;
-                const selectedBudget = formData.budgetProposals.find(b => b._id === budgetId);
-                
-                setFormData(prev => ({
-                  ...prev,
-                  attachedBudget: budgetId,
-                  budgetAmount: selectedBudget?.grandTotal || '',
-                  budgetFrom: selectedBudget?.nameOfRso || ''
-                }));
-              }}
-            >
-              <option value="">Select a budget proposal...</option>
-              {formData.budgetProposals.map(budget => (
-                <option key={budget._id} value={budget._id}>
-                  {budget.eventTitle} - ₱{budget.grandTotal}
-                </option>
-              ))}
-            </select>
-            
-            <button 
-              type="button" 
-              className="create-budget-btn"
-              onClick={() => {
-                // Save current form data to localStorage before redirecting
-                localStorage.setItem('activityFormDraft', JSON.stringify(formData));
-                navigate('/budget', { 
-                  state: { 
-                    returnPath: location.pathname,
-                    activityFormData: formData 
-                  } 
-                });
-              }}
-            >
-              + Create New Budget
-            </button>
-          </div>
+          <label className="required-field">Attached Budget Proposal:</label>
+          <select
+            name="attachedBudget"
+            value={formData.attachedBudget || ''}
+            onChange={(e) => {
+              const budgetId = e.target.value;
+              const selectedBudget = formData.budgetProposals.find(b => b._id === budgetId);
+              
+              setFormData(prev => ({
+                ...prev,
+                attachedBudget: budgetId,
+                budgetAmount: selectedBudget?.grandTotal || '',
+                budgetFrom: selectedBudget?.nameOfRso || 'Org',
+                eventTitle: selectedBudget?.eventTitle || prev.eventTitle
+              }));
+            }}
+            className={fieldErrors.attachedBudget ? 'invalid-field' : ''}
+          >
+            <option value="">Select a budget proposal...</option>
+            {formData.budgetProposals.map(budget => (
+              <option key={budget._id} value={budget._id}>
+                {budget.eventTitle} - ₱{budget.grandTotal?.toLocaleString()}
+                {budget.status ? ` (${budget.status})` : ''}
+              </option>
+            ))}
+          </select>
+          
+          <button 
+            type="button" 
+            className="create-budget-btn"
+            onClick={() => {
+              localStorage.setItem('activityFormDraft', JSON.stringify(formData));
+              navigate('/budget', { 
+                state: { 
+                  returnPath: location.pathname,
+                  activityFormData: formData 
+                } 
+              });
+            }}
+          >
+            + Create New Budget
+          </button>
+        </div>
+
+        {budgetLoadError && (
+          <div className="error-message">{budgetLoadError}</div>
+        )}
             
             <label className="required-field">Budget Amount:</label>
             <input 

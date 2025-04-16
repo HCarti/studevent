@@ -3,6 +3,7 @@ const router = express.Router();
 const Form = require('../models/Form');
 const multer = require('multer');
 const formController = require('../controllers/formController');
+const BudgetProposal = require("../models/BudgetProposal");
 
 // Configure multer for file uploads
 const upload = multer({
@@ -89,11 +90,71 @@ router.get('/local-off-campus/:eventId', formController.getLocalOffCampusForm);
 // ======================
 // BUDGET PROPOSAL ROUTES
 // ======================
-router.get('/budget-proposals', formController.getBudgetProposals);
-// router.get('/budget-proposals/:budgetId', formController.getBudgetProposalById);
 router.post('/budget-proposals', formController.createBudgetProposal);
 router.put('/budget-proposals/:budgetId', formController.updateBudgetProposal);
-// router.delete('/budget-proposals/:budgetId', formController.deleteBudgetProposal);
+// Add these new routes to your formRoutes.js
+router.get('/budget-proposals', auth, async (req, res) => {
+  try {
+    const user = req.user;
+    
+    // Build query based on user role
+    let query = {};
+    
+    if (user.role === 'Organization') {
+      query = { 
+        organization: user._id,
+        status: { $in: ['submitted', 'approved'] }
+      };
+    } else if (user.role === 'Admin') {
+      query = { 
+        status: { $in: ['submitted', 'approved'] }
+      };
+    } else {
+      query = { 
+        createdBy: user._id,
+        status: { $in: ['submitted', 'approved'] }
+      };
+    }
+
+    const budgets = await BudgetProposal.find(query)
+      .select('_id nameOfRso eventTitle grandTotal status createdAt')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json(budgets);
+  } catch (error) {
+    console.error('Error fetching budget proposals:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch budget proposals',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+
+router.get('/budget-proposals/:id', auth, async (req, res) => {
+  try {
+    const budget = await BudgetProposal.findOne({
+      _id: req.params.id,
+      $or: [
+        { organization: req.user.organizationId || req.user._id },
+        { createdBy: req.user._id }
+      ]
+    });
+
+    if (!budget) {
+      return res.status(404).json({ error: 'Budget proposal not found' });
+    }
+
+    res.json(budget);
+  } catch (error) {
+    console.error('Error fetching budget proposal:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch budget proposal',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
 
 // Get form with budget options
 // router.get('/:formId/with-budgets', formController.getFormWithBudgetOptions);
