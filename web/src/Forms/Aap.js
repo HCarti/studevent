@@ -210,42 +210,44 @@ useEffect(() => {
 }, [formData, formSent, isEditMode]);
 
 useEffect(() => {
-  // 1. FIRST check if we're returning from budget submission
   if (location.state?.selectedBudget) {
-    console.log("Returning from budget form with:", location.state);
+    console.log("🏁 Returning from budget form with:", location.state);
     
-    // 2. Load from localStorage - THIS IS THE CRITICAL FIX
+    // 1. Retrieve from localStorage
     const savedData = localStorage.getItem('activityFormDraft');
-    console.log("Retrieved from localStorage:", savedData);
-    
+    console.log("📦 Retrieved from localStorage:", savedData ? "Exists" : "Null");
+
     if (savedData) {
       try {
         const parsedData = JSON.parse(savedData);
-        console.log("Parsed localStorage data:", parsedData);
-        
-        // 3. Merge with budget data and update form
-        setFormData({
-          ...parsedData, // Restore all saved fields
+        console.log("🔍 Parsed data:", parsedData);
+
+        // 2. Update form state FIRST
+        setFormData(prev => ({
+          ...parsedData,
           attachedBudget: location.state.selectedBudget._id,
           budgetAmount: location.state.selectedBudget.grandTotal,
           budgetFrom: location.state.selectedBudget.nameOfRso,
-          budgetProposals: [...formData.budgetProposals, location.state.selectedBudget],
-          // Handle date deserialization
+          budgetProposals: [...prev.budgetProposals, location.state.selectedBudget],
           eventStartDate: parsedData.eventStartDate ? new Date(parsedData.eventStartDate) : null,
           eventEndDate: parsedData.eventEndDate ? new Date(parsedData.eventEndDate) : null
-        });
-        
-        // 4. Clean up
-        localStorage.removeItem('activityFormDraft');
+        }));
+
+        // 3. Verify update before cleanup (optional)
+        setTimeout(() => {
+          console.log("✅ Form state updated, now cleaning localStorage");
+          localStorage.removeItem('activityFormDraft');
+        }, 100); // Small delay to ensure state update
+
       } catch (e) {
-        console.error("Failed to parse saved data:", e);
+        console.error("❌ Parse error:", e);
       }
     }
-    
-    // 5. Clear navigation state
+
+    // 4. Always clear navigation state
     navigate(location.pathname, { replace: true, state: {} });
   }
-}, [location.state]); // Trigger when navigation state changes
+}, [location.state]);
 
   const fetchBudgetProposals = async () => {
     try {
