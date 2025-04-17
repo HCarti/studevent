@@ -2,50 +2,56 @@ const EventTracker = require("../models/EventTracker");
 const User = require("../models/User"); // Import User model
 const mongoose = require('mongoose');
 const notificationController = require('./notificationController');
+const Form = require("../models/Form");
 
 // HELPER
 
 const getNextReviewers = async (tracker, currentStepIndex) => {
   try {
     const nextStepIndex = currentStepIndex + 1;
-    if (nextStepIndex >= tracker.steps.length) return [];
-
-    const nextStep = tracker.steps[nextStepIndex];
-    const form = await Form.findById(tracker.formId).select('organizationId submittedBy');
-
-    if (!form) {
-      console.error('❌ Form not found');
+    if (nextStepIndex >= tracker.steps.length) {
+      console.log('🏁 Process complete - no next step');
       return [];
     }
 
-    // Debug: Show critical info
-    console.log('🔍 Critical Info:', {
-      formId: tracker.formId,
-      organizationId: form.organizationId,
-      requiredRole: nextStep.reviewerRole
+    const nextStep = tracker.steps[nextStepIndex];
+    console.log('🔍 Next Step:', {
+      stepName: nextStep.stepName,
+      reviewerRole: nextStep.reviewerRole
     });
 
-    // Fallback if organizationId is missing
+    // Get form with only necessary fields
+    const form = await Form.findById(tracker.formId)
+      .select('organizationId submittedBy name')
+      .lean();
+
+    if (!form) {
+      console.error('❌ Form not found for ID:', tracker.formId);
+      return [];
+    }
+
+    console.log('🏢 Form Organization:', form.organizationId);
+
+    // Build query - handle missing organizationId
     const query = { role: nextStep.reviewerRole };
     if (form.organizationId) {
       query.organizationId = form.organizationId;
     } else {
-      console.warn('⚠️ No organizationId on form - searching all users with role');
+      console.warn('⚠️ No organizationId - searching all users with role');
     }
 
     const reviewers = await User.find(query)
       .select('email name role organizationId')
       .lean();
 
-    console.log('👥 Found Reviewers:', reviewers.map(r => ({
-      email: r.email,
-      role: r.role,
-      org: r.organizationId
-    })));
-
+    console.log('👥 Reviewers Found:', reviewers.length);
     return reviewers;
+
   } catch (error) {
-    console.error('❌ getNextReviewers error:', error);
+    console.error('❌ getNextReviewers Error:', {
+      message: error.message,
+      stack: error.stack
+    });
     return [];
   }
 };
@@ -286,61 +292,91 @@ const updateTrackerStep = async (req, res) => {
     if (status === "approved") {
       const nextStepIndex = firstPendingOrDeclinedStepIndex + 1;
       
-      // Debug: Log current workflow state
-      console.log('🔍 Workflow State:', {
-        currentStep: firstPendingOrDeclinedStepIndex,
+      // Debug: Enhanced workflow state logging
+      console.log('🔍 WORKFLOW DEBUG:', {
+        currentStep: {
+          index: firstPendingOrDeclinedStepIndex,
+          name: tracker.steps[firstPendingOrDeclinedStepIndex]?.stepName,
+          status: tracker.steps[firstPendingOrDeclinedStepIndex]?.status
+        },
         totalSteps: tracker.steps.length,
-        nextStepExists: nextStepIndex < tracker.steps.length,
-        formId: tracker.formId,
-        currentUser: currentUserEmail
+        formInfo: {
+          id: tracker.formId,
+          name: form?.name,
+          organizationId: form?.organizationId
+        }
       });
     
       if (nextStepIndex < tracker.steps.length) {
-        // Get next step details
         const nextStep = tracker.steps[nextStepIndex];
-        const formName = form.name || `Form ${form._id}`;
+        const formName = form?.name || `Form ${form?._id || tracker.formId}`;
         
-        // Debug: Log next step details
-        console.log('🔍 Next Step Details:', {
-          stepName: nextStep.stepName,
-          requiredRole: nextStep.reviewerRole,
-          currentStatus: nextStep.status
+        // Debug: Detailed next step analysis
+        console.log('🔍 NEXT STEP ANALYSIS:', {
+          stepDetails: {
+            name: nextStep.stepName,
+            requiredRole: nextStep.reviewerRole,
+            status: nextStep.status
+          },
+          formOrganization: form?.organizationId || 'UNDEFINED'
         });
     
-        // Get next reviewers with enhanced debugging
-        const nextReviewers = await getNextReviewers(tracker, firstPendingOrDeclinedStepIndex);
-        console.log('👥 Next Reviewers Found:', {
-          count: nextReviewers.length,
-          reviewers: nextReviewers.map(r => ({
-            email: r.email,
-            role: r.role,
-            name: r.name
-          }))
-        });
+        // Get next reviewers with robust error handling
+        let nextReviewers = [];
+        try {
+          nextReviewers = await getNextReviewers(tracker, firstPendingOrDeclinedStepIndex);
+          console.log('👥 REVIEWER ANALYSIS:', {
+            count: nextReviewers.length,
+            sample: nextReviewers.slice(0, 3).map(r => ({
+              email: r.email,
+              role: r.role,
+              org: r.organizationId
+            })),
+            queryUsed: {
+              role: nextStep.reviewerRole,
+              organizationId: form?.organizationId
+            }
+          });
+        } catch (reviewerError) {
+          console.error('❌ REVIEWER FETCH ERROR:', reviewerError);
+        }
     
-        // Send notifications to next reviewers
-        for (const reviewer of nextReviewers) {
+        // Notification pipeline with fallbacks
+        if (nextReviewers.length > 0) {
+          console.log('✉️ STARTING NOTIFICATION PROCESS');
+          for (const reviewer of nextReviewers) {
+            try {
+              const notificationMessage = `Review Required: ${formName} needs your ${nextStep.stepName} approval`;
+              console.log(`   Preparing notification for ${reviewer.email}`);
+              
+              await notificationController.createNotification(
+                reviewer.email,
+                notificationMessage
+              );
+              
+              console.log(`   ✅ Successfully notified ${reviewer.email}`);
+            } catch (notificationError) {
+              console.error(`   ❌ Notification failed for ${reviewer.email}:`, {
+                error: notificationError.message,
+                stack: notificationError.stack
+              });
+            }
+          }
+        } else {
+          console.warn('⚠️ NO REVIEWERS FOUND - sending admin alert');
           try {
-            const notificationMessage = `Action Required: ${formName} requires your ${nextStep.stepName} review.`;
-            console.log(`✉️ Attempting to notify ${reviewer.email}`);
-            
             await notificationController.createNotification(
-              reviewer.email,
-              notificationMessage
+              ADMIN_EMAIL,
+              `URGENT: No reviewers found for ${nextStep.stepName} (Form: ${formName})`
             );
-            
-            console.log(`✅ Successfully notified ${reviewer.email}`);
-          } catch (notificationError) {
-            console.error(`❌ Failed to notify ${reviewer.email}:`, {
-              error: notificationError.message,
-              stack: notificationError.stack
-            });
+          } catch (adminError) {
+            console.error('❌ ADMIN ALERT FAILED:', adminError);
           }
         }
     
-        // Send confirmation to current reviewer
+        // Current user confirmation
         try {
-          const confirmationMessage = `You approved ${formName}. ${nextReviewers.length} reviewer(s) have been notified.`;
+          const confirmationMessage = `You approved ${formName}. ${nextReviewers.length} reviewer(s) notified.`;
           console.log(`✉️ Sending confirmation to ${currentUserEmail}`);
           
           await notificationController.createNotification(
@@ -348,59 +384,54 @@ const updateTrackerStep = async (req, res) => {
             confirmationMessage
           );
           
-          console.log(`✅ Confirmation sent to ${currentUserEmail}`);
-        } catch (error) {
-          console.error("❌ Failed to send confirmation:", {
-            error: error.message,
-            stack: error.stack
-          });
+          console.log('✅ User confirmation sent');
+        } catch (confirmationError) {
+          console.error('❌ CONFIRMATION FAILED:', confirmationError);
         }
       } else {
-        // Final approval case
-        console.log('🏁 Form fully approved - notifying submitter');
-        
+        // Final approval process
+        console.log('🏁 FINAL APPROVAL PROCESS STARTED');
         try {
-          const submitter = await User.findById(form.submittedBy).select('email name');
+          const submitter = await User.findById(form?.submittedBy)?.select('email name');
           if (submitter) {
             await notificationController.createNotification(
               submitter.email,
-              `Your form "${form.name}" has been fully approved!`
+              `APPROVED: Your form "${form?.name}" is fully approved!`
             );
-            console.log(`✅ Final approval sent to submitter: ${submitter.email}`);
+            console.log(`✅ Final approval sent to submitter ${submitter.email}`);
           } else {
-            console.error('❌ Form submitter not found');
+            console.error('❌ Submitter not found');
           }
-        } catch (error) {
-          console.error("❌ Final approval notification failed:", {
-            error: error.message,
-            stack: error.stack
-          });
+        } catch (finalError) {
+          console.error('❌ FINAL APPROVAL NOTIFICATION FAILED:', finalError);
         }
       }
     } else if (status === "declined") {
-      // Decline case
-      console.log('🛑 Form declined - notifying submitter');
-      
+      // Decline notification process
+      console.log('🛑 DECLINE PROCESS STARTED');
       try {
-        const submitter = await User.findById(form.submittedBy).select('email name');
+        const submitter = await User.findById(form?.submittedBy)?.select('email name');
         if (submitter) {
           await notificationController.createNotification(
             submitter.email,
-            `Your form "${form.name}" was declined by ${req.user.name}. Remarks: ${remarks || "None provided"}`
+            `DECLINED: Your form "${form?.name}" was rejected by ${req.user.name}. ${remarks ? `Reason: ${remarks}` : ''}`
           );
-          console.log(`✅ Decline notification sent to ${submitter.email}`);
+          console.log(`✅ Decline notice sent to ${submitter.email}`);
         } else {
-          console.error('❌ Form submitter not found for decline notification');
+          console.error('❌ Submitter not found for decline notice');
         }
-      } catch (error) {
-        console.error("❌ Decline notification failed:", {
-          error: error.message,
-          stack: error.stack
-        });
+      } catch (declineError) {
+        console.error('❌ DECLINE NOTIFICATION FAILED:', declineError);
       }
     }
-    // Return the updated tracker and form
-    return res.status(200).json({ message: "Tracker step updated successfully", tracker, form });
+    
+    // Final response
+    return res.status(200).json({ 
+      success: true,
+      message: "Tracker step updated successfully", 
+      tracker, 
+      form 
+    });
 
   } catch (error) {
     console.error("❌ Error updating progress tracker:", error);
