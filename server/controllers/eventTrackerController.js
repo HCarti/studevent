@@ -7,28 +7,56 @@ const notificationController = require('./notificationController');
 
 const getNextReviewers = async (tracker, currentStepIndex) => {
   try {
+    console.log('🔍 Getting next reviewers for step:', currentStepIndex + 1);
+    
     if (currentStepIndex + 1 >= tracker.steps.length) {
-      return []; // No next step
-    }
-
-    const nextStep = tracker.steps[currentStepIndex + 1];
-    const Form = mongoose.model('Form');
-    const form = await Form.findById(tracker.formId);
-
-    if (!form) {
+      console.log('🏁 No next step - process complete');
       return [];
     }
 
-    return await User.find({
+    const nextStep = tracker.steps[currentStepIndex + 1];
+    console.log('🔍 Next Step Details:', {
+      stepName: nextStep.stepName,
+      reviewerRole: nextStep.reviewerRole,
+      _id: nextStep._id
+    });
+
+    const Form = mongoose.model('Form');
+    const form = await Form.findById(tracker.formId);
+    
+    if (!form) {
+      console.log('❌ Form not found for tracker:', tracker.formId);
+      return [];
+    }
+
+    console.log('🔍 Organization ID from form:', form.organizationId);
+    
+    // Get all users with the required role for debugging
+    const allUsersWithRole = await User.find({
+      role: nextStep.reviewerRole
+    }).select('email role organizationId').lean();
+
+    console.log('👥 All users with role', nextStep.reviewerRole, ':', 
+      allUsersWithRole.map(u => ({
+        email: u.email,
+        orgId: u.organizationId
+      }))
+    );
+
+    // Actual query we're using
+    const reviewers = await User.find({
       role: nextStep.reviewerRole,
       organizationId: form.organizationId
-    });
+    }).select('email role name').lean();
+
+    console.log('✅ Matching reviewers:', reviewers.length);
+    return reviewers;
+    
   } catch (error) {
-    console.error("Error getting next reviewers:", error);
+    console.error("❌ Error getting next reviewers:", error);
     return [];
   }
 };
-
 
 // Get event tracker by form ID
 const getEventTracker = async (req, res) => {
