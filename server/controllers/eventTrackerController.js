@@ -1,8 +1,34 @@
 const EventTracker = require("../models/EventTracker");
 const User = require("../models/User"); // Import User model
-const Form = require("../models/Form");
 const mongoose = require('mongoose');
-const { put } = require('@vercel/blob');
+const Notification = require("../models/Notification");
+
+// HELPER
+
+const getNextReviewers = async (tracker, currentStepIndex) => {
+  try {
+    if (currentStepIndex + 1 >= tracker.steps.length) {
+      return []; // No next step
+    }
+
+    const nextStep = tracker.steps[currentStepIndex + 1];
+    const Form = mongoose.model('Form');
+    const form = await Form.findById(tracker.formId);
+
+    if (!form) {
+      return [];
+    }
+
+    return await User.find({
+      role: nextStep.reviewerRole,
+      organizationId: form.organizationId
+    });
+  } catch (error) {
+    console.error("Error getting next reviewers:", error);
+    return [];
+  }
+};
+
 
 // Get event tracker by form ID
 const getEventTracker = async (req, res) => {
@@ -119,9 +145,9 @@ const updateTrackerStep = async (req, res) => {
     console.log("Request Body:", req.body);
 
     const { trackerId, stepId } = req.params;
-    const { status, remarks, signature } = req.body; // NEW: Signature URL
+    const { status, remarks, signature } = req.body;
     const userId = req.user._id;
-    const { role, faculty } = req.user;
+    const { role, faculty, email: currentUserEmail } = req.user; // Add email to destructuring
 
     // Validate user and request
     if (!req.user) {
@@ -134,13 +160,13 @@ const updateTrackerStep = async (req, res) => {
     }
 
     // Fetch the tracker
-    const tracker = await EventTracker.findById(trackerId);
+    const tracker = await EventTracker.findById(trackerId).populate({
+      path: 'steps.reviewedBy',
+      select: 'email role'
+    });
     if (!tracker) {
       return res.status(404).json({ message: "Tracker not found" });
     }
-
-    // Log the steps for debugging
-    console.log("Steps in Tracker:", tracker.steps);
 
     // Find the step
     const step = tracker.steps.find(step => step._id.toString() === stepId);
@@ -178,7 +204,7 @@ const updateTrackerStep = async (req, res) => {
     step.timestamp = new Date();
     step.reviewedBy = userId;
     step.reviewedByRole = faculty || role;
-    step.signature = signature; // NEW: Store the signature URL
+    step.signature = signature;
 
     // Update currentStep and currentAuthority
     if (status === "approved") {
@@ -202,7 +228,7 @@ const updateTrackerStep = async (req, res) => {
         tracker.steps[i].reviewedByRole = null;
         tracker.steps[i].remarks = "";
         tracker.steps[i].timestamp = null;
-        tracker.steps[i].signature = null; // NEW: Reset signature
+        tracker.steps[i].signature = null;
       }
     }
 
@@ -236,6 +262,66 @@ const updateTrackerStep = async (req, res) => {
     // Update the Form's finalStatus
     form.finalStatus = finalStatus;
     await form.save();
+
+    if (status === "approved") {
+      const nextStepIndex = firstPendingOrDeclinedStepIndex + 1;
+      
+      if (nextStepIndex < tracker.steps.length) {
+        const nextReviewers = await getNextReviewers(tracker, firstPendingOrDeclinedStepIndex);
+        const nextStep = tracker.steps[nextStepIndex];
+        const formName = form.name || `Form ${form._id}`;
+
+        // Send notifications to all next reviewers
+        for (const reviewer of nextReviewers) {
+          try {
+            const notificationMessage = `Action Required: ${formName} is ready for your ${nextStep.stepName} review.`;
+            
+            await Notification.createNotification(
+              reviewer.email,
+              notificationMessage
+            );
+            
+            console.log(`✅ Notification sent to ${reviewer.email}`);
+          } catch (notificationError) {
+            console.error(`❌ Failed to notify ${reviewer.email}:`, notificationError);
+          }
+        }
+
+        // Also notify the current user that the next reviewer was notified
+        try {
+          const confirmationMessage = `You approved the form. ${nextReviewers.length} reviewer(s) have been notified.`;
+          await Notification.createNotification(currentUserEmail, confirmationMessage);
+        } catch (error) {
+          console.error("❌ Failed to send confirmation notification:", error);
+        }
+      } else {
+        // Notify the submitter that the form is fully approved
+        try {
+          const submitter = await User.findById(form.submittedBy);
+          if (submitter) {
+            await Notification.createNotification(
+              submitter.email,
+              `Your form "${form.name}" has been fully approved!`
+            );
+          }
+        } catch (error) {
+          console.error("❌ Failed to notify submitter:", error);
+        }
+      }
+    } else if (status === "declined") {
+      // Notify the form submitter about the decline
+      try {
+        const submitter = await User.findById(form.submittedBy);
+        if (submitter) {
+          await Notification.createNotification(
+            submitter.email,
+            `Your form "${form.name}" was declined by ${req.user.name}. Remarks: ${remarks || "None provided"}`
+          );
+        }
+      } catch (error) {
+        console.error("❌ Failed to notify submitter about decline:", error);
+      }
+    }
 
     // Return the updated tracker and form
     return res.status(200).json({ message: "Tracker step updated successfully", tracker, form });
