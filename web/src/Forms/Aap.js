@@ -210,65 +210,42 @@ useEffect(() => {
 }, [formData, formSent, isEditMode]);
 
 useEffect(() => {
-  const initializeForm = async () => {
-    // First handle any budget data from navigation state
-    if (location.state?.selectedBudget) {
-      const selectedBudget = location.state.selectedBudget;
-      const savedDraft = localStorage.getItem('activityFormDraft');
-      
+  // 1. FIRST check if we're returning from budget submission
+  if (location.state?.selectedBudget) {
+    console.log("Returning from budget form with:", location.state);
+    
+    // 2. Load from localStorage - THIS IS THE CRITICAL FIX
+    const savedData = localStorage.getItem('activityFormDraft');
+    console.log("Retrieved from localStorage:", savedData);
+    
+    if (savedData) {
       try {
-        const baseData = savedDraft 
-          ? JSON.parse(savedDraft)
-          : location.state.activityFormData || {};
+        const parsedData = JSON.parse(savedData);
+        console.log("Parsed localStorage data:", parsedData);
         
-        // Properly handle date fields
-        const restoredData = {
-          ...baseData,
-          eventStartDate: baseData.eventStartDate ? new Date(baseData.eventStartDate) : null,
-          eventEndDate: baseData.eventEndDate ? new Date(baseData.eventEndDate) : null
-        };
-
-        setFormData(prev => ({
-          ...restoredData,
-          attachedBudget: selectedBudget._id,
-          budgetAmount: selectedBudget.grandTotal,
-          budgetFrom: selectedBudget.nameOfRso,
-          budgetProposals: [
-            ...(prev.budgetProposals || []),
-            ...(baseData.budgetProposals || []),
-            selectedBudget
-          ].filter((v, i, a) => a.findIndex(t => t._id === v._id) === i) // Remove duplicates
-        }));
-
-        // Clean up
-        localStorage.removeItem('activityFormDraft');
-        navigate(location.pathname, { replace: true, state: {} });
-      } catch (error) {
-        console.error('Restoration error:', error);
-      }
-      return;
-    }
-
-    // Case 2: Initial load with saved draft
-    const savedDraft = localStorage.getItem('activityFormDraft');
-    if (savedDraft) {
-      try {
-        const parsed = JSON.parse(savedDraft);
+        // 3. Merge with budget data and update form
         setFormData({
-          ...parsed,
-          eventStartDate: parsed.eventStartDate ? new Date(parsed.eventStartDate) : null,
-          eventEndDate: parsed.eventEndDate ? new Date(parsed.eventEndDate) : null
+          ...parsedData, // Restore all saved fields
+          attachedBudget: location.state.selectedBudget._id,
+          budgetAmount: location.state.selectedBudget.grandTotal,
+          budgetFrom: location.state.selectedBudget.nameOfRso,
+          budgetProposals: [...formData.budgetProposals, location.state.selectedBudget],
+          // Handle date deserialization
+          eventStartDate: parsedData.eventStartDate ? new Date(parsedData.eventStartDate) : null,
+          eventEndDate: parsedData.eventEndDate ? new Date(parsedData.eventEndDate) : null
         });
-      } catch (error) {
-        console.error('Draft parse error:', error);
-      } finally {
+        
+        // 4. Clean up
         localStorage.removeItem('activityFormDraft');
+      } catch (e) {
+        console.error("Failed to parse saved data:", e);
       }
     }
-  };
-
-  initializeForm();
-}, [location.state, navigate]);
+    
+    // 5. Clear navigation state
+    navigate(location.pathname, { replace: true, state: {} });
+  }
+}, [location.state]); // Trigger when navigation state changes
 
   const fetchBudgetProposals = async () => {
     try {

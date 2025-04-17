@@ -386,36 +386,37 @@ const BudgetForm = () => {
 
       // Handle navigation - modified this section
       if (location.state?.returnPath) {
-        // 1. FIRST check localStorage for saved form data
-        let activityFormData = null;
+        // 1. FIRST try to load from localStorage
+        let activityData = null;
         try {
-            const savedData = localStorage.getItem('activityFormDraft');
-            if (savedData) {
-                activityFormData = JSON.parse(savedData);
-                console.log('Loaded from localStorage:', activityFormData);
-            }
+          const savedData = localStorage.getItem('activityFormDraft');
+          if (savedData) {
+            activityData = JSON.parse(savedData);
+            console.log('Loaded from localStorage:', activityData);
+          }
         } catch (e) {
-            console.error('Error reading localStorage:', e);
+          console.error('Failed to parse localStorage data:', e);
         }
     
-        // 2. Fall back to navigation state data if no localStorage data
-        if (!activityFormData && location.state.activityFormData) {
-            activityFormData = location.state.activityFormData;
-            console.log('Fell back to navigation state data');
+        // 2. Fall back to navigation state if needed
+        if (!activityData && location.state.activityFormData) {
+          activityData = location.state.activityFormData;
+          console.log('Fell back to navigation state data');
         }
     
+        // 3. Navigate back with the data
         setTimeout(() => {
-            navigate(location.state.returnPath, {
-                state: {
-                    selectedBudget: result,
-                    activityFormData: activityFormData || null, // Pass whichever we found
-                    fromBudgetSubmission: true
-                },
-                replace: true
-            });
-            
-            // 3. Clean up localStorage after we've used it
-            localStorage.removeItem('activityFormDraft');
+          navigate(location.state.returnPath, {
+            state: {
+              selectedBudget: result,
+              activityFormData: activityData,
+              fromBudgetSubmission: true
+            },
+            replace: true
+          });
+    
+          // 4. Clean up localStorage AFTER navigation is initiated
+          localStorage.removeItem('activityFormDraft');
         }, 1500);
     }
     else if (formData.targetFormId) {
