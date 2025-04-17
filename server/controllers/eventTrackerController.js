@@ -7,53 +7,45 @@ const notificationController = require('./notificationController');
 
 const getNextReviewers = async (tracker, currentStepIndex) => {
   try {
-    console.log('🔍 Getting next reviewers for step:', currentStepIndex + 1);
-    
-    if (currentStepIndex + 1 >= tracker.steps.length) {
-      console.log('🏁 No next step - process complete');
+    const nextStepIndex = currentStepIndex + 1;
+    if (nextStepIndex >= tracker.steps.length) return [];
+
+    const nextStep = tracker.steps[nextStepIndex];
+    const form = await Form.findById(tracker.formId).select('organizationId submittedBy');
+
+    if (!form) {
+      console.error('❌ Form not found');
       return [];
     }
 
-    const nextStep = tracker.steps[currentStepIndex + 1];
-    console.log('🔍 Next Step Details:', {
-      stepName: nextStep.stepName,
-      reviewerRole: nextStep.reviewerRole,
-      _id: nextStep._id
+    // Debug: Show critical info
+    console.log('🔍 Critical Info:', {
+      formId: tracker.formId,
+      organizationId: form.organizationId,
+      requiredRole: nextStep.reviewerRole
     });
 
-    const Form = mongoose.model('Form');
-    const form = await Form.findById(tracker.formId);
-    
-    if (!form) {
-      console.log('❌ Form not found for tracker:', tracker.formId);
-      return [];
+    // Fallback if organizationId is missing
+    const query = { role: nextStep.reviewerRole };
+    if (form.organizationId) {
+      query.organizationId = form.organizationId;
+    } else {
+      console.warn('⚠️ No organizationId on form - searching all users with role');
     }
 
-    console.log('🔍 Organization ID from form:', form.organizationId);
-    
-    // Get all users with the required role for debugging
-    const allUsersWithRole = await User.find({
-      role: nextStep.reviewerRole
-    }).select('email role organizationId').lean();
+    const reviewers = await User.find(query)
+      .select('email name role organizationId')
+      .lean();
 
-    console.log('👥 All users with role', nextStep.reviewerRole, ':', 
-      allUsersWithRole.map(u => ({
-        email: u.email,
-        orgId: u.organizationId
-      }))
-    );
+    console.log('👥 Found Reviewers:', reviewers.map(r => ({
+      email: r.email,
+      role: r.role,
+      org: r.organizationId
+    })));
 
-    // Actual query we're using
-    const reviewers = await User.find({
-      role: nextStep.reviewerRole,
-      organizationId: form.organizationId
-    }).select('email role name').lean();
-
-    console.log('✅ Matching reviewers:', reviewers.length);
     return reviewers;
-    
   } catch (error) {
-    console.error("❌ Error getting next reviewers:", error);
+    console.error('❌ getNextReviewers error:', error);
     return [];
   }
 };
