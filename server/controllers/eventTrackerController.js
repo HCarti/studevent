@@ -288,7 +288,7 @@ const updateTrackerStep = async (req, res) => {
         // Also notify the current user that the next reviewer was notified
         try {
           const confirmationMessage = `You approved the form. ${nextReviewers.length} reviewer(s) have been notified.`;
-          await Notification.createNotification(currentUserEmail, confirmationMessage);
+          await notificationController.createNotification(currentUserEmail, confirmationMessage);
         } catch (error) {
           console.error("❌ Failed to send confirmation notification:", error);
         }
