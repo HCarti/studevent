@@ -386,16 +386,14 @@ const BudgetForm = () => {
 
       // Handle navigation - modified this section
       if (location.state?.returnPath) {
-        // Clear any saved draft from localStorage
-        localStorage.removeItem('activityFormDraft');
-        
-        // Return to original form with the new budget data
         setTimeout(() => {
           navigate(location.state.returnPath, {
             state: {
               selectedBudget: result,
-              // Preserve the original form data if it exists
-              formData: location.state.activityFormData || null
+              // Pass along the original activity form data
+              activityFormData: location.state.activityFormData || null,
+              // Indicate we're coming from a budget submission
+              fromBudgetSubmission: true
             },
             replace: true
           });
@@ -403,7 +401,7 @@ const BudgetForm = () => {
       } 
       else if (formData.targetFormId) {
         setTimeout(() => {
-          navigate(`/forms/${formData.targetFormType.toLowerCase()}/${formData.targetFormId}`);
+          navigate(`/activity/${formData.targetFormType.toLowerCase()}/${formData.targetFormId}`);
         }, 1500);
       }
       else if (isSubmission) {

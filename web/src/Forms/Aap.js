@@ -214,30 +214,53 @@ useEffect(() => {
     // First handle any budget data from navigation state
     if (location.state?.selectedBudget) {
       const selectedBudget = location.state.selectedBudget;
-      setFormData(prev => ({
-        ...prev,
-        attachedBudget: selectedBudget._id,
-        budgetAmount: selectedBudget.grandTotal,
-        budgetFrom: selectedBudget.nameOfRso,
-        budgetProposals: [...prev.budgetProposals, selectedBudget]
-      }));
-      navigate(location.pathname, { replace: true, state: {} });
+      const savedDraft = localStorage.getItem('activityFormDraft');
+      
+      try {
+        const baseData = savedDraft 
+          ? JSON.parse(savedDraft)
+          : location.state.activityFormData || {};
+        
+        // Properly handle date fields
+        const restoredData = {
+          ...baseData,
+          eventStartDate: baseData.eventStartDate ? new Date(baseData.eventStartDate) : null,
+          eventEndDate: baseData.eventEndDate ? new Date(baseData.eventEndDate) : null
+        };
+
+        setFormData(prev => ({
+          ...restoredData,
+          attachedBudget: selectedBudget._id,
+          budgetAmount: selectedBudget.grandTotal,
+          budgetFrom: selectedBudget.nameOfRso,
+          budgetProposals: [
+            ...(prev.budgetProposals || []),
+            ...(baseData.budgetProposals || []),
+            selectedBudget
+          ].filter((v, i, a) => a.findIndex(t => t._id === v._id) === i) // Remove duplicates
+        }));
+
+        // Clean up
+        localStorage.removeItem('activityFormDraft');
+        navigate(location.pathname, { replace: true, state: {} });
+      } catch (error) {
+        console.error('Restoration error:', error);
+      }
       return;
     }
 
-    // Then automatically restore any saved draft
+    // Case 2: Initial load with saved draft
     const savedDraft = localStorage.getItem('activityFormDraft');
     if (savedDraft) {
       try {
-        const parsedDraft = JSON.parse(savedDraft);
-        const restoredData = {
-          ...parsedDraft,
-          eventStartDate: parsedDraft.eventStartDate ? new Date(parsedDraft.eventStartDate) : null,
-          eventEndDate: parsedDraft.eventEndDate ? new Date(parsedDraft.eventEndDate) : null
-        };
-        setFormData(restoredData);
-      } catch (e) {
-        console.error('Error parsing saved draft:', e);
+        const parsed = JSON.parse(savedDraft);
+        setFormData({
+          ...parsed,
+          eventStartDate: parsed.eventStartDate ? new Date(parsed.eventStartDate) : null,
+          eventEndDate: parsed.eventEndDate ? new Date(parsed.eventEndDate) : null
+        });
+      } catch (error) {
+        console.error('Draft parse error:', error);
       } finally {
         localStorage.removeItem('activityFormDraft');
       }
@@ -1029,22 +1052,49 @@ const renderSidebar = () => (
           </select>
           
           <button 
-          type="button" 
-          className="create-budget-btn"
-          onClick={() => {
-            saveFormDraft();
-            navigate('/budget', { 
-              state: { 
-                returnPath: location.pathname,
-                activityFormData: formData,
-                targetFormType: 'Activity',
-                targetFormId: formId || null
-              } 
-            });
-          }}
-        >
-          + Create New Budget
-        </button>
+            type="button" 
+            className="create-budget-btn"
+            onClick={() => {
+              // First, prepare the data for storage
+              const dataToSave = {
+                ...formData,
+                // Ensure dates are properly serialized
+                eventStartDate: formData.eventStartDate 
+                  ? new Date(formData.eventStartDate).toISOString() 
+                  : null,
+                eventEndDate: formData.eventEndDate 
+                  ? new Date(formData.eventEndDate).toISOString() 
+                  : null,
+                // Clean up complex objects
+                budgetProposals: formData.budgetProposals.map(b => ({
+                  _id: b._id,
+                  eventTitle: b.eventTitle,
+                  grandTotal: b.grandTotal,
+                  nameOfRso: b.nameOfRso
+                }))
+              };
+
+              // Save to localStorage immediately
+              try {
+                localStorage.setItem('activityFormDraft', JSON.stringify(dataToSave));
+                console.log('Form data saved to localStorage:', dataToSave); // Debug log
+              } catch (error) {
+                console.error('Error saving to localStorage:', error);
+              }
+
+              // Then navigate to budget form
+              navigate('/budget', { 
+                state: { 
+                  returnPath: location.pathname,
+                  activityFormData: formData,
+                  targetFormType: 'Activity',
+                  targetFormId: formId || null
+                } 
+              });
+            }}
+          >
+            + Create New Budget
+          </button>
         </div>
 
         {budgetLoadError && (
