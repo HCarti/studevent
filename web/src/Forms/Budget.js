@@ -386,20 +386,39 @@ const BudgetForm = () => {
 
       // Handle navigation - modified this section
       if (location.state?.returnPath) {
+        // 1. FIRST check localStorage for saved form data
+        let activityFormData = null;
+        try {
+            const savedData = localStorage.getItem('activityFormDraft');
+            if (savedData) {
+                activityFormData = JSON.parse(savedData);
+                console.log('Loaded from localStorage:', activityFormData);
+            }
+        } catch (e) {
+            console.error('Error reading localStorage:', e);
+        }
+    
+        // 2. Fall back to navigation state data if no localStorage data
+        if (!activityFormData && location.state.activityFormData) {
+            activityFormData = location.state.activityFormData;
+            console.log('Fell back to navigation state data');
+        }
+    
         setTimeout(() => {
-          navigate(location.state.returnPath, {
-            state: {
-              selectedBudget: result,
-              // Pass along the original activity form data
-              activityFormData: location.state.activityFormData || null,
-              // Indicate we're coming from a budget submission
-              fromBudgetSubmission: true
-            },
-            replace: true
-          });
+            navigate(location.state.returnPath, {
+                state: {
+                    selectedBudget: result,
+                    activityFormData: activityFormData || null, // Pass whichever we found
+                    fromBudgetSubmission: true
+                },
+                replace: true
+            });
+            
+            // 3. Clean up localStorage after we've used it
+            localStorage.removeItem('activityFormDraft');
         }, 1500);
-      } 
-      else if (formData.targetFormId) {
+    }
+    else if (formData.targetFormId) {
         setTimeout(() => {
           navigate(`/activity/${formData.targetFormType.toLowerCase()}/${formData.targetFormId}`);
         }, 1500);
