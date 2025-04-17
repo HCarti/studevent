@@ -177,32 +177,75 @@ const Aap = () => {
     return isValid;
   };
 
-  useEffect(() => {
-    // Check for budget data when returning from budget form
-    const locationState = location.state;
-    if (locationState?.newBudget) {
-      const newBudget = locationState.newBudget;
-      
-      // Update form with new budget data
+
+  // Add this custom save function in your component
+// Simplified saveFormDraft function
+const saveFormDraft = () => {
+  try {
+    const draftToSave = {
+      ...formData,
+      eventStartDate: formData.eventStartDate ? new Date(formData.eventStartDate).toISOString() : null,
+      eventEndDate: formData.eventEndDate ? new Date(formData.eventEndDate).toISOString() : null,
+      attachedBudget: formData.attachedBudget || null,
+      budgetProposals: formData.budgetProposals.map(b => ({
+        _id: b._id,
+        eventTitle: b.eventTitle,
+        grandTotal: b.grandTotal,
+        nameOfRso: b.nameOfRso
+      }))
+    };
+    
+    localStorage.setItem('activityFormDraft', JSON.stringify(draftToSave));
+  } catch (error) {
+    console.error('Error saving draft:', error);
+  }
+};
+
+useEffect(() => {
+  return () => {
+    if (!formSent && !isEditMode && formData.eventTitle) {
+      saveFormDraft();
+    }
+  };
+}, [formData, formSent, isEditMode]);
+
+useEffect(() => {
+  const initializeForm = async () => {
+    // First handle any budget data from navigation state
+    if (location.state?.selectedBudget) {
+      const selectedBudget = location.state.selectedBudget;
       setFormData(prev => ({
         ...prev,
-        attachedBudget: newBudget._id,
-        budgetAmount: newBudget.grandTotal,
-        budgetFrom: newBudget.nameOfRso,
-        budgetProposals: [...prev.budgetProposals, newBudget]
+        attachedBudget: selectedBudget._id,
+        budgetAmount: selectedBudget.grandTotal,
+        budgetFrom: selectedBudget.nameOfRso,
+        budgetProposals: [...prev.budgetProposals, selectedBudget]
       }));
-      
-      // Clear the state to prevent infinite updates
       navigate(location.pathname, { replace: true, state: {} });
+      return;
     }
-    
-    // Check for saved draft data
+
+    // Then automatically restore any saved draft
     const savedDraft = localStorage.getItem('activityFormDraft');
-    if (savedDraft && !isEditMode) {
-      setFormData(JSON.parse(savedDraft));
-      localStorage.removeItem('activityFormDraft');
+    if (savedDraft) {
+      try {
+        const parsedDraft = JSON.parse(savedDraft);
+        const restoredData = {
+          ...parsedDraft,
+          eventStartDate: parsedDraft.eventStartDate ? new Date(parsedDraft.eventStartDate) : null,
+          eventEndDate: parsedDraft.eventEndDate ? new Date(parsedDraft.eventEndDate) : null
+        };
+        setFormData(restoredData);
+      } catch (e) {
+        console.error('Error parsing saved draft:', e);
+      } finally {
+        localStorage.removeItem('activityFormDraft');
+      }
     }
-  }, [location.state, navigate, location.pathname, isEditMode]);
+  };
+
+  initializeForm();
+}, [location.state, navigate]);
 
   const fetchBudgetProposals = async () => {
     try {
@@ -298,7 +341,7 @@ const Aap = () => {
     fetchBudgetProposals();
   }, []);
 
-  
+
   // Fetch form data if in edit mode
   useEffect(() => {
     // Update the fetchFormData function in your useEffect
@@ -957,7 +1000,6 @@ const renderSidebar = () => (
               <div className="validation-error">Please Enter A Organizer</div>
             )}
 
-          <label className="required-field">Budget:</label>
           <div className="budget-selection">
           <label className="required-field">Attached Budget Proposal:</label>
           <select
@@ -987,20 +1029,22 @@ const renderSidebar = () => (
           </select>
           
           <button 
-            type="button" 
-            className="create-budget-btn"
-            onClick={() => {
-              localStorage.setItem('activityFormDraft', JSON.stringify(formData));
-              navigate('/budget', { 
-                state: { 
-                  returnPath: location.pathname,
-                  activityFormData: formData 
-                } 
-              });
-            }}
-          >
-            + Create New Budget
-          </button>
+          type="button" 
+          className="create-budget-btn"
+          onClick={() => {
+            saveFormDraft();
+            navigate('/budget', { 
+              state: { 
+                returnPath: location.pathname,
+                activityFormData: formData,
+                targetFormType: 'Activity',
+                targetFormId: formId || null
+              } 
+            });
+          }}
+        >
+          + Create New Budget
+        </button>
         </div>
 
         {budgetLoadError && (

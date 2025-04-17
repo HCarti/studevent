@@ -310,7 +310,6 @@ const BudgetForm = () => {
       );
     });
   };
-
   const handleSubmit = async () => {
     // Set loading state
     setLoading(true);
@@ -322,42 +321,45 @@ const BudgetForm = () => {
     }
   
     const token = localStorage.getItem('token');
-    if (!token) {
+    const user = JSON.parse(localStorage.getItem('user'));
+    
+    if (!token || !user) {
       showNotification('Please log in to submit the form', 'error');
       setLoading(false);
       return;
     }
   
-    // Filter out empty rows
-    const validRows = rows.filter(row => 
-      row.quantity || row.unit || row.description || row.unitCost
-    ).map(row => ({
-      quantity: Number(row.quantity),
-      unit: row.unit.trim(),
-      description: row.description.trim(),
-      unitCost: Number(row.unitCost),
-      totalCost: Number(row.totalCost || row.quantity * row.unitCost)
-    }));
-  
-    // Prepare payload according to new schema
-    const payload = {
-      nameOfRso: formData.nameOfRso.trim(),
-      eventTitle: formData.eventTitle?.trim() || 'Budget Proposal',
-      items: validRows,
-      grandTotal: Number(formData.grandTotal) || 
-        validRows.reduce((sum, row) => sum + (row.quantity * row.unitCost), 0),
-      createdBy: JSON.parse(localStorage.getItem('user'))._id,
-      organization: JSON.parse(localStorage.getItem('user')).organizationId,
-      associatedForm: formData.targetFormId || null,
-      formType: formData.targetFormType || null,
-      isActive: true
-    };
-  
     try {
+      // Prepare the budget data
+      const budgetData = {
+        nameOfRso: formData.nameOfRso.trim(),
+        eventTitle: formData.eventTitle?.trim() || 'Budget Proposal',
+        items: rows.map(row => ({
+          quantity: Number(row.quantity),
+          unit: row.unit.trim(),
+          description: row.description.trim(),
+          unitCost: Number(row.unitCost),
+          totalCost: Number(row.quantity * row.unitCost)
+        })),
+        grandTotal: rows.reduce((sum, row) => sum + (row.quantity * row.unitCost), 0),
+        createdBy: user._id,
+        organization: user.organizationId || user._id,
+        associatedForm: formData.targetFormId || null,
+        formType: formData.targetFormType || null,
+        isActive: true,
+        status: 'draft'
+      };
+
+      // Determine if we're submitting or saving as draft
+      const isSubmission = location.pathname.includes('/submit');
+      if (isSubmission) {
+        budgetData.status = 'submitted';
+      }
+  
       const url = isEditMode 
         ? `https://studevent-server.vercel.app/api/budgets/${formId}`
         : 'https://studevent-server.vercel.app/api/budgets/submit';
-      
+  
       const method = isEditMode ? 'PUT' : 'POST';
   
       const response = await fetch(url, {
@@ -366,7 +368,7 @@ const BudgetForm = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(budgetData),
       });
   
       if (!response.ok) {
@@ -374,60 +376,50 @@ const BudgetForm = () => {
         throw new Error(errorData.message || `Server error: ${response.status}`);
       }
   
-      const newBudget = await response.json();
+      const result = await response.json();
       setFormSent(true);
-      showNotification(`Budget ${isEditMode ? 'updated' : 'submitted'} successfully`, 'success');
-  
-      // Handle navigation after successful submission
+      
+      showNotification(
+        `Budget ${isEditMode ? 'updated' : isSubmission ? 'submitted' : 'saved'} successfully`, 
+        'success'
+      );
+
+      // Handle navigation - modified this section
       if (location.state?.returnPath) {
-        // If coming from activity form, return with the new budget data
+        // Clear any saved draft from localStorage
+        localStorage.removeItem('activityFormDraft');
+        
+        // Return to original form with the new budget data
         setTimeout(() => {
           navigate(location.state.returnPath, {
             state: {
-              newBudget, // Pass the newly created budget
-              activityFormData: location.state.activityFormData // Pass back the original form data
+              selectedBudget: result,
+              // Preserve the original form data if it exists
+              formData: location.state.activityFormData || null
             },
-            replace: true // Replace current entry in history
+            replace: true
           });
         }, 1500);
       } 
-      else if (formData.targetFormId && !isEditMode) {
-        // If linked to a form but not coming directly from it
+      else if (formData.targetFormId) {
         setTimeout(() => {
           navigate(`/forms/${formData.targetFormType.toLowerCase()}/${formData.targetFormId}`);
         }, 1500);
-      } 
-      else {
-        // Default case - go to submitted forms
-        setTimeout(() => navigate('/'), 1500);
       }
-  
-      // Reset form if this is a standalone budget
-      if (!isEditMode && !formData.targetFormId && !location.state?.returnPath) {
-        setFormData({
-          nameOfRso: formData.nameOfRso, // Keep organization name
-          eventTitle: "",
-          grandTotal: 0,
-          targetFormType: null,
-          targetFormId: null
-        });
-        setRows([{ 
-          quantity: "", 
-          unit: "", 
-          description: "", 
-          unitCost: "", 
-          totalCost: "" 
-        }]);
+      else if (isSubmission) {
+        setTimeout(() => navigate('/budgets'), 1500);
       }
   
     } catch (error) {
       console.error('Submission error:', error);
-      showNotification(error.message || 'Failed to submit form', 'error');
+      showNotification(
+        error.message || `Failed to ${isEditMode ? 'update' : 'create'} budget`, 
+        'error'
+      );
     } finally {
       setLoading(false);
     }
-  };
-
+};
   
   return (
     <div className="budget-form">
