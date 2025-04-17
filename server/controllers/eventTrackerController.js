@@ -1,7 +1,7 @@
 const EventTracker = require("../models/EventTracker");
 const User = require("../models/User"); // Import User model
 const mongoose = require('mongoose');
-const Notification = require("../models/Notification");
+const notificationController = require('./notificationController');
 
 // HELPER
 
@@ -267,20 +267,15 @@ const updateTrackerStep = async (req, res) => {
       const nextStepIndex = firstPendingOrDeclinedStepIndex + 1;
       
       if (nextStepIndex < tracker.steps.length) {
-        console.log('🔔 Preparing to notify next reviewers...');
         const nextReviewers = await getNextReviewers(tracker, firstPendingOrDeclinedStepIndex);
         const nextStep = tracker.steps[nextStepIndex];
-        
-        if (nextReviewers.length === 0) {
-          console.log('⚠️ No reviewers found for next step:', nextStep.stepName);
-        }
+        const formName = form.name || `Form ${form._id}`;
     
         for (const reviewer of nextReviewers) {
           try {
-            const notificationMessage = `Action Required: Form "${form.name}" (ID: ${form._id}) needs your ${nextStep.stepName} review.`;
-            console.log(`✉️ Sending to ${reviewer.email}:`, notificationMessage);
+            const notificationMessage = `Action Required: ${formName} is ready for your ${nextStep.stepName} review.`;
             
-            await Notification.createNotification(
+            await notificationController.createNotification(
               reviewer.email,
               notificationMessage
             );
