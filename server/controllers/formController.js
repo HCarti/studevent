@@ -248,35 +248,39 @@ exports.createForm = async (req, res) => {
     // Handle budget validation if attached
     // Handle budget validation if attached
 // In the budget validation/creation section of createForm
+// In createForm controller
 if (req.body.attachedBudget) {
   const validBudget = await BudgetProposal.findOne({
     _id: req.body.attachedBudget,
     organization: req.body.studentOrganization || req.user.organizationId,
-    isActive: true
+    isActive: true // Only check if budget exists and belongs to org
   }).session(session);
 
   if (!validBudget) {
     await session.abortTransaction();
     session.endSession();
     return res.status(400).json({ 
-      error: 'Budget proposal not found or not active for your organization' 
+      error: 'Budget proposal not found for your organization' 
     });
   }
 
+  // Auto-populate budget-related fields in the form
   req.body.budgetAmount = validBudget.grandTotal;
   req.body.budgetFrom = validBudget.nameOfRso;
   
   // After form is created, associate it with the BudgetProposal if exists
-if (req.body.attachedBudget) {
-  await BudgetProposal.findByIdAndUpdate(
-    req.body.attachedBudget,
-    {
-      associatedForm: form._id,
-      formType: 'Activity'
-    },
-    { session }
-  );
-}
+  if (req.body.attachedBudget) {
+    await BudgetProposal.findByIdAndUpdate(
+      req.body.attachedBudget,
+      {
+        $set: {
+          associatedForm: form._id,
+          formType: form.formType
+        }
+      },
+      { session }
+    );
+  }
 } else if (req.body.budgetData) {
   // Create new budget proposal
   const budgetProposal = new BudgetProposal({
@@ -285,9 +289,9 @@ if (req.body.attachedBudget) {
     items: req.body.budgetData.items,
     grandTotal: req.body.budgetData.items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0),
     createdBy: req.user._id,
-    organization: req.body.studentOrganization || req.user.organizationId, // Ensure organization is set
+    organization: req.body.studentOrganization || req.user.organizationId,
     formType: 'Activity',
-    isActive: true
+    status: 'submitted' // Ensure new budgets are submitted
   });
 
   await budgetProposal.save({ session });

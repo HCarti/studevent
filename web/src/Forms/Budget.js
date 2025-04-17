@@ -64,9 +64,11 @@ const BudgetForm = () => {
   const validateForm = () => {
     const nameOfRsoError = !formData.nameOfRso?.trim();
     const rowErrors = validateAllRows();
+    const eventTitleError = !formData.eventTitle?.trim();
     
     setErrors({
       nameOfRso: nameOfRsoError,
+      eventTitle: eventTitleError,
       rows: rowErrors
     });
 
@@ -466,19 +468,20 @@ const BudgetForm = () => {
         </div>
       </div>
 
-      {formData.targetFormType && (
-        <div className="form-group">
-          <label>For {formData.targetFormType}:</label>
+      <div className="form-group">
+          <label>Event Title:</label>
           <div className="input-group">
             <input 
               type="text" 
+              name="eventTitle"
               value={formData.eventTitle} 
-              onChange={(e) => setFormData({...formData, eventTitle: e.target.value})}
-              placeholder={`${formData.targetFormType} title`}
+              onChange={handleChange}
+              placeholder="Enter event title"
+              className={errors.eventTitle ? 'error' : ''}
             />
+             {errors.eventTitle && <ErrorMessage message="This field is required" />}
           </div>
         </div>
-      )}
 
       <div className="budget-items">
         <div className="budget-header">
