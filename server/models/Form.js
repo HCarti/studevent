@@ -528,24 +528,46 @@ const formSchema = new mongoose.Schema({
         // ====BUDGET PROPOSAL====
 
         // Update the attachedBudget field validation:
-        attachedBudget: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'BudgetProposal',
-            validate: {
-              validator: async function(v) {
-                if (!v) return true; // Optional attachment
-                if (!['Activity', 'Project'].includes(this.formType)) return false;
-                
-                const budget = await mongoose.model('BudgetProposal').findOne({
-                  _id: v,
-                  organization: this.studentOrganization,
-                  isActive: true
-                });
-                return !!budget;
-              },
-              message: 'Budget must belong to your organization'
+       // In your Form model (formSchema)
+attachedBudget: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'BudgetProposal',
+    validate: {
+      validator: async function(v) {
+        if (!v) return true; // Optional attachment
+        
+        const Budget = mongoose.model('BudgetProposal');
+        const budget = await Budget.findOne({
+          _id: v,
+          isActive: true,
+          $or: [
+            // For Activity forms - strict org validation
+            { 
+              organization: this.studentOrganization || this.organization,
+              formType: 'Activity' 
+            },
+            // For Project forms - more flexible validation
+            { 
+              createdBy: this.submittedBy,
+              formType: 'Project' 
+            },
+            // Allow admin-assigned budgets
+            { 
+              isPublic: true 
             }
-          },
+          ]
+        });
+        
+        return !!budget;
+      },
+      message: function(props) {
+        if (this.formType === 'Activity') {
+          return 'Budget must belong to your organization for Activity forms';
+        }
+        return 'Budget not found or you do not have permission to use it';
+      }
+    }
+  },
           
     // ===== COMMON FIELDS =====
     currentStep: { type: Number, default: 0 },
