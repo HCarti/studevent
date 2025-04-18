@@ -247,35 +247,50 @@ exports.createForm = async (req, res) => {
     }
 
     // Handle budget validation if attached - MODIFIED FOR PROJECT PROPOSALS
+    // In the budget validation section of createForm
     if (req.body.attachedBudget) {
-      let query = {
+      const budgetQuery = {
         _id: req.body.attachedBudget,
         isActive: true
       };
 
-      // For Activity forms, require organization match
+      // For Activity forms - strict org validation
       if (req.body.formType === 'Activity') {
-        query.organization = req.body.studentOrganization || req.user.organizationId;
+        budgetQuery.organization = req.body.studentOrganization || req.user.organizationId;
       } 
-      // For Project forms, check either organization or createdBy
+      // For Project forms - more flexible validation
       else if (req.body.formType === 'Project') {
-        query.$or = [
+        budgetQuery.$or = [
           { organization: req.body.studentOrganization || req.user.organizationId },
-          { createdBy: req.user._id }
+          { createdBy: req.user._id }, // Allow user's personal budgets
+          { isPublic: true } // Optionally allow public budgets
         ];
       }
 
-      const validBudget = await BudgetProposal.findOne(query).session(session);
+      const validBudget = await BudgetProposal.findOne(budgetQuery).session(session);
 
       if (!validBudget) {
         await session.abortTransaction();
         session.endSession();
         return res.status(400).json({ 
-          error: 'Budget proposal not found or not accessible' 
+          error: req.body.formType === 'Activity' 
+            ? 'Budget must belong to your organization' 
+            : 'Budget not found or not accessible'
         });
       }
 
-      // Auto-populate budget-related fields
+      // Additional ownership check for projects
+      if (req.body.formType === 'Project' && 
+          validBudget.createdBy.toString() !== req.user._id.toString() &&
+          validBudget.organization?.toString() !== (req.user.organizationId || '').toString()) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(403).json({ 
+          error: 'You do not have permission to use this budget' 
+        });
+      }
+
+      // Auto-populate budget fields
       req.body.budgetAmount = validBudget.grandTotal;
       req.body.budgetFrom = validBudget.nameOfRso || 'Org';
     }
