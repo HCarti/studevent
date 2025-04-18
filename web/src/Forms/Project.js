@@ -696,6 +696,7 @@ const formatTimeDisplay = (timeStr) => {
       // Prepare submission data
       const submissionData = {
         formType: 'Project',
+        ...formData,
         projectTitle: formData.projectTitle,
         projectDescription: formData.projectDescription,
         projectObjectives: formData.projectObjectives,
@@ -748,7 +749,6 @@ const formatTimeDisplay = (timeStr) => {
       // Reset form if not in edit mode
       if (!isEditMode) {
         setFormData({
-          formType: 'Project',
           projectTitle: "",
           projectDescription: "",
           projectObjectives: "",

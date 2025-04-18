@@ -193,7 +193,6 @@ exports.getFormById = async (req, res) => {
   }
 };
 
-// In the formController.js
 exports.createForm = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -209,8 +208,8 @@ exports.createForm = async (req, res) => {
       req.body.emailAddress = req.user.email;
     }
 
-    // Handle organization lookup (for Activity forms)
-    if (req.body.studentOrganization && req.body.formType === 'Activity') {
+    // Handle organization lookup
+    if (req.body.studentOrganization) {
       let organization;
 
       if (mongoose.Types.ObjectId.isValid(req.body.studentOrganization)) {
@@ -246,66 +245,48 @@ exports.createForm = async (req, res) => {
       }
     }
 
-    // Handle budget validation if attached - MODIFIED FOR PROJECT PROPOSALS
-    // In the budget validation section of createForm
-    // In formController.js - modify the budget validation section
-    if (req.body.attachedBudget) {
-      try {
-        const budgetQuery = {
-          _id: req.body.attachedBudget,
-          isActive: true,
-          $or: []
-        };
+    // Handle budget validation if attached
+    // Handle budget validation if attached
+// In the budget validation/creation section of createForm
+// In createForm controller
+if (req.body.attachedBudget) {
+  const validBudget = await BudgetProposal.findOne({
+    _id: req.body.attachedBudget,
+    organization: req.body.studentOrganization || req.user.organizationId,
+    isActive: true // Only check if budget exists and belongs to org
+  }).session(session);
 
-        // For Activity forms
-        if (req.body.formType === 'Activity') {
-          budgetQuery.$or.push({
-            organization: req.body.studentOrganization || req.user.organizationId
-          });
-        }
-        // For Project forms
-        else {
-          budgetQuery.$or.push(
-            { createdBy: req.user._id },
-            { isPublic: true },
-            { sharedWith: req.user.organizationId }
-          );
-        }
+  if (!validBudget) {
+    await session.abortTransaction();
+    session.endSession();
+    return res.status(400).json({ 
+      error: 'Budget proposal not found for your organization' 
+    });
+  }
 
-        const validBudget = await BudgetProposal.findOne(budgetQuery).session(session);
-        
-        if (!validBudget) {
-          throw new Error(
-            req.body.formType === 'Activity'
-              ? 'Budget must belong to your organization'
-              : 'Budget not found or not accessible'
-          );
-        }
+  // Auto-populate budget-related fields in the form
+  req.body.budgetAmount = validBudget.grandTotal;
+  req.body.budgetFrom = validBudget.nameOfRso;
+  
+} else if (req.body.budgetData) {
+  // Create new budget proposal
+  const budgetProposal = new BudgetProposal({
+    nameOfRso: req.user.organizationName || req.body.studentOrganization?.organizationName,
+    eventTitle: req.body.budgetData.eventTitle || req.body.eventTitle || 'Budget Proposal',
+    items: req.body.budgetData.items,
+    grandTotal: req.body.budgetData.items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0),
+    createdBy: req.user._id,
+    organization: req.body.studentOrganization || req.user.organizationId,
+    formType: 'Activity',
+    status: 'submitted' // Ensure new budgets are submitted
+  });
 
-        // Additional checks
-        if (req.body.formType === 'Project' && 
-            validBudget.status !== 'approved' &&
-            validBudget.createdBy.toString() !== req.user._id.toString()) {
-          throw new Error('Only approved budgets or your own budgets can be used for projects');
-        }
+  await budgetProposal.save({ session });
+  req.body.attachedBudget = budgetProposal._id;
+  req.body.budgetAmount = budgetProposal.grandTotal;
+  req.body.budgetFrom = budgetProposal.nameOfRso;
+}
 
-        // Auto-populate fields
-        req.body.budgetAmount = validBudget.grandTotal;
-        req.body.budgetFrom = validBudget.nameOfRso || 'Org';
-
-      } catch (error) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(400).json({ 
-          error: error.message,
-          details: {
-            budgetId: req.body.attachedBudget,
-            formType: req.body.formType,
-            userId: req.user._id
-          }
-        });
-      }
-    }
     // Form type specific validation
     switch (req.body.formType) {
       case 'Activity':
@@ -327,6 +308,11 @@ exports.createForm = async (req, res) => {
         }
         break;
 
+      case 'Budget':
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: "Budget forms should be submitted through a different endpoint" });
+
       case 'Project':
         if (!req.body.projectTitle || !req.body.projectDescription) {
           await session.abortTransaction();
@@ -334,19 +320,6 @@ exports.createForm = async (req, res) => {
           return res.status(400).json({ error: "Project title and description are required" });
         }
         
-        // Project-specific budget validation
-        if (!req.body.budgetAmount || isNaN(req.body.budgetAmount)) {
-          await session.abortTransaction();
-          session.endSession();
-          return res.status(400).json({ error: "Valid budget amount is required" });
-        }
-
-        if (!req.body.budgetFrom) {
-          await session.abortTransaction();
-          session.endSession();
-          return res.status(400).json({ error: "Budget source is required" });
-        }
-
         if (req.body.eventStartDate) {
           try {
             const endDate = req.body.eventEndDate || req.body.eventStartDate;
@@ -358,6 +331,11 @@ exports.createForm = async (req, res) => {
           }
         }
         break;
+
+      case 'LocalOffCampus':
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: "Local Off Campus forms should be submitted through their specific endpoints" });
 
       default:
         await session.abortTransaction();
@@ -398,20 +376,17 @@ exports.createForm = async (req, res) => {
     });
     await tracker.save({ session });
 
-    // Associate budget with form
-    if (req.body.attachedBudget) {
-      await BudgetProposal.findByIdAndUpdate(
-        req.body.attachedBudget,
-        { 
-          $set: {
-            associatedForm: form._id,
-            formType: form.formType,
-            status: 'In Use' // Update status to reflect it's being used
-          }
-        },
-        { session }
-      );
-    }
+    // Associate budget AFTER form is created
+if (req.body.attachedBudget) {
+  await BudgetProposal.findByIdAndUpdate(
+    req.body.attachedBudget,
+    { 
+      associatedForm: form._id,
+      formType: form.formType 
+    },
+    { session }
+  );
+}
 
     // Send notification
     if (req.body.emailAddress) {
