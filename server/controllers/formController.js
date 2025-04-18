@@ -250,35 +250,47 @@ exports.createForm = async (req, res) => {
 // In the budget validation/creation section of createForm
 // In createForm controller
 if (req.body.attachedBudget) {
-  const validBudget = await BudgetProposal.findOne({
+  const budgetQuery = {
     _id: req.body.attachedBudget,
-    organization: req.body.studentOrganization || req.user.organizationId,
-    isActive: true // Only check if budget exists and belongs to org
-  }).session(session);
+    isActive: true
+  };
+
+  // Add organization check if available
+  if (req.body.studentOrganization) {
+    budgetQuery.organization = req.body.studentOrganization;
+  } else if (req.user?.organizationId) {
+    budgetQuery.organization = req.user.organizationId;
+  }
+
+  // Optionally add formType check if needed
+  if (req.body.formType) {
+    budgetQuery.formType = req.body.formType;
+  }
+
+  const validBudget = await BudgetProposal.findOne(budgetQuery).session(session);
 
   if (!validBudget) {
     await session.abortTransaction();
     session.endSession();
     return res.status(400).json({ 
-      error: 'Budget proposal not found for your organization' 
+      error: 'Budget proposal not found for your organization or form type mismatch' 
     });
   }
 
-  // Auto-populate budget-related fields in the form
+  // Auto-populate budget-related fields
   req.body.budgetAmount = validBudget.grandTotal;
   req.body.budgetFrom = validBudget.nameOfRso;
-  
 } else if (req.body.budgetData) {
   // Create new budget proposal
   const budgetProposal = new BudgetProposal({
-    nameOfRso: req.user.organizationName || req.body.studentOrganization?.organizationName,
+    nameOfRso: req.user?.organizationName || req.body.studentOrganization?.organizationName,
     eventTitle: req.body.budgetData.eventTitle || req.body.eventTitle || 'Budget Proposal',
     items: req.body.budgetData.items,
     grandTotal: req.body.budgetData.items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0),
-    createdBy: req.user._id,
-    organization: req.body.studentOrganization || req.user.organizationId,
-    formType: 'Activity',
-    status: 'submitted' // Ensure new budgets are submitted
+    createdBy: req.user?._id,
+    organization: req.body.studentOrganization || req.user?.organizationId,
+    formType: req.body.formType || 'Activity', // Use the form's type or default to Activity
+    status: 'submitted'
   });
 
   await budgetProposal.save({ session });
