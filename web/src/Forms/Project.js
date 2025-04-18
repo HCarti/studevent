@@ -36,7 +36,6 @@ const Project = () => {
     budgetFrom: '',
     attachedBudget: null,       // ID of attached budget proposal
     budgetProposals: [],       // List of available budgets for dropdown
-    showBudgetModal: false     // Control budget modal visibility
   });
 
   const [fieldErrors, setFieldErrors] = useState({
@@ -177,7 +176,7 @@ const Project = () => {
           schoolEquipments: formData.schoolEquipments || [{ equipments: '', estimatedQuantity: '' }],
           // Budget fields
           budgetAmount: formData.budgetAmount || '',
-          budgetFrom: formData.budgetFrom || '',
+          budgetFrom: formData.budgetFrom || 'Org', // Default to 'Org' if empty
           attachedBudget: formData.attachedBudget || null,
           budgetProposals: formData.budgetProposals || []
         };
@@ -200,93 +199,99 @@ const Project = () => {
     fetchFormData();
   }, [formId, isEditMode, navigate]);
 
-  const fetchBudgetProposals = async () => {
-    if (!isEditMode) return;
-    try {
-      const token = localStorage.getItem('token');
-      const user = JSON.parse(localStorage.getItem('user'));
-      
-      if (!token || !user) {
-        throw new Error('User not authenticated');
-      }
-  
-      // Build the URL based on user role
-      let url = 'https://studevent-server.vercel.app/api/budgets';
-      let queryParams = [];
-      
-      // Organization users see their own budgets
-      if (user.role === 'Organization') {
-        queryParams.push(`organization=${user._id}`);
-      } 
-      // Regular users see budgets they created
-      else if (user.role !== 'Admin') {
-        queryParams.push(`createdBy=${user._id}`);
-      }
-      
-      // Only show active budgets by default
-      queryParams.push('isActive=true');
-      
-      if (queryParams.length > 0) {
-        url += `?${queryParams.join('&')}`;
-      }
-  
-      const response = await fetch(url, {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+   const fetchBudgetProposals = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user'));
+        
+        if (!token || !user) {
+          throw new Error('User not authenticated');
         }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-  
-      const data = await response.json();
-      setFormData(prev => ({
-        ...prev,
-        budgetProposals: data
-      }));
-  
-      // If in edit mode and we have an attached budget, ensure it's in the list
-      if (isEditMode && formData.attachedBudget) {
-        const hasAttachedBudget = data.some(b => b._id === formData.attachedBudget);
-        if (!hasAttachedBudget) {
-          fetchSingleBudget(formData.attachedBudget);
+    
+        // Build the URL based on user role
+        let url = 'https://studevent-server.vercel.app/api/budgets';
+        let queryParams = [];
+        
+        // Organization users see their own budgets
+        if (user.role === 'Organization') {
+          queryParams.push(`organization=${user._id}`);
+        } 
+        // Regular users see budgets they created
+        else if (user.role !== 'Admin') {
+          queryParams.push(`createdBy=${user._id}`);
         }
-      }
-    } catch (error) {
-      console.error('Error fetching budgets:', error);
-      setBudgetLoadError(error.message || 'Failed to load budget proposals. Please try again later.');
-    }
-  };
-  
-  const fetchSingleBudget = async (budgetId) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`https://studevent-server.vercel.app/api/budgets/${budgetId}`, {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+        
+        // Only show active budgets by default
+        queryParams.push('isActive=true');
+        
+        // Add status filter if needed (optional)
+        // queryParams.push('status=submitted');
+        
+        if (queryParams.length > 0) {
+          url += `?${queryParams.join('&')}`;
         }
-      });
-      
-      if (response.ok) {
-        const budget = await response.json();
+    
+        const response = await fetch(url, {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+    
+        const data = await response.json();
         setFormData(prev => ({
           ...prev,
-          budgetProposals: [...prev.budgetProposals, budget]
+          budgetProposals: data
         }));
-      } else {
-        throw new Error(`Failed to fetch budget: ${response.status}`);
+    
+        // If in edit mode and we have an attached budget, ensure it's in the list
+        if (isEditMode && formData.attachedBudget) {
+          const hasAttachedBudget = data.some(b => b._id === formData.attachedBudget);
+          if (!hasAttachedBudget) {
+            // Fetch the specific budget if it's not in the list
+            fetchSingleBudget(formData.attachedBudget);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching budgets:', error);
+        setBudgetLoadError(error.message || 'Failed to load budget proposals. Please try again later.');
       }
-    } catch (error) {
-      console.error('Error fetching single budget:', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchBudgetProposals();
-  }, []);
+    };
+    
+    // Updated helper function to fetch a single budget
+    const fetchSingleBudget = async (budgetId) => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`https://studevent-server.vercel.app/api/budgets/${budgetId}`, {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          const budget = await response.json();
+          setFormData(prev => ({
+            ...prev,
+            budgetProposals: [...prev.budgetProposals, budget]
+          }));
+        } else {
+          throw new Error(`Failed to fetch budget: ${response.status}`);
+        }
+      } catch (error) {
+        console.error('Error fetching single budget:', error);
+        // Optionally set an error state here if needed
+      }
+    };
+    
+    // Call this in useEffect when component mounts
+    useEffect(() => {
+      fetchBudgetProposals();
+    }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -548,7 +553,7 @@ const formatTimeDisplay = (timeStr) => {
       ['schoolEquipments'],
       
       // Step 7: Budget Proposal
-      ['budgetProposal']
+      ['attachedBudget', 'budgetAmount', 'budgetFrom']
     ];
     return sections[step] || [];
   };
@@ -612,27 +617,25 @@ const formatTimeDisplay = (timeStr) => {
 
 
   const handleSubmit = async () => {
-
     // First validate all sections
-  if (!validateAllSections()) {
-    setNotification({
-      visible: true,
-      message: 'Please complete all required fields in all sections before submitting',
-      type: 'error'
-    });
-    setTimeout(() => setNotification({ visible: false }), 3000);
-    
-    // Scroll to the first error
-    setTimeout(() => {
-      const firstErrorElement = document.querySelector('.invalid-field');
-      if (firstErrorElement) {
-        firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 100);
-    
-    return;
-  }
-
+    if (!validateAllSections()) {
+      setNotification({
+        visible: true,
+        message: 'Please complete all required fields in all sections before submitting',
+        type: 'error'
+      });
+      setTimeout(() => setNotification({ visible: false }), 3000);
+      
+      // Scroll to the first error
+      setTimeout(() => {
+        const firstErrorElement = document.querySelector('.invalid-field');
+        if (firstErrorElement) {
+          firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+      return;
+    }
+  
     // Validate dates
     if (moment(formData.endDate).isBefore(moment(formData.startDate))) {
       setFieldErrors(prev => ({
@@ -648,7 +651,36 @@ const formatTimeDisplay = (timeStr) => {
       setTimeout(() => setNotification({ visible: false }), 3000);
       return;
     }
-
+  
+    // Validate budget
+    if (!formData.budgetAmount || isNaN(formData.budgetAmount) || Number(formData.budgetAmount) <= 0) {
+      setFieldErrors(prev => ({
+        ...prev,
+        budgetAmount: true
+      }));
+      setNotification({
+        visible: true,
+        message: 'Please enter a valid budget amount',
+        type: 'error'
+      });
+      setTimeout(() => setNotification({ visible: false }), 3000);
+      return;
+    }
+  
+    if (!formData.budgetFrom) {
+      setFieldErrors(prev => ({
+        ...prev,
+        budgetFrom: true
+      }));
+      setNotification({
+        visible: true,
+        message: 'Please select a budget source',
+        type: 'error'
+      });
+      setTimeout(() => setNotification({ visible: false }), 3000);
+      return;
+    }
+  
     const token = localStorage.getItem('token');
     if (!token) {
       setNotification({
@@ -659,68 +691,102 @@ const formatTimeDisplay = (timeStr) => {
       setTimeout(() => setNotification({ visible: false }), 3000);
       return;
     }
-
+  
     try {
-      const response = await fetch('https://studevent-server.vercel.app/api/forms', {
-        method: 'POST',
+      // Prepare submission data
+      const submissionData = {
+        formType: 'Project',
+        projectTitle: formData.projectTitle,
+        projectDescription: formData.projectDescription,
+        projectObjectives: formData.projectObjectives,
+        startDate: new Date(formData.startDate),
+        endDate: new Date(formData.endDate),
+        venue: formData.venue,
+        targetParticipants: formData.targetParticipants,
+        projectGuidelines: formData.projectGuidelines,
+        programFlow: formData.programFlow,
+        projectHeads: formData.projectHeads,
+        workingCommittees: formData.workingCommittees,
+        taskDeligation: formData.taskDeligation,
+        timelineSchedules: formData.timelineSchedules,
+        schoolEquipments: formData.schoolEquipments,
+        // Budget data
+        budgetAmount: Number(formData.budgetAmount),
+        budgetFrom: formData.budgetFrom,
+        attachedBudget: formData.attachedBudget || null,
+        budgetProposals: formData.budgetProposals
+      };
+  
+      // Determine endpoint and method based on edit mode
+      const url = isEditMode 
+        ? `https://studevent-server.vercel.app/api/forms/${formId}`
+        : 'https://studevent-server.vercel.app/api/forms/submit';
+      
+      const method = isEditMode ? 'PUT' : 'POST';
+  
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          ...formData,
-          formType: 'Project',
-          startDate: new Date(formData.startDate),
-          endDate: new Date(formData.endDate)
-        }),
+        body: JSON.stringify(submissionData),
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Submission failed');
       }
-
-      const result = await response.json();
-      setFormSent(true);
-      setNotificationVisible(true);
-      
-      // Reset form
-      // Replace your current reset with:
-setFormData({
-  formType: 'Project',
-  projectTitle: "",
-  projectDescription: "",
-  projectObjectives: "",
-  startDate: "",
-  endDate: "",
-  venue: "",
-  targetParticipants: "",
-  projectGuidelines: "",
-  programFlow: [{ timeRange: "", duration: "", segment: "" }],
-  projectHeads: [{ headName: "", designatedOffice: "" }],
-  workingCommittees: [{ workingName: "", designatedTask: "" }],
-  taskDeligation: [{ taskList: "", deadline: "" }],
-  timelineSchedules: [{ publicationMaterials: "", schedule: "" }],
-  schoolEquipments: [{ equipments: "", estimatedQuantity: "" }],
-  budgetAmount: Number(formData.budgetAmount),
-  budgetFrom: formData.budgetFrom,
-  attachedBudget: formData.attachedBudget || undefined
-});
-
-setTimeout(() => setNotification({ visible: false }), 3000);
-} catch (error) {
-  console.error('Error:', error);
-  setNotification({
-    visible: true,
-    message: error.message || 'An error occurred while submitting the form.',
-    type: 'error'
-  });
-  setTimeout(() => setNotification({ visible: false }), 3000);
-  navigate('/')
-} finally {
-  setLoading(false);
-}
-};
+  
+      // Show success message
+      setNotification({
+        visible: true,
+        message: `Project proposal ${isEditMode ? 'updated' : 'submitted'} successfully!`,
+        type: 'success'
+      });
+  
+      // Reset form if not in edit mode
+      if (!isEditMode) {
+        setFormData({
+          formType: 'Project',
+          projectTitle: "",
+          projectDescription: "",
+          projectObjectives: "",
+          startDate: "",
+          endDate: "",
+          venue: "",
+          targetParticipants: "",
+          projectGuidelines: "",
+          programFlow: [{ timeRange: "", segment: "" }],
+          projectHeads: [{ headName: "", designatedOffice: "" }],
+          workingCommittees: [{ workingName: "", designatedTask: "" }],
+          taskDeligation: [{ taskList: "", deadline: "" }],
+          timelineSchedules: [{ publicationMaterials: "", schedule: "" }],
+          schoolEquipments: [{ equipments: "", estimatedQuantity: "" }],
+          budgetAmount: "",
+          budgetFrom: "",
+          attachedBudget: null,
+          budgetProposals: []
+        });
+      }
+  
+      // Redirect after 3 seconds
+      setTimeout(() => {
+        navigate('/submitted-forms');
+      }, 3000);
+  
+    } catch (error) {
+      console.error('Error:', error);
+      setNotification({
+        visible: true,
+        message: error.message || 'An error occurred while submitting the form.',
+        type: 'error'
+      });
+    } finally {
+      setLoading(false);
+      setTimeout(() => setNotification({ visible: false }), 3000);
+    }
+  };
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -1306,7 +1372,6 @@ setTimeout(() => setNotification({ visible: false }), 3000);
           case 7: // Budget Proposal
           return (
             <div className="form-section">
-              <h2>Budget Proposal</h2>
               
               <div className="budget-selection">
                 <label className="required-field">Attached Budget Proposal:</label>
@@ -1322,7 +1387,7 @@ setTimeout(() => setNotification({ visible: false }), 3000);
                       attachedBudget: budgetId,
                       budgetAmount: selectedBudget?.grandTotal || '',
                       budgetFrom: selectedBudget?.nameOfRso || 'Org',
-                      projectTitle: selectedBudget?.eventTitle || prev.projectTitle
+                      projectTitle: selectedBudget?.projectTitle || prev.projectTitle
                     }));
                   }}
                   className={fieldErrors.attachedBudget ? 'invalid-field' : ''}
