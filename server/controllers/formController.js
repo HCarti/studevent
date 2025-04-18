@@ -252,7 +252,7 @@ exports.createForm = async (req, res) => {
 // Modified budget validation section in createForm
 if (req.body.attachedBudget) {
   // First get the organization ID we'll use for validation
-  const organizationId = req.body.studentOrganization || req.user?.organizationId;
+  const organizationId = req.body.studentOrganization || req.user?.organizationName;
   
   if (!organizationId) {
     await session.abortTransaction();
