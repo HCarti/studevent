@@ -388,84 +388,15 @@ if (req.body.attachedBudget) {
   );
 }
 
-try {
-  // 1. Notify the submitter
-  const submitterEmail = req.body.emailAddress || req.user?.email;
-  if (submitterEmail) {
-    await Notification.create([{
-      userEmail: submitterEmail,
-      message: `✅ ${form.formType} Form Submission Confirmation\n\n` +
-               `Your ${form.formType} form "${form.name || form.eventTitle || form.projectTitle}" has been successfully submitted.\n\n` +
-               `Submission ID: ${form._id.toString().slice(-8).toUpperCase()}\n` +
-               `Date: ${new Date().toLocaleString()}\n\n` +
-               `Next Step: ${trackerSteps[0].stepName} review`,
-      read: false,
-      type: 'submission_confirmation',
-      formId: form._id,
-      trackerId: tracker._id,
-      createdAt: new Date()
-    }], { session });
-  }
-
-  // 2. Notify Organization Admins (if organization form)
-  if (req.body.studentOrganization || req.user?.organizationId) {
-    const orgId = req.body.studentOrganization || req.user.organizationId;
-    const orgAdmins = await User.find({
-      organizationId: orgId,
-      role: { $in: ['Admin', 'Organization Admin'] }
-    }).session(session);
-
-    const formName = form.name || form.eventTitle || form.projectTitle || `${form.formType} Form`;
-    
-    for (const admin of orgAdmins) {
+    // Send notification
+    if (req.body.emailAddress) {
       await Notification.create([{
-        userEmail: admin.email,
-        message: `🏛️ New ${form.formType} Form Submission\n\n` +
-                 `Form: ${formName}\n` +
-                 `Submitted by: ${req.user?.name || 'Anonymous'}\n` +
-                 `Submission ID: ${form._id.toString().slice(-8).toUpperCase()}\n\n` +
-                 `Review Process:\n` +
-                 `${trackerSteps.map(step => `- ${step.stepName} (${step.reviewerRole})`).join('\n')}\n\n` +
-                 `Estimated review time: 3-5 business days`,
+        userEmail: req.body.emailAddress,
+        message: `Your ${req.body.formType} form has been submitted!`,
         read: false,
-        type: 'organization_notice',
-        formId: form._id,
-        trackerId: tracker._id,
-        createdAt: new Date()
+        timestamp: new Date(),
       }], { session });
     }
-  }
-
-  // 3. Notify First Reviewer
-  const firstReviewers = await User.find({
-    role: trackerSteps[0].reviewerRole,
-    organizationId: form.organizationId || null
-  }).session(session);
-
-  const formLink = `${process.env.FRONTEND_URL}/forms/review/${form._id}`;
-  
-  for (const reviewer of firstReviewers) {
-    await Notification.create([{
-      userEmail: reviewer.email,
-      message: `📋 Review Required: ${form.formType} Form\n\n` +
-               `Form: ${form.name || form.eventTitle || form.projectTitle}\n` +
-               `Organization: ${form.organizationId?.name || 'N/A'}\n` +
-               `Submitted by: ${req.user?.name || 'Anonymous'}\n\n` +
-               `Your Role: ${trackerSteps[0].stepName}\n` +
-               `Action Required: Please review within 48 hours\n\n` +
-               `Review Link: ${formLink}`,
-      read: false,
-      type: 'review_request',
-      formId: form._id,
-      trackerId: tracker._id,
-      createdAt: new Date()
-    }], { session });
-  }
-
-} catch (notificationError) {
-  console.error('Notification subsystem error:', notificationError);
-  // Don't fail form submission if notifications fail
-}
 
     await session.commitTransaction();
     session.endSession();

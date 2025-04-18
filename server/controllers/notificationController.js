@@ -2,37 +2,47 @@ const Notification = require('../models/Notification');
 
 exports.getNotifications = async (req, res) => {
     try {
-      const notifications = await Notification.find({ userEmail: req.user.email })
-        .sort({ createdAt: -1 })
-        .populate('formId', 'name'); // Include form name
-      res.status(200).json(notifications);
+      const notifications = await Notification.find({ userEmail: req.user.email }).sort({ createdAt: -1 });
+        res.status(200).json(notifications);
     } catch (error) {
         res.status(500).json({ error: 'Error fetching notifications' });
     }
 };
 
-exports.createNotification = async (userEmail, message, type, formId = null) => {
+exports.createTrackerNotification = async (req, res) => {
+  try {
+    const { userEmail, message } = req.body;
+    
+    if (!userEmail || !message) {
+      return res.status(400).json({ error: 'User email and message are required' });
+    }
+
+    await exports.createNotification(userEmail, message);
+    res.status(201).json({ message: 'Notification created successfully' });
+    
+  } catch (error) {
+    console.error("Error creating tracker notification:", error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+exports.createNotification = async (userEmail, message) => {
     try {
-      console.log(`🔹 Creating ${type} notification for:`, userEmail);
+      console.log("🔹 Attempting to create notification for:", userEmail); // Debug log
 
       const notification = new Notification({
         userEmail,
         message,
-        type,
-        formId,
-        createdAt: new Date(),
+        createdAt: new Date(),  // Ensure createdAt is always set
       });
-
       await notification.save();
-      console.log("✅ Notification saved successfully:", notification);
-      return notification;
+      console.log("Notification saved successfully:", notification);
     } catch (error) {
-      console.error("❌ Error saving notification:", error);
-      throw error; // Re-throw to handle in calling function
+      console.error("Error saving notification:", error);
     }
-};
+  };
 
-exports.markNotificationAsRead = async (req, res) => {
+  exports.markNotificationAsRead = async (req, res) => {
     try {
         const { notificationId } = req.body;
         if (!notificationId) {
@@ -54,27 +64,5 @@ exports.markNotificationAsRead = async (req, res) => {
     }
 };
 
-exports.notifyOrganizationAdmins = async (organizationId, message, options = {}) => {
-  try {
-    const admins = await User.find({
-      organizationId,
-      role: { $in: ['Admin', 'Organization Admin'] } // Adjust roles as needed
-    }).select('email name');
-    
-    const notifications = [];
-    for (const admin of admins) {
-      const notification = await this.createNotification(
-        admin.email,
-        message,
-        'organization_notice',
-        options.formId,
-        options.trackerId
-      );
-      notifications.push(notification);
-    }
-    return notifications;
-  } catch (error) {
-    console.error('Error notifying organization admins:', error);
-    throw error;
-  }
-};
+
+  

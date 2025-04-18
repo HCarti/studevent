@@ -58,17 +58,6 @@ const getNextReviewers = async (tracker, currentStepIndex) => {
   }
 };
 
-const getNotifications = async (req, res) => {
-  try {
-    const notifications = await Notification.find({ userEmail: req.user.email })
-      .sort({ createdAt: -1 })
-      .populate('formId', 'name'); // Include form name
-    res.status(200).json(notifications);
-  } catch (error) {
-      res.status(500).json({ error: 'Error fetching notifications' });
-  }
-};
-
 // Get event tracker by form ID
 const getEventTracker = async (req, res) => {
   console.log("🔍 Fetching tracker for formId:", req.params.formId);
@@ -305,164 +294,111 @@ const updateTrackerStep = async (req, res) => {
     if (status === "approved") {
       const nextStepIndex = firstPendingOrDeclinedStepIndex + 1;
       
+      // Debug: Log current workflow state
+      console.log('🔍 Workflow State:', {
+        currentStep: firstPendingOrDeclinedStepIndex,
+        totalSteps: tracker.steps.length,
+        nextStepExists: nextStepIndex < tracker.steps.length,
+        formId: tracker.formId,
+        currentUser: currentUserEmail
+      });
+    
       if (nextStepIndex < tracker.steps.length) {
+        // Get next step details
         const nextStep = tracker.steps[nextStepIndex];
         const formName = form.name || `Form ${form._id}`;
-        const formLink = getFormLink(form._id);
         
+        // Debug: Log next step details
+        console.log('🔍 Next Step Details:', {
+          stepName: nextStep.stepName,
+          requiredRole: nextStep.reviewerRole,
+          currentStatus: nextStep.status
+        });
+    
+        // Get next reviewers with enhanced debugging
         const nextReviewers = await getNextReviewers(tracker, firstPendingOrDeclinedStepIndex);
-        
-        // Notify all next reviewers
+        console.log('👥 Next Reviewers Found:', {
+          count: nextReviewers.length,
+          reviewers: nextReviewers.map(r => ({
+            email: r.email,
+            role: r.role,
+            name: r.name
+          }))
+        });
+    
+        // Send notifications to next reviewers
         for (const reviewer of nextReviewers) {
           try {
-            const notificationMessage = `Review Required: "${formName}" needs your ${nextStep.stepName} approval.\n\n` +
-              `Organization: ${form.organizationId.name}\n` +
-              `Submitted by: ${form.submittedBy.name}\n` +
-              `Current status: ${form.status}\n\n` +
-              `Click to review: ${formLink}`;
+            const notificationMessage = `Action Required: ${formName} requires your ${nextStep.stepName} review.`;
+            console.log(`✉️ Attempting to notify ${reviewer.email}`);
             
             await notificationController.createNotification(
               reviewer.email,
-              notificationMessage,
-              'review_request',
-              form._id,
-              tracker._id
+              notificationMessage
             );
             
-            console.log(`✅ Notified ${reviewer.email} (${reviewer.role}) for ${nextStep.stepName} review`);
-            
-          } catch (error) {
-            console.error(`❌ Notification failed for ${reviewer.email}:`, {
-              error: error.message,
-              stack: error.stack
+            console.log(`✅ Successfully notified ${reviewer.email}`);
+          } catch (notificationError) {
+            console.error(`❌ Failed to notify ${reviewer.email}:`, {
+              error: notificationError.message,
+              stack: notificationError.stack
             });
           }
         }
     
-        // Send detailed confirmation to current reviewer
+        // Send confirmation to current reviewer
         try {
-          const confirmationMessage = `Approval Confirmed: You approved "${formName}" as ${step.stepName}.\n\n` +
-            `Next step: ${nextStep.stepName}\n` +
-            `${nextReviewers.length} ${nextReviewers.length === 1 ? 'reviewer' : 'reviewers'} notified:\n` +
-            `${nextReviewers.map(r => `- ${r.name} (${r.email})`).join('\n')}\n\n` +
-            `Track progress: ${formLink}`;
+          const confirmationMessage = `You approved ${formName}. ${nextReviewers.length} reviewer(s) have been notified.`;
+          console.log(`✉️ Sending confirmation to ${currentUserEmail}`);
           
           await notificationController.createNotification(
             currentUserEmail,
-            confirmationMessage,
-            'approval_confirmation',
-            form._id,
-            tracker._id
+            confirmationMessage
           );
           
-          console.log(`✅ Sent confirmation to ${currentUserEmail}`);
-          
+          console.log(`✅ Confirmation sent to ${currentUserEmail}`);
         } catch (error) {
-          console.error("❌ Confirmation notification failed:", {
+          console.error("❌ Failed to send confirmation:", {
             error: error.message,
             stack: error.stack
           });
         }
       } else {
-        // Final approval case - notify submitter and all previous reviewers
+        // Final approval case
+        console.log('🏁 Form fully approved - notifying submitter');
+        
         try {
           const submitter = await User.findById(form.submittedBy).select('email name');
           if (submitter) {
-            const approvalMessage = `🎉 Final Approval: "${form.name}" has been fully approved!\n\n` +
-              `Approval path:\n` +
-              `${tracker.steps.map(s => `- ${s.stepName}: ${s.status}${s.reviewedBy ? ` by ${s.reviewedBy.name}` : ''}`).join('\n')}\n\n` +
-              `View completed form: ${formLink}`;
-            
             await notificationController.createNotification(
               submitter.email,
-              approvalMessage,
-              'final_approval',
-              form._id,
-              tracker._id
+              `Your form "${form.name}" has been fully approved!`
             );
-            
             console.log(`✅ Final approval sent to submitter: ${submitter.email}`);
-          }
-    
-          // Notify all previous reviewers of final approval
-          const previousReviewers = await User.find({
-            _id: { $in: tracker.steps.filter(s => s.reviewedBy).map(s => s.reviewedBy) }
-          }).select('email name');
-          
-          for (const reviewer of previousReviewers) {
-            try {
-              const completionNotice = `Process Complete: "${form.name}" you reviewed has been fully approved.\n\n` +
-                `Your role: ${tracker.steps.find(s => s.reviewedBy?.equals(reviewer._id))?.stepName}\n` +
-                `Final outcome: Approved\n\n` +
-                `View form: ${formLink}`;
-              
-              await notificationController.createNotification(
-                reviewer.email,
-                completionNotice,
-                'final_approval',
-                form._id,
-                tracker._id
-              );
-              
-              console.log(`✅ Final notice sent to ${reviewer.email}`);
-            } catch (error) {
-              console.error(`❌ Error notifying previous reviewer ${reviewer.email}:`, error);
-            }
+          } else {
+            console.error('❌ Form submitter not found');
           }
         } catch (error) {
-          console.error("❌ Final approval notifications failed:", {
+          console.error("❌ Final approval notification failed:", {
             error: error.message,
             stack: error.stack
           });
         }
       }
     } else if (status === "declined") {
+      // Decline case
+      console.log('🛑 Form declined - notifying submitter');
+      
       try {
         const submitter = await User.findById(form.submittedBy).select('email name');
         if (submitter) {
-          const declineMessage = `⚠️ Action Required: "${form.name}" was declined during ${step.stepName} review.\n\n` +
-            `Reviewer: ${req.user.name}\n` +
-            `Role: ${step.stepName}\n` +
-            `Remarks: ${remarks || "No specific feedback provided"}\n\n` +
-            `Required actions:\n` +
-            `1. Address the feedback\n` +
-            `2. Resubmit the form\n\n` +
-            `Edit form: ${getFormLink(form._id)}`;
-          
           await notificationController.createNotification(
             submitter.email,
-            declineMessage,
-            'decline_notice',
-            form._id,
-            tracker._id
+            `Your form "${form.name}" was declined by ${req.user.name}. Remarks: ${remarks || "None provided"}`
           );
-          
           console.log(`✅ Decline notification sent to ${submitter.email}`);
-        }
-    
-        // Optionally notify previous reviewers about the decline
-        const previousReviewers = await User.find({
-          _id: { $in: tracker.steps.filter(s => s.reviewedBy && s.status === 'approved').map(s => s.reviewedBy) }
-        }).select('email name');
-        
-        for (const reviewer of previousReviewers) {
-          try {
-            const reviewUpdate = `Update: "${form.name}" you approved was declined at ${step.stepName}.\n\n` +
-              `Your approval: ${tracker.steps.find(s => s.reviewedBy?.equals(reviewer._id))?.stepName}\n` +
-              `Current status: Declined\n` +
-              `Remarks: ${remarks || "None provided"}\n\n` +
-              `View form: ${formLink}`;
-            
-            await notificationController.createNotification(
-              reviewer.email,
-              reviewUpdate,
-              'decline_notice',
-              form._id,
-              tracker._id
-            );
-          } catch (error) {
-            console.error(`❌ Error notifying previous reviewer ${reviewer.email}:`, error);
-          }
+        } else {
+          console.error('❌ Form submitter not found for decline notification');
         }
       } catch (error) {
         console.error("❌ Decline notification failed:", {
@@ -498,7 +434,6 @@ const getEventTrackerByFormId = async (req, res) => {
 };
 
 module.exports = {
-  getNotifications,
   getReviewSignatures,
   getEventTracker,
   createEventTracker,
