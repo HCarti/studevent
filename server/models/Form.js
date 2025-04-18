@@ -524,9 +524,6 @@ const formSchema = new mongoose.Schema({
             return this.formType === 'LocalOffCampus';
         }
     },
-
-        // ====BUDGET PROPOSAL====
-
         // Update the attachedBudget field validation:
        // In your Form model (formSchema)
 attachedBudget: {

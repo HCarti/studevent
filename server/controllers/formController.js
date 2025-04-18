@@ -248,53 +248,64 @@ exports.createForm = async (req, res) => {
 
     // Handle budget validation if attached - MODIFIED FOR PROJECT PROPOSALS
     // In the budget validation section of createForm
+    // In formController.js - modify the budget validation section
     if (req.body.attachedBudget) {
-      const budgetQuery = {
-        _id: req.body.attachedBudget,
-        isActive: true
-      };
+      try {
+        const budgetQuery = {
+          _id: req.body.attachedBudget,
+          isActive: true,
+          $or: []
+        };
 
-      // For Activity forms - strict org validation
-      if (req.body.formType === 'Activity') {
-        budgetQuery.organization = req.body.studentOrganization || req.user.organizationId;
-      } 
-      // For Project forms - more flexible validation
-      else if (req.body.formType === 'Project') {
-        budgetQuery.$or = [
-          { organization: req.body.studentOrganization || req.user.organizationId },
-          { createdBy: req.user._id }, // Allow user's personal budgets
-          { isPublic: true } // Optionally allow public budgets
-        ];
-      }
+        // For Activity forms
+        if (req.body.formType === 'Activity') {
+          budgetQuery.$or.push({
+            organization: req.body.studentOrganization || req.user.organizationId
+          });
+        }
+        // For Project forms
+        else {
+          budgetQuery.$or.push(
+            { createdBy: req.user._id },
+            { isPublic: true },
+            { sharedWith: req.user.organizationId }
+          );
+        }
 
-      const validBudget = await BudgetProposal.findOne(budgetQuery).session(session);
+        const validBudget = await BudgetProposal.findOne(budgetQuery).session(session);
+        
+        if (!validBudget) {
+          throw new Error(
+            req.body.formType === 'Activity'
+              ? 'Budget must belong to your organization'
+              : 'Budget not found or not accessible'
+          );
+        }
 
-      if (!validBudget) {
+        // Additional checks
+        if (req.body.formType === 'Project' && 
+            validBudget.status !== 'approved' &&
+            validBudget.createdBy.toString() !== req.user._id.toString()) {
+          throw new Error('Only approved budgets or your own budgets can be used for projects');
+        }
+
+        // Auto-populate fields
+        req.body.budgetAmount = validBudget.grandTotal;
+        req.body.budgetFrom = validBudget.nameOfRso || 'Org';
+
+      } catch (error) {
         await session.abortTransaction();
         session.endSession();
         return res.status(400).json({ 
-          error: req.body.formType === 'Activity' 
-            ? 'Budget must belong to your organization' 
-            : 'Budget not found or not accessible'
+          error: error.message,
+          details: {
+            budgetId: req.body.attachedBudget,
+            formType: req.body.formType,
+            userId: req.user._id
+          }
         });
       }
-
-      // Additional ownership check for projects
-      if (req.body.formType === 'Project' && 
-          validBudget.createdBy.toString() !== req.user._id.toString() &&
-          validBudget.organization?.toString() !== (req.user.organizationId || '').toString()) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(403).json({ 
-          error: 'You do not have permission to use this budget' 
-        });
-      }
-
-      // Auto-populate budget fields
-      req.body.budgetAmount = validBudget.grandTotal;
-      req.body.budgetFrom = validBudget.nameOfRso || 'Org';
     }
-
     // Form type specific validation
     switch (req.body.formType) {
       case 'Activity':
