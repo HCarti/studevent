@@ -57,7 +57,6 @@ const Aap = () => {
     weather: "",
     attachedBudget: null, // ID of attached budget proposal
     budgetProposals: [], // List of available budgets for dropdown
-    showBudgetModal: false // Control budget modal visibility
   });
 
   const [fieldErrors, setFieldErrors] = useState({

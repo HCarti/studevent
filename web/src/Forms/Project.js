@@ -4,9 +4,11 @@ import moment from 'moment';
 import { FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 import "react-datepicker/dist/react-datepicker.css";
 import DatePicker from 'react-datepicker';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 const Project = () => {
+  const { formId } = useParams(); // Add this with other route hooks
+  const isEditMode = !!formId; // Determine if we're in edit mode
   const [formData, setFormData] = useState({
     // Project Overview
     projectTitle: '',
@@ -30,12 +32,11 @@ const Project = () => {
     // School Facilities & Equipment
     schoolEquipments: [{ equipments: '', estimatedQuantity: '' }],
     // Budget Proposal
-    budgetProposal: [{
-      budgetItems: '',
-      budgetEstimatedQuantity: '',
-      budgetPerUnit: '',
-      budgetEstimatedAmount: ''
-    }],
+    budgetAmount: '',
+    budgetFrom: '',
+    attachedBudget: null,       // ID of attached budget proposal
+    budgetProposals: [],       // List of available budgets for dropdown
+    showBudgetModal: false     // Control budget modal visibility
   });
 
   const [fieldErrors, setFieldErrors] = useState({
@@ -58,8 +59,12 @@ const Project = () => {
     taskDeligation: [],
     timelineSchedules: [],
     schoolEquipments: [],
-    budgetProposal: []
+    budgetAmount: '',
+    budgetFrom: '',
+    attachedBudget: null,
+    budgetProposals: []
   });
+  
 
   const TimeRangePicker = ({ value, onChange }) => {
     const [startTime, setStartTime] = useState('');
@@ -126,8 +131,9 @@ const Project = () => {
   const [notificationVisible, setNotificationVisible] = useState(false);
   const [occupiedDates, setOccupiedDates] = useState([]);
   const [eventsPerDate, setEventsPerDate] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(isEditMode); // Start loading in edit mode
   const [loadingDates, setLoadingDates] = useState(false);
+  const [budgetLoadError, setBudgetLoadError] = useState(null);
   const navigate = useNavigate();
   const [notification, setNotification] = useState({
     visible: false,
@@ -140,6 +146,147 @@ const Project = () => {
       {message}
     </div>
   );
+
+  useEffect(() => {
+    const fetchFormData = async () => {
+      if (!isEditMode) return;
+      
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`https://studevent-server.vercel.app/api/forms/${formId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        
+        if (!response.ok) throw new Error('Failed to fetch form');
+        
+        const formData = await response.json();
+        
+        // Format the data for the form
+        const formattedData = {
+          ...formData,
+          startDate: formData.startDate ? new Date(formData.startDate).toISOString() : '',
+          endDate: formData.endDate ? new Date(formData.endDate).toISOString() : '',
+          // Format array fields if needed
+          programFlow: formData.programFlow || [{ timeRange: '', segment: '' }],
+          projectHeads: formData.projectHeads || [{ headName: '', designatedOffice: '' }],
+          workingCommittees: formData.workingCommittees || [{ workingName: '', designatedTask: '' }],
+          taskDeligation: formData.taskDeligation || [{ taskList: '', deadline: '' }],
+          timelineSchedules: formData.timelineSchedules || [{ publicationMaterials: '', schedule: '' }],
+          schoolEquipments: formData.schoolEquipments || [{ equipments: '', estimatedQuantity: '' }],
+          // Budget fields
+          budgetAmount: formData.budgetAmount || '',
+          budgetFrom: formData.budgetFrom || '',
+          attachedBudget: formData.attachedBudget || null,
+          budgetProposals: formData.budgetProposals || []
+        };
+        
+        setFormData(formattedData);
+      } catch (error) {
+        console.error('Error fetching form:', error);
+        setNotification({
+          visible: true,
+          message: 'Failed to load form data',
+          type: 'error'
+        });
+        setTimeout(() => setNotification({ visible: false }), 3000);
+        navigate('/submitted-forms');
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchFormData();
+  }, [formId, isEditMode, navigate]);
+
+  const fetchBudgetProposals = async () => {
+    if (!isEditMode) return;
+    try {
+      const token = localStorage.getItem('token');
+      const user = JSON.parse(localStorage.getItem('user'));
+      
+      if (!token || !user) {
+        throw new Error('User not authenticated');
+      }
+  
+      // Build the URL based on user role
+      let url = 'https://studevent-server.vercel.app/api/budgets';
+      let queryParams = [];
+      
+      // Organization users see their own budgets
+      if (user.role === 'Organization') {
+        queryParams.push(`organization=${user._id}`);
+      } 
+      // Regular users see budgets they created
+      else if (user.role !== 'Admin') {
+        queryParams.push(`createdBy=${user._id}`);
+      }
+      
+      // Only show active budgets by default
+      queryParams.push('isActive=true');
+      
+      if (queryParams.length > 0) {
+        url += `?${queryParams.join('&')}`;
+      }
+  
+      const response = await fetch(url, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      setFormData(prev => ({
+        ...prev,
+        budgetProposals: data
+      }));
+  
+      // If in edit mode and we have an attached budget, ensure it's in the list
+      if (isEditMode && formData.attachedBudget) {
+        const hasAttachedBudget = data.some(b => b._id === formData.attachedBudget);
+        if (!hasAttachedBudget) {
+          fetchSingleBudget(formData.attachedBudget);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching budgets:', error);
+      setBudgetLoadError(error.message || 'Failed to load budget proposals. Please try again later.');
+    }
+  };
+  
+  const fetchSingleBudget = async (budgetId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://studevent-server.vercel.app/api/budgets/${budgetId}`, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const budget = await response.json();
+        setFormData(prev => ({
+          ...prev,
+          budgetProposals: [...prev.budgetProposals, budget]
+        }));
+      } else {
+        throw new Error(`Failed to fetch budget: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Error fetching single budget:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchBudgetProposals();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -440,6 +587,17 @@ const formatTimeDisplay = (timeStr) => {
             });
             return itemErrors;
           });
+          if (field === 'budgetAmount') {
+            const isEmpty = !formData.budgetAmount || isNaN(formData.budgetAmount);
+            newErrors.budgetAmount = isEmpty;
+            if (isEmpty) isValid = false;
+          }
+          
+          if (field === 'budgetFrom') {
+            const isEmpty = !formData.budgetFrom;
+            newErrors.budgetFrom = isEmpty;
+            if (isEmpty) isValid = false;
+          }
         } else {
           const isEmpty = !formData[field] || (typeof formData[field] === 'string' && formData[field].trim() === '');
           newErrors[field] = isEmpty;
@@ -544,12 +702,9 @@ setFormData({
   taskDeligation: [{ taskList: "", deadline: "" }],
   timelineSchedules: [{ publicationMaterials: "", schedule: "" }],
   schoolEquipments: [{ equipments: "", estimatedQuantity: "" }],
-  budgetProposal: [{ 
-    budgetItems: "", 
-    budgetEstimatedQuantity: "", 
-    budgetPerUnit: "", 
-    budgetEstimatedAmount: "" 
-  }],
+  budgetAmount: Number(formData.budgetAmount),
+  budgetFrom: formData.budgetFrom,
+  attachedBudget: formData.attachedBudget || undefined
 });
 
 setTimeout(() => setNotification({ visible: false }), 3000);
@@ -1146,102 +1301,109 @@ setTimeout(() => setNotification({ visible: false }), 3000);
           </div>
         );
 
-      case 7: // Budget Proposal
-        return (
-          <div className="form-section">
-            <h2>Budget Proposal</h2>
-            {formData.budgetProposal.map((item, index) => (
-              <div key={index} className="array-item">
-                <div className="form-group">
-                  <label className="required-field">Budget Item:</label>
-                  <input
-                    type="text"
-                    name="budgetItems"
-                    value={item.budgetItems}
-                    onChange={(e) => handleArrayChange('budgetProposal', index, e)}
-                    required
-                  />
-                  {fieldErrors.budgetProposal[index]?.budgetItems && (
-                        <span className="validation-error">Budget Item is required</span>
-                      )}
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="required-field">Estimated Quantity:</label>
-                    <input
-                      type="number"
-                      name="budgetEstimatedQuantity"
-                      value={item.budgetEstimatedQuantity}
-                      onChange={(e) => handleArrayChange('budgetProposal', index, e)}
-                      min="1"
-                      required
-                    />
-                    {fieldErrors.budgetProposal[index]?.budgetEstimatedQuantity && (
-                        <span className="validation-error">Budget Estimated Quantity is required</span>
-                      )}
-                  </div>
-
-                  <div className="form-group">
-                    <label className="required-field">Cost Per Unit ($):</label>
-                    <input
-                      type="number"
-                      name="budgetPerUnit"
-                      value={item.budgetPerUnit}
-                      onChange={(e) => handleArrayChange('budgetProposal', index, e)}
-                      min="0"
-                      step="0.01"
-                      required
-                    />
-                    {fieldErrors.budgetProposal[index]?.budgetPerUnit && (
-                        <span className="validation-error">Budget Per Unit is required</span>
-                      )}
-                  </div>
-
-                  <div className="form-group">
-                    <label className="required-field">Estimated Amount ($):</label>
-                    <input
-                      type="number"
-                      name="budgetEstimatedAmount"
-                      value={item.budgetEstimatedAmount}
-                      onChange={(e) => handleArrayChange('budgetProposal', index, e)}
-                      min="0"
-                      step="0.01"
-                      required
-                    />
-                    {fieldErrors.budgetProposal[index]?.budgetEstimatedAmount && (
-                        <span className="validation-error">Budget Estimated Amount is required</span>
-                      )}
-                  </div>
-                </div>
-
-                {index > 0 && (
-                  <button 
-                    type="button" 
-                    className="remove-btn"
-                    onClick={() => removeArrayItem('budgetProposal', index)}
-                  >
-                    Remove
-                  </button>
+        
+          // 3. Update the budget section rendering
+          case 7: // Budget Proposal
+          return (
+            <div className="form-section">
+              <h2>Budget Proposal</h2>
+              
+              <div className="budget-selection">
+                <label className="required-field">Attached Budget Proposal:</label>
+                <select
+                  name="attachedBudget"
+                  value={formData.attachedBudget || ''}
+                  onChange={(e) => {
+                    const budgetId = e.target.value;
+                    const selectedBudget = formData.budgetProposals.find(b => b._id === budgetId);
+                    
+                    setFormData(prev => ({
+                      ...prev,
+                      attachedBudget: budgetId,
+                      budgetAmount: selectedBudget?.grandTotal || '',
+                      budgetFrom: selectedBudget?.nameOfRso || 'Org',
+                      projectTitle: selectedBudget?.eventTitle || prev.projectTitle
+                    }));
+                  }}
+                  className={fieldErrors.attachedBudget ? 'invalid-field' : ''}
+                >
+                  <option value="">Select a budget proposal...</option>
+                  {formData.budgetProposals.map(budget => (
+                    <option 
+                      key={budget._id} 
+                      value={budget._id}
+                      selected={formData.attachedBudget === budget._id}
+                    >
+                      {budget.eventTitle} - ₱{budget.grandTotal?.toLocaleString()}
+                      {budget.status ? ` (${budget.status})` : ''}
+                    </option>
+                  ))}
+                </select>
+                {fieldErrors.attachedBudget && (
+                  <span className="validation-error">Please select a budget proposal</span>
                 )}
               </div>
-            ))}
 
-            <button 
-              type="button" 
-              className="add-btn"
-              onClick={() => addArrayItem('budgetProposal', { 
-                budgetItems: "", 
-                budgetEstimatedQuantity: "", 
-                budgetPerUnit: "", 
-                budgetEstimatedAmount: "" 
-              })}
-            >
-              Add Budget Item
-            </button>
-          </div>
-        );
-
+              {budgetLoadError && (
+                <div className="error-message">{budgetLoadError}</div>
+              )}
+                  
+              <div className="form-group">
+                <label className="required-field">Budget Amount:</label>
+                <input 
+                  type="number" 
+                  name="budgetAmount" 
+                  value={formData.budgetAmount} 
+                  onChange={handleChange}
+                  readOnly={!!formData.attachedBudget}
+                  className={fieldErrors.budgetAmount ? 'invalid-field' : ''}
+                  min="0"
+                />
+                {fieldErrors.budgetAmount && (
+                  <span className="validation-error">Budget amount is required</span>
+                )}
+              </div>
+              
+              <div className="form-group">
+                <label className="required-field">Budget From:</label>
+                <select 
+                  name="budgetFrom" 
+                  value={formData.budgetFrom} 
+                  onChange={handleChange}
+                  readOnly={!!formData.attachedBudget}
+                  className={fieldErrors.budgetFrom ? 'invalid-field' : ''}
+                >
+                  <option value="">Select An Option...</option>
+                  <option 
+                    value="College/Department" 
+                    selected={formData.budgetFrom === "College/Department"}
+                  >
+                    College/Department
+                  </option>
+                  <option 
+                    value="Org" 
+                    selected={formData.budgetFrom === "Org"}
+                  >
+                    Organization
+                  </option>
+                  <option 
+                    value="SDAO" 
+                    selected={formData.budgetFrom === "SDAO"}
+                  >
+                    SDAO
+                  </option>
+                </select>
+                {fieldErrors.budgetFrom && (
+                  <span className="validation-error">Budget source is required</span>
+                )}
+              </div>
+              
+              <p className="venue-note">
+                Note: Budget amount is not automatically approved by this system. Please confirm
+                budget availability separately with the budget management before submission.
+              </p>
+            </div>
+          );
       default:
         return <div>Unknown step</div>;
     }
@@ -1276,7 +1438,9 @@ setTimeout(() => setNotification({ visible: false }), 3000);
         </ul>
       </div>
       <div className="inner-forms-1">
-        <h1>Project Proposal</h1>
+        <h1>
+          {isEditMode ? 'Edit Project Proposal' : 'Project Proposal Form'}
+        </h1>
         {renderStepContent()}
         <div className="form-navigation">
           {currentStep > 0 && (
@@ -1285,7 +1449,9 @@ setTimeout(() => setNotification({ visible: false }), 3000);
           {currentStep < 7 ? (
             <button onClick={handleNext}>Next</button>
           ) : (
-            <button onClick={handleSubmit}>Submit</button>
+            <button onClick={handleSubmit}>
+              {isEditMode ? 'Update Proposal' : 'Submit Proposal'}
+            </button>
           )}
         </div>
       </div>
