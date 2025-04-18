@@ -714,7 +714,7 @@ const formatTimeDisplay = (timeStr) => {
         // Budget data
         budgetAmount: Number(formData.budgetAmount),
         budgetFrom: formData.budgetFrom,
-        attachedBudget: formData.attachedBudget || null,
+        attachedBudget: formData.attachedBudget || undefined,
         budgetProposals: formData.budgetProposals
       };
   
