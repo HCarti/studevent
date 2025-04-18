@@ -249,53 +249,37 @@ exports.createForm = async (req, res) => {
     // Handle budget validation if attached
 // In the budget validation/creation section of createForm
 // In createForm controller
-// Modified budget validation section in createForm
 if (req.body.attachedBudget) {
-  // First get the organization ID we'll use for validation
-  const organizationId = req.body.studentOrganization || req.user?.organizationName;
-  
-  if (!organizationId) {
-    await session.abortTransaction();
-    session.endSession();
-    return res.status(400).json({ 
-      error: 'Organization reference missing for budget validation' 
-    });
+  const budgetQuery = {
+    _id: req.body.attachedBudget,
+    isActive: true
+  };
+
+  // Add organization check if available
+  if (req.body.studentOrganization) {
+    budgetQuery.organization = req.body.studentOrganization;
+  } else if (req.user?.organizationName) {
+    budgetQuery.organization = req.user.organizationName;
   }
 
-  // Find the budget with loose formType matching
-  const validBudget = await BudgetProposal.findOne({
-    _id: req.body.attachedBudget,
-    $or: [
-      { organization: organizationId },
-      { organization: mongoose.Types.ObjectId(organizationId) } // Handle both string and ObjectId
-    ],
-    isActive: true
-  }).session(session);
+  // Optionally add formType check if needed
+  if (req.body.formType) {
+    budgetQuery.formType = req.body.formType;
+  }
+
+  const validBudget = await BudgetProposal.findOne(budgetQuery).session(session);
 
   if (!validBudget) {
-    console.error('Budget lookup failed for:', {
-      budgetId: req.body.attachedBudget,
-      organizationId: organizationId,
-      formType: req.body.formType
-    });
-    
     await session.abortTransaction();
     session.endSession();
     return res.status(400).json({ 
-      error: 'Budget proposal not found for your organization' 
+      error: 'Budget proposal not found for your organization or form type mismatch' 
     });
   }
 
-  // Ensure form types are compatible
-  if (validBudget.formType && validBudget.formType !== req.body.formType) {
-    console.warn(`Form type mismatch: Budget is ${validBudget.formType}, Form is ${req.body.formType}`);
-    // We'll allow this but log it, since budgets can sometimes be reused
-  }
-
-  // Auto-populate budget fields
+  // Auto-populate budget-related fields
   req.body.budgetAmount = validBudget.grandTotal;
   req.body.budgetFrom = validBudget.nameOfRso;
-  
 } else if (req.body.budgetData) {
   // Create new budget proposal
   const budgetProposal = new BudgetProposal({
@@ -305,7 +289,7 @@ if (req.body.attachedBudget) {
     grandTotal: req.body.budgetData.items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0),
     createdBy: req.user?._id,
     organization: req.body.studentOrganization || req.user?.organizationId,
-    formType: req.body.formType, // Match the form's type
+    formType: req.body.formType || 'Activity', // Use the form's type or default to Activity
     status: 'submitted'
   });
 
