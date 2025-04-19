@@ -250,57 +250,59 @@ exports.createForm = async (req, res) => {
 // In the budget validation/creation section of createForm
 // In createForm controller
 if (req.body.attachedBudget) {
-  // Determine organization based on form type
+  // Determine organization based on user role and form type
   let organizationId;
   
-  if (req.body.formType === 'Activity') {
-    // For Activities, use studentOrganization (already converted to ObjectId)
-    organizationId = req.body.studentOrganization;
-  } else if (req.body.formType === 'Project') {
-    // For Projects, use the user's organization reference
-    if (req.user?.role === 'Organization') {
-      organizationId = req.user._id; // Organization users are the org themselves
-    } else {
-      organizationId = req.user?.organizationId; // Regular users have org reference
-    }
+  if (req.user?.role === 'Organization') {
+    // Organization users ARE the organization
+    organizationId = req.user._id;
+  } else {
+    // For regular users, use their organization reference
+    organizationId = req.user?.organizationId;
   }
 
   if (!organizationId) {
     await session.abortTransaction();
     session.endSession();
     return res.status(400).json({ 
-      error: 'Organization reference missing for this form type' 
+      error: 'Organization reference missing - please ensure your account is properly associated with an organization' 
     });
   }
 
-  // Find budget that either:
-  // 1. Belongs to the organization, OR
-  // 2. Was created by the current user
+  // Build the budget query
   const budgetQuery = {
     _id: req.body.attachedBudget,
     isActive: true,
     $or: [
       { organization: organizationId },
-      { createdBy: req.user._id }
+      { createdBy: req.user._id } // Allow users to attach their own budgets
     ]
   };
 
-  // Include formType if specified
-  if (req.body.formType) {
-    budgetQuery.formType = req.body.formType;
+  // For Projects, we can optionally include formType filter
+  if (req.body.formType === 'Project') {
+    budgetQuery.$or.push({ formType: { $in: ['Project', null] }});
   }
 
   const validBudget = await BudgetProposal.findOne(budgetQuery).session(session);
 
   if (!validBudget) {
+    console.error('Budget lookup failed', {
+      query: budgetQuery,
+      actualBudgets: await BudgetProposal.find({ organization: organizationId }).lean()
+    });
+    
     await session.abortTransaction();
     session.endSession();
     return res.status(400).json({ 
-      error: 'Budget proposal not found or not accessible for your organization',
+      error: 'Budget proposal not accessible',
       details: {
-        formType: req.body.formType,
-        organizationCriteria: organizationId,
-        userId: req.user?._id
+        suggestion: 'Please ensure the budget was created by you or your organization',
+        debugInfo: {
+          searchedBudgetId: req.body.attachedBudget,
+          organizationId,
+          userId: req.user._id
+        }
       }
     });
   }
