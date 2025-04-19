@@ -250,28 +250,24 @@ exports.createForm = async (req, res) => {
 // In the budget validation/creation section of createForm
 // In createForm controller
 if (req.body.attachedBudget) {
-  let organizationId = req.body.studentOrganization;
-  
-  // If organization is a name (string), look up the ID
-  if (typeof organizationId === 'string' && !mongoose.Types.ObjectId.isValid(organizationId)) {
-    const org = await User.findOne({
-      organizationName: organizationId,
-      role: "Organization"
-    }).session(session);
-    
-    if (!org) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ error: "Organization not found" });
-    }
-    organizationId = org._id;
+  const budgetQuery = {
+    _id: req.body.attachedBudget,
+    isActive: true
+  };
+
+  // Add organization check if available
+  if (req.body.studentOrganization) {
+    budgetQuery.organization = req.body.studentOrganization;
+  } else if (req.user?.organizationName) {
+    budgetQuery.organization = req.user.organizationName;
   }
 
-  const validBudget = await BudgetProposal.findOne({
-    _id: req.body.attachedBudget,
-    organization: organizationId,
-    isActive: true
-  }).session(session);
+  // Optionally add formType check if needed
+  if (req.body.formType) {
+    budgetQuery.formType = req.body.formType;
+  }
+
+  const validBudget = await BudgetProposal.findOne(budgetQuery).session(session);
 
   if (!validBudget) {
     await session.abortTransaction();

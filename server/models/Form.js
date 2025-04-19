@@ -112,24 +112,24 @@ const equipmentsNeedSchema = new mongoose.Schema({
     },
 });
 
-const projectBudgetSchema = new mongoose.Schema({
-    budgetItems:{
-        type: String, 
-        required: function() { return this.formType === 'Project'; }
-    },
-    budgetEstimatedQuantity:{
-        type: Number, 
-        required: function() { return this.formType === 'Project'; }
-    },
-    budgetPerUnit:{
-        type: Number, 
-        required: function() { return this.formType === 'Project'; }
-    },
-    budgetEstimatedAmount:{
-        type: Number, 
-        required: function() { return this.formType === 'Project'; }
-    },
-});
+// const projectBudgetSchema = new mongoose.Schema({
+//     budgetItems:{
+//         type: String, 
+//         required: function() { return this.formType === 'Project'; }
+//     },
+//     budgetEstimatedQuantity:{
+//         type: Number, 
+//         required: function() { return this.formType === 'Project'; }
+//     },
+//     budgetPerUnit:{
+//         type: Number, 
+//         required: function() { return this.formType === 'Project'; }
+//     },
+//     budgetEstimatedAmount:{
+//         type: Number, 
+//         required: function() { return this.formType === 'Project'; }
+//     },
+// });
 
 // Schema for individual compliance items with remarks
 const complianceItemSchema = new mongoose.Schema({
@@ -509,13 +509,6 @@ const formSchema = new mongoose.Schema({
         type: [equipmentsNeedSchema],
         required: function() { return this.formType === 'Project'; }
     },
-
-    // === Budget Proposal ===
-    budgetProposal: { 
-        type: [projectBudgetSchema],
-        required: function() { return this.formType === 'Project'; }
-    },
-
     //Local Off Campus Form
     // Add this new field for LocalOffCampus forms
     localOffCampus: {
