@@ -715,7 +715,6 @@ const formatTimeDisplay = (timeStr) => {
         budgetAmount: Number(formData.budgetAmount),
         budgetFrom: formData.budgetFrom,
         attachedBudget: formData.attachedBudget || undefined,
-        budgetProposals: formData.budgetProposals
       };
   
       // Determine endpoint and method based on edit mode
