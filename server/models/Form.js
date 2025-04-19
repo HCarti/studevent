@@ -527,15 +527,14 @@ const formSchema = new mongoose.Schema({
 
         // ====BUDGET PROPOSAL====
 
-        // Update the attachedBudget field validation:
         attachedBudget: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'BudgetProposal',
             validate: {
               validator: async function(v) {
                 if (!v) return true; // Optional attachment
-                if (!['Activity', 'Project'].includes(this.formType)) return false;
                 
+                // Check if budget exists and belongs to the same organization
                 const budget = await mongoose.model('BudgetProposal').findOne({
                   _id: v,
                   organization: this.studentOrganization,
@@ -543,7 +542,7 @@ const formSchema = new mongoose.Schema({
                 });
                 return !!budget;
               },
-              message: 'Budget must belong to your organization'
+              message: 'Budget must belong to your organization and be active'
             }
           },
           

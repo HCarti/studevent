@@ -8,19 +8,16 @@ exports.createBudgetProposal = async (req, res) => {
   session.startTransaction();
 
   try {
-    const { items, eventTitle, targetFormType, targetFormId } = req.body;
+    const { items, eventTitle, targetFormId } = req.body;
     
-    // Validate budget items
     if (!items?.length) {
       await session.abortTransaction();
       session.endSession();
       return res.status(400).json({ error: 'At least one budget item is required' });
     }
 
-    // Resolve organization - comprehensive approach
     let organizationId, organizationName;
 
-    // Scenario 1: Directly provided in request
     if (req.body.studentOrganization) {
       const org = await User.findOne({
         _id: req.body.studentOrganization,
@@ -36,12 +33,10 @@ exports.createBudgetProposal = async (req, res) => {
       organizationId = org._id;
       organizationName = org.organizationName;
     }
-    // Scenario 2: From authenticated user (organization user)
     else if (req.user?.role === 'Organization') {
       organizationId = req.user._id;
       organizationName = req.user.organizationName;
     }
-    // Scenario 3: From authenticated user (regular user with organization association)
     else if (req.user?.organizationId) {
       const org = await User.findById(req.user.organizationId).session(session);
       if (!org) {
@@ -53,7 +48,6 @@ exports.createBudgetProposal = async (req, res) => {
       organizationId = org._id;
       organizationName = org.organizationName;
     }
-    // Scenario 4: No organization could be determined
     else {
       await session.abortTransaction();
       session.endSession();
@@ -63,12 +57,10 @@ exports.createBudgetProposal = async (req, res) => {
       });
     }
 
-    // Calculate grand total
     const grandTotal = items.reduce((sum, item) => {
       return sum + (item.quantity * item.unitCost);
     }, 0);
 
-    // Create new budget proposal
     const newBudget = new BudgetProposal({
       nameOfRso: organizationName || 'Organization',
       eventTitle: eventTitle || 'Budget Proposal',
@@ -83,13 +75,11 @@ exports.createBudgetProposal = async (req, res) => {
       createdBy: req.user._id,
       organization: organizationId,
       associatedForm: targetFormId || null,
-      formType: targetFormType || null,
       isActive: true
     });
 
     await newBudget.save({ session });
 
-    // If linked to an existing form, update the form
     if (targetFormId) {
       await Form.findByIdAndUpdate(
         targetFormId,
@@ -135,7 +125,6 @@ exports.updateBudgetProposal = async (req, res) => {
     const { budgetId } = req.params;
     const { items, eventTitle, status } = req.body;
 
-    // Find and validate budget
     const budget = await BudgetProposal.findOne({
       _id: budgetId,
       $or: [
@@ -150,7 +139,6 @@ exports.updateBudgetProposal = async (req, res) => {
       return res.status(404).json({ error: 'Budget proposal not found' });
     }
 
-    // Prevent updates to submitted/approved budgets
     if (budget.status === 'submitted' || budget.status === 'approved') {
       await session.abortTransaction();
       session.endSession();
@@ -159,7 +147,6 @@ exports.updateBudgetProposal = async (req, res) => {
       });
     }
 
-    // Update budget fields
     if (items) {
       budget.items = items.map(item => ({
         quantity: Number(item.quantity),
@@ -177,7 +164,6 @@ exports.updateBudgetProposal = async (req, res) => {
 
     await budget.save({ session });
 
-    // Update linked form if exists
     if (budget.associatedForm) {
       await Form.findByIdAndUpdate(
         budget.associatedForm,
@@ -211,16 +197,13 @@ exports.getBudgetProposals = async (req, res) => {
   try {
     let query = {};
     
-    // Organization users see their org's budgets
     if (req.user.role === 'Organization') {
       query = { organization: req.user._id };
     } 
-    // Regular users see budgets they created
     else {
       query = { createdBy: req.user._id };
     }
 
-    // Admins can see all budgets
     if (req.user.role === 'Admin') {
       query = {};
     }
@@ -282,7 +265,6 @@ exports.deleteBudgetProposal = async (req, res) => {
       return res.status(404).json({ error: 'Budget proposal not found or cannot be deleted' });
     }
 
-    // Remove reference from form if attached
     if (budget.associatedForm) {
       await Form.findByIdAndUpdate(
         budget.associatedForm,
@@ -317,7 +299,6 @@ exports.attachToForm = async (req, res) => {
   try {
     const { budgetId, formId } = req.params;
 
-    // Verify budget exists and belongs to user
     const budget = await BudgetProposal.findOne({
       _id: budgetId,
       $or: [
@@ -332,7 +313,6 @@ exports.attachToForm = async (req, res) => {
       return res.status(404).json({ error: 'Budget proposal not found' });
     }
 
-    // Verify form exists and belongs to user
     const form = await Form.findOne({
       _id: formId,
       submittedBy: req.user._id
@@ -344,18 +324,7 @@ exports.attachToForm = async (req, res) => {
       return res.status(404).json({ error: 'Form not found' });
     }
 
-    // Check if form type matches
-    if (budget.formType && budget.formType !== form.formType) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ 
-        error: `Budget is for ${budget.formType} forms but form is ${form.formType}`
-      });
-    }
-
-    // Update both records
     budget.associatedForm = form._id;
-    budget.formType = form.formType;
     await budget.save({ session });
 
     form.attachedBudget = budget._id;
@@ -398,7 +367,7 @@ exports.detachFromForm = async (req, res) => {
         ]
       },
       {
-        $unset: { associatedForm: 1, formType: 1 }
+        $unset: { associatedForm: 1 }
       },
       { new: true, session }
     );
@@ -409,7 +378,6 @@ exports.detachFromForm = async (req, res) => {
       return res.status(404).json({ error: 'Budget proposal not found' });
     }
 
-    // Update form if it exists
     if (budget.associatedForm) {
       await Form.findByIdAndUpdate(
         budget.associatedForm,

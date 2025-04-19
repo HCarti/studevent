@@ -245,60 +245,63 @@ exports.createForm = async (req, res) => {
       }
     }
 
-    // Handle budget validation if attached
-    // Handle budget validation if attached
-// In the budget validation/creation section of createForm
-// In createForm controller
-if (req.body.attachedBudget) {
-  const budgetQuery = {
-    _id: req.body.attachedBudget,
-    isActive: true
-  };
-
-  // Add organization check if available
-  if (req.body.studentOrganization) {
-    budgetQuery.organization = req.body.studentOrganization;
-  } else if (req.user?.organizationName) {
-    budgetQuery.organization = req.user.organizationName;
-  }
-
-  // Optionally add formType check if needed
-  if (req.body.formType) {
-    budgetQuery.formType = req.body.formType;
-  }
-
-  const validBudget = await BudgetProposal.findOne(budgetQuery).session(session);
-
-  if (!validBudget) {
-    await session.abortTransaction();
-    session.endSession();
-    return res.status(400).json({ 
-      error: 'Budget proposal not found for your organization or form type mismatch' 
-    });
-  }
-
-  // Auto-populate budget-related fields
-  req.body.budgetAmount = validBudget.grandTotal;
-  req.body.budgetFrom = validBudget.nameOfRso;
-} else if (req.body.budgetData) {
-  // Create new budget proposal
-  const budgetProposal = new BudgetProposal({
-    nameOfRso: req.user?.organizationName || req.body.studentOrganization?.organizationName,
-    eventTitle: req.body.budgetData.eventTitle || req.body.eventTitle || 'Budget Proposal',
-    items: req.body.budgetData.items,
-    grandTotal: req.body.budgetData.items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0),
-    createdBy: req.user?._id,
-    organization: req.body.studentOrganization || req.user?.organizationId,
-    formType: req.body.formType || 'Activity', // Use the form's type or default to Activity
-    status: 'submitted'
-  });
-
-  await budgetProposal.save({ session });
-  req.body.attachedBudget = budgetProposal._id;
-  req.body.budgetAmount = budgetProposal.grandTotal;
-  req.body.budgetFrom = budgetProposal.nameOfRso;
-}
-
+    if (req.body.attachedBudget) {
+      const budgetQuery = {
+        _id: req.body.attachedBudget,
+        isActive: true
+      };
+    
+      // Add organization check (required)
+      if (req.body.studentOrganization) {
+        budgetQuery.organization = req.body.studentOrganization;
+      } else if (req.user?.organizationId) {
+        budgetQuery.organization = req.user.organizationId;
+      } else {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ 
+          error: 'Organization reference is required to attach a budget' 
+        });
+      }
+    
+      const validBudget = await BudgetProposal.findOne(budgetQuery).session(session);
+    
+      if (!validBudget) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ 
+          error: 'Budget proposal not found or not accessible for your organization' 
+        });
+      }
+    
+      // Auto-populate budget-related fields
+      req.body.budgetAmount = validBudget.grandTotal;
+      req.body.budgetFrom = validBudget.nameOfRso;
+    } else if (req.body.budgetData) {
+      // Create new budget proposal
+      const budgetProposal = new BudgetProposal({
+        nameOfRso: req.user?.organizationName || req.body.studentOrganization?.organizationName || 'Organization',
+        eventTitle: req.body.budgetData.eventTitle || req.body.eventTitle || 'Budget Proposal',
+        items: req.body.budgetData.items.map(item => ({
+          quantity: Number(item.quantity),
+          unit: item.unit.trim(),
+          description: item.description.trim(),
+          unitCost: Number(item.unitCost),
+          totalCost: Number(item.quantity * item.unitCost)
+        })),
+        grandTotal: req.body.budgetData.items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0),
+        createdBy: req.user?._id,
+        organization: req.body.studentOrganization || req.user?.organizationId,
+        isActive: true,
+        status: 'submitted'
+      });
+    
+      await budgetProposal.save({ session });
+      req.body.attachedBudget = budgetProposal._id;
+      req.body.budgetAmount = budgetProposal.grandTotal;
+      req.body.budgetFrom = budgetProposal.nameOfRso;
+    }
+    
     // Form type specific validation
     switch (req.body.formType) {
       case 'Activity':

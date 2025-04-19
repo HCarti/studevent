@@ -27,7 +27,7 @@ const budgetItemSchema = new mongoose.Schema({
             return this.quantity * this.unitCost;
         }
     }
-}, { _id: false }); // No need for individual item IDs
+}, { _id: false });
 
 const BudgetProposalSchema = new mongoose.Schema({
     // Basic identification
@@ -80,12 +80,7 @@ const BudgetProposalSchema = new mongoose.Schema({
     associatedForm: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Form',
-        required: false // Optional for standalone budgets
-    },
-    formType: {
-        type: String,
-        enum: ['Activity', 'Project', null],
-        default: null
+        required: false
     },
     
     // Metadata
@@ -103,21 +98,18 @@ const BudgetProposalSchema = new mongoose.Schema({
         default: true
     }
 }, {
-    timestamps: true, // Auto-manage createdAt and updatedAt
+    timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
 });
 
-// Auto-calculate totals before save
 BudgetProposalSchema.pre('save', function(next) {
-    // Calculate item totals
     this.items.forEach(item => {
         if (!item.totalCost) {
             item.totalCost = item.quantity * item.unitCost;
         }
     });
     
-    // Calculate grand total if not provided
     if (!this.grandTotal) {
         this.grandTotal = this.items.reduce(
             (sum, item) => sum + (item.totalCost || item.quantity * item.unitCost), 
@@ -129,7 +121,6 @@ BudgetProposalSchema.pre('save', function(next) {
     next();
 });
 
-// Add index for better query performance
 BudgetProposalSchema.index({ organization: 1, isActive: 1 });
 BudgetProposalSchema.index({ associatedForm: 1 });
 
