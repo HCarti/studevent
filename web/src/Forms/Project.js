@@ -693,6 +693,18 @@ const formatTimeDisplay = (timeStr) => {
     }
   
     try {
+
+      const organizationId = localStorage.getItem('organizationId'); // Or from your auth context
+    
+      if (!organizationId) {
+        setNotification({
+          visible: true,
+          message: 'Organization reference missing. Please log in again.',
+          type: 'error'
+        });
+        return;
+      }
+
       // Prepare submission data
       const submissionData = {
         formType: 'Project',
@@ -715,7 +727,8 @@ const formatTimeDisplay = (timeStr) => {
         budgetAmount: Number(formData.budgetAmount),
         budgetFrom: formData.budgetFrom,
         attachedBudget: formData.attachedBudget || undefined,
-        budgetProposals: formData.budgetProposals
+        budgetProposals: formData.budgetProposals,
+        organizationId: organizationId // Critical for backend validation
       };
   
       // Determine endpoint and method based on edit mode
