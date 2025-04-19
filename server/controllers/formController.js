@@ -306,15 +306,11 @@ if (req.body.attachedBudget) {
     _id: req.body.attachedBudget,
     isActive: true,
     $or: [
-      { organization: organizationId },
-      { createdBy: req.user._id }
+        { organization: organizationId },
+        { createdBy: req.user._id }
     ]
-  };
-
-  if (req.body.formType) {
-    budgetQuery.formType = req.body.formType;
-  }
-
+    // Removed formType requirement
+};
   console.log('Budget Query:', JSON.stringify(budgetQuery, null, 2));
 
   // Add debug for the actual budget document
