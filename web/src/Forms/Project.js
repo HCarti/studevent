@@ -691,19 +691,20 @@ const formatTimeDisplay = (timeStr) => {
       setTimeout(() => setNotification({ visible: false }), 3000);
       return;
     }
+
+    const organizationId = localStorage.getItem('organizationId'); 
+    if (!organizationId) {
+      setNotification({
+        visible: true,
+        message: 'Organization reference missing. Please log in again.',
+        type: 'error'
+      });
+      setTimeout(() => setNotification({ visible: false }), 3000);
+      return;
+    }
   
     try {
 
-      const organizationId = localStorage.getItem('organizationId'); // Or from your auth context
-    
-      if (!organizationId) {
-        setNotification({
-          visible: true,
-          message: 'Organization reference missing. Please log in again.',
-          type: 'error'
-        });
-        return;
-      }
 
       // Prepare submission data
       const submissionData = {
@@ -726,7 +727,7 @@ const formatTimeDisplay = (timeStr) => {
         // Budget data
         budgetAmount: Number(formData.budgetAmount),
         budgetFrom: formData.budgetFrom,
-        attachedBudget: formData.attachedBudget || undefined,
+        attachedBudget: formData.attachedBudget || null,
         budgetProposals: formData.budgetProposals,
         organizationId: organizationId // Critical for backend validation
       };
