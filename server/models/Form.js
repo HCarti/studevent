@@ -516,6 +516,12 @@ const formSchema = new mongoose.Schema({
         required: function() { return this.formType === 'Project'; }
     },
 
+    createdBy: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User', 
+        required: true  // Enforce for all forms
+      },
+
     //Local Off Campus Form
     // Add this new field for LocalOffCampus forms
     localOffCampus: {
