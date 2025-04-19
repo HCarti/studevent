@@ -516,10 +516,19 @@ const formSchema = new mongoose.Schema({
                 if (!v) return true; // Optional attachment
                 if (!['Activity', 'Project'].includes(this.formType)) return false;
                 
-                // Get the organization reference - handle both ObjectId and string cases
-                let orgId = this.studentOrganization;
+                // Get organization reference based on form type
+                let orgId;
                 
-                // If orgId is a string that's not an ObjectId, look up the organization
+                if (this.formType === 'Activity') {
+                  orgId = this.studentOrganization;
+                } else {
+                  // For Projects, we need to get the organization from context
+                  // This requires accessing the User model - may not work in all validation contexts
+                  const user = await mongoose.model('User').findById(this.createdBy);
+                  orgId = user?.role === 'Organization' ? user._id : user?.organizationId;
+                }
+          
+                // Handle string organization names
                 if (typeof orgId === 'string' && !mongoose.Types.ObjectId.isValid(orgId)) {
                   const org = await mongoose.model('User').findOne({
                     organizationName: orgId,
@@ -531,12 +540,15 @@ const formSchema = new mongoose.Schema({
                 
                 const budget = await mongoose.model('BudgetProposal').findOne({
                   _id: v,
-                  organization: orgId,
+                  $or: [
+                    { organization: orgId },
+                    { createdBy: this.createdBy }
+                  ],
                   isActive: true
                 });
                 return !!budget;
               },
-              message: 'Budget must belong to your organization'
+              message: 'Budget must belong to your organization or be created by you'
             }
           },
           
