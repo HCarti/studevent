@@ -254,8 +254,8 @@ exports.createForm = async (req, res) => {
       // Add organization check (required)
       if (req.body.studentOrganization) {
         budgetQuery.organization = req.body.studentOrganization;
-      } else if (req.user?.organizationId) {
-        budgetQuery.organization = req.user.organizationId;
+      } else if (req.user?.organizationName) {
+        budgetQuery.organization = req.user.organizationName;
       } else {
         await session.abortTransaction();
         session.endSession();
@@ -301,7 +301,7 @@ exports.createForm = async (req, res) => {
       req.body.budgetAmount = budgetProposal.grandTotal;
       req.body.budgetFrom = budgetProposal.nameOfRso;
     }
-    
+
     // Form type specific validation
     switch (req.body.formType) {
       case 'Activity':
