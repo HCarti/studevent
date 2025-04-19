@@ -249,56 +249,20 @@ exports.createForm = async (req, res) => {
     // Handle budget validation if attached
 // In the budget validation/creation section of createForm
 // In createForm controller
-// In the budget validation/creation section of createForm
-// Handle budget validation if attached
 if (req.body.attachedBudget) {
-  let orgId;
-  
-  // Try to get organization from different sources
-  if (req.body.studentOrganization) {
-    // For Activity forms
-    orgId = req.body.studentOrganization;
-  } else if (req.user?.organizationId) {
-    // For Project forms from organization users
-    orgId = req.user.organizationId;
-  } else if (req.user?.organizationName) {
-    // For Project forms where we only have name
-    const org = await User.findOne({
-      organizationName: req.user.organizationName,
-      role: "Organization"
-    }).session(session);
-    orgId = org?._id;
-  }
-
-  // If we have an organization name but not ID, look it up
-  if (typeof orgId === 'string' && !mongoose.Types.ObjectId.isValid(orgId)) {
-    const org = await User.findOne({
-      organizationName: orgId,
-      role: "Organization"
-    }).session(session);
-    
-    if (!org) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ 
-        error: 'Organization not found' 
-      });
-    }
-    orgId = org._id;
-  }
-
-  // Build the budget query
   const budgetQuery = {
     _id: req.body.attachedBudget,
     isActive: true
   };
 
-  // Only add organization if we found one
-  if (orgId) {
-    budgetQuery.organization = orgId;
+  // Add organization check if available
+  if (req.body.studentOrganization) {
+    budgetQuery.organization = req.body.studentOrganization;
+  } else if (req.user?.organizationName) {
+    budgetQuery.organization = req.user.organizationName;
   }
 
-  // Add formType check if needed
+  // Optionally add formType check if needed
   if (req.body.formType) {
     budgetQuery.formType = req.body.formType;
   }
@@ -309,14 +273,13 @@ if (req.body.attachedBudget) {
     await session.abortTransaction();
     session.endSession();
     return res.status(400).json({ 
-      error: 'Budget proposal not found or not authorized for this form type' 
+      error: 'Budget proposal not found for your organization or form type mismatch' 
     });
   }
 
   // Auto-populate budget-related fields
   req.body.budgetAmount = validBudget.grandTotal;
   req.body.budgetFrom = validBudget.nameOfRso;
-
 } else if (req.body.budgetData) {
   // Create new budget proposal
   const budgetProposal = new BudgetProposal({
