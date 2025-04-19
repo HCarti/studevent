@@ -713,7 +713,6 @@ const formatTimeDisplay = (timeStr) => {
         schoolEquipments: formData.schoolEquipments,
         // Budget data
         budgetAmount: Number(formData.budgetAmount),
-        budgetFrom: formData.budgetFrom,
         attachedBudget: formData.attachedBudget || undefined,
       };
   

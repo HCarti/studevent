@@ -250,11 +250,27 @@ exports.createForm = async (req, res) => {
 // In the budget validation/creation section of createForm
 // In createForm controller
 // In the budget validation/creation section of createForm
+// Handle budget validation if attached
 if (req.body.attachedBudget) {
-  // First get the organization ID properly
-  let orgId = req.body.studentOrganization;
+  let orgId;
   
-  // If orgId is a string name (not ObjectId), look up the organization
+  // Try to get organization from different sources
+  if (req.body.studentOrganization) {
+    // For Activity forms
+    orgId = req.body.studentOrganization;
+  } else if (req.user?.organizationId) {
+    // For Project forms from organization users
+    orgId = req.user.organizationId;
+  } else if (req.user?.organizationName) {
+    // For Project forms where we only have name
+    const org = await User.findOne({
+      organizationName: req.user.organizationName,
+      role: "Organization"
+    }).session(session);
+    orgId = org?._id;
+  }
+
+  // If we have an organization name but not ID, look it up
   if (typeof orgId === 'string' && !mongoose.Types.ObjectId.isValid(orgId)) {
     const org = await User.findOne({
       organizationName: orgId,
@@ -271,13 +287,18 @@ if (req.body.attachedBudget) {
     orgId = org._id;
   }
 
+  // Build the budget query
   const budgetQuery = {
     _id: req.body.attachedBudget,
-    isActive: true,
-    organization: orgId // Use the resolved ObjectId
+    isActive: true
   };
 
-  // Optionally add formType check if needed
+  // Only add organization if we found one
+  if (orgId) {
+    budgetQuery.organization = orgId;
+  }
+
+  // Add formType check if needed
   if (req.body.formType) {
     budgetQuery.formType = req.body.formType;
   }
@@ -288,7 +309,7 @@ if (req.body.attachedBudget) {
     await session.abortTransaction();
     session.endSession();
     return res.status(400).json({ 
-      error: 'Budget proposal not found for your organization or form type mismatch' 
+      error: 'Budget proposal not found or not authorized for this form type' 
     });
   }
 
