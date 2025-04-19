@@ -143,8 +143,8 @@ const Project = () => {
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
-    if (user?.organizationId) {
-      setUserOrgId(user.organizationId);
+    if (user?._id) {
+      setUserOrgId(user._id);
     }
   }, []);
 
