@@ -21,6 +21,7 @@ const reviewStageSchema = new mongoose.Schema({
 const programFlowSchema = new mongoose.Schema({
     timeRange: {  // Combined field
         type: String,
+        required: function() { return this.formType === 'Project'; },
         validate: {
             validator: function(v) {
                 // Validate format: "HH:MM-HH:MM"
@@ -43,6 +44,8 @@ const programFlowSchema = new mongoose.Schema({
         }
     },
     segment: { 
+        type: String, 
+        required: function() { return this.formType === 'Project'; }
     },
 });
 
@@ -55,27 +58,33 @@ function convertToMinutes(timeStr) {
 const projectHeadsSchema = new mongoose.Schema({
     headName:{
         type: String, 
+        required: function() { return this.formType === 'Project'; }
     },
     designatedOffice:{
         type: String, 
+        required: function() { return this.formType === 'Project'; }
     },
 });
 
 const workingCommitteesSchema = new mongoose.Schema({
     workingName:{
         type: String, 
+        required: function() { return this.formType === 'Project'; }
     },
     designatedTask:{
         type: String, 
+        required: function() { return this.formType === 'Project'; }
     },
 });
 
 const taskDeligationSchema = new mongoose.Schema({
     taskList:{
         type: String, 
+        required: function() { return this.formType === 'Project'; }
     },
     deadline: {
         type: Date,  // Changed from String to Date
+        required: function() { return this.formType === 'Project'; },
         get: (date) => date?.toISOString().split('T')[0] // Optional: Format as YYYY-MM-DD
     }
 }, { toJSON: { getters: true } });
@@ -83,9 +92,11 @@ const taskDeligationSchema = new mongoose.Schema({
 const timelineSchedulesSchema = new mongoose.Schema({
     publicationMaterials:{
         type: String, 
+        required: function() { return this.formType === 'Project'; }
     },
     schedule: {
         type: Date,  // Changed from String to Date
+        required: function() { return this.formType === 'Project'; },
         get: (date) => date?.toISOString().split('T')[0] // Optional: Format as YYYY-MM-DD
     }
 });
@@ -93,30 +104,32 @@ const timelineSchedulesSchema = new mongoose.Schema({
 const equipmentsNeedSchema = new mongoose.Schema({
     equipments:{
         type: String, 
+        required: function() { return this.formType === 'Project'; }
     },
     estimatedQuantity:{
         type: Number, 
+        required: function() { return this.formType === 'Project'; }
     },
 });
 
-// const projectBudgetSchema = new mongoose.Schema({
-//     budgetItems:{
-//         type: String, 
-//         required: function() { return this.formType === 'Project'; }
-//     },
-//     budgetEstimatedQuantity:{
-//         type: Number, 
-//         required: function() { return this.formType === 'Project'; }
-//     },
-//     budgetPerUnit:{
-//         type: Number, 
-//         required: function() { return this.formType === 'Project'; }
-//     },
-//     budgetEstimatedAmount:{
-//         type: Number, 
-//         required: function() { return this.formType === 'Project'; }
-//     },
-// });
+const projectBudgetSchema = new mongoose.Schema({
+    budgetItems:{
+        type: String, 
+        required: function() { return this.formType === 'Project'; }
+    },
+    budgetEstimatedQuantity:{
+        type: Number, 
+        required: function() { return this.formType === 'Project'; }
+    },
+    budgetPerUnit:{
+        type: Number, 
+        required: function() { return this.formType === 'Project'; }
+    },
+    budgetEstimatedAmount:{
+        type: Number, 
+        required: function() { return this.formType === 'Project'; }
+    },
+});
 
 // Schema for individual compliance items with remarks
 const complianceItemSchema = new mongoose.Schema({
@@ -496,6 +509,13 @@ const formSchema = new mongoose.Schema({
         type: [equipmentsNeedSchema],
         required: function() { return this.formType === 'Project'; }
     },
+
+    // === Budget Proposal ===
+    budgetProposal: { 
+        type: [projectBudgetSchema],
+        required: function() { return this.formType === 'Project'; }
+    },
+
     //Local Off Campus Form
     // Add this new field for LocalOffCampus forms
     localOffCampus: {
@@ -516,22 +536,9 @@ const formSchema = new mongoose.Schema({
                 if (!v) return true; // Optional attachment
                 if (!['Activity', 'Project'].includes(this.formType)) return false;
                 
-                // Get the organization reference - handle both ObjectId and string cases
-                let orgId = this.studentOrganization;
-                
-                // If orgId is a string that's not an ObjectId, look up the organization
-                if (typeof orgId === 'string' && !mongoose.Types.ObjectId.isValid(orgId)) {
-                  const org = await mongoose.model('User').findOne({
-                    organizationName: orgId,
-                    role: "Organization"
-                  });
-                  if (!org) return false;
-                  orgId = org._id;
-                }
-                
                 const budget = await mongoose.model('BudgetProposal').findOne({
                   _id: v,
-                  organization: orgId,
+                  organization: this.studentOrganization,
                   isActive: true
                 });
                 return !!budget;
