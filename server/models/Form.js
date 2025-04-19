@@ -529,9 +529,22 @@ const formSchema = new mongoose.Schema({
                 if (!v) return true; // Optional attachment
                 if (!['Activity', 'Project'].includes(this.formType)) return false;
                 
+                // Get the organization reference - handle both ObjectId and string cases
+                let orgId = this.studentOrganization;
+                
+                // If orgId is a string that's not an ObjectId, look up the organization
+                if (typeof orgId === 'string' && !mongoose.Types.ObjectId.isValid(orgId)) {
+                  const org = await mongoose.model('User').findOne({
+                    organizationName: orgId,
+                    role: "Organization"
+                  });
+                  if (!org) return false;
+                  orgId = org._id;
+                }
+                
                 const budget = await mongoose.model('BudgetProposal').findOne({
                   _id: v,
-                  organization: this.studentOrganization,
+                  organization: orgId,
                   isActive: true
                 });
                 return !!budget;
