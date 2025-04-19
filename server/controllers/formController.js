@@ -255,7 +255,7 @@ if (req.body.attachedBudget) {
   console.log('User:', {
     _id: req.user?._id,
     role: req.user?.role,
-    organizationId: req.user?.organizationId,
+    organizationId: req.user?.organization._id,
     organizationName: req.user?.organizationName
   });
 
@@ -302,7 +302,7 @@ if (req.body.attachedBudget) {
   }
 
   // Log the complete budget query
-  const budgetQuery = {
+const budgetQuery = {
     _id: req.body.attachedBudget,
     isActive: true,
     $or: [

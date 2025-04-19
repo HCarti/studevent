@@ -516,49 +516,60 @@ const formSchema = new mongoose.Schema({
                 if (!v) return true; // Optional attachment
                 if (!['Activity', 'Project'].includes(this.formType)) return false;
                 
-                // Get the current user context (important for validation)
-                const currentUser = this._user || await mongoose.model('User').findById(this.createdBy);
-                
-                // Determine organization reference
-                let orgId;
-                if (this.formType === 'Activity') {
-                  orgId = this.studentOrganization;
-                } else {
-                  orgId = currentUser.role === 'Organization' 
-                    ? currentUser._id 
-                    : currentUser.organizationId;
-                }
+                try {
+                  // Get user context with fallbacks
+                  const currentUser = this._user || 
+                                   (this.createdBy && await mongoose.model('User').findById(this.createdBy)) || 
+                                   { role: null, organizationId: null, organizationName: null };
           
-                // Handle string organization names if needed
-                if (typeof orgId === 'string' && !mongoose.Types.ObjectId.isValid(orgId)) {
-                  const org = await mongoose.model('User').findOne({
-                    organizationName: orgId,
-                    role: "Organization"
-                  });
-                  if (!org) return false;
-                  orgId = org._id;
+                  if (!currentUser) {
+                    console.warn('No user context available for budget validation');
+                    return false;
+                  }
+          
+                  // Determine organization reference
+                  let orgId;
+                  if (this.formType === 'Activity') {
+                    orgId = this.studentOrganization;
+                  } else {
+                    orgId = currentUser.role === 'Organization' 
+                      ? currentUser._id 
+                      : currentUser.organizationId;
+                  }
+          
+                  // Handle string organization names
+                  if (typeof orgId === 'string' && !mongoose.Types.ObjectId.isValid(orgId)) {
+                    const org = await mongoose.model('User').findOne({
+                      organizationName: orgId,
+                      role: "Organization"
+                    });
+                    if (!org) return false;
+                    orgId = org._id;
+                  }
+          
+                  // Find matching budget with multiple fallbacks
+                  const budgetQuery = {
+                    _id: v,
+                    isActive: true,
+                    $or: [
+                      { organization: orgId },
+                      { createdBy: this.createdBy },
+                      currentUser.organizationName ? { 
+                        nameOfRso: currentUser.organizationName 
+                      } : {}
+                    ].filter(condition => Object.keys(condition).length > 0) // Remove empty conditions
+                  };
+          
+                  if (this.formType === 'Activity') {
+                    budgetQuery.formType = 'Activity';
+                  }
+          
+                  const budget = await mongoose.model('BudgetProposal').findOne(budgetQuery);
+                  return !!budget;
+                } catch (error) {
+                  console.error('Budget validation error:', error);
+                  return false;
                 }
-                
-                // Find matching budget with more flexible criteria
-                const budget = await mongoose.model('BudgetProposal').findOne({
-                  _id: v,
-                  $or: [
-                    { organization: orgId },
-                    { createdBy: this.createdBy },
-                    // Additional fallback for organization name match
-                    currentUser.organizationName ? { 
-                      $expr: { 
-                        $eq: [
-                          "$nameOfRso", 
-                          currentUser.organizationName
-                        ] 
-                      } 
-                    } : {}
-                  ],
-                  isActive: true
-                });
-                
-                return !!budget;
               },
               message: 'Budget must belong to your organization or be created by you'
             }
