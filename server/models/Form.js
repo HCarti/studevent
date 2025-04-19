@@ -21,7 +21,6 @@ const reviewStageSchema = new mongoose.Schema({
 const programFlowSchema = new mongoose.Schema({
     timeRange: {  // Combined field
         type: String,
-        required: function() { return this.formType === 'Project'; },
         validate: {
             validator: function(v) {
                 // Validate format: "HH:MM-HH:MM"
@@ -44,8 +43,6 @@ const programFlowSchema = new mongoose.Schema({
         }
     },
     segment: { 
-        type: String, 
-        required: function() { return this.formType === 'Project'; }
     },
 });
 
@@ -58,33 +55,27 @@ function convertToMinutes(timeStr) {
 const projectHeadsSchema = new mongoose.Schema({
     headName:{
         type: String, 
-        required: function() { return this.formType === 'Project'; }
     },
     designatedOffice:{
         type: String, 
-        required: function() { return this.formType === 'Project'; }
     },
 });
 
 const workingCommitteesSchema = new mongoose.Schema({
     workingName:{
         type: String, 
-        required: function() { return this.formType === 'Project'; }
     },
     designatedTask:{
         type: String, 
-        required: function() { return this.formType === 'Project'; }
     },
 });
 
 const taskDeligationSchema = new mongoose.Schema({
     taskList:{
         type: String, 
-        required: function() { return this.formType === 'Project'; }
     },
     deadline: {
         type: Date,  // Changed from String to Date
-        required: function() { return this.formType === 'Project'; },
         get: (date) => date?.toISOString().split('T')[0] // Optional: Format as YYYY-MM-DD
     }
 }, { toJSON: { getters: true } });
@@ -92,11 +83,9 @@ const taskDeligationSchema = new mongoose.Schema({
 const timelineSchedulesSchema = new mongoose.Schema({
     publicationMaterials:{
         type: String, 
-        required: function() { return this.formType === 'Project'; }
     },
     schedule: {
         type: Date,  // Changed from String to Date
-        required: function() { return this.formType === 'Project'; },
         get: (date) => date?.toISOString().split('T')[0] // Optional: Format as YYYY-MM-DD
     }
 });
@@ -104,11 +93,9 @@ const timelineSchedulesSchema = new mongoose.Schema({
 const equipmentsNeedSchema = new mongoose.Schema({
     equipments:{
         type: String, 
-        required: function() { return this.formType === 'Project'; }
     },
     estimatedQuantity:{
         type: Number, 
-        required: function() { return this.formType === 'Project'; }
     },
 });
 
