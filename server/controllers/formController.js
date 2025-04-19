@@ -250,43 +250,74 @@ exports.createForm = async (req, res) => {
 // In the budget validation/creation section of createForm
 // In createForm controller
 if (req.body.attachedBudget) {
-  // Get the organization reference - use the already converted studentOrganization if available
-  let organizationId = req.body.studentOrganization;
+  // Determine organization reference based on form type
+  let organizationId;
   
-  // If not available, try to get from user's organizationId
-  if (!organizationId && req.user?.organizationId) {
-    organizationId = req.user.organizationId;
-  }
-
-  // If we have an organization reference, ensure it's an ObjectId
-  if (organizationId) {
-    // Handle case where organizationId might be a name
-    if (typeof organizationId === 'string' && !mongoose.Types.ObjectId.isValid(organizationId)) {
-      const org = await User.findOne({
-        organizationName: organizationId,
-        role: "Organization"
-      }).session(session);
-      
-      if (!org) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(400).json({ error: "Organization not found" });
-      }
-      organizationId = org._id;
+  // For Activity forms, use studentOrganization
+  if (req.body.formType === 'Activity') {
+    organizationId = req.body.studentOrganization;
+  } 
+  // For Project forms, use the user's organizationId
+  else if (req.body.formType === 'Project') {
+    organizationId = req.user?.organizationId;
+    
+    // If user is an organization, use their _id directly
+    if (!organizationId && req.user?.role === 'Organization') {
+      organizationId = req.user._id;
     }
   }
 
-  const validBudget = await BudgetProposal.findOne({
+  // Convert organization name to ID if needed
+  if (organizationId && typeof organizationId === 'string' && !mongoose.Types.ObjectId.isValid(organizationId)) {
+    const org = await User.findOne({
+      organizationName: organizationId,
+      role: "Organization"
+    }).session(session);
+    
+    if (!org) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ error: "Organization not found" });
+    }
+    organizationId = org._id;
+  }
+
+  // Build the budget query
+  const budgetQuery = {
     _id: req.body.attachedBudget,
-    organization: organizationId,
-    isActive: true
-  }).session(session);
+    isActive: true,
+    $or: []
+  };
+
+  // Add organization match if we have one
+  if (organizationId) {
+    budgetQuery.$or.push({ organization: organizationId });
+  }
+  
+  // Always allow budgets created by the current user
+  if (req.user?._id) {
+    budgetQuery.$or.push({ createdBy: req.user._id });
+  }
+
+  // Ensure we have at least one condition
+  if (budgetQuery.$or.length === 0) {
+    await session.abortTransaction();
+    session.endSession();
+    return res.status(400).json({ error: 'No valid budget criteria specified' });
+  }
+
+  const validBudget = await BudgetProposal.findOne(budgetQuery).session(session);
 
   if (!validBudget) {
     await session.abortTransaction();
     session.endSession();
     return res.status(400).json({ 
-      error: 'Budget proposal not found for your organization' 
+      error: 'Budget proposal not accessible for this submission',
+      details: {
+        formType: req.body.formType,
+        organizationCriteria: organizationId,
+        userId: req.user?._id
+      }
     });
   }
 
