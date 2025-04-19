@@ -251,18 +251,30 @@ exports.createForm = async (req, res) => {
         isActive: true
       };
     
-      // Add organization check (required)
+      // Validate and get proper organization ID
+      let organizationId;
       if (req.body.studentOrganization) {
-        budgetQuery.organization = req.body.studentOrganization;
-      } else if (req.user?.organizationName) {
-        budgetQuery.organization = req.user.organizationName;
+        organizationId = req.body.studentOrganization; // This should already be an ObjectId
+      } else if (req.user?.organizationId) {
+        organizationId = req.user.organizationId; // This should already be an ObjectId
       } else {
         await session.abortTransaction();
         session.endSession();
         return res.status(400).json({ 
-          error: 'Organization reference is required to attach a budget' 
+          error: 'Valid organization reference is required to attach a budget' 
         });
       }
+    
+      // Ensure we have a valid ObjectId
+      if (!mongoose.Types.ObjectId.isValid(organizationId)) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ 
+          error: 'Invalid organization reference format' 
+        });
+      }
+    
+      budgetQuery.organization = organizationId;
     
       const validBudget = await BudgetProposal.findOne(budgetQuery).session(session);
     
@@ -278,9 +290,36 @@ exports.createForm = async (req, res) => {
       req.body.budgetAmount = validBudget.grandTotal;
       req.body.budgetFrom = validBudget.nameOfRso;
     } else if (req.body.budgetData) {
+      // Validate organization reference first
+      let organizationId;
+      let organizationName;
+      
+      if (req.body.studentOrganization) {
+        if (mongoose.Types.ObjectId.isValid(req.body.studentOrganization)) {
+          organizationId = req.body.studentOrganization;
+          // You might need to fetch the organization name if not provided
+          organizationName = req.body.studentOrganizationName || 'Organization';
+        } else {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(400).json({ 
+            error: 'Invalid organization ID format' 
+          });
+        }
+      } else if (req.user?.organizationName) {
+        organizationId = req.user.organizationId;
+        organizationName = req.user.organizationName || 'Organization';
+      } else {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ 
+          error: 'Organization reference is required' 
+        });
+      }
+    
       // Create new budget proposal
       const budgetProposal = new BudgetProposal({
-        nameOfRso: req.user?.organizationName || req.body.studentOrganization?.organizationName || 'Organization',
+        nameOfRso: organizationName,
         eventTitle: req.body.budgetData.eventTitle || req.body.eventTitle || 'Budget Proposal',
         items: req.body.budgetData.items.map(item => ({
           quantity: Number(item.quantity),
@@ -291,7 +330,7 @@ exports.createForm = async (req, res) => {
         })),
         grandTotal: req.body.budgetData.items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0),
         createdBy: req.user?._id,
-        organization: req.body.studentOrganization || req.user?.organizationId,
+        organization: organizationId, // Use the validated ObjectId
         isActive: true,
         status: 'submitted'
       });
