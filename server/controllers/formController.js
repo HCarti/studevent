@@ -276,12 +276,12 @@ exports.createForm = async (req, res) => {
     
       budgetQuery.organization = organizationId;
     
-     // In your formController
+        // Validate the budget exists AND belongs to the org
       const validBudget = await BudgetProposal.findOne({
         _id: req.body.attachedBudget,
-        organization: req.body.organizationId, // Use the passed ID
+        organization: organizationId, // Critical security check
         isActive: true
-      });
+      }).session(session);  
     
       if (!validBudget) {
         await session.abortTransaction();

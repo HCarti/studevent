@@ -139,6 +139,14 @@ const Project = () => {
     message: '',
     type: 'success'
   });
+  const [userOrgId, setUserOrgId] = useState(null);
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user?.organizationId) {
+      setUserOrgId(user.organizationId);
+    }
+  }, []);
 
   const Notification = ({ message }) => (
     <div className="notification">
@@ -691,25 +699,13 @@ const formatTimeDisplay = (timeStr) => {
       setTimeout(() => setNotification({ visible: false }), 3000);
       return;
     }
-
-    const organizationId = localStorage.getItem('organizationId'); 
-    if (!organizationId) {
-      setNotification({
-        visible: true,
-        message: 'Organization reference missing. Please log in again.',
-        type: 'error'
-      });
-      setTimeout(() => setNotification({ visible: false }), 3000);
-      return;
-    }
   
     try {
-
-
       // Prepare submission data
       const submissionData = {
         formType: 'Project',
         ...formData,
+        ...(userOrgId && { organizationId: userOrgId }), // Critical for budget validation
         projectTitle: formData.projectTitle,
         projectDescription: formData.projectDescription,
         projectObjectives: formData.projectObjectives,
@@ -727,9 +723,8 @@ const formatTimeDisplay = (timeStr) => {
         // Budget data
         budgetAmount: Number(formData.budgetAmount),
         budgetFrom: formData.budgetFrom,
-        attachedBudget: formData.attachedBudget || null,
-        budgetProposals: formData.budgetProposals,
-        organizationId: organizationId // Critical for backend validation
+        attachedBudget: formData.attachedBudget || undefined,
+        budgetProposals: formData.budgetProposals
       };
   
       // Determine endpoint and method based on edit mode
