@@ -255,11 +255,33 @@ if (req.body.attachedBudget) {
     isActive: true
   };
 
-  // Add organization check if available
-  if (req.body.studentOrganization) {
-    budgetQuery.organization = req.body.studentOrganization;
-  } else if (req.user?.organizationName) {
-    budgetQuery.organization = req.user.organizationName;
+  // Get the organization ID - use the already converted studentOrganization if available
+  let organizationId = req.body.studentOrganization;
+  
+  // If not available, try to get from user's organizationId
+  if (!organizationId && req.user?.organizationId) {
+    organizationId = req.user.organizationId;
+  }
+
+  // If we have an organization reference, add it to the query
+  if (organizationId) {
+    // Ensure it's an ObjectId
+    if (typeof organizationId === 'string' && !mongoose.Types.ObjectId.isValid(organizationId)) {
+      // If it's a string that's not an ObjectId, look up the organization
+      const org = await User.findOne({
+        organizationName: organizationId,
+        role: "Organization"
+      }).session(session);
+      
+      if (!org) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: "Organization not found" });
+      }
+      organizationId = org._id;
+    }
+    
+    budgetQuery.organization = organizationId;
   }
 
   // Optionally add formType check if needed
@@ -280,6 +302,7 @@ if (req.body.attachedBudget) {
   // Auto-populate budget-related fields
   req.body.budgetAmount = validBudget.grandTotal;
   req.body.budgetFrom = validBudget.nameOfRso;
+  
 } else if (req.body.budgetData) {
   // Create new budget proposal
   const budgetProposal = new BudgetProposal({
