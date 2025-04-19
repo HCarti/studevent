@@ -251,74 +251,67 @@ exports.createForm = async (req, res) => {
         isActive: true
       };
     
-      // Validate and get proper organization ID
-      let organizationId;
-      if (req.body.studentOrganization) {
-        organizationId = req.body.studentOrganization; // This should already be an ObjectId
-      } else if (req.user?.organizationId) {
-        organizationId = req.user.organizationId; // This should already be an ObjectId
-      } else {
+      // ======== KEY CHANGE ======== //
+      // Use EITHER:
+      // 1. studentOrganization (if provided, e.g., in Activity forms)
+      // 2. req.user.organizationId (for Project forms or org users)
+      const organizationId = req.body.studentOrganization || req.user?.organizationId;
+    
+      if (!organizationId) {
         await session.abortTransaction();
         session.endSession();
         return res.status(400).json({ 
-          error: 'Valid organization reference is required to attach a budget' 
+          error: 'Organization reference is required. Your account must be linked to an organization.' 
         });
       }
     
-      // Ensure we have a valid ObjectId
+      // Validate ObjectId format
       if (!mongoose.Types.ObjectId.isValid(organizationId)) {
         await session.abortTransaction();
         session.endSession();
         return res.status(400).json({ 
-          error: 'Invalid organization reference format' 
+          error: 'Invalid organization ID format' 
         });
       }
     
+      // ======== SECURITY CHECK ======== //
+      // Verify budget belongs to this org
       budgetQuery.organization = organizationId;
-    
-        // Validate the budget exists AND belongs to the org
-      const validBudget = await BudgetProposal.findOne({
-        _id: req.body.attachedBudget,
-        organization: organizationId, // Critical security check
-        isActive: true
-      }).session(session);  
+      const validBudget = await BudgetProposal.findOne(budgetQuery).session(session);
     
       if (!validBudget) {
         await session.abortTransaction();
         session.endSession();
-        return res.status(400).json({ 
-          error: 'Budget proposal not found or not accessible for your organization' 
+        return res.status(403).json({ 
+          error: 'Budget not found or you lack permission to attach it.' 
         });
       }
     
-      // Auto-populate budget-related fields
+      // Attach budget data to the form
       req.body.budgetAmount = validBudget.grandTotal;
       req.body.budgetFrom = validBudget.nameOfRso;
-    } else if (req.body.budgetData) {
-      // Validate organization reference first
-      let organizationId;
-      let organizationName;
-      
+    } 
+    else if (req.body.budgetData) {
+      // ======== NEW BUDGET CREATION ======== //
+      // Determine organization context
+      let organizationId, organizationName;
+    
+      // Case 1: studentOrganization provided (Activity forms)
       if (req.body.studentOrganization) {
-        if (mongoose.Types.ObjectId.isValid(req.body.studentOrganization)) {
-          organizationId = req.body.studentOrganization;
-          // You might need to fetch the organization name if not provided
-          organizationName = req.body.studentOrganizationName || 'Organization';
-        } else {
-          await session.abortTransaction();
-          session.endSession();
-          return res.status(400).json({ 
-            error: 'Invalid organization ID format' 
-          });
-        }
-      } else if (req.user?.organizationName) {
+        organizationId = req.body.studentOrganization;
+        organizationName = req.body.studentOrganizationName || 'Organization';
+      } 
+      // Case 2: User is org-affiliated (Project forms)
+      else if (req.user?.organizationId) {
         organizationId = req.user.organizationId;
         organizationName = req.user.organizationName || 'Organization';
-      } else {
+      } 
+      // Case 3: No org context (reject)
+      else {
         await session.abortTransaction();
         session.endSession();
         return res.status(400).json({ 
-          error: 'Organization reference is required' 
+          error: 'Cannot create budget: No organization specified.' 
         });
       }
     
