@@ -245,9 +245,13 @@ exports.getBudgetProposalById = async (req, res) => {
     const budget = await BudgetProposal.findOne({
       _id: req.params.id,
       $or: [
-        { organization: req.user.organizationId },
-        { createdBy: req.user._id }
-      ]
+        { organization: req.user.organizationId || req.user._id },
+        { createdBy: req.user._id },
+        req.user.organizationName ? { 
+          nameOfRso: req.user.organizationName 
+        } : {}
+      ],
+      isActive: true
     });
 
     if (!budget) {
