@@ -258,9 +258,10 @@ if (req.body.attachedBudget) {
     organizationId: req.user?.organizationId,
     organizationName: req.user?.organizationName
   });
-  
+
   // Determine organization based on form type
   let organizationId;
+  let organizationName;
   
   if (req.body.formType === 'Activity') {
     organizationId = req.body.studentOrganization;
@@ -268,10 +269,26 @@ if (req.body.attachedBudget) {
   } else {
     if (req.user?.role === 'Organization') {
       organizationId = req.user._id;
+      organizationName = req.user.organizationName;
       console.log('Project - Using user._id (org user):', organizationId);
     } else {
       organizationId = req.user?.organizationId;
+      organizationName = req.user?.organizationName;
       console.log('Project - Using user.organizationId:', organizationId);
+    }
+  }
+
+  // If we don't have an ID but have a name, look up the organization
+  if (!organizationId && organizationName) {
+    console.log('Looking up organization by name:', organizationName);
+    const org = await User.findOne({
+      organizationName: organizationName,
+      role: "Organization"
+    }).session(session);
+    
+    if (org) {
+      organizationId = org._id;
+      console.log('Found organization by name:', org._id);
     }
   }
 
