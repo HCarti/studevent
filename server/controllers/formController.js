@@ -252,11 +252,11 @@ exports.createForm = async (req, res) => {
       };
     
       // Validate and get proper organization ID
-      let organizationId;
+      let organizationName;
       if (req.body.studentOrganization) {
-        organizationId = req.body.studentOrganization; // This should already be an ObjectId
+        organizationName = req.body.studentOrganization; // This should already be an ObjectId
       } else if (req.user?.organizationName) {
-        organizationId = req.user.organizationName; // This should already be an ObjectId
+        organizationName = req.user.organizationName; // This should already be an ObjectId
       } else {
         await session.abortTransaction();
         session.endSession();
@@ -266,7 +266,7 @@ exports.createForm = async (req, res) => {
       }
     
       // Ensure we have a valid ObjectId
-      if (!mongoose.Types.ObjectId.isValid(organizationId)) {
+      if (!mongoose.Types.ObjectId.isValid(organizationName)) {
         await session.abortTransaction();
         session.endSession();
         return res.status(400).json({ 
@@ -274,7 +274,7 @@ exports.createForm = async (req, res) => {
         });
       }
     
-      budgetQuery.organization = organizationId;
+      budgetQuery.organization = organizationName;
     
       const validBudget = await BudgetProposal.findOne(budgetQuery).session(session);
     
