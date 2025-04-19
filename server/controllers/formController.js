@@ -247,40 +247,44 @@ exports.createForm = async (req, res) => {
     }
 
     // === 5. Budget Attachment Logic (UPDATED TO MIRROR BUDGET PROPOSAL) ===
-    if (req.body.attachedBudget) {
-      // Resolve organization context from user (like budgetController)
-      let organizationId;
-      if (req.user.role === 'Organization') {
-        organizationId = req.user._id;
-      } else if (req.user.organizationId) {
-        organizationId = req.user.organizationId;
-      } else if (req.body.studentOrganization) {
-        organizationId = req.body.studentOrganization;
-      } else {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(400).json({ 
-          error: "Organization reference is required to attach a budget" 
-        });
-      }
+   // In your formController's createForm function:
 
-      const budget = await BudgetProposal.findOne({
-        _id: req.body.attachedBudget,
-        organization: organizationId, // Strict org match
-        isActive: true
-      }).session(session);
+if (req.body.attachedBudget) {
+  // Resolve organization context
+  let organizationId;
+  
+  // Case 1: Activity form with studentOrganization
+  if (req.body.studentOrganization) {
+    organizationId = req.body.studentOrganization;
+  } 
+  // Case 2: Project form - get org from user
+  else {
+    if (req.user.role === 'Organization') {
+      organizationId = req.user._id;
+    } else {
+      organizationId = req.user.organizationId;
+    }
+  }
 
-      if (!budget) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(403).json({ 
-          error: "Budget not found or not owned by your organization" 
-        });
-      }
+  // Validate budget belongs to org
+  const validBudget = await BudgetProposal.findOne({
+    _id: req.body.attachedBudget,
+    organization: organizationId,
+    isActive: true
+  }).session(session);
 
-      req.body.budgetAmount = budget.grandTotal;
-      req.body.budgetFrom = budget.nameOfRso;
-    } 
+  if (!validBudget) {
+    await session.abortTransaction();
+    session.endSession();
+    return res.status(403).json({ 
+      error: "Budget not found or not owned by your organization" 
+    });
+  }
+
+  // Attach budget data
+  req.body.budgetAmount = validBudget.grandTotal;
+  req.body.budgetFrom = validBudget.nameOfRso;
+}
     // === 6. New Budget Creation (FOR PROJECTS/ACTIVITIES) ===
     else if (req.body.budgetData) {
       let organizationId, organizationName;

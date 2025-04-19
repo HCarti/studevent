@@ -540,12 +540,26 @@ const formSchema = new mongoose.Schema({
               validator: async function(v) {
                 if (!v) return true; // Optional attachment
                 
-                // Check if budget exists and belongs to the same organization
+                // Get the form's organization context
+                let orgId;
+                if (this.studentOrganization) {
+                  // Activity form - use explicit studentOrganization
+                  orgId = this.studentOrganization;
+                } else if (this.createdBy) {
+                  // Project form - get org from creator
+                  const user = await mongoose.model('User').findById(this.createdBy);
+                  orgId = user?.organizationId || user?._id; // Handle org users
+                }
+                
+                if (!orgId) return false; // No org context
+                
+                // Check budget belongs to the same org
                 const budget = await mongoose.model('BudgetProposal').findOne({
                   _id: v,
-                  organization: this.studentOrganization,
+                  organization: orgId,
                   isActive: true
                 });
+                
                 return !!budget;
               },
               message: 'Budget must belong to your organization and be active'
