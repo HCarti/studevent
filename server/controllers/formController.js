@@ -250,66 +250,98 @@ exports.createForm = async (req, res) => {
 // In the budget validation/creation section of createForm
 // In createForm controller
 if (req.body.attachedBudget) {
-  // Determine organization based on user role and form type
+  console.log('=== BUDGET VALIDATION START ===');
+  console.log('Form Type:', req.body.formType);
+  console.log('User:', {
+    _id: req.user?._id,
+    role: req.user?.role,
+    organizationId: req.user?.organizationId,
+    organizationName: req.user?.organizationName
+  });
+  
+  // Determine organization based on form type
   let organizationId;
   
-  if (req.user?.role === 'Organization') {
-    // Organization users ARE the organization
-    organizationId = req.user._id;
+  if (req.body.formType === 'Activity') {
+    organizationId = req.body.studentOrganization;
+    console.log('Activity - Using studentOrganization:', organizationId);
   } else {
-    // For regular users, use their organization reference
-    organizationId = req.user?.organizationId;
+    if (req.user?.role === 'Organization') {
+      organizationId = req.user._id;
+      console.log('Project - Using user._id (org user):', organizationId);
+    } else {
+      organizationId = req.user?.organizationId;
+      console.log('Project - Using user.organizationId:', organizationId);
+    }
   }
 
   if (!organizationId) {
+    console.log('ERROR: No organization ID determined');
     await session.abortTransaction();
     session.endSession();
     return res.status(400).json({ 
-      error: 'Organization reference missing - please ensure your account is properly associated with an organization' 
+      error: 'Organization reference missing for this form type' 
     });
   }
 
-  // Build the budget query
+  // Log the complete budget query
   const budgetQuery = {
     _id: req.body.attachedBudget,
     isActive: true,
     $or: [
       { organization: organizationId },
-      { createdBy: req.user._id } // Allow users to attach their own budgets
+      { createdBy: req.user._id }
     ]
   };
 
-  // For Projects, we can optionally include formType filter
-  if (req.body.formType === 'Project') {
-    budgetQuery.$or.push({ formType: { $in: ['Project', null] }});
+  if (req.body.formType) {
+    budgetQuery.formType = req.body.formType;
   }
 
+  console.log('Budget Query:', JSON.stringify(budgetQuery, null, 2));
+
+  // Add debug for the actual budget document
   const validBudget = await BudgetProposal.findOne(budgetQuery).session(session);
+  console.log('Found Budget:', validBudget ? validBudget._id : 'NOT FOUND');
 
   if (!validBudget) {
-    console.error('Budget lookup failed', {
-      query: budgetQuery,
-      actualBudgets: await BudgetProposal.find({ organization: organizationId }).lean()
-    });
+    // Additional debug - check if budget exists at all
+    const anyBudget = await BudgetProposal.findOne({
+      _id: req.body.attachedBudget
+    }).session(session);
     
+    console.log('Budget Exists (any status):', anyBudget ? {
+      _id: anyBudget._id,
+      organization: anyBudget.organization,
+      createdBy: anyBudget.createdBy,
+      isActive: anyBudget.isActive,
+      formType: anyBudget.formType
+    } : 'NOT FOUND');
+
     await session.abortTransaction();
     session.endSession();
     return res.status(400).json({ 
-      error: 'Budget proposal not accessible',
+      error: 'Budget proposal not found or not accessible for your organization',
       details: {
-        suggestion: 'Please ensure the budget was created by you or your organization',
-        debugInfo: {
-          searchedBudgetId: req.body.attachedBudget,
-          organizationId,
-          userId: req.user._id
-        }
+        formType: req.body.formType,
+        organizationCriteria: organizationId,
+        userId: req.user?._id,
+        budgetId: req.body.attachedBudget
       }
     });
   }
 
+  console.log('Budget Validation Successful:', {
+    budgetId: validBudget._id,
+    organizationMatch: validBudget.organization.equals(organizationId),
+    createdByMatch: validBudget.createdBy.equals(req.user._id)
+  });
+
   // Auto-populate budget-related fields
   req.body.budgetAmount = validBudget.grandTotal;
   req.body.budgetFrom = validBudget.nameOfRso;
+  console.log('=== BUDGET VALIDATION END ===');
+
 
 } else if (req.body.budgetData) {
   // Create new budget proposal
