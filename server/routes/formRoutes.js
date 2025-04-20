@@ -43,11 +43,4 @@ router.put('/:formId', formController.updateForm);
 // ======================
 router.post('/submit', upload.none(), formController.createForm);
 
-// ======================
-// LOCAL OFF-CAMPUS ROUTES
-// ======================
-router.post('/local-off-campus/before', formController.submitLocalOffCampusBefore);
-router.post('/local-off-campus/after', formController.submitLocalOffCampusAfter);
-router.get('/local-off-campus/:eventId', formController.getLocalOffCampusForm);
-
 module.exports = router;
