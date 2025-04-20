@@ -8,6 +8,6 @@ router.post('/before', localOffController.submitLocalOffCampusBefore);
 //after phase routes
 router.post('/after', localOffController.submitLocalOffCampusAfter);
 
-router.get('/:offId', localOffController.getLocalOffCampusForm);
+router.get('/:offId', localOffController.getLocalOffCampusForms);
 
 module.exports = router;
