@@ -22,7 +22,7 @@ const checkEventCapacity = async (startDate, endDate, currentFormId = null) => {
   };
   
   if (currentFormId) {
-    query.formId = { $ne: currentFormId };
+    query.formId = { $ne: currentFormId }; // Exclude current form when editing
   }
 
   const existingEvents = await CalendarEvent.find(query);
@@ -39,11 +39,11 @@ const checkEventCapacity = async (startDate, endDate, currentFormId = null) => {
     }
   });
   
-  // Check each day of the new event
+  // Validate new event dates
   for (let date = start.clone(); date <= end; date.add(1, 'days')) {
     const dateStr = date.format('YYYY-MM-DD');
     if ((eventCounts[dateStr] || 0) >= 3) {
-      throw new Error(`Date ${dateStr} has reached the maximum number of events (3)`);
+      throw new Error(`Maximum events reached (3) on ${date.format('MMMM Do YYYY')}`);
     }
   }
 };
@@ -52,30 +52,25 @@ const checkEventCapacity = async (startDate, endDate, currentFormId = null) => {
 // Updated createCalendarEventFromForm
 const createCalendarEventFromForm = async (form, session) => {
   try {
-    // Debug: Check what's actually in the form
-    console.log('Form data received:', {
-      formType: form.formType,
-      projectTitle: form.projectTitle,
-      startDate: form.startDate,
-      venue: form.venue
-    });
-
     if (!['Activity', 'Project'].includes(form.formType)) return null;
 
     // Get dates based on form type
     const startDate = form.formType === 'Project' 
       ? form.startDate 
       : form.eventStartDate;
-    
     const endDate = form.formType === 'Project'
       ? form.endDate || form.startDate
       : form.eventEndDate || form.eventStartDate;
 
     if (!startDate) {
-      console.log('Cannot create event - missing start date');
+      console.log('Skipping calendar event - missing start date');
       return null;
     }
 
+    // Double-check capacity (redundant safety check)
+    await checkEventCapacity(startDate, endDate, form._id);
+
+    // Create event data
     const eventData = {
       title: form.formType === 'Project' 
         ? form.projectTitle 
@@ -92,19 +87,12 @@ const createCalendarEventFromForm = async (form, session) => {
       formType: form.formType,
       createdBy: form.createdBy,
       organization: form.studentOrganization || 
-                   (form.createdBy?.organizationId || form.createdBy?._id)
+                  (await User.findById(form.createdBy)).organizationId
     };
 
-    // Validate
-    if (!eventData.title || !eventData.startDate) {
-      console.log('Missing required event fields:', eventData);
-      return null;
-    }
-
-    const calendarEvent = new CalendarEvent(eventData);
-    return await calendarEvent.save({ session });
+    return await CalendarEvent.create([eventData], { session });
   } catch (error) {
-    console.error('Calendar event creation failed:', error);
+    console.error('Calendar event creation failed:', error.message);
     return null;
   }
 };
@@ -389,20 +377,25 @@ if (req.body.attachedBudget) {
       );
     }
 
-    if (['Activity', 'Project'].includes(form.formType)) {
-      try {
-        console.log('Attempting to create calendar event for:', form.formType);
-        const event = await createCalendarEventFromForm(form, session);
-        if (!event) {
-          console.log('Calendar event not created (missing data)');
-        } else {
-          console.log('Calendar event created:', event._id);
-        }
-      } catch (error) {
-        console.error('Non-critical calendar error:', error.message);
-      }
-    }
+// In your createForm function, before calendar event creation:
+if (['Activity', 'Project'].includes(form.formType)) {
+  try {
+    const startDate = form.formType === 'Project' 
+      ? form.startDate 
+      : form.eventStartDate;
+    const endDate = form.formType === 'Project'
+      ? form.endDate || form.startDate
+      : form.eventEndDate || form.eventStartDate;
+
+    await checkEventCapacity(startDate, endDate);
     
+    // Proceed with calendar event creation
+    await createCalendarEventFromForm(form, session);
+  } catch (capacityError) {
+    console.log('Event capacity check failed:', capacityError.message);
+    // Continue form submission but skip calendar event
+  }
+}
     // Create progress tracker
     const tracker = new EventTracker({
       formId: form._id,
