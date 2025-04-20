@@ -139,10 +139,6 @@ const getRequiredReviewers = (formType) => {
         { stepName: "Academic Services", reviewerRole: "Academic Services" },
         { stepName: "Executive Director", reviewerRole: "Executive Director" }
       ];
-    case 'LocalOffCampus':
-      return [
-        { stepName: "Initial Submission", reviewerRole: "Adviser" }
-      ];
     case 'Activity':
     default:
       return [
@@ -355,7 +351,6 @@ if (req.body.attachedBudget) {
         break;
 
       case 'Budget':
-      case 'LocalOffCampus':
         await session.abortTransaction();
         session.endSession();
         return res.status(400).json({ 

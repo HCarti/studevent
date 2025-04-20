@@ -62,6 +62,10 @@
   box-sizing: border-box;
 } 
 
+.inner-forms-1 input[type="text"] {
+  width: 500px;
+}
+
 /* Textarea Specific Styles */
 .inner-forms-1 textarea {
   min-height: 200px;

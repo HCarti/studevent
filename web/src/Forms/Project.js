@@ -357,54 +357,6 @@ const showFieldErrors = (step) => {
 };
   
 
-// Validate all fields in current step
-const validateStep = (step) => {
-  const errors = {...fieldErrors};
-  let isValid = true;
-
-  const requiredFields = getFieldsForStep(step);
-  
-  requiredFields.forEach(field => {
-    if (Array.isArray(formData[field])) {
-      // Handle array fields
-      errors[field] = formData[field].map(item => {
-        const itemErrors = {};
-        Object.keys(item).forEach(key => {
-          itemErrors[key] = !item[key];
-          if (!item[key]) isValid = false;
-        });
-        return itemErrors;
-      });
-    } else {
-      // Handle simple fields
-      errors[field] = !formData[field];
-      if (!formData[field]) isValid = false;
-    }
-  });
-
-  setFieldErrors(errors);
-  return isValid;
-};
-
-// Validate a single field
-const validateField = (name, value) => {
-  setFieldErrors(prev => ({
-    ...prev,
-    [name]: !value
-  }));
-};
-
-// Validate array item field
-const validateArrayField = (arrayName, index, fieldName, value) => {
-  setFieldErrors(prev => {
-    const newErrors = {...prev};
-    if (!newErrors[arrayName][index]) {
-      newErrors[arrayName][index] = {};
-    }
-    newErrors[arrayName][index][fieldName] = !value;
-    return newErrors;
-  });
-};
    // Fetch occupied dates from server
 // Fetch occupied dates and event counts
 useEffect(() => {
@@ -445,14 +397,6 @@ const isDateOccupied = (date) => {
   return (eventsPerDate[dateStr] || 0) >= 3;
 };
 
-const dayClassName = (date) => {
-  const dateStr = moment(date).format('YYYY-MM-DD');
-  const count = eventsPerDate[dateStr] || 0;
-  
-  if (count >= 3) return 'fully-booked-day';
-  if (count >= 2) return 'approaching-limit-day';
-  return '';
-};
 
 const handleArrayChange = (field, index, e) => {
   const { name, value } = e.target;
@@ -564,21 +508,6 @@ const formatTimeDisplay = (timeStr) => {
       ['attachedBudget', 'budgetAmount', 'budgetFrom']
     ];
     return sections[step] || [];
-  };
-
-  const handleDateChange = (date, field) => {
-    setFormData(prev => ({ ...prev, [field]: date }));
-    setFieldErrors(prev => ({ ...prev, [field]: !date }));
-    
-    // Cross-validate dates
-    if (field === 'startDate' && formData.endDate) {
-      const endDateValid = moment(formData.endDate).isSameOrAfter(date);
-      setFieldErrors(prev => ({ ...prev, endDate: !endDateValid }));
-    }
-    if (field === 'endDate' && formData.startDate) {
-      const startDateValid = moment(date).isSameOrAfter(formData.startDate);
-      setFieldErrors(prev => ({ ...prev, startDate: !startDateValid }));
-    }
   };
 
   const validateAllSections = () => {
@@ -781,8 +710,8 @@ const formatTimeDisplay = (timeStr) => {
   
       // Redirect after 3 seconds
       setTimeout(() => {
-        navigate('/submitted-forms');
-      }, 3000);
+        navigate('/');
+      }, 1000);
   
     } catch (error) {
       console.error('Error:', error);

@@ -15,7 +15,6 @@ const reviewStageSchema = new mongoose.Schema({
     timestamp: { type: Date }
 });
 
-
 // ===PROJECT PROPOSAL===
 
 const programFlowSchema = new mongoose.Schema({
@@ -131,191 +130,12 @@ const projectBudgetSchema = new mongoose.Schema({
     },
 });
 
-// Schema for individual compliance items with remarks
-const complianceItemSchema = new mongoose.Schema({
-    compliance: {
-        type: String,
-        enum: ['yes', 'no'],
-        required: true
-    },
-    remarks: {
-        type: String,
-        default: ""
-    }
-});
-
-// Schema for basic information (BEFORE phase)
-const basicInformationSchema = new mongoose.Schema({
-    programName: {
-        type: String,
-        required: true
-    },
-    course: {
-        type: String,
-        required: true
-    },
-    destinationAndVenue: {
-        type: String,
-        required: true
-    },
-    inclusiveDates: {
-        type: Date,
-        required: true
-    },
-    numberOfStudents: {
-        type: Number,
-        required: true,
-        min: 1
-    },
-    listOfPersonnelIncharge: {
-        type: String,
-        required: true
-    }
-});
-
-// Schema for activities off campus (BEFORE phase)
-const activitiesOffCampusSchema = new mongoose.Schema({
-    curriculumRequirement: complianceItemSchema,
-    destination: complianceItemSchema,
-    handbook: complianceItemSchema,
-    guardianConsent: complianceItemSchema,
-    personnelInCharge: complianceItemSchema,
-    firstAidKit: complianceItemSchema,
-    feesFunds: complianceItemSchema,
-    insurance: complianceItemSchema,
-    studentVehicles: complianceItemSchema,
-    lgusNgos: complianceItemSchema,
-    consultationAnnouncements: complianceItemSchema
-});
-
-// Schema for after activity report (AFTER phase)
-const afterActivitySchema = new mongoose.Schema({
-    programs: {
-        type: String,
-        required: true
-    },
-    destination: {
-        type: String,
-        required: true
-    },
-    noOfStudents: {
-        type: Number,
-        required: true,
-        min: 0
-    },
-    noofHeiPersonnel: {
-        type: Number,
-        required: true,
-        min: 0
-    }
-});
-
-// Main Local Off Campus schema
-const localOffCampusSchema = new mongoose.Schema({
-    formPhase: {
-        type: String,
-        enum: ['BEFORE', 'AFTER'],
-        required: true
-    },
-    // Common fields (partially required in BEFORE, fully in AFTER)
-    eventId: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: function() {
-            return this.formPhase === 'AFTER';
-        }
-    },
-    // BEFORE phase specific fields
-    nameOfHei: {
-        type: String,
-        required: function() {
-            return this.formPhase === 'BEFORE';
-        }
-    },
-    region: {
-        type: String,
-        required: function() {
-            return this.formPhase === 'BEFORE';
-        }
-    },
-    address: {
-        type: String,
-        required: function() {
-            return this.formPhase === 'BEFORE';
-        }
-    },
-    basicInformation: {
-        type: [basicInformationSchema],
-        required: function() {
-            return this.formPhase === 'BEFORE';
-        },
-        validate: {
-            validator: function(v) {
-                return v.length > 0;
-            },
-            message: 'At least one basic information entry is required'
-        }
-    },
-    activitiesOffCampus: {
-        type: [activitiesOffCampusSchema],
-        required: function() {
-            return this.formPhase === 'BEFORE';
-        },
-        validate: {
-            validator: function(v) {
-                return v.length > 0;
-            },
-            message: 'At least one activity entry is required'
-        }
-    },
-    // AFTER phase specific fields
-    afterActivity: {
-        type: [afterActivitySchema],
-        required: function() {
-          return this.formPhase === 'AFTER'; // Only required for AFTER phase
-        },
-        validate: {
-          validator: function(v) {
-            // Only validate array length for AFTER phase
-            return this.formPhase !== 'AFTER' || v.length > 0;
-          },
-          message: 'At least one after activity entry is required for AFTER phase'
-        }
-      },
-    problemsEncountered: {
-        type: String,
-        required: function() {
-            return this.formPhase === 'AFTER';
-        }
-    },
-    recommendation: {
-        type: String,
-        required: function() {
-            return this.formPhase === 'AFTER';
-        }
-    },
-    // Common metadata
-    submittedAt: {
-        type: Date,
-        default: Date.now
-    },
-    submittedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-    },
-    status: {
-        type: String,
-        enum: ['draft', 'submitted', 'approved', 'rejected'],
-        default: 'submitted'
-    }
-}, { _id: true });
-
 const formSchema = new mongoose.Schema({
     // --- Form Type Discriminator ---
     formType: { 
         type: String, 
         required: true, 
-        enum: ['Activity', 'Budget', 'Project', 'LocalOffCampus'],
+        enum: ['Activity', 'Budget', 'Project'], // Removed LocalOffCampus
         default: 'Activity'
     },
 
@@ -422,21 +242,20 @@ const formSchema = new mongoose.Schema({
     emergencyFirstAid: { type: String,  required: function() { return this.formType === 'Activity'; } },
     fireSafety: { type: String, required: function() { return this.formType === 'Activity'; } },
     weather: { type: String, required: function() { return this.formType === 'Activity'; } },
+    
     // ===== PRESIDENT SIGNATURE FIELDS =====
     presidentName: {
         type: String,
         required: function() {
-          // Required for all forms submitted by organizations
           return this.studentOrganization || this.formType === 'Activity';
         }
-      },
-      presidentSignature: {
-        type: String, // This will store the URL/path to the signature image
+    },
+    presidentSignature: {
+        type: String,
         required: function() {
-          // Required for all forms submitted by organizations
           return this.studentOrganization || this.formType === 'Activity';
         }
-      },
+    },
 
     //Project Proposal
     // ==== PROJECT OVERVIEW ====
@@ -519,53 +338,43 @@ const formSchema = new mongoose.Schema({
     createdBy: { 
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'User', 
-        required: true  // Enforce for all forms
-      },
-
-    //Local Off Campus Form
-    // Add this new field for LocalOffCampus forms
-    localOffCampus: {
-        type: localOffCampusSchema,
-        required: function() {
-            return this.formType === 'LocalOffCampus';
-        }
+        required: true
     },
 
-        // ====BUDGET PROPOSAL====
-
-        attachedBudget: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'BudgetProposal',
-            validate: {
-              validator: async function(v) {
-                if (!v) return true; // Optional attachment
-                
-                // Get the form's organization context
-                let orgId;
-                if (this.studentOrganization) {
-                  // Activity form - use explicit studentOrganization
-                  orgId = this.studentOrganization;
-                } else if (this.createdBy) {
-                  // Project form - get org from creator
-                  const user = await mongoose.model('User').findById(this.createdBy);
-                  orgId = user?.organizationId || user?._id; // Handle org users
-                }
-                
-                if (!orgId) return false; // No org context
-                
-                // Check budget belongs to the same org
-                const budget = await mongoose.model('BudgetProposal').findOne({
-                  _id: v,
-                  organization: orgId,
-                  isActive: true
-                });
-                
-                return !!budget;
-              },
-              message: 'Budget must belong to your organization and be active'
+    // ====BUDGET PROPOSAL====
+    attachedBudget: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'BudgetProposal',
+        validate: {
+          validator: async function(v) {
+            if (!v) return true; // Optional attachment
+            
+            // Get the form's organization context
+            let orgId;
+            if (this.studentOrganization) {
+              // Activity form - use explicit studentOrganization
+              orgId = this.studentOrganization;
+            } else if (this.createdBy) {
+              // Project form - get org from creator
+              const user = await mongoose.model('User').findById(this.createdBy);
+              orgId = user?.organizationId || user?._id; // Handle org users
             }
+            
+            if (!orgId) return false; // No org context
+            
+            // Check budget belongs to the same org
+            const budget = await mongoose.model('BudgetProposal').findOne({
+              _id: v,
+              organization: orgId,
+              isActive: true
+            });
+            
+            return !!budget;
           },
-          
+          message: 'Budget must belong to your organization and be active'
+        }
+    },
+      
     // ===== COMMON FIELDS =====
     currentStep: { type: Number, default: 0 },
     reviewStages: [reviewStageSchema],
