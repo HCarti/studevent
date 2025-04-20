@@ -66,7 +66,8 @@ exports.submitLocalOffCampusBefore = async (req, res) => {
       basicInformation,
       activitiesOffCampus,
       submittedBy: req.user._id,
-      status: "submitted"
+      status: "submitted",
+      emailAddress: req.user.email // Add this line to store user email
     });
 
     const savedForm = await newForm.save({ session });
@@ -86,29 +87,33 @@ exports.submitLocalOffCampusBefore = async (req, res) => {
     await tracker.save({ session });
 
     // Send notification to submitter
-    await Notification.create([{
-      userId: req.user._id,
-      message: `Your Local Off-Campus BEFORE form has been submitted successfully!`,
-      read: false,
-      timestamp: new Date(),
-    }], { session });
+    if (req.user.email) {
+        await Notification.create([{
+          userEmail: req.user.email, // Use the authenticated user's email
+          message: `Your Local Off-Campus BEFORE form has been submitted!`,
+          read: false,
+          timestamp: new Date(),
+          type: "form-submission"
+        }], { session });
+      }
 
     // Send notifications to first reviewers (Academic Services)
     const academicServicesUsers = await User.find({ 
-      role: "Academic Services" 
-    }).session(session);
-
-    await Notification.insertMany(
-      academicServicesUsers.map(user => ({
-        userId: user._id,
-        message: `New Local Off-Campus BEFORE form submitted by ${req.user.name || 'an organization'}`,
-        read: false,
-        timestamp: new Date(),
-        type: "review-request",
-        link: `/review/local-off-campus/${savedForm._id}`
-      })),
-      { session }
-    );
+        role: "Academic Services" 
+      }).session(session);
+  
+      await Notification.insertMany(
+        academicServicesUsers.map(user => ({
+          userEmail: user.email, // Make sure user has email field
+          message: `New Local Off-Campus BEFORE form submitted by ${req.user.name || 'an organization'}`,
+          read: false,
+          timestamp: new Date(),
+          type: "review-request",
+          link: `/review/local-off-campus/${savedForm._id}`
+        })),
+        { session }
+      );
+  
 
     await session.commitTransaction();
     session.endSession();
