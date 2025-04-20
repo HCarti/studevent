@@ -391,6 +391,11 @@ useEffect(() => {
   fetchOccupiedData();
 }, []);
 
+const normalizeDateToUTC = (date) => {
+  return moment(date).utc().startOf('day').format('YYYY-MM-DD');
+};
+
+
 const isDateOccupied = (date) => {
   if (!date) return false;
   const dateStr = moment(date).format('YYYY-MM-DD');
@@ -791,11 +796,11 @@ const formatTimeDisplay = (timeStr) => {
                 }
                 minDate={new Date()}
                 filterDate={(date) => {
-                  const dateStr = moment(date).format('YYYY-MM-DD');
+                  const dateStr = normalizeDateToUTC(date);
                   return (eventsPerDate[dateStr] || 0) < 3;
                 }}
                 dayClassName={(date) => {
-                  const dateStr = moment(date).format('YYYY-MM-DD');
+                  const dateStr = normalizeDateToUTC(date);
                   const count = eventsPerDate[dateStr] || 0;
 
                   if (count >= 3) return 'fully-booked-day';
@@ -835,11 +840,11 @@ const formatTimeDisplay = (timeStr) => {
                 }
                 minDate={formData.startDate ? new Date(formData.startDate) : new Date()}
                 filterDate={(date) => {
-                  const dateStr = moment(date).format('YYYY-MM-DD');
+                  const dateStr = normalizeDateToUTC(date);
                   return (eventsPerDate[dateStr] || 0) < 3;
                 }}
                 dayClassName={(date) => {
-                  const dateStr = moment(date).format('YYYY-MM-DD');
+                  const dateStr = normalizeDateToUTC(date);
                   const count = eventsPerDate[dateStr] || 0;
 
                   if (count >= 3) return 'fully-booked-day';

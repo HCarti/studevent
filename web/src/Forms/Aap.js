@@ -371,6 +371,10 @@ useEffect(() => {
   fetchOccupiedDates();
 }, []);
 
+const normalizeDateToUTC = (date) => {
+  return moment(date).utc().startOf('day').format('YYYY-MM-DD');
+};
+
 // Update the dayClassName function for visual feedback
 const dayClassName = (date) => {
   const dateStr = moment(date).format('YYYY-MM-DD');
@@ -852,11 +856,11 @@ const renderSidebar = () => (
               onChange={(date) => handleDateChange(date, 'eventStartDate')}
               minDate={new Date()}
               filterDate={(date) => {
-                const dateStr = moment(date).format('YYYY-MM-DD');
+                const dateStr = normalizeDateToUTC(date);
                 return (eventsPerDate[dateStr] || 0) < 3;
               }}
               dayClassName={(date) => {
-                const dateStr = moment(date).format('YYYY-MM-DD');
+                const dateStr = normalizeDateToUTC(date);
                 const count = eventsPerDate[dateStr] || 0;
                 
                 if (count >= 3) return 'fully-booked-day';
@@ -888,11 +892,11 @@ const renderSidebar = () => (
               onChange={(date) => handleDateChange(date, 'eventEndDate')}
               minDate={formData.eventStartDate ? new Date(formData.eventStartDate) : new Date()}
               filterDate={(date) => {
-                const dateStr = moment(date).format('YYYY-MM-DD');
+                const dateStr = normalizeDateToUTC(date);
                 return (eventsPerDate[dateStr] || 0) < 3;
               }}
               dayClassName={(date) => {
-                const dateStr = moment(date).format('YYYY-MM-DD');
+                const dateStr = normalizeDateToUTC(date);
                 const count = eventsPerDate[dateStr] || 0;
                 
                 if (count >= 3) return 'fully-booked-day';

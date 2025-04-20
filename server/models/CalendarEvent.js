@@ -11,11 +11,13 @@ const CalendarEventSchema = new mongoose.Schema({
   },
   startDate: {
     type: Date,
-    required: true
+    required: true,
+    get: (date) => moment.utc(date).format('YYYY-MM-DD') // Always output in UTC
   },
   endDate: {
     type: Date,
-    required: true
+    required: true,
+    get: (date) => moment.utc(date).format('YYYY-MM-DD') // Always output in UTC
   },
   location: {
     type: String,

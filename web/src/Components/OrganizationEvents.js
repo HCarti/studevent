@@ -106,14 +106,16 @@ const OrganizationEvents = () => {
       const formattedEvents = response.data.map(event => ({
         id: event._id,
         title: event.formType === 'Project' ? event.projectTitle : event.eventTitle || event.title,
-        start: new Date(event.startDate),
-        end: new Date(event.endDate),
+        start: moment.utc(event.startDate).local().toDate(), // Convert UTC to local time
+        end: moment.utc(event.endDate).local().toDate(),     // Convert UTC to local time
         description: event.formType === 'Project' ? event.projectDescription : event.description,
         location: event.location || 'TBA',
         organization: event.organization?.organizationName || 'N/A',
         type: event.formType,
         duration: calculateDuration(event.startDate, event.endDate),
         allDay: true,
+        rawStart: event.startDate, // Keep original for reference
+        rawEnd: event.endDate,      // Keep original for reference
         // Additional fields for display
         projectTitle: event.projectTitle,
         eventTitle: event.eventTitle,
@@ -136,10 +138,13 @@ const OrganizationEvents = () => {
   };
 
   // Calculate event duration
-  const calculateDuration = (start, end) => {
-    const duration = moment(end).diff(moment(start), 'days') + 1;
-    return duration === 1 ? '1 day' : `${duration} days`;
-  };
+// Make duration calculation timezone-aware
+const calculateDuration = (start, end) => {
+  const startDate = moment.utc(start).local();
+  const endDate = moment.utc(end).local();
+  const duration = endDate.diff(startDate, 'days') + 1;
+  return duration === 1 ? '1 day' : `${duration} days`;
+};
 
   // Handle month change to fetch new events
   const handleNavigate = (newDate) => {
@@ -156,14 +161,14 @@ const OrganizationEvents = () => {
     const date = slotInfo.start;
     setSelectedDate(date);
     
-    const filteredEvents = events.filter(event => 
-      moment(date).isBetween(
-        moment(event.start).startOf('day'),
-        moment(event.end).endOf('day'),
-        null,
-        '[]'
-      )
-    );
+  // Convert selected date to UTC for comparison
+  const utcDate = moment(date).utc().startOf('day');
+  
+  const filteredEvents = events.filter(event => {
+    const eventStartUTC = moment.utc(event.rawStart).startOf('day');
+    const eventEndUTC = moment.utc(event.rawEnd).startOf('day');
+    return utcDate.isBetween(eventStartUTC, eventEndUTC, null, '[]');
+  });
     
     setSelectedEvents(filteredEvents);
   };
