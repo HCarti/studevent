@@ -454,17 +454,22 @@ const Localoffcampus = () => {
   
         const userData = JSON.parse(localStorage.getItem('user'));
     
+        // Prepare the data in the correct format
+        const submissionData = {
+          localOffCampus: {
+            ...formData,  // This should contain all the form fields
+            formPhase: 'BEFORE',
+            submittedBy: userData?._id
+          }
+        };
+  
         const response = await fetch('https://studevent-server.vercel.app/api/local-off-campus/before', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            ...formData,
-            formPhase: 'BEFORE',
-            submittedBy: userData?._id
-          }),
+          body: JSON.stringify(submissionData),  // Send the properly formatted data
         });
   
         if (!response.ok) {
@@ -474,16 +479,19 @@ const Localoffcampus = () => {
         }
   
         const result = await response.json();
-        setEventId(result._id);
+        setEventId(result.eventId || result._id);  // Use eventId if available, fallback to _id
         setBeforeSubmitted(true);
         setFormPhase('AFTER');
         setCurrentStep(3);
         setNotificationVisible(true);
         setTimeout(() => setNotificationVisible(false), 3000);
-
+  
+        // Show success message
+        alert('BEFORE form submitted successfully!');
+  
       } catch (error) {
         console.error('Error:', error);
-        alert('An error occurred while submitting the form.');
+        alert(`An error occurred while submitting the form: ${error.message}`);
       }
     } else {
       setNotificationVisible(true);
