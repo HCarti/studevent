@@ -61,6 +61,8 @@ const OrganizationEvents = () => {
         title: event.title,
         start: new Date(event.startDate),
         end: new Date(event.endDate),
+        rawStart: event.startDate,        // Store original UTC string
+        rawEnd: event.endDate, 
         description: event.description,
         location: event.location,
         organization: event.organization?.organizationName || 'N/A',
@@ -158,21 +160,38 @@ const calculateDuration = (start, end) => {
 
   // Handle date selection
   const handleSelectSlot = (slotInfo) => {
-    const date = slotInfo.start;
-    setSelectedDate(date);
+    const clickedDate = slotInfo.start;
+    setSelectedDate(clickedDate);
     
-  // Convert selected date to UTC for comparison
-  const utcDate = moment(date).utc().startOf('day');
+    // Convert clicked date to UTC midnight for accurate comparison
+    const clickedDateUTC = moment(clickedDate).utc().startOf('day');
+    
+    const filteredEvents = events.filter(event => {
+      // Get UTC dates from the original event data (not the converted display dates)
+      const eventStartUTC = moment.utc(event.rawStart).startOf('day');
+      const eventEndUTC = moment.utc(event.rawEnd).startOf('day');
+      
+      // Check if clicked date falls within event range
+      return clickedDateUTC.isBetween(eventStartUTC, eventEndUTC, null, '[]') || 
+             clickedDateUTC.isSame(eventStartUTC) || 
+             clickedDateUTC.isSame(eventEndUTC);
+    });
   
-  const filteredEvents = events.filter(event => {
-    const eventStartUTC = moment.utc(event.rawStart).startOf('day');
-    const eventEndUTC = moment.utc(event.rawEnd).startOf('day');
-    return utcDate.isBetween(eventStartUTC, eventEndUTC, null, '[]');
-  });
-    
     setSelectedEvents(filteredEvents);
+    
+    // Debug output
+    console.log('Date Selection Debug:', {
+      clickedLocal: clickedDate,
+      clickedUTC: clickedDateUTC.format(),
+      matchedEvents: filteredEvents.map(e => ({
+        title: e.title,
+        localStart: moment(e.start).format(),
+        localEnd: moment(e.end).format(),
+        utcStart: e.rawStart,
+        utcEnd: e.rawEnd
+      }))
+    });
   };
-
   // Custom event style based on type
   const eventStyleGetter = (event) => {
     let backgroundColor = '#3174ad'; // Default blue
@@ -248,7 +267,7 @@ const calculateDuration = (start, end) => {
         </div>
 
         <div className="event-details">
-          <h2>{moment(selectedDate).format('MMMM D, YYYY')} - Event Details</h2>
+          <h2> {moment(selectedDate).format('dddd, MMMM D, YYYY')} - Event Details</h2>
           {selectedEvents.length > 0 ? (
             <ul className="event-list">
               {selectedEvents.map((event, index) => (
