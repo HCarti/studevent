@@ -153,7 +153,6 @@ const SuperAdminAddUser = () => {
         try {
           setLoading(true);
           
-          // Get token from localStorage
           const token = localStorage.getItem('token');
           if (!token) {
             return;
@@ -165,18 +164,27 @@ const SuperAdminAddUser = () => {
           data.append('email', formData.email);
           data.append('password', formData.password);
           data.append('logo', logo);
-          data.append('firstName', formData.firstName);
-          data.append('lastName', formData.lastName);
+          
+          // Add role-specific fields
+          if (formData.role === 'Admin' || formData.role === 'Authority' || formData.role === 'SuperAdmin') {
+            data.append('firstName', formData.firstName);
+            data.append('lastName', formData.lastName);
+          }
       
-          // Add signature based on role
+          if (formData.role === 'Authority') {
+            data.append('faculty', formData.faculty);
+          }
+      
+          // Add Organization-specific fields
           if (formData.role === 'Organization') {
+            data.append('organizationType', formData.organizationType);
+            data.append('organizationName', formData.organizationName);
+            data.append('presidentName', formData.presidentName);
             data.append('presidentSignature', presidentSignature);
           } else if (formData.role === 'Admin' || formData.role === 'Authority') {
             data.append('signature', signature);
           }
-          // No signature for SuperAdmin
       
-          // Use different endpoint for SuperAdmin
           const endpoint = formData.role === 'SuperAdmin' 
             ? 'https://studevent-server.vercel.app/api/users/superadmin'
             : 'https://studevent-server.vercel.app/api/users';
@@ -184,7 +192,7 @@ const SuperAdminAddUser = () => {
           const response = await axios.post(endpoint, data, {
             headers: {
               'Content-Type': 'multipart/form-data',
-              'Authorization': `Bearer ${token}` // Add authorization header
+              'Authorization': `Bearer ${token}`
             },
           });
           
@@ -209,7 +217,6 @@ const SuperAdminAddUser = () => {
         } catch (error) {
           console.error('Submission error:', error);
           if (error.response && error.response.status === 401) {
-            // Token is invalid or expired
             localStorage.removeItem('token');
           } else {
             setError(error.response?.data?.message || 'Error adding user. Please try again.');
