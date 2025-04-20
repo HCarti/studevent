@@ -28,7 +28,7 @@ exports.submitLocalOffCampusBefore = async (req, res) => {
   try {
     const { localOffCampus } = req.body;
     
-    // Validation
+    // Validation (existing code remains the same)
     if (!localOffCampus) {
       await session.abortTransaction();
       session.endSession();
@@ -67,53 +67,66 @@ exports.submitLocalOffCampusBefore = async (req, res) => {
       activitiesOffCampus,
       submittedBy: req.user._id,
       status: "submitted",
-      emailAddress: req.user.email // Add this line to store user email
+      emailAddress: req.user.email,
+      currentStep: 0 // Add currentStep to track progress
     });
 
     const savedForm = await newForm.save({ session });
 
-    // Create progress tracker
+    // Create progress tracker - MODIFIED THIS SECTION
+    const requiredReviewers = getRequiredReviewers('BEFORE');
     const tracker = new EventTracker({
       formId: savedForm._id,
       formType: "LocalOffCampus",
       formPhase: "BEFORE",
-      steps: getRequiredReviewers('BEFORE').map(reviewer => ({
+      steps: requiredReviewers.map(reviewer => ({
         stepName: reviewer.stepName,
         reviewerRole: reviewer.reviewerRole,
-        status: "pending"
+        status: "pending",
+        remarks: "",
+        timestamp: null
       })),
-      currentStep: 0
+      currentStep: 0,
+      currentAuthority: requiredReviewers[0].reviewerRole // Set first reviewer as current
     });
-    await tracker.save({ session });
+
+    const savedTracker = await tracker.save({ session });
+
+    // Update form with tracker reference
+    await LocalOffCampus.findByIdAndUpdate(
+      savedForm._id,
+      { trackerId: savedTracker._id },
+      { session }
+    );
 
     // Send notification to submitter
     if (req.user.email) {
-        await Notification.create([{
-          userEmail: req.user.email, // Use the authenticated user's email
-          message: `Your Local Off-Campus BEFORE form has been submitted!`,
-          read: false,
-          timestamp: new Date(),
-          type: "form-submission"
-        }], { session });
-      }
+      await Notification.create([{
+        userEmail: req.user.email,
+        message: `Your Local Off-Campus BEFORE form has been submitted!`,
+        read: false,
+        timestamp: new Date(),
+        type: "form-submission"
+      }], { session });
+    }
 
     // Send notifications to first reviewers (Academic Services)
     const academicServicesUsers = await User.find({ 
-        role: "Academic Services" 
-      }).session(session);
-  
-      await Notification.insertMany(
-        academicServicesUsers.map(user => ({
-          userEmail: user.email, // Make sure user has email field
-          message: `New Local Off-Campus BEFORE form submitted by ${req.user.name || 'an organization'}`,
-          read: false,
-          timestamp: new Date(),
-          type: "review-request",
-          link: `/review/local-off-campus/${savedForm._id}`
-        })),
-        { session }
-      );
-  
+      role: "Academic Services" 
+    }).session(session);
+
+    const reviewerNotifications = academicServicesUsers.map(user => ({
+      userEmail: user.email,
+      message: `New Local Off-Campus BEFORE form submitted by ${req.user.name || 'an organization'}`,
+      read: false,
+      timestamp: new Date(),
+      type: "review-request",
+      link: `/review/local-off-campus/${savedForm._id}`,
+      formId: savedForm._id,
+      trackerId: savedTracker._id
+    }));
+
+    await Notification.insertMany(reviewerNotifications, { session });
 
     await session.commitTransaction();
     session.endSession();
@@ -122,7 +135,7 @@ exports.submitLocalOffCampusBefore = async (req, res) => {
       success: true,
       message: "BEFORE form submitted successfully",
       form: savedForm,
-      tracker,
+      tracker: savedTracker,
       eventId: savedForm._id
     });
 
