@@ -143,9 +143,13 @@ const addUser = async (userData, logoUrl, signatureUrl, presidentSignatureUrl) =
       newUser.faculty = userData.faculty;
       newUser.signature = signatureUrl;
       
-      // Only add organization if faculty is Adviser
       if (userData.faculty === 'Adviser') {
         newUser.organization = userData.organization;
+      }
+      
+      if (userData.faculty === 'Dean') {
+        newUser.deanForOrganization = userData.deanForOrganization;
+        newUser.organizationType = 'Recognized Student Organization - Academic';
       }
     } else if (userData.role === 'Admin') {
       newUser.firstName = userData.firstName;
@@ -265,6 +269,20 @@ const getOrganizations = async (req, res) => {
   }
 };
 
+// Get all academic organizations
+const getAcademicOrganizations = async (req, res) => {
+  try {
+    const organizations = await User.find({ 
+      role: 'Organization',
+      organizationType: 'Recognized Student Organization - Academic'
+    }).select('organizationName organizationType presidentName presidentSignature status logo');
+    res.status(200).json(organizations);
+  } catch (error) {
+    console.error('Error fetching academic organizations:', error);
+    res.status(500).json({ message: 'Error fetching academic organizations' });
+  }
+};
+
 module.exports = { 
   getUserById, 
   updateUser, 
@@ -272,5 +290,6 @@ module.exports = {
   addUser, 
   login, 
   getCurrentUser, 
-  getOrganizations 
+  getOrganizations,
+  getAcademicOrganizations
 };
