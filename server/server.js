@@ -57,7 +57,7 @@ mongoose
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes 
-app.use('/api/users', authenticateToken, userRoutes); // Do not apply authenticateToken here
+app.use('/api/users', userRoutes); // Do not apply authenticateToken here
 app.use("/api", authenticateToken, notificationRoutes); // Apply it
 app.use('/api/calendar', authenticateToken, calendarRoutes);
 app.use('/api/tracker', authenticateToken, eventTrackerRoutes);

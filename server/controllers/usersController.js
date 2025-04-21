@@ -261,58 +261,6 @@ const getOrganizations = async (req, res) => {
   }
 };
 
-// Add this to your usersController.js
-// In usersController.js
-const getAllOrganizations = async (req, res) => {
-  console.log('Entering getAllOrganizations controller');
-  
-  try {
-    console.log('Checking database connection...');
-    const dbStatus = mongoose.connection.readyState;
-    console.log(`Database connection state: ${dbStatus}`);
-    
-    if(dbStatus !== 1) {
-      const err = new Error(`Database not connected (status: ${dbStatus})`);
-      console.error('Database connection error:', err);
-      throw err;
-    }
-
-    console.log('Executing organizations query...');
-    const organizations = await User.find({ role: 'Organization' })
-      .select('organizationName _id')
-      .maxTimeMS(5000)
-      .lean(); // Add lean() for better performance
-
-    console.log('Query completed, results:', organizations?.length);
-    
-    if(!organizations) {
-      const err = new Error('Query returned null');
-      console.error('Null result error:', err);
-      throw err;
-    }
-
-    console.log(`Sending ${organizations.length} organizations`);
-    return res.status(200).json(organizations);
-    
-  } catch (error) {
-    console.error('Full error context:', {
-      error: error.message,
-      stack: error.stack,
-      timestamp: new Date().toISOString(),
-      requestHeaders: req.headers,
-      authUser: req.user // If using authenticateToken
-    });
-    
-    return res.status(500).json({ 
-      message: 'Failed to fetch organizations',
-      detailedError: process.env.NODE_ENV === 'development' ? {
-        message: error.message,
-        stack: error.stack
-      } : null 
-    });
-  }
-};
-
 module.exports = { 
   getUserById, 
   updateUser, 
@@ -320,6 +268,5 @@ module.exports = {
   addUser, 
   login, 
   getCurrentUser, 
-  getOrganizations,
-  getAllOrganizations
+  getOrganizations 
 };

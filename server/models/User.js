@@ -59,23 +59,6 @@ const userSchema = new Schema({
       return this.role === 'Authority';
     }
   },
-  organizationId: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: function() {
-      return this.role === 'Authority' && this.faculty === 'Adviser';
-    },
-    validate: {
-      validator: async function(value) {
-        if (this.role === 'Authority' && this.faculty === 'Adviser') {
-          const org = await mongoose.model('User').findOne({ _id: value, role: 'Organization' });
-          return org !== null;
-        }
-        return true;
-      },
-      message: 'Referenced organization does not exist or is not an Organization'
-    }
-  },
   logo: String,
   signature: {
     type: String,
