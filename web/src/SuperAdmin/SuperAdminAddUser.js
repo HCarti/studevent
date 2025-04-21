@@ -201,9 +201,9 @@ const SuperAdminAddUser = () => {
           if (formData.role === 'Authority') {
             data.append('faculty', formData.faculty);
             if (formData.faculty === 'Adviser') {
-                data.append('organization', formData.organization); // THIS IS CRUCIAL
+                data.append('organization', formData.organization);
             }
-            data.append('signature', signature); // Don't forget the signature
+            if (signature) data.append('signature', signature); // Note: Correct field name
         }
       
           // Add Organization-specific fields

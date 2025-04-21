@@ -144,6 +144,7 @@ const addUser = async (userData, logoUrl, signatureUrl, presidentSignatureUrl) =
       newUser.signature = signatureUrl;
     } else if(userData.faculty === 'Adviser' && userData.organization) {
       newUser.organization = userData.organization;
+      newUser.signature = signatureUrl;
     }else if (userData.role === 'Admin') {
       newUser.firstName = userData.firstName;
       newUser.lastName = userData.lastName;
