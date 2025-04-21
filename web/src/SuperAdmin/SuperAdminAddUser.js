@@ -29,7 +29,9 @@ const SuperAdminAddUser = () => {
     const typeorganizations = [
         'Recognized Student Organization - Special Interest',
         'Recognized Student Organization - Academic',
-        'College Student Council'
+        'College Student Council',
+        'Student Govenment',
+        'Independent Constitutional Commissions ',
     ];
 
     const handleChange = (e) => {
