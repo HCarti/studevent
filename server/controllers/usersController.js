@@ -261,6 +261,18 @@ const getOrganizations = async (req, res) => {
   }
 };
 
+// Add this to your usersController.js
+const getAllOrganizations = async (req, res) => {
+  try {
+    const organizations = await User.find({ role: 'Organization' })
+      .select('organizationName _id');
+    res.status(200).json(organizations);
+  } catch (error) {
+    console.error('Error fetching organizations:', error);
+    res.status(500).json({ message: 'Error fetching organizations' });
+  }
+};
+
 module.exports = { 
   getUserById, 
   updateUser, 
@@ -268,5 +280,6 @@ module.exports = {
   addUser, 
   login, 
   getCurrentUser, 
-  getOrganizations 
+  getOrganizations,
+  getAllOrganizations
 };

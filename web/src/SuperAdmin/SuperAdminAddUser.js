@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import './SuperAdminAddUser.css';
 
@@ -11,13 +11,14 @@ const SuperAdminAddUser = () => {
         password: '',
         confirmPassword: '',
         faculty: '',
-        organization: '', // For faculty 'Adviser'
+        organizationId: '', // For faculty 'Adviser' - will store the organization ID
         organizationType: '', // Organization type
         organizationName: '', // Organization name
         presidentName: '', // NEW: President name for organizations
     });
 
     const [logo, setLogo] = useState(null);
+    const [organizations, setOrganizations] = useState([]);
     const [loading, setLoading] = useState(false);
     const [signature, setSignature] = useState(null);
     const [error, setError] = useState('');
@@ -67,8 +68,26 @@ const SuperAdminAddUser = () => {
         }
     };
 
+    useEffect(() => {
+        const fetchOrganizations = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await axios.get('https://studevent-server.vercel.app/api/users/allorganizations', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                setOrganizations(response.data);
+            } catch (error) {
+                console.error('Error fetching organizations:', error);
+            }
+        };
+    
+        fetchOrganizations();
+    }, []);
+
     const validateForm = () => {
-        const { role, firstName, lastName, email, password, confirmPassword, organizationType, organizationName, presidentName } = formData;
+        const { role, firstName, lastName, email, password, confirmPassword, faculty, organizationId, organizationType, organizationName, presidentName } = formData;
         let errors = {};
         let isValid = true;
     
@@ -101,12 +120,19 @@ const SuperAdminAddUser = () => {
                 isValid = false;
                 errors.presidentSignature = 'President signature is required.';
             }
-        } else if (role === 'Admin' || role === 'Authority') {  // Removed SuperAdmin from this check
+        } else if (role === 'Admin' || role === 'Authority') {
             if (!signature) {
                 isValid = false;
                 errors.signature = 'Signature is required.';
             }
         }
+    
+        // Additional validation for Adviser role
+        if (role === 'Authority' && faculty === 'Adviser' && !organizationId) {
+            isValid = false;
+            errors.organization = 'Organization is required for Adviser role.';
+        }
+    
         // Common validations
         if (!email) {
             isValid = false;
@@ -175,6 +201,10 @@ const SuperAdminAddUser = () => {
       
           if (formData.role === 'Authority') {
             data.append('faculty', formData.faculty);
+            // Add organizationId if faculty is Adviser
+            if (formData.faculty === 'Adviser' && formData.organizationId) {
+              data.append('organizationId', formData.organizationId);
+            }
           }
       
           // Add Organization-specific fields
@@ -208,7 +238,7 @@ const SuperAdminAddUser = () => {
             password: '',
             confirmPassword: '',
             faculty: '',
-            organization: '',
+            organizationId: '',
             organizationType: '',
             organizationName: '',
             presidentName: '',
@@ -226,7 +256,7 @@ const SuperAdminAddUser = () => {
         } finally {
           setLoading(false);
         }
-      };
+    };
 
     return (
         <div className="form-container">
@@ -415,6 +445,29 @@ const SuperAdminAddUser = () => {
                                 </div>
                             </>
                         )}
+
+                            {formData.faculty === 'Adviser' && (
+                                <div className="form-group">
+                                    <label htmlFor="organizationId">Organization <span className="important">*</span></label>
+                                    <select 
+                                        name="organizationId" 
+                                        value={formData.organizationId} 
+                                        onChange={handleChange}
+                                        className={validationErrors.organization ? 'input-error' : ''}
+                                        required
+                                    >
+                                        <option value="">Select Organization</option>
+                                        {organizations.map((org) => (
+                                            <option key={org._id} value={org._id}>
+                                                {org.organizationName}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {validationErrors.organization && (
+                                        <small className="error-text">{validationErrors.organization}</small>
+                                    )}
+                                </div>
+                            )}
 
                         <div className="form-group">
                             <label htmlFor="password">Password <span className="important">*</span></label>
