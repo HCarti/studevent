@@ -262,29 +262,37 @@ const getOrganizations = async (req, res) => {
 };
 
 // Add this to your usersController.js
+// In usersController.js
 const getAllOrganizations = async (req, res) => {
   try {
-    console.log('Fetching organizations...'); // Debug log
-    const organizations = await User.find({ role: 'Organization' })
-      .select('organizationName _id')
-      .lean(); // Add lean() for better performance
+    console.log('Attempting to fetch organizations...');
     
-    if (!organizations || organizations.length === 0) {
-      console.log('No organizations found');
-      return res.status(200).json([]); // Return empty array instead of error
+    // Verify database connection
+    const dbStatus = mongoose.connection.readyState;
+    if(dbStatus !== 1) {
+      throw new Error(`Database not connected (status: ${dbStatus})`);
     }
 
-    console.log('Organizations fetched successfully:', organizations.length);
+    const organizations = await User.find({ role: 'Organization' })
+      .select('organizationName _id')
+      .maxTimeMS(5000); // Add query timeout
+
+    if(!organizations) {
+      throw new Error('Query returned null');
+    }
+
+    console.log(`Found ${organizations.length} organizations`);
     res.status(200).json(organizations);
+    
   } catch (error) {
-    console.error('Detailed error fetching organizations:', {
-      message: error.message,
+    console.error('Organization fetch failed:', {
+      error: error.message,
       stack: error.stack,
       timestamp: new Date().toISOString()
     });
     res.status(500).json({ 
-      message: 'Error fetching organizations',
-      error: error.message 
+      message: 'Failed to fetch organizations',
+      detailedError: process.env.NODE_ENV === 'development' ? error.message : null 
     });
   }
 };

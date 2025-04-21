@@ -76,6 +76,7 @@ const SuperAdminAddUser = () => {
                     'https://studevent-server.vercel.app/api/users/allorganizations', 
                     {
                         headers: {
+                            'Content-Type': 'multipart/form-data',
                             'Authorization': `Bearer ${token}`
                         }
                     }
