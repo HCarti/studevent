@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import './SuperAdminAddUser.css';
 
@@ -24,6 +24,7 @@ const SuperAdminAddUser = () => {
     const [success, setSuccess] = useState('');
     const [validationErrors, setValidationErrors] = useState({});
     const [presidentSignature, setPresidentSignature] = useState(null);
+    const [organizations, setOrganizations] = useState([]); // State for organizations list
 
     const faculties = ['Adviser', 'Dean', 'Academic Services', 'Academic Director', 'Executive Director'];
     const typeorganizations = [
@@ -33,6 +34,25 @@ const SuperAdminAddUser = () => {
         'Student Govenment',
         'Independent Constitutional Commissions ',
     ];
+
+     // Fetch organizations when component mounts
+     useEffect(() => {
+        const fetchOrganizations = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await axios.get('https://studevent-server.vercel.app/api/users/organizations', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                setOrganizations(response.data);
+            } catch (error) {
+                console.error('Error fetching organizations:', error);
+            }
+        };
+
+        fetchOrganizations();
+    }, []);
 
     const handleChange = (e) => {
         setFormData({
@@ -68,7 +88,7 @@ const SuperAdminAddUser = () => {
     };
 
     const validateForm = () => {
-        const { role, firstName, lastName, email, password, confirmPassword, organizationType, organizationName, presidentName } = formData;
+        const { role, firstName, lastName, email, password, confirmPassword, faculty, organization, organizationType, organizationName, presidentName } = formData;
         let errors = {};
         let isValid = true;
     
@@ -101,10 +121,15 @@ const SuperAdminAddUser = () => {
                 isValid = false;
                 errors.presidentSignature = 'President signature is required.';
             }
-        } else if (role === 'Admin' || role === 'Authority') {  // Removed SuperAdmin from this check
+        } else if (role === 'Admin' || role === 'Authority') {
             if (!signature) {
                 isValid = false;
                 errors.signature = 'Signature is required.';
+            }
+            // Additional validation for Advisers
+            if (faculty === 'Adviser' && !organization) {
+                isValid = false;
+                errors.organization = 'Organization is required for Advisers.';
             }
         }
         // Common validations
@@ -175,6 +200,10 @@ const SuperAdminAddUser = () => {
       
           if (formData.role === 'Authority') {
             data.append('faculty', formData.faculty);
+            // Add organization if faculty is Adviser
+            if (formData.faculty === 'Adviser') {
+              data.append('organization', formData.organization);
+            }
           }
       
           // Add Organization-specific fields
@@ -353,34 +382,41 @@ const SuperAdminAddUser = () => {
                         </div>
 
                         {formData.role === 'Authority' && (
-                            <>
-                                <div className="form-group">
-                                    <label htmlFor="faculty">Faculty and School Admin:</label>
-                                    <select name="faculty" value={formData.faculty} onChange={handleChange}>
-                                        <option value="">Select Role</option>
-                                        {faculties.map((faculty, index) => (
-                                            <option key={index} value={faculty}>
-                                                {faculty}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                <>
+                    <div className="form-group">
+                        <label htmlFor="faculty">Faculty and School Admin:</label>
+                        <select name="faculty" value={formData.faculty} onChange={handleChange}>
+                            <option value="">Select Role</option>
+                            {faculties.map((faculty, index) => (
+                                <option key={index} value={faculty}>
+                                    {faculty}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
 
-                                {formData.faculty === 'Adviser' && (
-                                    <div className="form-group">
-                                        <label htmlFor="organization">Type of Organizations:</label>
-                                        <select name="organization" value={formData.organization} onChange={handleChange}>
-                                            <option value="">Select Organization</option>
-                                            {typeorganizations.map((organization, index) => (
-                                                <option key={index} value={organization}>
-                                                    {organization}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                )}
-                            </>
-                        )}
+                    {formData.faculty === 'Adviser' && (
+                        <>
+                            <div className="form-group">
+                                <label htmlFor="organization">Organization:</label>
+                                <select 
+                                    name="organization" 
+                                    value={formData.organization} 
+                                    onChange={handleChange}
+                                    required={formData.faculty === 'Adviser'}
+                                >
+                                    <option value="">Select Organization</option>
+                                    {organizations.map((org) => (
+                                        <option key={org._id} value={org.organizationName}>
+                                            {org.organizationName}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </>
+                    )}
+                </>
+            )}
 
                         {formData.role === 'Organization' && (
                             <>

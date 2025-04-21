@@ -59,6 +59,12 @@ const userSchema = new Schema({
       return this.role === 'Authority';
     }
   },
+  organization: {
+    type: String,
+    required: function() {
+      return this.role === 'Authority' && this.faculty === 'Adviser';
+    }
+  },
   logo: String,
   signature: {
     type: String,
