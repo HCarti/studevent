@@ -72,14 +72,19 @@ const SuperAdminAddUser = () => {
         const fetchOrganizations = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const response = await axios.get('https://studevent-server.vercel.app/api/users/allorganizations', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
+                const response = await axios.get(
+                    'https://studevent-server.vercel.app/api/users/allorganizations', 
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
                     }
-                });
+                );
                 setOrganizations(response.data);
             } catch (error) {
                 console.error('Error fetching organizations:', error);
+                // Add error handling for the UI
+                setError('Failed to load organizations. Please try again later.');
             }
         };
     
@@ -382,35 +387,44 @@ const SuperAdminAddUser = () => {
                             {validationErrors.email && <small className="error-text">{validationErrors.email}</small>}
                         </div>
 
-                        {formData.role === 'Authority' && (
-                            <>
-                                <div className="form-group">
-                                    <label htmlFor="faculty">Faculty and School Admin:</label>
-                                    <select name="faculty" value={formData.faculty} onChange={handleChange}>
-                                        <option value="">Select Role</option>
-                                        {faculties.map((faculty, index) => (
-                                            <option key={index} value={faculty}>
-                                                {faculty}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                              {formData.role === 'Authority' && (
+                                    <>
+                                        <div className="form-group">
+                                            <label htmlFor="faculty">Faculty and School Admin:</label>
+                                            <select name="faculty" value={formData.faculty} onChange={handleChange}>
+                                                <option value="">Select Role</option>
+                                                {faculties.map((faculty, index) => (
+                                                    <option key={index} value={faculty}>
+                                                        {faculty}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
 
-                                {formData.faculty === 'Adviser' && (
-                                    <div className="form-group">
-                                        <label htmlFor="organization">Type of Organizations:</label>
-                                        <select name="organization" value={formData.organization} onChange={handleChange}>
-                                            <option value="">Select Organization</option>
-                                            {typeorganizations.map((organization, index) => (
-                                                <option key={index} value={organization}>
-                                                    {organization}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                        {formData.faculty === 'Adviser' && (
+                                            <div className="form-group">
+                                                <label htmlFor="organizationId">Organization <span className="important">*</span></label>
+                                                <select 
+                                                    name="organizationId" 
+                                                    value={formData.organizationId} 
+                                                    onChange={handleChange}
+                                                    className={validationErrors.organizationId ? 'input-error' : ''}
+                                                    required
+                                                >
+                                                    <option value="">Select Organization</option>
+                                                    {organizations.map((org) => (
+                                                        <option key={org._id} value={org._id}>
+                                                            {org.organizationName}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                {validationErrors.organizationId && (
+                                                    <small className="error-text">{validationErrors.organizationId}</small>
+                                                )}
+                                            </div>
+                                        )}
+                                    </>
                                 )}
-                            </>
-                        )}
 
                         {formData.role === 'Organization' && (
                             <>
@@ -445,30 +459,6 @@ const SuperAdminAddUser = () => {
                                 </div>
                             </>
                         )}
-
-                            {formData.faculty === 'Adviser' && (
-                                <div className="form-group">
-                                    <label htmlFor="organizationId">Organization <span className="important">*</span></label>
-                                    <select 
-                                        name="organizationId" 
-                                        value={formData.organizationId} 
-                                        onChange={handleChange}
-                                        className={validationErrors.organization ? 'input-error' : ''}
-                                        required
-                                    >
-                                        <option value="">Select Organization</option>
-                                        {organizations.map((org) => (
-                                            <option key={org._id} value={org._id}>
-                                                {org.organizationName}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {validationErrors.organization && (
-                                        <small className="error-text">{validationErrors.organization}</small>
-                                    )}
-                                </div>
-                            )}
-
                         <div className="form-group">
                             <label htmlFor="password">Password <span className="important">*</span></label>
                             <input

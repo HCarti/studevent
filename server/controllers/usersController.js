@@ -269,7 +269,7 @@ const getAllOrganizations = async (req, res) => {
     res.status(200).json(organizations);
   } catch (error) {
     console.error('Error fetching organizations:', error);
-    res.status(500).json({ message: 'Error fetching organizations' });
+    res.status(500).json({ message: 'Error fetching organizations', error: error.message });
   }
 };
 
