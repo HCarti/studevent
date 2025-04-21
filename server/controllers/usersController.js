@@ -264,35 +264,51 @@ const getOrganizations = async (req, res) => {
 // Add this to your usersController.js
 // In usersController.js
 const getAllOrganizations = async (req, res) => {
+  console.log('Entering getAllOrganizations controller');
+  
   try {
-    console.log('Attempting to fetch organizations...');
-    
-    // Verify database connection
+    console.log('Checking database connection...');
     const dbStatus = mongoose.connection.readyState;
+    console.log(`Database connection state: ${dbStatus}`);
+    
     if(dbStatus !== 1) {
-      throw new Error(`Database not connected (status: ${dbStatus})`);
+      const err = new Error(`Database not connected (status: ${dbStatus})`);
+      console.error('Database connection error:', err);
+      throw err;
     }
 
+    console.log('Executing organizations query...');
     const organizations = await User.find({ role: 'Organization' })
       .select('organizationName _id')
-      .maxTimeMS(5000); // Add query timeout
+      .maxTimeMS(5000)
+      .lean(); // Add lean() for better performance
 
+    console.log('Query completed, results:', organizations?.length);
+    
     if(!organizations) {
-      throw new Error('Query returned null');
+      const err = new Error('Query returned null');
+      console.error('Null result error:', err);
+      throw err;
     }
 
-    console.log(`Found ${organizations.length} organizations`);
-    res.status(200).json(organizations);
+    console.log(`Sending ${organizations.length} organizations`);
+    return res.status(200).json(organizations);
     
   } catch (error) {
-    console.error('Organization fetch failed:', {
+    console.error('Full error context:', {
       error: error.message,
       stack: error.stack,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      requestHeaders: req.headers,
+      authUser: req.user // If using authenticateToken
     });
-    res.status(500).json({ 
+    
+    return res.status(500).json({ 
       message: 'Failed to fetch organizations',
-      detailedError: process.env.NODE_ENV === 'development' ? error.message : null 
+      detailedError: process.env.NODE_ENV === 'development' ? {
+        message: error.message,
+        stack: error.stack
+      } : null 
     });
   }
 };
