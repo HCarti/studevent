@@ -264,12 +264,28 @@ const getOrganizations = async (req, res) => {
 // Add this to your usersController.js
 const getAllOrganizations = async (req, res) => {
   try {
+    console.log('Fetching organizations...'); // Debug log
     const organizations = await User.find({ role: 'Organization' })
-      .select('organizationName _id');
+      .select('organizationName _id')
+      .lean(); // Add lean() for better performance
+    
+    if (!organizations || organizations.length === 0) {
+      console.log('No organizations found');
+      return res.status(200).json([]); // Return empty array instead of error
+    }
+
+    console.log('Organizations fetched successfully:', organizations.length);
     res.status(200).json(organizations);
   } catch (error) {
-    console.error('Error fetching organizations:', error);
-    res.status(500).json({ message: 'Error fetching organizations', error: error.message });
+    console.error('Detailed error fetching organizations:', {
+      message: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
+    res.status(500).json({ 
+      message: 'Error fetching organizations',
+      error: error.message 
+    });
   }
 };
 
