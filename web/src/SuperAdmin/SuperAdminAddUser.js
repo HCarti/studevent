@@ -187,34 +187,32 @@ const SuperAdminAddUser = () => {
       
           const data = new FormData();
           // Add common fields
-          data.append('role', formData.role);
-          data.append('email', formData.email);
-          data.append('password', formData.password);
-          data.append('logo', logo);
-          
-          // Add role-specific fields
-          if (formData.role === 'Admin' || formData.role === 'Authority' || formData.role === 'SuperAdmin') {
+           // Common fields for all roles
+        data.append('role', formData.role);
+        data.append('email', formData.email);
+        data.append('password', formData.password);
+        if (logo) data.append('logo', logo);
+
+        // Role-specific fields
+        if (['Admin', 'Authority', 'SuperAdmin'].includes(formData.role)) {
             data.append('firstName', formData.firstName);
             data.append('lastName', formData.lastName);
-          }
-      
-          if (formData.role === 'Authority') {
+        }
+
+        if (formData.role === 'Authority') {
             data.append('faculty', formData.faculty);
             if (formData.faculty === 'Adviser') {
                 data.append('organization', formData.organization);
             }
-            if (signature) data.append('signature', signature); // Note: Correct field name
+            if (signature) data.append('signature', signature);
         }
-      
-          // Add Organization-specific fields
-          if (formData.role === 'Organization') {
+
+        if (formData.role === 'Organization') {
             data.append('organizationType', formData.organizationType);
             data.append('organizationName', formData.organizationName);
             data.append('presidentName', formData.presidentName);
-            data.append('presidentSignature', presidentSignature);
-          } else if (formData.role === 'Admin' || formData.role === 'Authority') {
-            data.append('signature', signature);
-          }
+            if (presidentSignature) data.append('presidentSignature', presidentSignature);
+        }
       
           const endpoint = formData.role === 'SuperAdmin' 
             ? 'https://studevent-server.vercel.app/api/users/superadmin'

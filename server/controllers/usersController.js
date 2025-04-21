@@ -142,17 +142,18 @@ const addUser = async (userData, logoUrl, signatureUrl, presidentSignatureUrl) =
       newUser.lastName = userData.lastName;
       newUser.faculty = userData.faculty;
       newUser.signature = signatureUrl;
-    } else if(userData.faculty === 'Adviser' && userData.organization) {
-      newUser.organization = userData.organization;
-      newUser.signature = signatureUrl;
-    }else if (userData.role === 'Admin') {
+      
+      // Only add organization if faculty is Adviser
+      if (userData.faculty === 'Adviser') {
+        newUser.organization = userData.organization;
+      }
+    } else if (userData.role === 'Admin') {
       newUser.firstName = userData.firstName;
       newUser.lastName = userData.lastName;
       newUser.signature = signatureUrl;
     } else if (userData.role === 'SuperAdmin') {
       newUser.firstName = userData.firstName;
       newUser.lastName = userData.lastName;
-      // No signature required for SuperAdmin
     } else if (userData.role === 'Organization') {
       newUser.organizationType = userData.organizationType;
       newUser.organizationName = userData.organizationName;
