@@ -390,6 +390,9 @@ const fetchOccupiedDates = async () => {
     // Optionally set some error state to show to user
   }
 };
+useEffect(() => {
+  fetchOccupiedDates();
+}, []);
 
 const normalizeDateToUTC = (date) => {
   return moment(date).utc().startOf('day').format('YYYY-MM-DD');
