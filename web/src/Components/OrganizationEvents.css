@@ -43,6 +43,8 @@
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  height: calc(100vh - 200px); /* Adjust based on your header height */
+  min-height: 600px; /* Minimum height */
 }
 
 /* ===== Calendar Wrapper ===== */
@@ -50,6 +52,9 @@
   flex: 2;
   padding: 1.5rem;
   background: white;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .calendar-header {
@@ -142,8 +147,17 @@
   padding: 2rem;
   background: #f8f9fa;
   border-left: 1px solid #eaeaea;
-  overflow-y: auto;
-  max-height: 800px;
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Take full height of parent */
+  max-height: 800px; /* Maximum height */
+  overflow: hidden; /* Hide overflow */
+}
+
+.event-details-content {
+  overflow-y: auto; /* Make content scrollable */
+  flex: 1; /* Take remaining space */
+  padding-right: 0.5rem; /* Add some space for scrollbar */
 }
 
 .event-details h2 {
@@ -152,6 +166,11 @@
   padding-bottom: 1rem;
   border-bottom: 1px solid #eaeaea;
   font-size: 1.3rem;
+  position: sticky;
+  top: 0;
+  background: #f8f9fa;
+  z-index: 1;
+  padding-right: 1rem; /* Account for scrollbar */
 }
 
 .event-list {
@@ -207,6 +226,25 @@
   padding: 2rem;
   background: white;
   border-radius: 8px;
+}
+
+/* Custom scrollbar for event details */
+.event-details-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.event-details-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.event-details-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.event-details-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 
 /* ===== Loading & Error States ===== */

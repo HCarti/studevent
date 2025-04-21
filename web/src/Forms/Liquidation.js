@@ -213,6 +213,24 @@ const Liquidation = () => {
             )}
           </div>
         </div>
+
+        {processedData && (
+       
+       <button 
+         onClick={handleLiquidationSubmit}
+         className="submit-btn"
+         disabled={isLoading || !fileBlob}
+       >
+         {isLoading ? (
+           <>
+             <span className="spinner"></span>
+             Submitting...
+           </>
+         ) : (
+           'Submit Liquidation'
+         )}
+       </button>
+   )}
         
         {error && <div className="error-message">{error}</div>}
         {success && <div className="success-message">{success}</div>}
@@ -246,53 +264,6 @@ const Liquidation = () => {
       )}
 
       {/* Processed Liquidation Data Section */}
-      {processedData && (
-        <div className="liquidation-results">
-          <h3 className="section-subtitle">Liquidation Results</h3>
-          <div className="results-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Gross Amount</th>
-                  <th>Tax</th>
-                  <th>Net Amount</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {processedData.slice(0, 10).map((item, index) => (
-                  <tr key={index}>
-                    <td>{item.item || `Item ${index + 1}`}</td>
-                    <td>{item.grossAmount?.toFixed(2) || 'N/A'}</td>
-                    <td>{item.tax?.toFixed(2) || '0.00'}</td>
-                    <td>{item.netAmount?.toFixed(2) || 'N/A'}</td>
-                    <td>
-                      <span className={`status-badge ${item.status.toLowerCase()}`}>
-                        {item.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <button 
-            onClick={handleLiquidationSubmit}
-            className="submit-btn"
-            disabled={isLoading || !fileBlob}
-          >
-            {isLoading ? (
-              <>
-                <span className="spinner"></span>
-                Submitting...
-              </>
-            ) : (
-              'Submit Liquidation'
-            )}
-          </button>
-        </div>
-      )}
     </div>
   );
 };

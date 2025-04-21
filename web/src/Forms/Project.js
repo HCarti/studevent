@@ -1445,7 +1445,7 @@ const formatTimeDisplay = (timeStr) => {
           ))}
         </ul>
       </div>
-      <div className="inner-forms-1">
+      <div className="inner-forms-2">
         <h1>
           {isEditMode ? 'Edit Project Proposal' : 'Project Proposal Form'}
         </h1>

@@ -18,7 +18,7 @@
 }
 
 /* Main Form Content Area */
-.inner-forms-1 {
+.inner-forms-2 {
   background-color: #fff;
   padding: 30px;
   border-radius: 12px;
@@ -30,11 +30,11 @@
 }
 
 /* Make all textareas and inputs full width */
-.inner-forms-1 .form-group {
+.inner-forms-2 .form-group {
   width: 100%;
 }
 
-.inner-forms-1 textarea {
+.inner-forms-2 textarea {
   min-height: 100px;
   resize: vertical;
   font-family: inherit;
@@ -44,13 +44,13 @@
 
 
 /* Form Elements - Full Width */
-.inner-forms-1 input[type="text"],
-.inner-forms-1 input[type="email"],
-.inner-forms-1 input[type="date"],
-.inner-forms-1 input[type="time"],
-.inner-forms-1 input[type="number"],
-.inner-forms-1 textarea,
-.inner-forms-1 select {
+.inner-forms-2 input[type="text"],
+.inner-forms-2 input[type="email"],
+.inner-forms-2 input[type="date"],
+.inner-forms-2 input[type="time"],
+.inner-forms-2 input[type="number"],
+.inner-forms-2 textarea,
+.inner-forms-2 select {
   width: 100%;
   padding: 12px 15px;
   border-radius: 8px;
@@ -62,12 +62,12 @@
   box-sizing: border-box;
 } 
 
-.inner-forms-1 input[type="text"] {
+.inner-forms-2 input[type="text"] {
   width: 500px;
 }
 
 /* Textarea Specific Styles */
-.inner-forms-1 textarea {
+.inner-forms-2 textarea {
   min-height: 200px;
   resize: vertical;
   font-family: inherit;
@@ -79,9 +79,9 @@
 }
 
 /* Focus States */
-.inner-forms-1 input:focus,
-.inner-forms-1 textarea:focus,
-.inner-forms-1 select:focus {
+.inner-forms-2 input:focus,
+.inner-forms-2 textarea:focus,
+.inner-forms-2 select:focus {
   border-color: #80bdff;
   outline: none;
   box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
@@ -246,7 +246,7 @@
     flex-direction: column;
   }
   
-  .inner-forms-1 {
+  .inner-forms-2 {
     max-width: 100%;
     padding: 20px;
   }

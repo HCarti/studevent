@@ -353,23 +353,43 @@ const fetchFormData = async () => {
 const fetchOccupiedDates = async () => {
   try {
     const token = localStorage.getItem('token');
+    
+    if (!token) {
+      console.error('No authentication token found');
+      return;
+    }
+
+    console.log('Fetching event counts...'); // Debug log
+    
     const response = await fetch('https://studevent-server.vercel.app/api/calendar/event-counts', {
       headers: {
         'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
       }
     });
 
-    if (!response.ok) throw new Error('Failed to fetch event counts');
+    console.log('Response status:', response.status); // Debug log
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Error response:', errorData);
+      throw new Error(errorData.message || 'Failed to fetch event counts');
+    }
     
     const data = await response.json();
-    setEventsPerDate(data.eventCounts); // This should be { "YYYY-MM-DD": count }
+    console.log('Received event counts:', data); // Debug log
+    
+    if (data.eventCounts) {
+      setEventsPerDate(data.eventCounts);
+    } else {
+      console.warn('No eventCounts in response');
+      setEventsPerDate({});
+    }
   } catch (error) {
-    console.error('Error fetching event counts:', error);
+    console.error('Error in fetchOccupiedDates:', error);
+    // Optionally set some error state to show to user
   }
 };
-useEffect(() => {
-  fetchOccupiedDates();
-}, []);
 
 const normalizeDateToUTC = (date) => {
   return moment(date).utc().startOf('day').format('YYYY-MM-DD');

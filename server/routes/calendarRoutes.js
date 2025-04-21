@@ -94,29 +94,44 @@ router.get('/occupied-slots', async (req, res) => {
 // Get event counts per date
 router.get('/event-counts', async (req, res) => {
   try {
+    console.log('Fetching event counts...'); // Debug log
+    
+    // Add date range filtering if needed
     const events = await CalendarEvent.find({
       $or: [
         { formType: 'Activity' },
         { formType: 'Project' }
       ]
-    }, 'startDate endDate');
+    }, 'startDate endDate').lean();
+    
+    console.log(`Found ${events.length} events`); // Debug log
     
     const eventCounts = {};
     
     events.forEach(event => {
-      const start = moment(event.startDate).startOf('day');
-      const end = moment(event.endDate).startOf('day');
-      
-      for (let date = start.clone(); date <= end; date.add(1, 'days')) {
-        const dateStr = date.format('YYYY-MM-DD');
-        eventCounts[dateStr] = (eventCounts[dateStr] || 0) + 1;
+      try {
+        const start = moment.utc(event.startDate).startOf('day');
+        const end = moment.utc(event.endDate).startOf('day');
+        
+        console.log(`Processing event from ${start.format()} to ${end.format()}`); // Debug log
+        
+        for (let date = start.clone(); date <= end; date.add(1, 'days')) {
+          const dateStr = date.format('YYYY-MM-DD');
+          eventCounts[dateStr] = (eventCounts[dateStr] || 0) + 1;
+        }
+      } catch (e) {
+        console.error('Error processing event:', event, e);
       }
     });
     
+    console.log('Final event counts:', eventCounts); // Debug log
     res.json({ eventCounts });
   } catch (error) {
     console.error('Error in /event-counts:', error);
-    res.status(500).json({ error: 'Failed to fetch event counts' });
+    res.status(500).json({ 
+      error: 'Failed to fetch event counts',
+      details: error.message 
+    });
   }
 });
 

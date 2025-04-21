@@ -1,7 +1,6 @@
 /* Overall Form Container */
 .form-ubox-1 {
   display: flex;
-  flex-direction: row; /* Default to row layout */
   justify-content: center;
   padding: 40px;
   max-width: 100%;
@@ -26,11 +25,10 @@
   width: 100%;
   align-items: center;
   justify-content: center;
-  max-width: 60%;
-  max-height: 73vh; /* Set maximum height for the form container */
+  max-width: 50%;
+  max-height: 65vh; /* Set maximum height for the form container */
   overflow-y: auto; /* Enable vertical scrolling */
 }
-
 
 /* Sidebar Styles */
 .sidebar {
@@ -665,65 +663,28 @@ textarea {
 }
 
 /* Responsive Design */
-@media (max-width: 992px) {
-  .inner-forms-1 {
-    max-width: 70%;
-  }
-}
-
 @media (max-width: 768px) {
-  .form-ubox-1 {
+  .form-row {
     flex-direction: column;
+  }
+
+  .form-row label {
+    flex-basis: 100%;
+  }
+
+  .inner-forms {
     padding: 20px;
   }
-  
-  .sidebar {
-    width: 100%;
-    border-radius: 12px 12px 0 0;
-    border-right: none;
-    border-bottom: 1px solid #ddd;
-    max-height: none;
-    margin-bottom: 20px;
+
+  h1 {
+    font-size: 22px;
   }
-  
-  .inner-forms-1 {
-    max-width: 100%;
-    border-radius: 0 0 12px 12px;
-    padding: 20px;
-  }
-  
+
   input[type="text"],
   input[type="email"],
   input[type="date"],
   textarea,
   select {
     width: 100%;
-  }
-  
-  .form-row {
-    flex-direction: column;
-  }
-  
-  h1 {
-    font-size: 22px;
-  }
-}
-
-@media (max-width: 576px) {
-  .form-ubox-1 {
-    padding: 15px;
-  }
-  
-  .inner-forms-1 {
-    padding: 15px;
-  }
-  
-  .sidebar {
-    padding: 15px;
-  }
-  
-  .sidebar li {
-    padding: 8px;
-    font-size: 14px;
   }
 }
