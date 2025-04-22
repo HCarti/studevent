@@ -50,9 +50,15 @@ const checkEventCapacity = async (startDate, endDate, currentFormId = null) => {
 
 // Unified calendar event creator that handles both form types
 // Updated createCalendarEventFromForm
+// Updated createCalendarEventFromForm with better logging
 const createCalendarEventFromForm = async (form, session) => {
   try {
-    if (!['Activity', 'Project'].includes(form.formType)) return null;
+    console.log(`Creating calendar event for form ${form._id} of type ${form.formType}`);
+    
+    if (!['Activity', 'Project'].includes(form.formType)) {
+      console.log('Skipping - invalid form type');
+      return null;
+    }
 
     // Get dates based on form type
     const startDate = form.formType === 'Project' 
@@ -67,7 +73,9 @@ const createCalendarEventFromForm = async (form, session) => {
       return null;
     }
 
-    // Double-check capacity (redundant safety check)
+    console.log(`Event dates: ${startDate} to ${endDate}`);
+
+    // Double-check capacity
     await checkEventCapacity(startDate, endDate, form._id);
 
     // Create event data
@@ -90,10 +98,13 @@ const createCalendarEventFromForm = async (form, session) => {
                   (await User.findById(form.createdBy)).organizationId
     };
 
-    return await CalendarEvent.create([eventData], { session });
+    console.log('Creating event with data:', eventData);
+    const createdEvent = await CalendarEvent.create([eventData], { session });
+    console.log('Event created successfully:', createdEvent);
+    return createdEvent;
   } catch (error) {
-    console.error('Calendar event creation failed:', error.message);
-    return null;
+    console.error('Calendar event creation failed:', error);
+    throw error; // Re-throw to handle in calling function
   }
 };
 
@@ -390,6 +401,7 @@ if (['Activity', 'Project'].includes(form.formType)) {
     await checkEventCapacity(startDate, endDate);
     
     // Proceed with calendar event creation
+    console.log(`Attempting to create calendar event for form ${form._id}`);
     await createCalendarEventFromForm(form, session);
   } catch (capacityError) {
     console.log('Event capacity check failed:', capacityError.message);
