@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+import moment from 'moment';
 
 const CalendarEventSchema = new mongoose.Schema({
   title: {
