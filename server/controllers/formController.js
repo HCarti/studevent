@@ -11,64 +11,86 @@ const BudgetProposal = require("../models/BudgetProposal");
 
 // Enhanced event capacity check that handles both form types
 const checkEventCapacity = async (startDate, endDate, currentFormId = null) => {
-  const start = moment(startDate).startOf('day');
-  const end = moment(endDate).startOf('day');
-  
-  // Build query to find overlapping events from both form types
-  const query = {
-    $or: [
-      { startDate: { $lte: end.toDate() }, endDate: { $gte: start.toDate() } }
-    ]
-  };
-  
-  if (currentFormId) {
-    query.formId = { $ne: currentFormId }; // Exclude current form when editing
-  }
-
-  const existingEvents = await CalendarEvent.find(query);
-  
-  // Count events per date
-  const eventCounts = {};
-  existingEvents.forEach(event => {
-    const eventStart = moment(event.startDate).startOf('day');
-    const eventEnd = moment(event.endDate).startOf('day');
+  try {
+    const start = moment.utc(startDate).startOf('day');
+    const end = moment.utc(endDate).startOf('day');
     
-    for (let date = eventStart.clone(); date <= eventEnd; date.add(1, 'days')) {
+    const query = {
+      $or: [
+        { 
+          startDate: { $lte: end.toDate() },
+          endDate: { $gte: start.toDate() }
+        }
+      ]
+    };
+    
+    if (currentFormId) {
+      query.formId = { $ne: currentFormId };
+    }
+
+    const existingEvents = await CalendarEvent.find(query);
+    
+    const eventCounts = {};
+    existingEvents.forEach(event => {
+      const eventStart = moment.utc(event.startDate).startOf('day');
+      const eventEnd = moment.utc(event.endDate).startOf('day');
+      
+      for (let date = eventStart.clone(); date <= eventEnd; date.add(1, 'days')) {
+        const dateStr = date.format('YYYY-MM-DD');
+        eventCounts[dateStr] = (eventCounts[dateStr] || 0) + 1;
+      }
+    });
+    
+    // Debug output
+    console.log('Event counts by day:', eventCounts);
+    
+    for (let date = start.clone(); date <= end; date.add(1, 'days')) {
       const dateStr = date.format('YYYY-MM-DD');
-      eventCounts[dateStr] = (eventCounts[dateStr] || 0) + 1;
+      if ((eventCounts[dateStr] || 0) >= 3) {
+        throw new Error(`Maximum events reached (3) on ${date.format('MMMM Do YYYY')}`);
+      }
     }
-  });
-  
-  // Validate new event dates
-  for (let date = start.clone(); date <= end; date.add(1, 'days')) {
-    const dateStr = date.format('YYYY-MM-DD');
-    if ((eventCounts[dateStr] || 0) >= 3) {
-      throw new Error(`Maximum events reached (3) on ${date.format('MMMM Do YYYY')}`);
-    }
+  } catch (error) {
+    console.error('Capacity check error:', error);
+    throw error; // Re-throw to be caught by the calling function
   }
 };
 
-// Unified calendar event creator that handles both form types
+
 // Updated createCalendarEventFromForm
 const createCalendarEventFromForm = async (form, session) => {
   try {
-    if (!['Activity', 'Project'].includes(form.formType)) return null;
-
-    // Get dates based on form type
-    const startDate = form.formType === 'Project' 
-      ? form.startDate 
-      : form.eventStartDate;
-    const endDate = form.formType === 'Project'
-      ? form.endDate || form.startDate
-      : form.eventEndDate || form.eventStartDate;
-
-    if (!startDate) {
-      console.log('Skipping calendar event - missing start date');
-      return null;
+    if (['Activity', 'Project'].includes(form.formType)) {
+      try {
+        const startDate = form.formType === 'Project' 
+          ? form.startDate 
+          : form.eventStartDate;
+        const endDate = form.formType === 'Project'
+          ? form.endDate || form.startDate
+          : form.eventEndDate || form.eventStartDate;
+    
+        console.log('Checking event capacity for:', {
+          startDate,
+          endDate,
+          formId: form._id
+        });
+    
+        await checkEventCapacity(startDate, endDate, form._id);
+        
+        console.log('Capacity check passed, creating calendar event...');
+        const calendarEvent = await createCalendarEventFromForm(form, session);
+        
+        if (!calendarEvent) {
+          console.log('Calendar event was not created (check logs for details)');
+        }
+      } catch (capacityError) {
+        console.error('Event capacity check failed:', {
+          message: capacityError.message,
+          stack: capacityError.stack
+        });
+       
+      }
     }
-
-    // Double-check capacity (redundant safety check)
-    await checkEventCapacity(startDate, endDate, form._id);
 
     // Create event data
     const eventData = {
@@ -77,26 +99,33 @@ const createCalendarEventFromForm = async (form, session) => {
         : form.eventTitle,
       description: form.formType === 'Project'
         ? form.projectDescription
-        : form.objectives,
+        : form.objectives || "No description provided",
       location: form.formType === 'Project'
-        ? form.venue
-        : form.venueAddress,
+        ? form.venue || "No venue specified"
+        : form.venueAddress || "No location specified",
       startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      endDate: endDate ? new Date(endDate) : new Date(startDate),
       formId: form._id,
       formType: form.formType,
       createdBy: form.createdBy,
       organization: form.studentOrganization || 
-                  (await User.findById(form.createdBy)).organizationId
+                 (await User.findById(form.createdBy).organizationId)
     };
 
-    return await CalendarEvent.create([eventData], { session });
+    // Debug output
+    console.log('Event data to be saved:', eventData);
+
+    const calendarEvent = await CalendarEvent.create([eventData], { session });
+    console.log('Calendar event created successfully:', calendarEvent._id);
+    return calendarEvent;
   } catch (error) {
-    console.error('Calendar event creation failed:', error.message);
+    console.error('Calendar event creation failed:', {
+      error: error.message,
+      stack: error.stack
+    });
     return null;
   }
 };
-
 // Helper to update calendar event when form changes
 const updateCalendarEventFromForm = async (form) => {
   try {

@@ -531,9 +531,6 @@ const isOccupied = (date) => {
     return sections[step] || [];
   };
 
-  console.log("Current form data:", formData);
-  console.log("Validation errors:", fieldErrors);
-
   // Form submission
   const handleSubmit = async () => {
     
