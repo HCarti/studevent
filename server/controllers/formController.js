@@ -4,7 +4,7 @@ const Notification = require("../models/Notification");
 const EventTracker = require("../models/EventTracker");
 const mongoose = require("mongoose");
 const CalendarEvent = require("../models/CalendarEvent");
-const moment = require('moment.utc');
+const moment = require('moment');
 const BudgetProposal = require("../models/BudgetProposal");
 
 // HELPERS
