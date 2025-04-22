@@ -11,18 +11,27 @@ const BudgetProposal = require("../models/BudgetProposal");
 
 // Enhanced event capacity check that handles both form types
 const checkEventCapacity = async (startDate, endDate, currentFormId = null) => {
+  // Ensure moment is available
+  if (!moment) throw new Error("Moment.js library is not available");
+  
+  // Convert to UTC and normalize dates
   const start = moment.utc(startDate).startOf('day');
   const end = moment.utc(endDate).startOf('day');
   
-  // Build query to find overlapping events from both form types
+  if (!start.isValid() || !end.isValid()) {
+    throw new Error("Invalid date range provided");
+  }
+
+  // Build query to find overlapping events
   const query = {
     $or: [
-      { startDate: { $lte: end.toDate() }, endDate: { $gte: start.toDate() } }
+      { startDate: { $lte: end.toDate() } }, 
+      { endDate: { $gte: start.toDate() } }
     ]
   };
   
   if (currentFormId) {
-    query.formId = { $ne: currentFormId }; // Exclude current form when editing
+    query.formId = { $ne: currentFormId };
   }
 
   const existingEvents = await CalendarEvent.find(query);
