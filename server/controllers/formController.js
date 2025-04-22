@@ -387,7 +387,7 @@ if (['Activity', 'Project'].includes(form.formType)) {
       ? form.endDate || form.startDate
       : form.eventEndDate || form.eventStartDate;
 
-    await checkEventCapacity(startDate, endDate);
+      await checkEventCapacity(startDate, endDate, form._id); // Add form._id here
     
     // Proceed with calendar event creation
     await createCalendarEventFromForm(form, session);

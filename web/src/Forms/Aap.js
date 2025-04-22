@@ -567,12 +567,29 @@ const isOccupied = (date) => {
     }
 
     // Date validation
-    const eventStart = moment(formData.eventStartDate);
-    const eventEnd = moment(formData.eventEndDate);
-    if (!eventStart.isValid() || !eventEnd.isValid() || eventEnd.isBefore(eventStart)) {
-      alert("Invalid event dates");
-      return;
-    }
+   // Update handleSubmit to check event counts
+      const startDateStr = moment(formData.eventStartDate).format('YYYY-MM-DD');
+      const endDateStr = moment(formData.eventEndDate).format('YYYY-MM-DD');
+
+      // Check all dates in the range
+      let isDateAvailable = true;
+      for (let date = moment(startDateStr); date <= moment(endDateStr); date.add(1, 'day')) {
+        const dateStr = date.format('YYYY-MM-DD');
+        if ((eventsPerDate[dateStr] || 0) >= 3) {
+          isDateAvailable = false;
+          break;
+        }
+      }
+
+      if (!isDateAvailable) {
+        alert("One or more selected dates have reached the maximum event capacity (3 events per day)");
+        return;
+      }
+
+      const formatDateForBackend = (dateString) => {
+        return moment(dateString).utc().format();
+      };
+      
 
     // Prepare submission data
     const submissionData = {
@@ -580,8 +597,8 @@ const isOccupied = (date) => {
       ...formData,
       attachedBudget: formData.attachedBudget || undefined, // Send undefined instead of null
       studentOrganization: formData.organizationId, // Send the ID instead of name
-      eventStartDate: new Date(formData.eventStartDate),
-      eventEndDate: new Date(formData.eventEndDate),
+      eventStartDate: formatDateForBackend(formData.eventStartDate),
+      eventEndDate: formatDateForBackend(formData.eventEndDate),
       applicationDate: new Date(formData.applicationDate),
       contactNo: Number(formData.contactNo),
       budgetAmount: Number(formData.budgetAmount),

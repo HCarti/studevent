@@ -377,9 +377,9 @@ useEffect(() => {
       const data = await response.json();
       if (data?.eventCounts) {
         setEventsPerDate(data.eventCounts);
-      }
-      if (data?.occupiedDates) {
-        setOccupiedDates(data.occupiedDates);
+        // Convert eventCounts to occupiedDates if needed
+        const dates = Object.keys(data.eventCounts).filter(date => data.eventCounts[date] > 0);
+        setOccupiedDates(dates);
       }
     } catch (error) {
       console.error('Error fetching calendar data:', error);

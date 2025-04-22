@@ -55,8 +55,8 @@ router.get('/occupied-slots', async (req, res) => {
     const eventCounts = {};
     
     events.forEach(event => {
-      const start = moment(event.startDate);
-      const end = moment(event.endDate);
+      const start = moment.utc(event.startDate).startOf('day');
+      const end = moment.utc(event.endDate).startOf('day');
       
       // Count events per date
       for (let date = start.clone().startOf('day'); date <= end.startOf('day'); date.add(1, 'days')) {
@@ -108,21 +108,23 @@ router.get('/event-counts', async (req, res) => {
     
     const eventCounts = {};
     
-    events.forEach(event => {
-      try {
-        const start = moment.utc(event.startDate).startOf('day');
-        const end = moment.utc(event.endDate).startOf('day');
-        
-        console.log(`Processing event from ${start.format()} to ${end.format()}`); // Debug log
-        
-        for (let date = start.clone(); date <= end; date.add(1, 'days')) {
-          const dateStr = date.format('YYYY-MM-DD');
-          eventCounts[dateStr] = (eventCounts[dateStr] || 0) + 1;
-        }
-      } catch (e) {
-        console.error('Error processing event:', event, e);
-      }
-    });
+    // In /event-counts route, make counting more robust
+        events.forEach(event => {
+          const start = moment.utc(event.startDate).startOf('day');
+          const end = moment.utc(event.endDate).startOf('day');
+          
+          // Handle cases where end date is before start date
+          if (end.isBefore(start)) {
+            const dateStr = start.format('YYYY-MM-DD');
+            eventCounts[dateStr] = (eventCounts[dateStr] || 0) + 1;
+            return;
+          }
+
+          for (let date = start.clone(); date <= end; date.add(1, 'days')) {
+            const dateStr = date.format('YYYY-MM-DD');
+            eventCounts[dateStr] = (eventCounts[dateStr] || 0) + 1;
+          }
+        });
     
     console.log('Final event counts:', eventCounts); // Debug log
     res.json({ eventCounts });
