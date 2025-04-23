@@ -1,10 +1,28 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './Forms.css';
 import { useNavigate } from 'react-router-dom';
+import FaceIcon from '@mui/icons-material/Face';
 import { FaFileContract, FaMoneyCheckAlt, FaProjectDiagram, FaClipboardList, FaMapMarkedAlt, FaMoneyBillWave } from 'react-icons/fa';
 
 const Forms = ({ role }) => {
   const navigate = useNavigate();
+
+  const [showModal, setShowModal] = useState(false);
+
+useEffect(() => {
+  const hasSeenInstructions = localStorage.getItem('seenFormsInstructions');
+  if (!hasSeenInstructions) {
+    setShowModal(true);
+    localStorage.setItem('seenFormsInstructions', 'true');
+  }
+}, []);
+
+const handleCloseModal = (e) => {
+  if (e.target.className === 'modal') {
+    setShowModal(false);
+  }
+};
+
 
   const handleNavigation = (path, formName) => {
     console.log(`${formName} has been clicked`);
@@ -51,6 +69,32 @@ const Forms = ({ role }) => {
   return (
     <div className="f-box">
       <h1 className="f-title">Document Forms</h1>
+      {/* Instruction Icon */}
+
+<div
+  className="help-icon"
+  title="Need help?"
+  onClick={() => setShowModal(!showModal)}
+>
+  <FaceIcon style={{ fontSize: '60px', color: '#0ea5e9', cursor: 'pointer' }} />
+</div>
+
+
+{/* Instruction Modal */}
+{showModal && (
+  <div className="modal" onClick={handleCloseModal}>
+    <div className="modal-content small">
+      <h3>Instructions for Document Forms</h3>
+      <ul>
+        <li>Select the appropriate form for your activity.</li>
+        <li>Complete all required fields and attach necessary files.</li>
+        <li>After submission, your form will be routed to your Adviser and Dean for review.</li>
+        <li>You can monitor the status in the Proposal Tracker.</li>
+      </ul>
+    </div>
+  </div>
+)}
+
       <div className="papers-box">
         {formsData.map((form, index) => (
           <div

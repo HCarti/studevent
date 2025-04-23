@@ -11,7 +11,6 @@
     background-position: center;
     background-size: cover;
     overflow-x: hidden;
-    border: 1px solid #e0e0e0;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
@@ -19,13 +18,15 @@
   /* Form Inner Section */
   .inner-forms-4 {
     background-color: #fff; 
-    padding: 40px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    align-items: center;
-    justify-content: center;
-    max-width: 1000px;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  max-width: 60%;
+  max-height: 65vh; /* Set maximum height for the form container */
+  overflow-y: auto; /* Enable vertical scrolling */
   }
   
   h1 {
@@ -56,7 +57,7 @@
   
 
   /* Input Labels */
-  .inner-forms label {
+  .inner-forms-4 label {
     font-size: 16px;
     font-weight: 500;
     color: #495057;
@@ -66,21 +67,25 @@
   }
   
   /* Input Fields */
-  input[type="text"],
-  input[type="email"],
-  input[type="date"],
-  textarea,
-  select {
-    width: 95%;
-    padding: 12px 15px;
-    margin-bottom: 5px;
-    border-radius: 8px;
-    border: 2px solid rgb(214, 214, 214);
-    background-color: #f9f9f9;
-    font-size: 16px;
-    color: #495057;
-    transition: border-color 0.2s ease-in-out;
-  }
+/* Consistent input styles */
+.inner-forms-4 input[type="text"],
+.inner-forms-4 input[type="email"],
+.inner-forms-4 input[type="number"],
+.inner-forms-4 input[type="date"],
+.inner-forms-4 textarea,
+.inner-forms-4 select,
+.react-datepicker__input-container input {
+  width: 100%;
+  padding: 12px 15px;
+  margin-bottom: 5px;
+  border-radius: 8px;
+  border: 2px solid rgb(214, 214, 214);
+  background-color: #f9f9f9;
+  font-size: 16px;
+  color: #495057;
+  transition: border-color 0.2s ease-in-out;
+  box-sizing: border-box; /* Include padding and border in width */
+}
   
   input[type="text"]:focus,
   input[type="email"]:focus,
@@ -182,10 +187,28 @@
   }
 
   .table-container {
-    overflow-x: auto;
+    overflow-x: disabled;
     margin: 1rem 0;
   }
   
+  .basic-info-table input[type="text"],
+  .basic-info-table input[type="number"],
+  .basic-info-table .react-datepicker-wrapper,
+  .basic-info-table .react-datepicker__input-container input {
+    width: 100%;
+    padding: 8px 12px;
+    box-sizing: border-box;
+  }
+  
+  /* Error message positioning adjustments */
+.basic-info-table .error-message {
+  position: relative;
+  top: 0;
+  left: 0;
+  margin-top: 4px;
+  white-space: normal;
+}
+
   .basic-info-table {
     width: 100%;
     border-collapse: collapse;
@@ -305,9 +328,8 @@
   
   .remarks-cell input {
     width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    padding: 8px 12px;
+    box-sizing: border-box;
   }
   
   .section-header {

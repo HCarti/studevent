@@ -1,24 +1,42 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import './FormsandSig.css';
 import FileCopyIcon from '@mui/icons-material/FileCopy';
 import EditIcon from '@mui/icons-material/Edit';
 import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
 import SearchIcon from '@mui/icons-material/Search';
+import FaceIcon from '@mui/icons-material/Face';
 import { useNavigate } from 'react-router-dom';
 
 const FormsandSig = () => {
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState(null);
-  const [organizationId, setOrganizationId] = useState(null); // Using the userId of the organization
+  const [organizationId, setOrganizationId] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const modalRef = useRef();
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
-      setUserRole(parsedUser?.role); // Get the role
-      setOrganizationId(parsedUser?._id); // Get the userId (which matches the organizationId in forms)
+      setUserRole(parsedUser?.role);
+      setOrganizationId(parsedUser?._id);
     }
   }, []);
+
+  // Close modal when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        setShowModal(false);
+      }
+    };
+    if (showModal) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showModal]);
 
   const handleForms = () => {
     if (!userRole) {
@@ -37,7 +55,7 @@ const FormsandSig = () => {
 
   const handleSig = () => {
     if (organizationId) {
-      navigate(`/organization/${organizationId}/forms`); // Use the userId as the identifier
+      navigate(`/organization/${organizationId}/forms`);
     } else {
       alert("Organization ID not found.");
     }
@@ -46,6 +64,33 @@ const FormsandSig = () => {
   return (
     <div className="fs-container">
       <h1 className="fs-title">Forms and Signature</h1>
+
+      {/* Icon to toggle modal */}
+{/* Icon with tooltip for clarity */}
+<div
+  className="help-icon"
+  title="Need help?"
+  onClick={() => setShowModal(!showModal)}
+>
+  <FaceIcon style={{ fontSize: '60px', color: '#0ea5e9', cursor: 'pointer'}} />
+</div>
+
+
+      {showModal && (
+        <div className="modal-bottom-right-overlay">
+          <div className="modal-content small" ref={modalRef}>
+
+            <h3>Step 1: Go to the forms</h3>
+            <p><strong></strong> You must select and create forms and then there will be a progress tracker created specifically for that form
+            </p>
+
+            <h3>Step 2: Go to the Progress Tracker</h3>
+            <p><strong></strong> Inside the progress tracker are the forms you created. You can see the progress of the forms you created.</p>
+
+          </div>
+        </div>
+      )}
+
       <div className="steps">
         <div className="step">
           <FileCopyIcon className="step-icon" />

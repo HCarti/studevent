@@ -30,6 +30,13 @@ const ProgressTracker = () => {
     const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
     const [feedbackError, setFeedbackError] = useState('');
     const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
+    const [budgetData, setBudgetData] = useState(null);
+
+    const [pdfStatus, setPdfStatus] = useState({
+        loading: false,
+        error: null,
+        success: false
+      });
 
     useEffect(() => {
         console.log("Retrieving user data from localStorage...");
@@ -64,6 +71,57 @@ const ProgressTracker = () => {
             console.error("Error fetching review signatures:", error);
         }
     };
+
+    const fetchBudgetData = async (budgetId) => {
+        if (!budgetId) return;
+        
+        try {
+          const token = localStorage.getItem('token');
+          const response = await fetch(`https://studevent-server.vercel.app/api/budgets/${budgetId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            setBudgetData(data);
+          } else {
+            console.error('Failed to fetch budget data');
+            setBudgetData(null);
+          }
+        } catch (error) {
+          console.error('Error fetching budget data:', error);
+          setBudgetData(null);
+        }
+      };
+
+      useEffect(() => {
+        const fetchFormData = async () => {
+          try {
+            const token = localStorage.getItem("token");
+            const response = await fetch(`https://studevent-server.vercel.app/api/forms/${formId}`, {
+              headers: {
+                "Authorization": `Bearer ${token}`,
+              },
+            });
+            const data = await response.json();
+            setFormDetails(data);
+      
+            // Fetch budget data if there's an attached budget
+            if (data.attachedBudget) {
+              await fetchBudgetData(data.attachedBudget);
+            }
+      
+            // Fetch review signatures
+            await fetchReviewSignatures();
+          } catch (error) {
+            console.error("Error fetching form data:", error);
+          }
+        };
+        
+        if (formId) fetchFormData();
+      }, [formId]);
 
     // NEW: Function to handle feedback submission
     const handleFeedbackSubmit = async () => {
@@ -377,41 +435,84 @@ const ProgressTracker = () => {
                     </div>
                 ) : (
                     <div className="action-buttons">
-                        {isTrackerCompleted && (
-                            <div className="pdf-download-container">
-                              <PDFDownloadLink
-                                document={React.createElement(
-                                  getPdfComponent(formDetails?.formType),
-                                  { 
-                                    formData: formDetails,
-                                    signatures: reviewSignatures 
-                                  }
-                                )}
-                                fileName={getPdfFileName(formDetails?.formType, formDetails)}
-                              >
-                                {({ loading }) => (
-                                  <Button 
-                                    variant="contained" 
-                                    color="primary" 
-                                    disabled={loading}
-                                    startIcon={loading ? <CircularProgress size={20} /> : null}
-                                    sx={{
-                                      backgroundColor: formDetails?.formType === 'Budget' ? '#4caf50' : 
-                                                    formDetails?.formType === 'Project' ? '#9c27b0' : 
-                                                    '#1976d2',
-                                      '&:hover': {
-                                        backgroundColor: formDetails?.formType === 'Budget' ? '#388e3c' : 
-                                                      formDetails?.formType === 'Project' ? '#7b1fa2' : 
-                                                      '#1565c0'
-                                      }
-                                    }}
-                                  >
-                                    {loading ? 'Generating PDF...' : `Download ${formDetails?.formType || 'Form'} PDF`}
-                                  </Button>
-                                )}
-                              </PDFDownloadLink>
+                       <div className="pdf-download-container">
+                        {pdfStatus.error && (
+                            <div className="pdf-error-message">
+                            <small style={{ color: 'red' }}>Error generating PDF: {pdfStatus.error}</small>
                             </div>
-                          )}
+                        )}
+                        
+                        <PDFDownloadLink
+                            document={React.createElement(
+                            getPdfComponent(formDetails?.formType),
+                            { 
+                                formData: formDetails,
+                                budgetData: budgetData,
+                                signatures: reviewSignatures 
+                            }
+                            )}
+                            fileName={getPdfFileName(formDetails?.formType, formDetails)}
+                            onRender={() => {
+                            setPdfStatus({
+                                loading: true,
+                                error: null,
+                                success: false
+                            });
+                            }}
+                            onError={(error) => {
+                            setPdfStatus({
+                                loading: false,
+                                error: error.message || 'Failed to generate PDF',
+                                success: false
+                            });
+                            }}
+                            onLoad={() => {
+                            setPdfStatus({
+                                loading: false,
+                                error: null,
+                                success: true
+                            });
+                            }}
+                        >
+                            {({ loading }) => (
+                            <Button 
+                                variant="contained" 
+                                color="primary" 
+                                disabled={loading || pdfStatus.loading}
+                                startIcon={(loading || pdfStatus.loading) ? <CircularProgress size={20} /> : null}
+                                sx={{
+                                backgroundColor: formDetails?.formType === 'Budget' ? '#4caf50' : 
+                                                formDetails?.formType === 'Project' ? '#9c27b0' : 
+                                                '#1976d2',
+                                '&:hover': {
+                                    backgroundColor: formDetails?.formType === 'Budget' ? '#388e3c' : 
+                                                formDetails?.formType === 'Project' ? '#7b1fa2' : 
+                                                '#1565c0'
+                                },
+                                position: 'relative'
+                                }}
+                            >
+                                {loading || pdfStatus.loading ? 'Generating PDF...' : `Download ${formDetails?.formType || 'Form'} PDF`}
+                                {pdfStatus.success && (
+                                <CheckCircleIcon 
+                                    style={{ 
+                                    color: '#4caf50', 
+                                    fontSize: 20, 
+                                    position: 'absolute', 
+                                    right: 8 
+                                    }} 
+                                />
+                                )}
+                            </Button>
+                            )}
+                        </PDFDownloadLink>
+                        
+                        {pdfStatus.loading && !pdfStatus.error && (
+                            <div className="pdf-loading-message">
+                            <small>Preparing your document...</small>
+                            </div>
+                        )}
+                        </div>
                         <Button variant="contained" className="action-button" onClick={handleViewForms}>
                             VIEW FORMS
                         </Button>

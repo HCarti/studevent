@@ -267,6 +267,10 @@ body{
     padding-right: 30px;
     font-size: 14px;
   }
+
+  .home-email-input{
+    width: 100%;
+  }
  
   .home-login-btn {
     font-size: 14px;

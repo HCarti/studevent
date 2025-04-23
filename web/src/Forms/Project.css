@@ -12,7 +12,6 @@
   background-attachment: fixed;
   background-position: center;
   background-size: cover;
-  border: 1px solid #e0e0e0;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
@@ -26,7 +25,8 @@
   width: 100%;
   max-width: 1000px;
   box-sizing: border-box;
-  overflow-y: auto;
+  max-height: 73vh; /* Set maximum height for the form container */
+  overflow-y: auto; /* Enable vertical scrolling */
 }
 
 /* Make all textareas and inputs full width */
@@ -44,6 +44,7 @@
 
 
 /* Form Elements - Full Width */
+/* Form Elements - Full Width */
 .inner-forms-2 input[type="text"],
 .inner-forms-2 input[type="email"],
 .inner-forms-2 input[type="date"],
@@ -60,11 +61,9 @@
   color: #495057;
   transition: border-color 0.2s ease-in-out;
   box-sizing: border-box;
+  max-width: 100%; /* Add this to prevent overflow */
 } 
 
-.inner-forms-2 input[type="text"] {
-  width: 500px;
-}
 
 /* Textarea Specific Styles */
 .inner-forms-2 textarea {
@@ -90,11 +89,13 @@
 .form-row {
   display: flex;
   gap: 20px;
+  width: 100%; /* Add this */
 }
 
 .form-row .form-group {
   flex: 1;
   min-width: 0; /* Prevent flex items from overflowing */
+  width: 100%; /* Add this */
 }
 
 /* Table Styles */
@@ -102,7 +103,7 @@
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 20px;
-  table-layout: fixed;
+  table-layout: fixed; /* Keep this for consistent columns */
 }
 
 /* Segment Input */
@@ -338,11 +339,12 @@
 
 /* Date Picker Styles */
 .date-picker-input {
-  width: 100%;
+  width: 100% !important; /* Override any inline styles */
   padding: 8px 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
+  box-sizing: border-box;
 }
 
 .react-datepicker {
@@ -350,6 +352,8 @@
   border: 1px solid #e0e0e0;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
+
+
 
 .react-datepicker__header {
   background-color: #f8f9fa;
@@ -440,4 +444,9 @@
   padding: 15px;
   background-color: #f9f9f9;
   border-radius: 8px;
+  box-sizing: border-box; /* Add this */
+}
+
+.array-item .form-row {
+  width: 100%; /* Ensure full width */
 }

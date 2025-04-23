@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
 });
 
 // Create Document Component with Page Numbers
-const ActivityPdf = ({ formData = {}, signatures = {} }) => {
+const ActivityPdf = ({ formData = {}, signatures = {}, budgetData = {} }) => {
   const {
     eventLocation = "N/A",
     applicationDate = "N/A",
@@ -319,6 +319,13 @@ const ActivityPdf = ({ formData = {}, signatures = {} }) => {
     weather = "N/A"
   } = formData;
 
+    // Destructure budget data
+    const {
+      nameOfRso = "N/A",
+      items = [],
+      grandTotal = "N/A"
+    } = budgetData;
+
   // Format date function
   const formatDate = (dateString) => {
     if (!dateString || dateString === "N/A") return "N/A";
@@ -329,6 +336,16 @@ const ActivityPdf = ({ formData = {}, signatures = {} }) => {
       day: 'numeric'
     });
   };
+
+    // Format currency
+    const formatCurrency = (amount) => {
+      if (amount === "N/A") return "N/A";
+      return new Intl.NumberFormat('en-PH', {
+        style: 'currency',
+        currency: 'PHP'
+      }).format(amount).replace('PHP', '₱');
+    };
+  
 
   const SignatureField = ({ title, name, signature, date, status, remarks }) => (
     <View style={styles.signatureColumn}>

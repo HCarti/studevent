@@ -99,13 +99,14 @@ h1 {
   display: block;
 }
 
-/* Input Fields */
-input[type="text"],
-input[type="email"],
-input[type="date"],
-textarea,
-select {
-  width: 70%;
+.inner-forms-1 input[type="text"],
+.inner-forms-1 input[type="email"],
+.inner-forms-1 input[type="number"],
+.inner-forms-1 input[type="date"],
+.inner-forms-1 textarea,
+.inner-forms-1 select,
+.inner-forms-1 .react-datepicker-wrapper input {
+  width: 100%;
   padding: 12px 15px;
   margin-bottom: 5px;
   border-radius: 8px;
@@ -114,6 +115,36 @@ select {
   font-size: 16px;
   color: #495057;
   transition: border-color 0.2s ease-in-out;
+  box-sizing: border-box; /* Include padding and border in width */
+}
+
+/* Date Picker Specific Styling */
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+.react-datepicker__input-container {
+  width: 100%;
+}
+
+/* Textarea Specific Styling */
+.inner-forms-1 textarea {
+  min-height: 100px;
+  resize: vertical;
+  min-height: 100px;
+  font-family: inherit;
+}
+
+/* Focus State for All Inputs */
+.inner-forms-1 input[type="text"]:focus,
+.inner-forms-1 input[type="email"]:focus,
+.inner-forms-1 input[type="number"]:focus,
+.inner-forms-1 input[type="date"]:focus,
+.inner-forms-1 select:focus,
+.inner-forms-1 .react-datepicker-wrapper input:focus {
+  border-color: #80bdff;
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
 .form-ubox-1 textarea{
@@ -164,12 +195,6 @@ input[type="checkbox"] {
   align-items: center;
   gap: 20px;
   margin-bottom: 20px;
-}
-
-/* Textarea */
-textarea {
-  min-height: 100px;
-  resize: vertical;
 }
 
 /* Button Styles */
@@ -620,6 +645,7 @@ textarea {
   margin-bottom: 1rem;
   font-style: italic;
   padding-left: 0.5rem;
+  margin-top: 10px;
 }
 
 /* Add to your Aap.css file */

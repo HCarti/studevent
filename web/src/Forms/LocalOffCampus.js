@@ -209,18 +209,15 @@ const Localoffcampus = () => {
   };
 
   // Handle activity compliance changes
-  const handleActivityChange = (section, field, value, remarks = "", index = 0) => {
+  const handleActivityChange = React.useCallback((section, field, value, remarks = "", index = 0) => {
     setFormData(prev => {
       const newData = {...prev};
       const updatedActivities = [...newData.activitiesOffCampus];
       
       if (section && field) {
-        if (!updatedActivities[index][section]) {
-          updatedActivities[index][section] = {};
-        }
-        updatedActivities[index][section][field] = { 
-          compliance: value, 
-          remarks: remarks 
+        updatedActivities[index][section] = { 
+          ...updatedActivities[index][section],
+          [field]: field === 'compliance' ? value : remarks
         };
       } else {
         updatedActivities[index][field] = { 
@@ -229,10 +226,12 @@ const Localoffcampus = () => {
         };
       }
       
-      newData.activitiesOffCampus = updatedActivities;
-      return newData;
+      return {
+        ...newData,
+        activitiesOffCampus: updatedActivities
+      };
     });
-  };
+  }, []);
 
   // Compliance row component
   const ComplianceRow = ({ 
@@ -243,42 +242,59 @@ const Localoffcampus = () => {
     nested = false,
     indent = false,
     hasError = false
-  }) => (
-    <tr className={`compliance-row ${nested ? 'nested-row' : ''} ${indent ? 'indent-row' : ''} ${hasError ? 'compliance-error' : ''}`}>
-      <td className="activity-label">
-        {label}
-        {hasError && <span className="required-asterisk">*</span>}
-      </td>
-      <td className="compliance-cell">
-        <div className="compliance-options">
-          <label>
-            <input
-              type="radio"
-              name={`${label}-compliance`}
-              checked={value === "yes"}
-              onChange={() => onChange("yes", remarks)}
-            /> Yes
-          </label>
-          <label>
-            <input
-              type="radio"
-              name={`${label}-compliance`}
-              checked={value === "no"}
-              onChange={() => onChange("no", remarks)}
-            /> No
-          </label>
-        </div>
-      </td>
-      <td className="remarks-cell">
-        <input
-          type="text"
-          value={remarks || ""}
-          onChange={(e) => onChange(value, e.target.value)}
-          placeholder="Enter remarks..."
-        />
-      </td>
-    </tr>
-  );
+  }) => {
+    // Create a local state for the remarks to prevent losing focus
+    const [localRemarks, setLocalRemarks] = React.useState(remarks || "");
+    
+    // Update the parent state when localRemarks changes
+    React.useEffect(() => {
+      if (remarks !== localRemarks) {
+        onChange(value, localRemarks);
+      }
+    }, [localRemarks]);
+  
+    // Update localRemarks when the parent remarks prop changes
+    React.useEffect(() => {
+      setLocalRemarks(remarks || "");
+    }, [remarks]);
+  
+    return (
+      <tr className={`compliance-row ${nested ? 'nested-row' : ''} ${indent ? 'indent-row' : ''} ${hasError ? 'compliance-error' : ''}`}>
+        <td className="activity-label">
+          {label}
+          {hasError && <span className="required-asterisk">*</span>}
+        </td>
+        <td className="compliance-cell">
+          <div className="compliance-options">
+            <label>
+              <input
+                type="radio"
+                name={`${label}-compliance`}
+                checked={value === "yes"}
+                onChange={() => onChange("yes", localRemarks)}
+              /> Yes
+            </label>
+            <label>
+              <input
+                type="radio"
+                name={`${label}-compliance`}
+                checked={value === "no"}
+                onChange={() => onChange("no", localRemarks)}
+              /> No
+            </label>
+          </div>
+        </td>
+        <td className="remarks-cell">
+          <input
+            type="text"
+            value={localRemarks}
+            onChange={(e) => setLocalRemarks(e.target.value)}
+            placeholder="Enter remarks..."
+          />
+        </td>
+      </tr>
+    );
+  };
 
   // Validate current section
   const validateSection = useCallback((step) => {
@@ -591,9 +607,9 @@ const Localoffcampus = () => {
     switch (currentStep) {
       case 0: // School Information (BEFORE)
         return (
-          <div className="form-section">
+          <div >
             <h2>School Information</h2>
-            <div className="form-group">
+            <div >
               <label className={fieldErrors.nameOfHei ? 'required-field' : ''}>Name of HEI:</label>
               <input
                 type="text"
@@ -604,7 +620,7 @@ const Localoffcampus = () => {
               />
               {fieldErrors.nameOfHei && <div className="error-message">This field is required</div>}
             </div>
-            <div className="form-group">
+            <div >
               <label className={fieldErrors.region ? 'required-field' : ''}>Region:</label>
               <input
                 type="text"
@@ -615,7 +631,7 @@ const Localoffcampus = () => {
               />
               {fieldErrors.region && <div className="error-message">This field is required</div>}
             </div>
-            <div className="form-group">
+            <div >
               <label className={fieldErrors.address ? 'required-field' : ''}>Address:</label>
               <input
                 type="text"
@@ -631,7 +647,7 @@ const Localoffcampus = () => {
   
       case 1: // Basic Information (BEFORE)
         return (
-          <div className="form-section">
+          <div >
             <h2>Basic Information</h2>
             <div className="table-container">
               <table className="basic-info-table">
@@ -756,7 +772,7 @@ const Localoffcampus = () => {
   
       case 2: // Activities Off Campus (BEFORE)
         return (
-          <div className="form-section">
+          <div >
             <h2>Activities Off Campus Compliance</h2>
             <div className="compliance-table-container">
               <table className="compliance-table">
@@ -885,11 +901,11 @@ const Localoffcampus = () => {
 
       case 3: // After Activity (AFTER)
         return (
-          <div className="form-section">
+          <div >
             <h2>After Activity Report</h2>
             {formData.afterActivity.map((activity, index) => (
               <div key={index} className="after-activity-group">
-                <div className="form-group">
+                <div >
                   <label className={fieldErrors.afterActivity[index]?.programs ? 'required-field' : ''}>Programs:</label>
                   <input
                     type="text"
@@ -902,7 +918,7 @@ const Localoffcampus = () => {
                     <div className="error-message">This field is required</div>
                   )}
                 </div>
-                <div className="form-group">
+                <div >
                   <label className={fieldErrors.afterActivity[index]?.destination ? 'required-field' : ''}>Destination:</label>
                   <input
                     type="text"
@@ -915,7 +931,7 @@ const Localoffcampus = () => {
                     <div className="error-message">This field is required</div>
                   )}
                 </div>
-                <div className="form-group">
+                <div >
                   <label className={fieldErrors.afterActivity[index]?.noOfStudents ? 'required-field' : ''}>Number of Students:</label>
                   <input
                     type="number"
@@ -928,7 +944,7 @@ const Localoffcampus = () => {
                     <div className="error-message">This field is required</div>
                   )}
                 </div>
-                <div className="form-group">
+                <div >
                   <label className={fieldErrors.afterActivity[index]?.noofHeiPersonnel ? 'required-field' : ''}>Number of HEI Personnel:</label>
                   <input
                     type="number"
@@ -948,9 +964,9 @@ const Localoffcampus = () => {
 
       case 4: // Problems Encountered (AFTER)
         return (
-          <div className="form-section">
+          <div >
             <h2>Problems Encountered</h2>
-            <div className="form-group">
+            <div >
               <label className={fieldErrors.problemsEncountered ? 'required-field' : ''}>Describe any problems encountered:</label>
               <textarea
                 name="problemsEncountered"
@@ -968,9 +984,9 @@ const Localoffcampus = () => {
 
       case 5: // Recommendations (AFTER)
         return (
-          <div className="form-section">
+          <div >
             <h2>Recommendations</h2>
-            <div className="form-group">
+            <div >
               <label className={fieldErrors.recommendation ? 'required-field' : ''}>Provide your recommendations:</label>
               <textarea
                 name="recommendation"
