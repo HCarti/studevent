@@ -277,124 +277,33 @@
       borderBottomColor: '#eee',
       marginVertical: 8
     },
-    budgetTable: {
-      width: '100%',
-      marginTop: 10,
-      borderWidth: 1,
-      borderColor: '#000',
-    },
-    budgetTableHeader: {
-      flexDirection: 'row',
-      backgroundColor: '#f0f0f0',
-      borderBottomWidth: 1,
-      borderBottomColor: '#000',
-    },
-    budgetTableHeaderCell: {
-      padding: 5,
-      fontSize: 9,
-      fontWeight: 'bold',
-      borderRightWidth: 1,
-      borderRightColor: '#000',
-      textAlign: 'center',
-    },
-    budgetTableRow: {
-      flexDirection: 'row',
-      borderBottomWidth: 1,
-      borderBottomColor: '#000',
-    },
-    budgetTableCell: {
-      padding: 5,
-      fontSize: 9,
-      borderRightWidth: 1,
-      borderRightColor: '#000',
-    },
-    budgetTableQty: {
-      width: '10%',
-      textAlign: 'center',
-    },
-    budgetTableUnit: {
-      width: '15%',
-      textAlign: 'center',
-    },
-    budgetTableDesc: {
-      width: '45%',
-    },
-    budgetTableCost: {
-      width: '15%',
-      textAlign: 'right',
-      paddingRight: 5,
-    },
-    budgetTableTotal: {
-      width: '15%',
-      textAlign: 'right',
-      paddingRight: 5,
-    },
-    budgetTotalRow: {
-      flexDirection: 'row',
-      justifyContent: 'flex-end',
-      padding: 5,
-      backgroundColor: '#f8f8f8',
-      borderTopWidth: 1,
-      borderTopColor: '#000',
-    },
-    budgetTotalLabel: {
-      fontWeight: 'bold',
-      paddingRight: 10,
-    },
-    budgetTotalValue: {
-      fontWeight: 'bold',
-    },
     
   });
 
   // Create Document Component with Page Numbers
-  const ActivityPdf = ({ formData = {}, signatures = {}, budgetData = {} }) => {
+  const ActivityPdf = ({ formData = {}, signatures = {}, budgetData = null }) => {
+    
 
-    const safeFormData = formData || {
-      eventLocation: "N/A",
-      applicationDate: "N/A",
-      studentOrganization: "N/A",
-      contactPerson: "N/A", 
-      contactNo: "N/A",
-      emailAddress: "N/A",
-      eventTitle: "N/A",
-      eventType: "N/A",
-      venueAddress: "N/A",
-      eventStartDate: "N/A",
-      eventEndDate: "N/A",
-      organizer: "N/A",
-      budgetAmount: "N/A",
-      budgetFrom: "N/A",
-      coreValuesIntegration: "N/A",
-      objectives: "N/A",
-      marketingCollaterals: "N/A",
-      pressRelease: "N/A",
-      others: "N/A",
-      eventFacilities: "N/A",
-      holdingArea: "N/A",
-      toilets: "N/A",
-      transportationandParking: "N/A",
-      more: "N/A",
-      houseKeeping: "N/A",
-      wasteManagement: "N/A",
-      eventManagementHead: "N/A",
-      eventCommitteesandMembers: "N/A",
-      health: "N/A",
-      safetyAttendees: "N/A",
-      emergencyFirstAid: "N/A",
-      fireSafety: "N/A",
-      weather: "N/A",
-      attachedBudget: null,
-      presidentName: "N/A",
-      presidentSignature: null
+    const safeSignatures = {
+      adviser: signatures?.adviser || {},
+      dean: signatures?.dean || {},
+      admin: signatures?.admin || {},
+      academicservices: signatures?.academicservices || {},
+      academicdirector: signatures?.academicdirector || {},
+      executivedirector: signatures?.executivedirector || {}
     };
-
+  
+    // Safely get budget data
     const safeBudgetData = budgetData || {
-      nameOfRso: "N/A",
+      nameOfRso: 'N/A',
+      eventTitle: 'N/A',
       items: [],
-      grandTotal: "N/A"
+      grandTotal: 0,
+      createdAt: null,
+      updatedAt: null,
+      createdBy: { name: 'Organization Representative' }
     };
-
+  
      const {
     eventLocation = "N/A",
     applicationDate = "N/A",
@@ -432,15 +341,8 @@
     attachedBudget = null,
     presidentName = "N/A",
     presidentSignature = null
-  } = safeFormData;
+  } = formData;
 
-
-      // Destructure budget data
-      const {
-        nameOfRso = "N/A",
-        items = [],
-        grandTotal = "N/A"
-      } = budgetData;
 
     // Format date function
     const formatDate = (dateString) => {
@@ -453,47 +355,155 @@
       });
     };
 
-      // Format currency
-      const formatCurrency = (amount) => {
-        if (amount === "N/A") return "N/A";
-        return new Intl.NumberFormat('en-PH', {
-          style: 'currency',
-          currency: 'PHP'
-        }).format(amount).replace('PHP', '₱');
-      };
-    
+    const renderBudgetSection = () => {
+      if (!budgetData) return null;
 
-    const SignatureField = ({ title, name, signature, date, status, remarks }) => (
-      <View style={styles.signatureColumn}>
-        <Text style={styles.signatureLabel}>{title}</Text>
-        
-        <View style={styles.checkboxContainer}>
-          <View style={[styles.checkbox, status === 'approved' && styles.checked]} />
-          <Text>Approved</Text>
-        </View>
-        <View style={styles.checkboxContainer}>
-          <View style={[styles.checkbox, status === 'declined' && styles.checked]} />
-          <Text>Disapproved</Text>
-        </View>
-        
-        <Text style={styles.signatureName}>{name}</Text>
-        
-        {signature ? (
-          <Image 
-            src={signature} 
-            style={styles.signatureImage}
-          />
-        ) : (
-          <View style={styles.signatureValue}></View>
-        )}
-        
-        <Text style={styles.dateText}>Date: {formatDate(date)}</Text>
-        
-        {remarks && (
-          <Text style={styles.remarksText}>Remarks: {remarks}</Text>
-        )}
+      return (
+          <Page size="A4" style={styles.page} wrap>
+              <View style={styles.header} fixed>
+                  <Image src={NU_logo} style={styles.logo} />
+                  <View style={styles.headerText}>
+                      <Text style={styles.title}>NU MOA</Text>
+                      <Text>Student Development and Activities Office</Text>
+                      <Text>Attached Budget Proposal</Text>
+                  </View>
+              </View>
+
+              <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>BUDGET PROPOSAL DETAILS</Text>
+                  
+                  <View style={styles.compactTable}>
+                      <View style={styles.compactTableRow}>
+                          <Text style={styles.compactTableFirstCell}>Organization</Text>
+                          <Text style={styles.compactTableCell}>
+                              {budgetData.nameOfRso || 'N/A'}
+                          </Text>
+                      </View>
+                      <View style={styles.compactTableIndentedRow}>
+                          <Text style={styles.compactTableFirstCell}>Event Title</Text>
+                          <Text style={styles.compactTableCell}>
+                              {budgetData.eventTitle || 'N/A'}
+                          </Text>
+                      </View>
+                      <View style={styles.compactTableIndentedRow}>
+                          <Text style={styles.compactTableFirstCell}>Date Created</Text>
+                          <Text style={styles.compactTableCell}>
+                              {formatDate(budgetData.createdAt) || 'N/A'}
+                          </Text>
+                      </View>
+                      <View style={styles.compactTableIndentedRow}>
+                          <Text style={styles.compactTableFirstCell}>Last Updated</Text>
+                          <Text style={styles.compactTableCell}>
+                              {formatDate(budgetData.updatedAt) || 'N/A'}
+                          </Text>
+                      </View>
+                      <View style={styles.compactTableIndentedRow}>
+                          <Text style={styles.compactTableFirstCell}>Total Budget</Text>
+                          <Text style={[styles.compactTableCell, { fontWeight: 'bold' }]}>
+                              ₱{budgetData.grandTotal?.toLocaleString() || '0'}
+                          </Text>
+                      </View>
+                  </View>
+              </View>
+
+              {budgetData.items?.length > 0 && (
+                  <View style={styles.section}>
+                      <Text style={styles.sectionTitle}>BUDGET ITEM BREAKDOWN</Text>
+                      <View style={styles.table}>
+                          {/* Table Header */}
+                          <View style={[styles.tableRow, styles.tableHeader]}>
+                              <Text style={[styles.tableCell, { width: '40%' }]}>Item Description</Text>
+                              <Text style={[styles.tableCell, { width: '15%', textAlign: 'center' }]}>Qty</Text>
+                              <Text style={[styles.tableCell, { width: '20%', textAlign: 'right' }]}>Unit Cost</Text>
+                              <Text style={[styles.tableCell, { width: '25%', textAlign: 'right' }]}>Total Cost</Text>
+                          </View>
+                          {/* Table Rows */}
+                          {budgetData.items.map((item, index) => (
+                              <View key={index} style={styles.tableRow}>
+                                  <Text style={[styles.tableCell, { width: '40%' }]}>
+                                      {item.itemName || 'Unspecified Item'}
+                                  </Text>
+                                  <Text style={[styles.tableCell, { width: '15%', textAlign: 'center' }]}>
+                                      {item.quantity || '0'}
+                                  </Text>
+                                  <Text style={[styles.tableCell, { width: '20%', textAlign: 'right' }]}>
+                                      ₱{(item.unitCost || 0).toLocaleString()}
+                                  </Text>
+                                  <Text style={[styles.tableCell, { width: '25%', textAlign: 'right', fontWeight: 'bold' }]}>
+                                      ₱{(item.totalCost || 0).toLocaleString()}
+                                  </Text>
+                              </View>
+                          ))}
+                      </View>
+                  </View>
+              )}
+
+              <View style={styles.signatureSection}>
+                  <Text style={styles.signatureTitle}>BUDGET APPROVAL</Text>
+                  <View style={styles.signatureRowGap}>
+                      <View style={styles.borderedSignatureColumn}>
+                          <Text style={styles.signatureLabel}>Prepared by:</Text>
+                          <View style={styles.signatureValue}></View>
+                          <Text style={styles.signatureName}>
+                              {budgetData.createdBy?.name || 'Organization Representative'}
+                          </Text>
+                          <Text style={styles.dateText}>Date: {formatDate(budgetData.createdAt)}</Text>
+                      </View>
+                      <View style={styles.borderedSignatureColumn}>
+                          <Text style={styles.signatureLabel}>Approved by:</Text>
+                          <View style={styles.signatureValue}></View>
+                          <Text style={styles.signatureName}>Authorized Signatory</Text>
+                          <Text style={styles.dateText}>Date: ___________________</Text>
+                      </View>
+                  </View>
+              </View>
+
+              <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
+                  `Page ${pageNumber} of ${totalPages}`
+              )} fixed />
+          </Page>
+      );
+  };
+
+
+  const SignatureField = ({ title, name, signature, date, status, remarks }) => (
+    <View style={styles.signatureColumn}>
+      <Text style={styles.signatureLabel}>{title}</Text>
+      
+      <View style={styles.checkboxContainer}>
+        <View style={[styles.checkbox, status === 'approved' && styles.checked]} />
+        <Text>Approved</Text>
       </View>
-    );
+      <View style={styles.checkboxContainer}>
+        <View style={[styles.checkbox, status === 'declined' && styles.checked]} />
+        <Text>Disapproved</Text>
+      </View>
+      
+      <Text style={styles.signatureName}>{name || 'Not specified'}</Text>
+      
+      {signature ? (
+        <Image 
+          src={signature} 
+          style={styles.signatureImage}
+        />
+      ) : (
+        <View style={styles.signatureValue}></View>
+      )}
+      
+      <Text style={styles.dateText}>
+        Date: {date ? formatDate(date) : '__________'}
+      </Text>
+      
+      {remarks && (
+        <Text style={styles.remarksText}>Remarks: {remarks}</Text>
+      )}
+    </View>
+  );
+
+  console.log("FormData in PDF:", formData);
+console.log("Signatures in PDF:", signatures);
+console.log("BudgetData in PDF:", budgetData);
+
 
     return (
       <Document>
@@ -831,8 +841,9 @@
           )} fixed />
         </Page>
         
-        {/* Budget Table Section */}
-        
+
+        {budgetData && renderBudgetSection()}
+
         {/* Second Page for Additional Content */}
       </Document>
     );

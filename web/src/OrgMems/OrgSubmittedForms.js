@@ -23,7 +23,9 @@ const OrgSubmittedForms = () => {
                     setLoading(false);
                     return;
                 }
-
+        
+                console.log("Fetching forms for user:", user._id, "with email:", user.email);
+        
                 // Fetch all form types in parallel
                 const [formsRes, localOffRes] = await Promise.all([
                     fetch(`https://studevent-server.vercel.app/api/forms/by-email/${user.email}`, {
@@ -39,15 +41,21 @@ const OrgSubmittedForms = () => {
                         }
                     })
                 ]);
-
+        
+                console.log("Forms response status:", formsRes.status);
+                console.log("Local Off-Campus response status:", localOffRes.status);
+        
                 if (!formsRes.ok || !localOffRes.ok) {
                     throw new Error(`Failed to fetch forms: ${formsRes.statusText || localOffRes.statusText}`);
                 }
-
+        
                 const formsData = await formsRes.json();
                 const localOffData = await localOffRes.json();
-
-                // Transform Local Off-Campus forms to match the expected structure
+        
+                console.log("Regular forms data:", formsData);
+                console.log("Local Off-Campus data:", localOffData);
+        
+                // Transform Local Off-Campus forms
                 const transformedLocalOffForms = (localOffData.data || localOffData).map(form => ({
                     ...form,
                     _id: form._id,
@@ -57,13 +65,19 @@ const OrgSubmittedForms = () => {
                     eventTitle: form.formPhase === 'BEFORE' 
                         ? `Local Off-Campus: ${form.nameOfHei || 'Untitled'}`
                         : `After Report: ${form.nameOfHei || 'Untitled'}`,
-                    isLocalOffCampus: true // Add marker for easier identification
+                    isLocalOffCampus: true
                 }));
-
-                setAllForms([
+        
+                console.log("Transformed Local Off-Campus forms:", transformedLocalOffForms);
+        
+                const combinedForms = [
                     ...(Array.isArray(formsData) ? formsData : []),
                     ...transformedLocalOffForms
-                ]);
+                ];
+        
+                console.log("Combined forms:", combinedForms);
+        
+                setAllForms(combinedForms);
             } catch (error) {
                 console.error("Error fetching forms:", error);
                 setError(error.message);
@@ -78,7 +92,7 @@ const OrgSubmittedForms = () => {
     const isFormEditable = (form) => {
         if (form.formType === 'LocalOffCampus') {
             return form.formPhase === 'BEFORE' && 
-                   (form.status === 'submitted' || form.status === 'pending');
+                   (form.status === 'submitted' || form.status === 'pending' || form.status === 'draft');
         }
         
         // Original logic for other forms
@@ -90,7 +104,7 @@ const OrgSubmittedForms = () => {
     const isFormDeletable = (form) => {
         if (form.formType === 'LocalOffCampus') {
             return form.formPhase === 'BEFORE' && 
-                   (form.status === 'submitted' || form.status === 'pending');
+                   (form.status === 'submitted' || form.status === 'pending' || form.status === 'draft');
         }
         
         // Original logic for other forms
@@ -104,7 +118,7 @@ const OrgSubmittedForms = () => {
             const status = form.finalStatus?.toLowerCase() || form.status?.toLowerCase();
             switch (filter) {
                 case "pending":
-                    return status === 'pending' || status === 'submitted';
+                    return status === 'pending' || status === 'submitted' || status === 'draft';
                 case "approved":
                     return status === 'approved';
                 default:
@@ -178,7 +192,27 @@ const OrgSubmittedForms = () => {
         status = status.toLowerCase();
         if (status === 'approved') return 'approved';
         if (status === 'declined' || status === 'rejected') return 'rejected';
+        if (status === 'draft') return 'draft';
         return 'pending';
+    };
+
+    const formatFormType = (form) => {
+        if (form.formType === 'LocalOffCampus') {
+            return `Local Off-Campus (${form.formPhase})`;
+        }
+        return form.formType || 'N/A';
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return 'No Date';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     };
 
     return (
@@ -241,11 +275,10 @@ const OrgSubmittedForms = () => {
                                                     ? `/local-off-campus/${form._id}`
                                                     : `/orgTrackerViewer/${form._id}`
                                             )}
+                                            className="clickable-row"
                                         >
                                             <td>
-                                                {form.formType === 'LocalOffCampus'
-                                                    ? `Local Off-Campus (${form.formPhase})`
-                                                    : form.formType || 'N/A'}
+                                                {formatFormType(form)}
                                             </td>
                                             <td>
                                                 {form.eventTitle || 
@@ -260,9 +293,7 @@ const OrgSubmittedForms = () => {
                                                 </span>
                                             </td>
                                             <td>
-                                                {form.applicationDate || form.submittedAt
-                                                    ? new Date(form.applicationDate || form.submittedAt).toLocaleDateString()
-                                                    : 'No Date'}
+                                                {formatDate(form.applicationDate || form.submittedAt)}
                                             </td>
                                             <td>
                                                 <div className="action-buttons">
