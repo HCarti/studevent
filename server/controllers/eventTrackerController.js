@@ -281,6 +281,7 @@ const updateTrackerStep = async (req, res) => {
 
     // In the notification section of updateTrackerStep (around line 200-250):
 
+    
 if (status === "approved") {
   const nextStepIndex = firstPendingOrDeclinedStepIndex + 1;
   
@@ -288,68 +289,49 @@ if (status === "approved") {
     const nextStep = tracker.steps[nextStepIndex];
     const nextReviewers = await getNextReviewers(tracker, firstPendingOrDeclinedStepIndex);
 
-    // Ensure we have the current reviewer's name
-    const currentReviewerName = currentUserName || (step.reviewedBy?.name || 'Unknown Reviewer');
+    // FIX 1: Ensure we always have a reviewer name
+    const reviewerName = req.user.name || 
+                       (step.reviewedBy?.name || 
+                       req.user.email.split('@')[0] || 
+                       'a reviewer');
 
-    // Send notifications to next reviewers only if they exist
-    if (nextReviewers.length > 0) {
+    // Only proceed if we actually found next reviewers
+    if (nextReviewers && nextReviewers.length > 0) {
+      // Send notifications to next reviewers
       for (const reviewer of nextReviewers) {
         try {
-          const notificationMessage = `
-            Action Required: ${formName} has been approved by ${currentReviewerName} (${currentStepName}) 
-            and now requires your ${nextStep.stepName} review.
-          `;
-          
           await notificationController.createNotification(
             reviewer.email,
-            notificationMessage.trim().replace(/\s+/g, ' '), // Clean up whitespace
-            {
-              formId: form._id,
-              trackerId: tracker._id,
-              stepId: nextStep._id
-            }
+            `Action Required: ${formName} has been approved by ${reviewerName} (${step.stepName}) ` +
+            `and now requires your ${nextStep.stepName} review.`
           );
-          
-          console.log(`✅ Notified next reviewer: ${reviewer.email}`);
         } catch (error) {
-          console.error(`❌ Failed to notify ${reviewer.email}:`, error);
+          console.error(`Failed to notify ${reviewer.email}:`, error);
         }
       }
 
-      // Send confirmation to current reviewer
-      try {
-        const confirmationMessage = `
-          You approved ${formName} (${currentStepName}). 
-          The form has been sent to ${nextReviewers.map(r => r.name).join(', ')} for ${nextStep.stepName} review.
-        `;
-        
-        await notificationController.createNotification(
-          currentUserEmail,
-          confirmationMessage.trim().replace(/\s+/g, ' ')
-        );
-      } catch (error) {
-        console.error("❌ Failed to send confirmation:", error);
-      }
-    } else {
-      // Handle case where no next reviewers were found (shouldn't happen if workflow is correct)
-      console.warn('⚠️ No next reviewers found for step:', nextStep.stepName);
+      // FIX 2: Accurate confirmation message when next reviewers exist
       await notificationController.createNotification(
         currentUserEmail,
-        `You approved ${formName} (${currentStepName}), but no next reviewers were found.`
+        `You approved ${formName}. The form has been sent to ${nextReviewers.length} ` +
+        `reviewer(s) for ${nextStep.stepName} approval.`
+      );
+    } else {
+      // This should theoretically never happen if workflow is configured correctly
+      console.error('No next reviewers found despite existing next step!');
+      await notificationController.createNotification(
+        currentUserEmail,
+        `You approved ${formName}, but no ${nextStep.stepName} reviewers were found.`
       );
     }
   } else {
-    // Final approval notification
-    try {
-      const submitter = await User.findById(form.submittedBy).select('email name');
-      if (submitter) {
-        await notificationController.createNotification(
-          submitter.email,
-          `Your form "${formName}" has been fully approved by ${currentReviewerName}!`
-        );
-      }
-    } catch (error) {
-      console.error("❌ Final approval notification failed:", error);
+    // Final approval case
+    const submitter = await User.findById(form.submittedBy).select('email');
+    if (submitter) {
+      await notificationController.createNotification(
+        submitter.email,
+        `Your form "${formName}" has been fully approved!`
+      );
     }
   }
 } else if (status === "declined") {
