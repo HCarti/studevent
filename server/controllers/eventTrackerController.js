@@ -33,25 +33,38 @@ const getNextReviewers = async (tracker, currentStepIndex) => {
 
     console.log('🔍 Organization ID from form:', form.organizationId);
     
-    // Get all users with the required role for debugging
-    const allUsersWithRole = await User.find({
-      role: nextStep.reviewerRole
+    // Debug: Check all users in the organization first
+    const allOrgUsers = await User.find({
+      organizationId: form.organizationId
     }).select('email role organizationId').lean();
 
-    console.log('👥 All users with role', nextStep.reviewerRole, ':', 
-      allUsersWithRole.map(u => ({
+    console.log('👥 All users in organization:', 
+      allOrgUsers.map(u => ({
         email: u.email,
+        role: u.role,
         orgId: u.organizationId
       }))
     );
 
-    // Actual query we're using
+    // Get reviewers with the exact required role (case-sensitive)
     const reviewers = await User.find({
       role: nextStep.reviewerRole,
       organizationId: form.organizationId
     }).select('email role name').lean();
 
-    console.log('✅ Matching reviewers:', reviewers.length);
+    console.log('✅ Matching reviewers:', reviewers.map(r => ({
+      email: r.email,
+      role: r.role,
+      name: r.name
+    })));
+
+    if (reviewers.length === 0) {
+      console.warn('⚠️ No reviewers found for role:', nextStep.reviewerRole);
+      console.warn('Available roles in organization:', 
+        [...new Set(allOrgUsers.map(u => u.role))]
+      );
+    }
+    
     return reviewers;
     
   } catch (error) {
