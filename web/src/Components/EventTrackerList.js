@@ -21,7 +21,7 @@ const EventTrackerList = () => {
         }
 
         // First fetch all organizations to map emails to organization names
-        const orgsResponse = await fetch("https://studevent-server.vercel.app/api/organizations", {
+        const orgsResponse = await fetch("https://studevent-server.vercel.app/api/users/organizations", {
           method: "GET",
           headers: {
             "Authorization": `Bearer ${token}`,
@@ -96,16 +96,17 @@ const EventTrackerList = () => {
   };
 
   const getFilteredForms = () => {
-    switch (filter) {
-      case "pending":
-        return forms.filter((form) => form.finalStatus?.trim().toLowerCase() === "pending");
-      case "approved":
-        return forms.filter((form) => form.finalStatus?.trim().toLowerCase() === "approved");
-      case "declined":
-        return forms.filter((form) => form.finalStatus?.trim().toLowerCase() === "declined");
-      default:
-        return forms;
-    }
+    return forms.filter((form) => {
+      const status = form.finalStatus || form.status || '';
+      const normalizedStatus = status.trim().toLowerCase();
+      
+      switch (filter) {
+        case "pending": return normalizedStatus === "pending";
+        case "approved": return normalizedStatus === "approved";
+        case "declined": return normalizedStatus === "declined";
+        default: return true;
+      }
+    });
   };
 
   const handleFilterClick = (filterType) => {

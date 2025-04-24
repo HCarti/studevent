@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 const CalendarEvent = require("../models/CalendarEvent");
 const moment = require('moment');
 const BudgetProposal = require("../models/BudgetProposal");
+const LocalOffCampus = require('../models/LocalOffCampus');
 
 // HELPERS
 
@@ -173,20 +174,40 @@ const getRequiredReviewers = (formType) => {
 exports.getAllForms = async (req, res) => {
   try {
     const { formType } = req.query;
-    const filter = formType ? { formType } : {};
     
-    const forms = await Form.find(filter)
+    // Get regular forms
+    const formFilter = formType ? { formType } : {};
+    const forms = await Form.find(formFilter)
       .populate("studentOrganization")
       .populate("attachedBudget")
       .lean();
 
-    if (!forms.length) {
+    // Get LocalOffCampus forms
+    const localOffFilter = formType === 'LocalOffCampus' ? {} : { formType: 'NON_EXISTENT' }; // Only get if specifically requested
+    const localOffForms = await LocalOffCampus.find(localOffFilter)
+      .lean()
+      .then(forms => forms.map(form => ({
+        ...form,
+        formType: 'LocalOffCampus', // Ensure formType is set
+        finalStatus: form.status, // Map status to finalStatus
+        eventTitle: `Local Off-Campus (${form.formPhase})`, // Add eventTitle
+        nameOfHei: form.nameOfHei // Ensure organization name is included
+      })));
+
+    // Combine results
+    const allForms = [...forms, ...localOffForms];
+
+    if (!allForms.length) {
       return res.status(404).json({ message: "No forms found" });
     }
-    res.status(200).json(forms);
+
+    res.status(200).json(allForms);
   } catch (error) {
     console.error("Error fetching forms:", error);
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
+    res.status(500).json({ 
+      error: "Internal Server Error", 
+      details: error.message 
+    });
   }
 };
 
