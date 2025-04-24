@@ -7,7 +7,7 @@
   border-radius: 16px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  height: 70%;
+  height: 80%;
 }
 
 /* Heading */
@@ -75,6 +75,8 @@
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
   background: white;
   height: 70%;
+  max-height: 850px;
+  overflow: hidden;
 }
 
 /* Forms Table */

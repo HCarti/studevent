@@ -350,9 +350,9 @@
   // Create Document Component with Page Numbers
   const ActivityPdf = ({ formData = {}, signatures = {}, budgetData = {} }) => {
 
-    const safeFormData = {
+    const safeFormData = formData || {
       eventLocation: "N/A",
-      applicationDate: new Date().toISOString(),
+      applicationDate: "N/A",
       studentOrganization: "N/A",
       contactPerson: "N/A", 
       contactNo: "N/A",
@@ -386,34 +386,15 @@
       weather: "N/A",
       attachedBudget: null,
       presidentName: "N/A",
-      presidentSignature: null,
-      ...formData // Override defaults with actual values
+      presidentSignature: null
     };
-  
 
-    const safeBudgetData = {
+    const safeBudgetData = budgetData || {
       nameOfRso: "N/A",
       items: [],
-      grandTotal: "N/A",
-      ...budgetData
+      grandTotal: "N/A"
     };
-  
-    // Safe signatures with defaults
-    const safeSignatures = {
-      adviser: {},
-      dean: {},
-      admin: {},
-      academicservices: {},
-      academicdirector: {},
-      executivedirector: {},
-      president: {
-        name: safeFormData.presidentName,
-        signature: safeFormData.presidentSignature,
-        date: safeFormData.applicationDate,
-        status: 'approved'
-      },
-      ...signatures
-    };
+
      const {
     eventLocation = "N/A",
     applicationDate = "N/A",
@@ -851,65 +832,6 @@
         </Page>
         
         {/* Budget Table Section */}
-
-        {safeFormData.attachedBudget && (
-        <Page size="A4" style={styles.page} wrap>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>ATTACHED BUDGET PROPOSAL</Text>
-            
-            <View style={styles.compactTable}>
-              <View style={styles.compactTableRow}>
-                <Text style={styles.compactTableFirstCell}>Budget Proposal ID</Text>
-                <Text style={styles.compactTableCell}>
-                  {safeFormData.attachedBudget._id || safeFormData.attachedBudget || 'N/A'}
-                </Text>
-              </View>
-              <View style={styles.compactTableRow}>
-                <Text style={styles.compactTableFirstCell}>Organization</Text>
-                <Text style={styles.compactTableCell}>{safeBudgetData.nameOfRso}</Text>
-              </View>
-              <View style={styles.compactTableRow}>
-                <Text style={styles.compactTableFirstCell}>Total Budget Amount</Text>
-                <Text style={styles.compactTableCell}>{formatCurrency(safeBudgetData.grandTotal)}</Text>
-              </View>
-            </View>
-
-            {/* Budget Items Table */}
-            {safeBudgetData.items?.length > 0 && (
-              <View style={styles.budgetTable}>
-                {/* Table Header */}
-                <View style={styles.budgetTableHeader}>
-                  <Text style={[styles.budgetTableHeaderCell, styles.budgetTableQty]}>QTY</Text>
-                  <Text style={[styles.budgetTableHeaderCell, styles.budgetTableUnit]}>UNIT</Text>
-                  <Text style={[styles.budgetTableHeaderCell, styles.budgetTableDesc]}>DESCRIPTION</Text>
-                  <Text style={[styles.budgetTableHeaderCell, styles.budgetTableCost]}>UNIT COST</Text>
-                  <Text style={[styles.budgetTableHeaderCell, styles.budgetTableTotal]}>TOTAL COST</Text>
-                </View>
-                
-                {/* Table Rows */}
-                {safeBudgetData.items.map((item, index) => (
-                  <View key={index} style={styles.budgetTableRow}>
-                    <Text style={[styles.budgetTableCell, styles.budgetTableQty]}>{item.quantity || '0'}</Text>
-                    <Text style={[styles.budgetTableCell, styles.budgetTableUnit]}>{item.unit || '-'}</Text>
-                    <Text style={[styles.budgetTableCell, styles.budgetTableDesc]}>{item.description || 'No description'}</Text>
-                    <Text style={[styles.budgetTableCell, styles.budgetTableCost]}>{formatCurrency(item.unitCost)}</Text>
-                    <Text style={[styles.budgetTableCell, styles.budgetTableTotal]}>{formatCurrency(item.totalCost)}</Text>
-                  </View>
-                ))}
-                
-                {/* Grand Total Row */}
-                <View style={styles.budgetTotalRow}>
-                  <Text style={styles.budgetTotalLabel}>GRAND TOTAL:</Text>
-                  <Text style={styles.budgetTotalValue}>{formatCurrency(safeBudgetData.grandTotal)}</Text>
-                </View>
-              </View>
-            )}
-          </View>
-          <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
-            `Page ${pageNumber} of ${totalPages}`
-          )} fixed />
-        </Page>
-      )}
         
         {/* Second Page for Additional Content */}
       </Document>

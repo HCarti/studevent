@@ -5,13 +5,13 @@
   margin-top: 60px; /* To account for fixed navbar */
 }
 
+/* In your CSS */
 .superadmin-content {
-  flex: 1;
-  padding: 20px;
-  margin-left: 60px; /* Same as sidebar collapsed width */
-  transition: margin-left 0.3s ease;
+  border: 2px solid red !important; /* Should be visible */
+  padding: 20px !important;
+  background: white !important;
+  min-height: 300px;
 }
-
 /* When sidebar is expanded */
 .sidebar.expanded ~ .superadmin-content {
   margin-left: 200px; /* Same as sidebar expanded width */

@@ -36,18 +36,19 @@ const SuperAdminHome = () => {
     setClickedButton(button);
   };
 
+  const handleControlPanelClick = () => {
+    handleButtonClick('controlpanel');
+    navigate('/superadmin/controlpanel');
+  };
+  
   const handleFormsClick = () => {
     handleButtonClick('forms');
     navigate('/formss');
   };
-
+  
   const handleEventsClick = () => {
     handleButtonClick('events');
     navigate('/calendar');
-  };
-  const handleControlPanelClick = () => {
-    handleButtonClick('controlpanel');
-    navigate('/controlpanel');
   };
 
 

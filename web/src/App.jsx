@@ -129,46 +129,29 @@ const App = () => {
           <Route path="/organizations" element={<Organizations />} />
           <Route path="/view-all-organizations" element={<ViewAllOrganizations />} />
           <Route path="/formss" element={<FormsandSig />} />
-          <Route path="/adduser" element={
-              <SuperAdminAddUser />
-          } />
 
-          {/* SuperAdmin Routes */}
-          <Route path="/superadmin" element={
-            <ProtectedRoute allowedRoles={['SuperAdmin']}>
-              <SuperAdminHome />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/controlpanel" element={
-            <SuperAdminLayoutWrapper>
-              <AdminControlPanel />
-            </SuperAdminLayoutWrapper>
-          } />
-          
-          <Route path="/authorities" element={
-            <SuperAdminLayoutWrapper>
-              <SuperAdminAuthorities />
-            </SuperAdminLayoutWrapper>
-          } />
-          
-          <Route path="/adminuser" element={
-            <SuperAdminLayoutWrapper>
-              <SuperAdminUsers />
-            </SuperAdminLayoutWrapper>
-          } />
-          
-          <Route path="/adduser" element={
-            <SuperAdminLayoutWrapper>
-              <SuperAdminAddUser />
-            </SuperAdminLayoutWrapper>
-          } />
-          
-          <Route path="/admintab" element={
-            <SuperAdminLayoutWrapper>
-              <AdminTab />
-            </SuperAdminLayoutWrapper>
-          } />
+
+        {/* SuperAdmin Routes */}
+        // App.js
+        <Route path="/superadmin" element={
+          <ProtectedRoute allowedRoles={['SuperAdmin']}>
+            <SuperAdminHome />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/superadmin/*" element={
+          <ProtectedRoute allowedRoles={['SuperAdmin']}>
+            <SuperAdminLayout> {/* This wraps all child routes */}
+              <Routes>
+                <Route path="controlpanel" element={<AdminControlPanel />} />
+                <Route path="authorities" element={<SuperAdminAuthorities />} />
+                <Route path="adminuser" element={<SuperAdminUsers />} />
+                <Route path="adduser" element={<SuperAdminAddUser />} />
+                <Route path="admintab" element={<AdminTab />} />
+              </Routes>
+            </SuperAdminLayout>
+          </ProtectedRoute>
+        } />
 
           {/* Admin Routes */}
           <Route path="/admin" element={

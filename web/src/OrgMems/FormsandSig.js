@@ -67,18 +67,17 @@ const FormsandSig = () => {
 
       {/* Icon to toggle modal */}
 {/* Icon with tooltip for clarity */}
-<div
-  className="help-icon"
-  title="Need help?"
-  onClick={() => setShowModal(!showModal)}
->
-  <FaceIcon style={{ fontSize: '60px', color: '#0ea5e9', cursor: 'pointer'}} />
+<div className="help-icon" onClick={() => setShowModal(!showModal)}>
+  <div className="help-tooltip">Click me</div>
+  <FaceIcon style={{ fontSize: '60px', color: '#2563eb' }} />
 </div>
-
 
       {showModal && (
         <div className="modal-bottom-right-overlay">
           <div className="modal-content small" ref={modalRef}>
+
+            <h2>Instructions</h2>
+            <p>To use the forms and signature feature, follow these steps:</p>
 
             <h3>Step 1: Go to the forms</h3>
             <p><strong></strong> You must select and create forms and then there will be a progress tracker created specifically for that form
@@ -86,7 +85,6 @@ const FormsandSig = () => {
 
             <h3>Step 2: Go to the Progress Tracker</h3>
             <p><strong></strong> Inside the progress tracker are the forms you created. You can see the progress of the forms you created.</p>
-
           </div>
         </div>
       )}

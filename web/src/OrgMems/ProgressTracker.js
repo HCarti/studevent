@@ -295,28 +295,32 @@ const ProgressTracker = () => {
     const getPdfComponent = (formType) => {
         switch (formType) {
             case 'Activity':
-                return ActivityPdf;
+                return <ActivityPdf formData={formDetails} />;
             case 'Budget':
-                return BudgetPdf;
+                return <BudgetPdf formData={formDetails} />;
             case 'Project':
-                return ProjectPdf;
+                return <ProjectPdf formData={formDetails} />;
             default:
-                return ActivityPdf;
+                return <ActivityPdf formData={formDetails} />;
         }
     };
 
     const getPdfFileName = (formType, formDetails) => {
+        const now = new Date();
+        const timestamp = now.toISOString().split('T')[0];
+        
         switch (formType) {
             case 'Activity':
-                return 'activity_proposal_form.pdf';
+                return `Activity_Proposal_${formDetails?.eventTitle || ''}_${timestamp}.pdf`;
             case 'Budget':
-                return `budget_proposal_${formDetails?.nameOfRso || ''}.pdf`;
+                return `Budget_Proposal_${formDetails?.nameOfRso || ''}_${timestamp}.pdf`;
             case 'Project':
-                return `project_proposal_${formDetails?.projectTitle || ''}.pdf`;
+                return `Project_Proposal_${formDetails?.projectTitle || ''}_${timestamp}.pdf`;
             default:
-                return 'form_document.pdf';
+                return `Form_Document_${timestamp}.pdf`;
         }
     };
+
 
     if (loading) {
         return (
@@ -398,66 +402,34 @@ const ProgressTracker = () => {
                         </div>
                     ) : (
                         <div className="action-buttons">
-                            {isTrackerCompleted && (
-                                <div className="pdf-download-container">
-                                    <Button 
-                                        variant="contained" 
-                                        color="primary"
-                                        onClick={async () => {
-                                            const ready = await preparePdfData();
-                                            if (ready) {
-                                                const link = document.createElement('a');
-                                                link.href = `#pdf-download-${Date.now()}`;
-                                                link.click();
-                                            }
-                                        }}
-                                        disabled={pdfGenerationState.loading}
-                                        startIcon={pdfGenerationState.loading ? <CircularProgress size={20} /> : null}
-                                        sx={{
-                                            backgroundColor: formDetails?.formType === 'Budget' ? '#4caf50' : 
-                                                            formDetails?.formType === 'Project' ? '#9c27b0' : 
-                                                            '#1976d2',
-                                            '&:hover': {
-                                                backgroundColor: formDetails?.formType === 'Budget' ? '#388e3c' : 
-                                                            formDetails?.formType === 'Project' ? '#7b1fa2' : 
-                                                            '#1565c0'
-                                            }
-                                        }}
+                             {isTrackerCompleted && (
+                        <div className="pdf-download-section">
+                            <h4>Download Approved Proposal</h4>
+                            <div className="pdf-download-container">
+                                {formDetails && (
+                                    <PDFDownloadLink
+                                        document={getPdfComponent(formDetails.formType)}
+                                        fileName={getPdfFileName(formDetails.formType, formDetails)}
+                                        className="pdf-download-button"
                                     >
-                                        {pdfGenerationState.loading ? 'Preparing PDF...' : `Download ${formDetails?.formType || 'Form'} PDF`}
-                                    </Button>
-
-                                    {pdfGenerationState.error && (
-                                        <div style={{ color: 'red', marginTop: '10px' }}>
-                                            Error: {pdfGenerationState.error}
-                                        </div>
-                                    )}
-
-                                    {!pdfGenerationState.loading && pdfGenerationState.budgetData !== null && (
-                                        <div style={{ display: 'none' }}>
-                                            <PDFDownloadLink
-                                                document={React.createElement(
-                                                    getPdfComponent(formDetails?.formType),
-                                                    { 
-                                                        formData: formDetails,
-                                                        signatures: reviewSignatures,
-                                                        budgetData: pdfGenerationState.budgetData
-                                                    }
-                                                )}
-                                                fileName={getPdfFileName(formDetails?.formType, formDetails)}
+                                        {({ loading }) => (
+                                            <Button 
+                                                variant="contained" 
+                                                color="primary"
+                                                disabled={loading}
                                             >
-                                                {({ loading, error }) => {
-                                                    if (error) console.error("PDF generation error:", error);
-                                                    return <span id={`pdf-download-${Date.now()}`}></span>;
-                                                }}
-                                            </PDFDownloadLink>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                                                {loading ? 'Preparing PDF...' : 'Download PDF'}
+                                            </Button>
+                                        )}
+                                    </PDFDownloadLink>
+                                )}
+                            </div>
+                        </div>
+                    )}
                             <Button variant="contained" className="action-button" onClick={handleViewForms}>
                                 VIEW FORMS
                             </Button>
+                            
                             {trackerData.currentAuthority && (trackerData.currentAuthority === user?.faculty || trackerData.currentAuthority === user?.role) ? (
                                 <Button variant="contained" className="action-button" onClick={handleEditClick}>
                                     EDIT TRACKER

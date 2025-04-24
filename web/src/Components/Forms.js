@@ -1,27 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './Forms.css';
 import { useNavigate } from 'react-router-dom';
 import FaceIcon from '@mui/icons-material/Face';
 import { FaFileContract, FaMoneyCheckAlt, FaProjectDiagram, FaClipboardList, FaMapMarkedAlt, FaMoneyBillWave } from 'react-icons/fa';
 
+
 const Forms = ({ role }) => {
   const navigate = useNavigate();
 
   const [showModal, setShowModal] = useState(false);
+  const modalRef = useRef();
 
-useEffect(() => {
-  const hasSeenInstructions = localStorage.getItem('seenFormsInstructions');
-  if (!hasSeenInstructions) {
-    setShowModal(true);
-    localStorage.setItem('seenFormsInstructions', 'true');
-  }
-}, []);
-
-const handleCloseModal = (e) => {
-  if (e.target.className === 'modal') {
-    setShowModal(false);
-  }
-};
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        setShowModal(false);
+      }
+    };
+    if (showModal) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showModal]);
 
 
   const handleNavigation = (path, formName) => {
@@ -71,19 +73,16 @@ const handleCloseModal = (e) => {
       <h1 className="f-title">Document Forms</h1>
       {/* Instruction Icon */}
 
-<div
-  className="help-icon"
-  title="Need help?"
-  onClick={() => setShowModal(!showModal)}
->
-  <FaceIcon style={{ fontSize: '60px', color: '#0ea5e9', cursor: 'pointer' }} />
+      <div className="help-icon" onClick={() => setShowModal(!showModal)}>
+  <div className="help-tooltip">Click me</div>
+  <FaceIcon style={{ fontSize: '60px', color: '#2563eb' }} />
 </div>
 
 
 {/* Instruction Modal */}
 {showModal && (
-  <div className="modal" onClick={handleCloseModal}>
-    <div className="modal-content small">
+  <div className="modal">
+    <div className="modal-content small" ref={modalRef}>
       <h3>Instructions for Document Forms</h3>
       <ul>
         <li>Select the appropriate form for your activity.</li>

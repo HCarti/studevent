@@ -11,11 +11,11 @@ const Sidebar = () => {
   const [isHovered, setIsHovered] = useState(false);
 
   const menuItems = [
-    { name: 'Dashboard', icon: <MdDashboard />, onClick: () => navigate('/controlpanel') },
-    { name: 'Admin', icon: <FaUser />, onClick: () => navigate('/admintab') },
-    { name: 'Authorities', icon: <GrDocumentUser />, onClick: () => navigate('/authorities') },
-    { name: 'Users', icon: <FaUsers />, onClick: () => navigate('/adminuser') },
-    { name: 'Add User', icon: <FaUserPlus />, onClick: () => navigate('/adduser') }
+    { name: 'Dashboard', icon: <MdDashboard />, onClick: () => navigate('/superadmin/controlpanel') },
+    { name: 'Admin', icon: <FaUser />, onClick: () => navigate('/superadmin/admintab') },
+    { name: 'Authorities', icon: <GrDocumentUser />, onClick: () => navigate('/superadmin/authorities') },
+    { name: 'Users', icon: <FaUsers />, onClick: () => navigate('/superadmin/adminuser') },
+    { name: 'Add User', icon: <FaUserPlus />, onClick: () => navigate('/superadmin/adduser') }
   ];
 
   return (

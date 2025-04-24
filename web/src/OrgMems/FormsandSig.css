@@ -137,7 +137,6 @@
   bottom: 70px;
   right: 30px;
   z-index: 1002;
-  background: rgba(0, 0, 0, 0.4);
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
@@ -149,7 +148,6 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -178,10 +176,49 @@
 
 .help-icon {
   position: fixed;
-  bottom: 25px;
-  right: 25px;
+  bottom: 100px;
+  right: 40px; /* Adjust this to move more/less right */
+  border: none;
   z-index: 1001;
+  background: none;
 }
+
+.help-tooltip {
+  position: absolute;
+  bottom: 55px;
+  right: 40px;
+  margin-bottom: 12px;
+  background-color: #2563eb;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 20px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+/* Triangle tail of the speech bubble */
+.help-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  right: 10px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #2563eb;
+}
+
+
+.help-icon:hover .help-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .help-icon:hover {
   transform: scale(1.1);
   transition: transform 0.2s;
@@ -196,7 +233,7 @@
   position: fixed;
   bottom: 70px;
   right: 20px;
-  z-index: 2000;
+  z-index: 3000;
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
@@ -208,6 +245,8 @@
   border-radius: 16px;
   width: 420px; /* wider than before */
   max-height: 80vh;
+  right: 65px;
+  bottom: 30px;
   overflow-y: auto;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   font-size: 15px;

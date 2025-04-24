@@ -8,13 +8,10 @@ import {
 import { Icon } from '@iconify/react';
 import fileDocumentIcon from '@iconify/icons-mdi/file-document';
 import messageText from '@iconify/icons-mdi/message-text';
-import accountGroup from '@iconify/icons-mdi/account-group';
 import downloadIcon from '@iconify/icons-mdi/download';
-import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 
 const Dashboard = () => {
-  const navigate = useNavigate();
   const [feedbacks, setFeedbacks] = useState([]);
   const [liquidations, setLiquidations] = useState([]);
   const [loading, setLoading] = useState({
@@ -213,10 +210,10 @@ const Dashboard = () => {
                           </Tooltip>
                         </TableCell>
                         <TableCell>
-                          {liquidation.submittedAt ? 
-                            new Date(liquidation.submittedAt).toLocaleDateString() : 
-                            'N/A'}
-                        </TableCell>
+                        {liquidation.createdAt ? 
+                          new Date(liquidation.createdAt).toLocaleDateString() : 
+                          'N/A'}
+                      </TableCell>
                         <TableCell align="right">
                           <Tooltip title="Download">
                             <IconButton 

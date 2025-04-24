@@ -17,9 +17,9 @@ exports.submitLiquidation = async (req, res) => {
       contentType: req.file.mimetype,
     });
 
-    // Save to database
+    // In submitLiquidation controller
     const newLiquidation = await Liquidation.create({
-      organization: req.body.organizationName || 'Unknown Organization', // Provide default
+      organization: req.body.organization || req.body.organizationName || 'Unknown Organization',
       fileName: req.file.originalname,
       fileUrl: blob.url,
       submittedBy: req.user?.id,
