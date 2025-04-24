@@ -97,13 +97,11 @@ const EventTrackerList = () => {
 
   const getFilteredForms = () => {
     return forms.filter((form) => {
-      const status = form.finalStatus || form.status || '';
-      const normalizedStatus = status.trim().toLowerCase();
-      
+      const status = (form.finalStatus || form.status || '').trim().toLowerCase();
       switch (filter) {
-        case "pending": return normalizedStatus === "pending";
-        case "approved": return normalizedStatus === "approved";
-        case "declined": return normalizedStatus === "declined";
+        case "pending": return status === "pending";
+        case "approved": return status === "approved";
+        case "declined": return status === "declined";
         default: return true;
       }
     });
@@ -112,9 +110,10 @@ const EventTrackerList = () => {
   const handleFilterClick = (filterType) => {
     setFilter(filterType);
   };
-
-  // Helper function to get organization name
   const getOrganizationName = (form) => {
+    if (form.formType === 'LocalOffCampus') {
+      return form.nameOfHei || form.organizationName || 'Local Off-Campus';
+    }
     if (form.formType === 'Budget') return form.nameOfRso;
     if (form.formType === 'Project') return organizations[form.emailAddress] || 'Unknown Organization';
     return form.studentOrganization?.organizationName || organizations[form.emailAddress] || 'Unknown Organization';
@@ -122,8 +121,11 @@ const EventTrackerList = () => {
 
   // Helper function to get event/project title
   const getEventTitle = (form) => {
+    if (form.formType === 'LocalOffCampus') {
+      return `Local Off-Campus (${form.formPhase})`;
+    }
     if (form.formType === 'Project') return form.projectTitle;
-    return form.eventTitle;
+    return form.eventTitle || 'No Title';
   };
 
   return (

@@ -173,35 +173,62 @@ const getRequiredReviewers = (formType) => {
 // Main controller methods
 exports.getAllForms = async (req, res) => {
   try {
-    const { formType } = req.query;
-    
-    // Get regular forms
-    const formFilter = formType ? { formType } : {};
-    const forms = await Form.find(formFilter)
-      .populate("studentOrganization")
-      .populate("attachedBudget")
-      .lean();
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
 
-    // Get LocalOffCampus forms
-    const localOffFilter = formType === 'LocalOffCampus' ? {} : { formType: 'NON_EXISTENT' }; // Only get if specifically requested
-    const localOffForms = await LocalOffCampus.find(localOffFilter)
-      .lean()
-      .then(forms => forms.map(form => ({
-        ...form,
-        formType: 'LocalOffCampus', // Ensure formType is set
-        finalStatus: form.status, // Map status to finalStatus
-        eventTitle: `Local Off-Campus (${form.formPhase})`, // Add eventTitle
-        nameOfHei: form.nameOfHei // Ensure organization name is included
-      })));
+    // Get all form types in parallel
+    const [regularForms, localOffForms] = await Promise.all([
+      Form.find({})
+        .populate("studentOrganization")
+        .populate("attachedBudget")
+        .lean(),
+      LocalOffCampus.find({})
+        .populate("submittedBy")
+        .lean()
+    ]);
 
-    // Combine results
-    const allForms = [...forms, ...localOffForms];
+    // Transform LocalOffCampus forms to match the expected structure
+    const transformedLocalOffForms = localOffForms.map(form => ({
+      ...form,
+      _id: form._id,
+      formType: 'LocalOffCampus',
+      finalStatus: form.status,
+      applicationDate: form.createdAt || new Date(),
+      emailAddress: form.submittedBy?.email || form.emailAddress,
+      currentStep: form.currentStep || 0,
+      // Add other necessary fields
+      eventTitle: `Local Off-Campus (${form.formPhase})`,
+      nameOfHei: form.nameOfHei,
+      organizationName: form.nameOfHei // For consistent display
+    }));
 
-    if (!allForms.length) {
+    // Combine all forms
+    const allForms = [...regularForms, ...transformedLocalOffForms];
+
+    // Fetch tracker data for all forms
+    const formsWithTrackers = await Promise.all(
+      allForms.map(async form => {
+        try {
+          const tracker = await EventTracker.findOne({ formId: form._id }).lean();
+          return {
+            ...form,
+            currentStep: tracker?.currentStep || form.currentStep || 0,
+            trackerId: tracker?._id
+          };
+        } catch (error) {
+          console.error(`Error fetching tracker for form ${form._id}:`, error);
+          return form;
+        }
+      })
+    );
+
+    if (!formsWithTrackers.length) {
       return res.status(404).json({ message: "No forms found" });
     }
 
-    res.status(200).json(allForms);
+    res.status(200).json(formsWithTrackers);
   } catch (error) {
     console.error("Error fetching forms:", error);
     res.status(500).json({ 
@@ -210,7 +237,6 @@ exports.getAllForms = async (req, res) => {
     });
   }
 };
-
 // Update getFormById to populate attachedBudget:
 exports.getFormById = async (req, res) => {
   try {
