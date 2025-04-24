@@ -240,16 +240,51 @@ exports.getAllForms = async (req, res) => {
 // Update getFormById to populate attachedBudget:
 exports.getFormById = async (req, res) => {
   try {
-    const form = await Form.findById(req.params.formId)
+    const formId = req.params.formId;
+    
+    // First try regular Form collection
+    let form = await Form.findById(formId)
       .populate('attachedBudget')
       .populate('studentOrganization');
+
+    // If not found, try LocalOffCampus collection
+    if (!form) {
+      form = await LocalOffCampus.findById(formId)
+        .populate('submittedBy');
       
+      if (form) {
+        // Transform to match expected structure
+        form = {
+          ...form.toObject(),
+          formType: 'LocalOffCampus',
+          finalStatus: form.status,
+          eventTitle: `Local Off-Campus (${form.formPhase})`
+        };
+      }
+    }
+
+    // If still not found, try Budget collection if needed
+    if (!form) {
+      form = await BudgetProposal.findById(formId);
+      if (form) {
+        form = {
+          ...form.toObject(),
+          formType: 'Budget'
+        };
+      }
+    }
+
     if (!form) {
       return res.status(404).json({ message: 'Form not found' });
     }
+
     res.status(200).json(form);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error in getFormById:', error);
+    res.status(500).json({ 
+      error: 'Server error',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
