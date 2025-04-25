@@ -103,6 +103,13 @@ body{
   color: #1a3ab5;
 }
 
+/* Snackbar positioning */
+.MuiAlert-root {
+  margin-top: 60px; /* Adjust based on your navbar height */
+  width: 100%;
+  max-width: 400px;
+}
+
 /* Button Styles */
 .home-login-btn {
   width: 100%;

@@ -3,14 +3,18 @@ import './Home.css';
 import axios from 'axios';
 import { ParallaxProvider, Parallax } from 'react-scroll-parallax';
 import { useNavigate } from 'react-router-dom';
-import CircularProgress from '@mui/material/CircularProgress';
-import Snackbar from '@mui/material/Snackbar';
-import MuiAlert from '@mui/material/Alert';
 import Person2Icon from '@mui/icons-material/Person2';
 import LockIcon from '@mui/icons-material/Lock';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import CircularProgress from '@mui/material/CircularProgress';
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
 import NU_logo from '../Images/NU_logo.png';
+
+const Alert = React.forwardRef(function Alert(props, ref) {
+  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+});
 
 const Home = ({ handleLogin }) => {
   const [email, setEmail] = useState('');
@@ -19,13 +23,11 @@ const Home = ({ handleLogin }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [loading, setLoading] = useState(false);
-const [snackbarOpen, setSnackbarOpen] = useState(false);
-const [snackbarMessage, setSnackbarMessage] = useState('');
-const [snackbarSeverity, setSnackbarSeverity] = useState('success'); // 'error', 'warning', 'info'
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
   const [errors, setErrors] = useState({
     email: '',
     password: ''
@@ -99,11 +101,11 @@ const [snackbarSeverity, setSnackbarSeverity] = useState('success'); // 'error',
   
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSuccessMessage('');
-    setErrorMessage('');
+    setLoading(true);
 
     // Validate form before submission
     if (!validateForm()) {
+      setLoading(false);
       return;
     }
 
@@ -117,7 +119,10 @@ const [snackbarSeverity, setSnackbarSeverity] = useState('success'); // 'error',
 
         if (!token || !user) {
             console.error("Token or user data is missing in the response");
-            setErrorMessage("Login failed. Please check your credentials.");
+            setSnackbarMessage("Login failed. Please check your credentials.");
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
+            setLoading(false);
             return;
         }
 
@@ -132,12 +137,18 @@ const [snackbarSeverity, setSnackbarSeverity] = useState('success'); // 'error',
 
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-        setSuccessMessage("Login successful! Redirecting...");
+        setSnackbarMessage("Login successful! Redirecting...");
+        setSnackbarSeverity('success');
+        setSnackbarOpen(true);
 
     } catch (error) {
         console.error("Login error:", error.response ? error.response.data : error.message);
         const errorMsg = error.response?.data?.message || 'Invalid email or password.';
-        setErrorMessage(errorMsg);
+        setSnackbarMessage(errorMsg);
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+    } finally {
+        setLoading(false);
     }
   };
   
@@ -145,7 +156,6 @@ const [snackbarSeverity, setSnackbarSeverity] = useState('success'); // 'error',
     setShowPassword(!showPassword);
   };
 
-  // Handle input changes with validation
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
     if (errors.email) {
@@ -158,6 +168,13 @@ const [snackbarSeverity, setSnackbarSeverity] = useState('success'); // 'error',
     if (errors.password) {
       setErrors({...errors, password: ''});
     }
+  };
+
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbarOpen(false);
   };
 
   return (
@@ -215,9 +232,17 @@ const [snackbarSeverity, setSnackbarSeverity] = useState('success'); // 'error',
                   </div>
                   {errors.password && <p className="home-error-text">{errors.password}</p>}
 
-                  <button type="submit" className="home-login-btn">Log in</button>
-                  {successMessage && <p className="home-success-message">{successMessage}</p>}
-                  {errorMessage && <p className="home-error-message">{errorMessage}</p>}
+                  <button 
+                    type="submit" 
+                    className="home-login-btn"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <CircularProgress size={24} color="inherit" />
+                    ) : (
+                      'Log in'
+                    )}
+                  </button>
                 </form>
               </div>
 
@@ -246,6 +271,22 @@ const [snackbarSeverity, setSnackbarSeverity] = useState('success'); // 'error',
             </div>
           </div>
         </Parallax>
+
+        {/* Snackbar Notification */}
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={6000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        >
+          <Alert 
+            onClose={handleCloseSnackbar} 
+            severity={snackbarSeverity}
+            sx={{ width: '100%' }}
+          >
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
       </div>
     </ParallaxProvider>
   );
