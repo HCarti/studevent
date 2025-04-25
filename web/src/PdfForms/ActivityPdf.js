@@ -282,66 +282,44 @@
 
   // Create Document Component with Page Numbers
   const ActivityPdf = ({ formData = {}, signatures = {}, budgetData = null }) => {
-    
-
-    const safeSignatures = {
-      adviser: signatures?.adviser || {},
-      dean: signatures?.dean || {},
-      admin: signatures?.admin || {},
-      academicservices: signatures?.academicservices || {},
-      academicdirector: signatures?.academicdirector || {},
-      executivedirector: signatures?.executivedirector || {}
-    };
-  
-    // Safely get budget data
-    const safeBudgetData = budgetData || {
-      nameOfRso: 'N/A',
-      eventTitle: 'N/A',
-      items: [],
-      grandTotal: 0,
-      createdAt: null,
-      updatedAt: null,
-      createdBy: { name: 'Organization Representative' }
-    };
-  
-     const {
-    eventLocation = "N/A",
-    applicationDate = "N/A",
-    studentOrganization = "N/A",
-    contactPerson = "N/A",
-    contactNo = "N/A",
-    emailAddress = "N/A",
-    eventTitle = "N/A",
-    eventType = "N/A",
-    venueAddress = "N/A",
-    eventStartDate = "N/A",
-    eventEndDate = "N/A",
-    organizer = "N/A",
-    budgetAmount = "N/A",
-    budgetFrom = "N/A",
-    coreValuesIntegration = "N/A",
-    objectives = "N/A",
-    marketingCollaterals = "N/A",
-    pressRelease = "N/A",
-    others = "N/A",
-    eventFacilities = "N/A",
-    holdingArea = "N/A",
-    toilets = "N/A",
-    transportationandParking = "N/A",
-    more = "N/A",
-    houseKeeping = "N/A",
-    wasteManagement = "N/A",
-    eventManagementHead = "N/A",
-    eventCommitteesandMembers = "N/A",
-    health = "N/A",
-    safetyAttendees = "N/A",
-    emergencyFirstAid = "N/A",
-    fireSafety = "N/A",
-    weather = "N/A",
-    attachedBudget = null,
-    presidentSignature = null
-  } = formData;
-
+    // Destructure with proper fallbacks
+    const {
+      eventLocation = "N/A",
+      applicationDate = "N/A",
+      studentOrganization = "N/A",
+      contactPerson = "N/A",
+      contactNo = "N/A",
+      emailAddress = "N/A",
+      eventTitle = "N/A",
+      eventType = "N/A",
+      venueAddress = "N/A",
+      eventStartDate = "N/A",
+      eventEndDate = "N/A",
+      organizer = "N/A",
+      budgetAmount = "N/A",
+      budgetFrom = "N/A",
+      coreValuesIntegration = "N/A",
+      objectives = "N/A",
+      marketingCollaterals = "N/A",
+      pressRelease = "N/A",
+      others = "N/A",
+      eventFacilities = "N/A",
+      holdingArea = "N/A",
+      toilets = "N/A",
+      transportationandParking = "N/A",
+      more = "N/A",
+      houseKeeping = "N/A",
+      wasteManagement = "N/A",
+      eventManagementHead = "N/A",
+      eventCommitteesandMembers = "N/A",
+      health = "N/A",
+      safetyAttendees = "N/A",
+      emergencyFirstAid = "N/A",
+      fireSafety = "N/A",
+      weather = "N/A",
+      presidentName = "N/A",
+      presidentSignature = null
+    } = formData;
 
     // Format date function
     const formatDate = (dateString) => {
@@ -353,153 +331,139 @@
         day: 'numeric'
       });
     };
+    
+    const SignatureField = ({ title, name, signature, date, status, remarks }) => (
+      <View style={styles.signatureColumn}>
+        <Text style={styles.signatureLabel}>{title}</Text>
+        
+        <Text style={styles.signatureName}>{name || 'Not specified'}</Text>
+        
+        {signature ? (
+          <Image 
+            src={signature} 
+            style={styles.signatureImage}
+          />
+        ) : (
+          <View style={styles.signatureValue}></View>
+        )}
+        
+        <Text style={styles.dateText}>
+          Date: {date ? formatDate(date) : '__________'}
+        </Text>
+        
+        {remarks && (
+          <Text style={styles.remarksText}>Remarks: {remarks}</Text>
+        )}
+      </View>
+    );
 
     const renderBudgetSection = () => {
       if (!budgetData) return null;
-
+    
       return (
-          <Page size="A4" style={styles.page} wrap>
-              <View style={styles.header} fixed>
-                  <Image src={NU_logo} style={styles.logo} />
-                  <View style={styles.headerText}>
-                      <Text style={styles.title}>NU MOA</Text>
-                      <Text>Student Development and Activities Office</Text>
-                      <Text>Attached Budget Proposal</Text>
-                  </View>
+        <Page size="A4" style={styles.page} wrap>
+          <View style={styles.header} fixed>
+            <Image src={NU_logo} style={styles.logo} />
+            <View style={styles.headerText}>
+              <Text style={styles.title}>NU MOA</Text>
+              <Text>Student Development and Activities Office</Text>
+              <Text>Attached Budget Proposal</Text>
+            </View>
+          </View>
+    
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>BUDGET PROPOSAL DETAILS</Text>
+            <View style={styles.compactTable}>
+              <View style={styles.compactTableRow}>
+                <Text style={styles.compactTableFirstCell}>Name Of RSO:</Text>
+                <Text style={styles.compactTableCell}>
+                  {budgetData.nameOfRso || 'N/A'}
+                </Text>
               </View>
-
-              <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>BUDGET PROPOSAL DETAILS</Text>
-                  
-                  <View style={styles.compactTable}>
-                      <View style={styles.compactTableRow}>
-                          <Text style={styles.compactTableFirstCell}>Organization</Text>
-                          <Text style={styles.compactTableCell}>
-                              {budgetData.nameOfRso || 'N/A'}
-                          </Text>
-                      </View>
-                      <View style={styles.compactTableIndentedRow}>
-                          <Text style={styles.compactTableFirstCell}>Event Title</Text>
-                          <Text style={styles.compactTableCell}>
-                              {budgetData.eventTitle || 'N/A'}
-                          </Text>
-                      </View>
-                      <View style={styles.compactTableIndentedRow}>
-                          <Text style={styles.compactTableFirstCell}>Date Created</Text>
-                          <Text style={styles.compactTableCell}>
-                              {formatDate(budgetData.createdAt) || 'N/A'}
-                          </Text>
-                      </View>
-                      <View style={styles.compactTableIndentedRow}>
-                          <Text style={styles.compactTableFirstCell}>Last Updated</Text>
-                          <Text style={styles.compactTableCell}>
-                              {formatDate(budgetData.updatedAt) || 'N/A'}
-                          </Text>
-                      </View>
-                      <View style={styles.compactTableIndentedRow}>
-                          <Text style={styles.compactTableFirstCell}>Total Budget</Text>
-                          <Text style={[styles.compactTableCell, { fontWeight: 'bold' }]}>
-                              ₱{budgetData.grandTotal?.toLocaleString() || '0'}
-                          </Text>
-                      </View>
-                  </View>
+              <View style={styles.compactTableIndentedRow}>
+                <Text style={styles.compactTableFirstCell}>Event Title</Text>
+                <Text style={styles.compactTableCell}>
+                  {budgetData.eventTitle || 'N/A'}
+                </Text>
               </View>
-
-              {budgetData.items?.length > 0 && (
-                  <View style={styles.section}>
-                      <Text style={styles.sectionTitle}>BUDGET ITEM BREAKDOWN</Text>
-                      <View style={styles.table}>
-                          {/* Table Header */}
-                          <View style={[styles.tableRow, styles.tableHeader]}>
-                              <Text style={[styles.tableCell, { width: '40%' }]}>Item Description</Text>
-                              <Text style={[styles.tableCell, { width: '15%', textAlign: 'center' }]}>Qty</Text>
-                              <Text style={[styles.tableCell, { width: '20%', textAlign: 'right' }]}>Unit Cost</Text>
-                              <Text style={[styles.tableCell, { width: '25%', textAlign: 'right' }]}>Total Cost</Text>
-                          </View>
-                          {/* Table Rows */}
-                          {budgetData.items.map((item, index) => (
-                              <View key={index} style={styles.tableRow}>
-                                  <Text style={[styles.tableCell, { width: '40%' }]}>
-                                      {item.itemName || 'Unspecified Item'}
-                                  </Text>
-                                  <Text style={[styles.tableCell, { width: '15%', textAlign: 'center' }]}>
-                                      {item.quantity || '0'}
-                                  </Text>
-                                  <Text style={[styles.tableCell, { width: '20%', textAlign: 'right' }]}>
-                                      ₱{(item.unitCost || 0).toLocaleString()}
-                                  </Text>
-                                  <Text style={[styles.tableCell, { width: '25%', textAlign: 'right', fontWeight: 'bold' }]}>
-                                      ₱{(item.totalCost || 0).toLocaleString()}
-                                  </Text>
-                              </View>
-                          ))}
-                      </View>
-                  </View>
-              )}
-
-              <View style={styles.signatureSection}>
-                  <Text style={styles.signatureTitle}>BUDGET APPROVAL</Text>
-                  <View style={styles.signatureRowGap}>
-                      <View style={styles.borderedSignatureColumn}>
-                          <Text style={styles.signatureLabel}>Prepared by:</Text>
-                          <View style={styles.signatureValue}></View>
-                          <Text style={styles.signatureName}>
-                              {budgetData.createdBy?.name || 'Organization Representative'}
-                          </Text>
-                          <Text style={styles.dateText}>Date: {formatDate(budgetData.createdAt)}</Text>
-                      </View>
-                      <View style={styles.borderedSignatureColumn}>
-                          <Text style={styles.signatureLabel}>Approved by:</Text>
-                          <View style={styles.signatureValue}></View>
-                          <Text style={styles.signatureName}>Authorized Signatory</Text>
-                          <Text style={styles.dateText}>Date: ___________________</Text>
-                      </View>
-                  </View>
+              <View style={styles.compactTableIndentedRow}>
+                <Text style={styles.compactTableFirstCell}>Total Budget</Text>
+                <Text style={[styles.compactTableCell, { fontWeight: 'bold' }]}>
+                  ₱{(budgetData.grandTotal || 0).toLocaleString()}
+                </Text>
               </View>
-
-              <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
-                  `Page ${pageNumber} of ${totalPages}`
-              )} fixed />
-          </Page>
+            </View>
+          </View>
+    
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>BUDGET ITEM BREAKDOWN</Text>
+            <View style={styles.table}>
+              <View style={[styles.tableRow, styles.tableHeader]}>
+                <Text style={[styles.tableCell, { width: '35%' }]}>Description</Text>
+                <Text style={[styles.tableCell, { width: '10%' }]}>Unit</Text>
+                <Text style={[styles.tableCell, { width: '15%', textAlign: 'center' }]}>Qty</Text>
+                <Text style={[styles.tableCell, { width: '20%', textAlign: 'right' }]}>Unit Cost</Text>
+                <Text style={[styles.tableCell, { width: '20%', textAlign: 'right' }]}>Total Cost</Text>
+              </View>
+              {(budgetData.items || []).map((item, index) => (
+                <View key={index} style={styles.tableRow}>
+                  <Text style={[styles.tableCell, { width: '35%' }]}>
+                    {item.description || 'Unspecified Item'}
+                  </Text>
+                  <Text style={[styles.tableCell, { width: '10%' }]}>
+                    {item.unit || '-'}
+                  </Text>
+                  <Text style={[styles.tableCell, { width: '15%', textAlign: 'center' }]}>
+                    {item.quantity || '0'}
+                  </Text>
+                  <Text style={[styles.tableCell, { width: '20%', textAlign: 'right' }]}>
+                    ₱{(item.unitCost || 0).toLocaleString()}
+                  </Text>
+                  <Text style={[styles.tableCell, { width: '20%', textAlign: 'right', fontWeight: 'bold' }]}>
+                    ₱{(item.totalCost || 0).toLocaleString()}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+    
+          <View style={styles.signatureSection}>
+            <Text style={styles.signatureTitle}>BUDGET APPROVAL</Text>
+            <View style={styles.signatureRowGap}>
+              <View style={styles.borderedSignatureColumn}>
+                <Text style={styles.signatureLabel}>Prepared by:</Text>
+                <View style={styles.signatureValue}></View>
+                <Text style={styles.signatureName}>
+                  {budgetData.createdBy?.name || 'Organization Representative'}
+                </Text>
+                <Text style={styles.dateText}>Date: {formatDate(budgetData.createdAt)}</Text>
+              </View>
+              <View style={styles.borderedSignatureColumn}>
+                <Text style={styles.signatureLabel}>Approved by:</Text>
+                <View style={styles.signatureValue}></View>
+                <Text style={styles.signatureName}>Authorized Signatory</Text>
+                <Text style={styles.dateText}>Date: ___________________</Text>
+              </View>
+            </View>
+          </View>
+    
+          <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
+            `Page ${pageNumber} of ${totalPages}`
+          )} fixed />
+        </Page>
       );
-  };
+    };
 
-
-  const SignatureField = ({ title, name, signature, date, status, remarks }) => (
-    <View style={styles.signatureColumn}>
-      <Text style={styles.signatureLabel}>{title}</Text>
-      
-      <View style={styles.checkboxContainer}>
-        <View style={[styles.checkbox, status === 'approved' && styles.checked]} />
-        <Text>Approved</Text>
-      </View>
-      <View style={styles.checkboxContainer}>
-        <View style={[styles.checkbox, status === 'declined' && styles.checked]} />
-        <Text>Disapproved</Text>
-      </View>
-      
-      <Text style={styles.signatureName}>{name || 'Not specified'}</Text>
-      
-      {signature ? (
-        <Image 
-          src={signature} 
-          style={styles.signatureImage}
-        />
-      ) : (
-        <View style={styles.signatureValue}></View>
-      )}
-      
-      <Text style={styles.dateText}>
-        Date: {date ? formatDate(date) : '__________'}
-      </Text>
-      
-      {remarks && (
-        <Text style={styles.remarksText}>Remarks: {remarks}</Text>
-      )}
-    </View>
-  );
-
-  
+    console.log("Budget Data Structure:", {
+      hasBudgetData: !!budgetData,
+      hasItems: budgetData?.items?.length > 0,
+      itemsCount: budgetData?.items?.length,
+      data: budgetData
+    });
+  console.log("FormData in PDF:", formData);
+console.log("Signatures in PDF:", signatures);
+console.log("BudgetData in PDF:", budgetData);
+console.log("Received presidentSignature:", presidentSignature);
 
 
     return (
@@ -714,145 +678,137 @@
 
           {/* Signatures and Endorsements Section */}
           <View style={styles.signatureSection}>
-                <Text style={styles.signatureTitle}>5. SIGNATURES / ENDORSEMENTS</Text>
-                
-                <View style={styles.signatureRowGap}>
-                  {/* President's Signature */}
-                  <View style={styles.borderedSignatureColumn}>
-                    <Text style={styles.signatureLabel}>a. Organization President</Text>
-                    <View style={styles.signatureDivider} />
-                    {presidentSignature ? (
-                      <>
-                        <Image 
-                          src={presidentSignature} 
-                          style={styles.signatureImage}
-                        />
-                        <Text style={styles.signatureName}>President's Signature</Text>
-                        <Text style={styles.dateText}>Date: ___________________</Text>
-                      </>
-                    ) : (
-                      <>
-                        <View style={styles.signatureValue}></View>
-                        <Text style={styles.signatureName}>President's Signature</Text>
-                        <Text style={styles.dateText}>Date: ___________________</Text>
-                      </>
-                    )}
-                  </View>
-                  
-                  {/* Faculty Adviser */}
-                  <View style={styles.borderedSignatureColumn}>
-                    <Text style={styles.signatureLabel}>b. Faculty Adviser</Text>
-                    <View style={styles.signatureDivider} />
-                    {signatures.adviser ? (
-                      <>
-                        {signatures.adviser.signature ? (
-                          <Image 
-                            src={signatures.adviser.signature} 
-                            style={styles.signatureImage}
-                          />
-                        ) : (
-                          <View style={styles.signatureValue}></View>
-                        )}
-                        <Text style={styles.signatureName}>
-                          {signatures.adviser.name || "ADVISER NAME"}
-                        </Text>
-                        <Text style={styles.dateText}>
-                          Date: {signatures.adviser.date ? formatDate(signatures.adviser.date) : "___________________"}
-                        </Text>
-                        {signatures.adviser.remarks && (
-                          <Text style={styles.remarksText}>Remarks: {signatures.adviser.remarks}</Text>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <View style={styles.signatureValue}></View>
-                        <Text style={styles.signatureName}>ADVISER NAME</Text>
-                        <Text style={styles.dateText}>Date: ___________________</Text>
-                      </>
-                    )}
-                  </View>
-                </View>
-              </View>
-
-          <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
-            `Page ${pageNumber} of ${totalPages}`
-          )} fixed />
-        </Page>
-        
-        <Page size="A4" style={styles.page} wrap>
-        
-          {/* Signatures and Endorsements Section */}
-              
-              {/* Approvals Section */}
-              <View style={styles.signatureSection}>
-                <Text style={styles.signatureTitle}>APPROVALS</Text>
-                
-                {/* Dean & Admin Row */}
-                <View style={styles.signatureRowGap}>
-                  <View style={styles.borderedSignatureColumn}>
-                    <SignatureField 
-                      title="a. Dean"
-                      name={signatures.dean?.name || "DEAN NAME"}
-                      signature={signatures.dean?.signature}
-                      date={signatures.dean?.date}
-                      status={signatures.dean?.status}
-                    />
-                  </View>
-                  
-                  <View style={styles.borderedSignatureColumn}>
-                    <SignatureField 
-                      title="b. Admin"
-                      name={signatures.admin?.stepName || "ADMIN NAME"}
-                      signature={signatures.admin?.signature}
-                      date={signatures.admin?.date}
-                      status={signatures.admin?.status}
-                    />
-                  </View>
-                </View>
-                
-                {/* Academic Services & Academic Director Row */}
-                <View style={styles.signatureRowGap}>
-                  <View style={styles.borderedSignatureColumn}>
-                    <SignatureField 
-                      title="c. Academic Services"
-                      name={signatures.academicservices?.name || "ACADEMIC SERVICE NAME"}
-                      signature={signatures.academicservices?.signature}
-                      date={signatures.academicservices?.date}
-                      status={signatures.academicservices?.status}
-                    />
-                  </View>
-                  
-                  <View style={styles.borderedSignatureColumn}>
-                    <SignatureField 
-                      title="d. Academic Director"
-                      name={signatures.academicdirector?.name || "ACADEMIC DIRECTOR NAME"}
-                      signature={signatures.academicdirector?.signature}
-                      date={signatures.academicdirector?.date}
-                      status={signatures.academicdirector?.status}
-                    />
-                  </View>
-                </View>
-                
-                {/* Executive Director Row (full width) */}
-                <View style={[styles.borderedSignatureColumn, { width: '100%' }]}>
-                  <SignatureField 
-                    title="e. Executive Director"
-                    name={signatures.executivedirector?.name || "EXECUTIVE DIRECTOR NAME"}
-                    signature={signatures.executivedirector?.signature}
-                    date={signatures.executivedirector?.date}
-                    status={signatures.executivedirector?.status}
+          <Text style={styles.signatureTitle}>5. SIGNATURES / ENDORSEMENTS</Text>
+          <View style={styles.signatureRowGap}>
+            {/* President's Signature */}
+            <View style={styles.borderedSignatureColumn}>
+              <Text style={styles.signatureLabel}>a. Organization President</Text>
+              <View style={styles.signatureDivider} />
+              {presidentSignature ? (
+                <>
+                  <Image 
+                    src={presidentSignature} 
+                    style={styles.signatureImage}
                   />
-                </View>
-              </View>
+                  <Text style={styles.signatureName}>{presidentName || 'President'}</Text>
+                  <Text style={styles.dateText}>Date: ___________________</Text>
+                </>
+              ) : (
+                <>
+                  <View style={styles.signatureValue}></View>
+                  <Text style={styles.signatureName}>{presidentName || 'President'}</Text>
+                  <Text style={styles.dateText}>Date: ___________________</Text>
+                </>
+              )}
+            </View>
+            
+            {/* Faculty Adviser */}
+            <View style={styles.borderedSignatureColumn}>
+              <Text style={styles.signatureLabel}>b. Faculty Adviser</Text>
+              <View style={styles.signatureDivider} />
+              {signatures.adviser ? (
+                <>
+                  {signatures.adviser.signature ? (
+                    <Image 
+                      src={signatures.adviser.signature} 
+                      style={styles.signatureImage}
+                    />
+                  ) : (
+                    <View style={styles.signatureValue}></View>
+                  )}
+                  <Text style={styles.signatureName}>
+                    {signatures.adviser.name || "ADVISER NAME"}
+                  </Text>
+                  <Text style={styles.dateText}>
+                    Date: {signatures.adviser.date ? formatDate(signatures.adviser.date) : "___________________"}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <View style={styles.signatureValue}></View>
+                  <Text style={styles.signatureName}>ADVISER NAME</Text>
+                  <Text style={styles.dateText}>Date: ___________________</Text>
+                </>
+              )}
+            </View>
+          </View>
+        </View>
 
-          {/* Page Number Footer */}
-          <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
-            `Page ${pageNumber} of ${totalPages}`
-          )} fixed />
-        </Page>
+        <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
+          `Page ${pageNumber} of ${totalPages}`
+        )} fixed />
+      </Page>
+
+      {/* Second Page - Approvals */}
+      <Page size="A4" style={styles.page} wrap>
+        <View style={styles.signatureSection}>
+          <Text style={styles.signatureTitle}>APPROVALS</Text>
+          
+          {/* Dean & Admin */}
+          <View style={styles.signatureRowGap}>
+            <View style={styles.borderedSignatureColumn}>
+              <SignatureField 
+                title="a. Dean"
+                name={signatures.dean?.name || "DEAN NAME"}
+                signature={signatures.dean?.signature}
+                date={signatures.dean?.date}
+                status={signatures.dean?.status}
+              />
+            </View>
+            
+            <View style={styles.borderedSignatureColumn}>
+              <SignatureField 
+                title="b. Admin"
+                name={signatures.admin?.name || "ADMIN NAME"}
+                signature={signatures.admin?.signature}
+                date={signatures.admin?.date}
+                status={signatures.admin?.status}
+              />
+            </View>
+          </View>
+          
+          {/* Academic Services & Academic Director */}
+          <View style={styles.signatureRowGap}>
+            <View style={styles.borderedSignatureColumn}>
+              <SignatureField 
+                title="c. Academic Services"
+                name={signatures.academicservices?.name || "ACADEMIC SERVICE NAME"}
+                signature={signatures.academicservices?.signature}
+                date={signatures.academicservices?.date}
+                status={signatures.academicservices?.status}
+              />
+            </View>
+            
+            <View style={styles.borderedSignatureColumn}>
+              <SignatureField 
+                title="d. Academic Director"
+                name={signatures.academicdirector?.name || "ACADEMIC DIRECTOR NAME"}
+                signature={signatures.academicdirector?.signature}
+                date={signatures.academicdirector?.date}
+                status={signatures.academicdirector?.status}
+              />
+            </View>
+          </View>
+          
+          {/* Executive Director */}
+          <View style={[styles.borderedSignatureColumn, { width: '100%' }]}>
+            <SignatureField 
+              title="e. Executive Director"
+              name={signatures.executivedirector?.name || "EXECUTIVE DIRECTOR NAME"}
+              signature={signatures.executivedirector?.signature}
+              date={signatures.executivedirector?.date}
+              status={signatures.executivedirector?.status}
+            />
+          </View>
+        </View>
+
+        <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
+          `Page ${pageNumber} of ${totalPages}`
+        )} fixed />
+      </Page>
         
 
-        {budgetData && renderBudgetSection()}
+      {budgetData && renderBudgetSection()}
 
         {/* Second Page for Additional Content */}
       </Document>

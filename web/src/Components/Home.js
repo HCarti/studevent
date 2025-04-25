@@ -3,6 +3,9 @@ import './Home.css';
 import axios from 'axios';
 import { ParallaxProvider, Parallax } from 'react-scroll-parallax';
 import { useNavigate } from 'react-router-dom';
+import CircularProgress from '@mui/material/CircularProgress';
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
 import Person2Icon from '@mui/icons-material/Person2';
 import LockIcon from '@mui/icons-material/Lock';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -13,13 +16,57 @@ const Home = ({ handleLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
   const [isFocused, setIsFocused] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false)
+  const [passwordFocused, setPasswordFocused] = useState(false);
+  const [loading, setLoading] = useState(false);
+const [snackbarOpen, setSnackbarOpen] = useState(false);
+const [snackbarMessage, setSnackbarMessage] = useState('');
+const [snackbarSeverity, setSnackbarSeverity] = useState('success'); // 'error', 'warning', 'info'
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [errors, setErrors] = useState({
+    email: '',
+    password: ''
+  });
+
+  // Validation functions
+  const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  const validatePassword = (password) => {
+    return password.length >= 8;
+  };
+
+  const validateForm = () => {
+    let valid = true;
+    const newErrors = {
+      email: '',
+      password: ''
+    };
+
+    if (!email) {
+      newErrors.email = 'Email is required';
+      valid = false;
+    } else if (!validateEmail(email)) {
+      newErrors.email = 'Please enter a valid email address';
+      valid = false;
+    }
+
+    if (!password) {
+      newErrors.password = 'Password is required';
+      valid = false;
+    } else if (!validatePassword(password)) {
+      newErrors.password = 'Password must be at least 8 characters';
+      valid = false;
+    }
+
+    setErrors(newErrors);
+    return valid;
+  };
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -55,6 +102,11 @@ const Home = ({ handleLogin }) => {
     setSuccessMessage('');
     setErrorMessage('');
 
+    // Validate form before submission
+    if (!validateForm()) {
+      return;
+    }
+
     const data = { email, password };
     try {
         console.log("Attempting to log in with data:", data);
@@ -84,12 +136,28 @@ const Home = ({ handleLogin }) => {
 
     } catch (error) {
         console.error("Login error:", error.response ? error.response.data : error.message);
-        setErrorMessage('Invalid email or password.');
+        const errorMsg = error.response?.data?.message || 'Invalid email or password.';
+        setErrorMessage(errorMsg);
     }
   };
   
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
+  };
+
+  // Handle input changes with validation
+  const handleEmailChange = (e) => {
+    setEmail(e.target.value);
+    if (errors.email) {
+      setErrors({...errors, email: ''});
+    }
+  };
+
+  const handlePasswordChange = (e) => {
+    setPassword(e.target.value);
+    if (errors.password) {
+      setErrors({...errors, password: ''});
+    }
   };
 
   return (
@@ -102,31 +170,40 @@ const Home = ({ handleLogin }) => {
               <div className="home-login-box">
                 <h2 className="home-login-title">Login to your account </h2>
                 <form onSubmit={handleSubmit}>
-                  <div className={`home-input-container ${isFocused ? 'home-input-focused' : ''}`}>
+                  <div className={`home-input-container ${isFocused ? 'home-input-focused' : ''} ${errors.email ? 'home-input-error' : ''}`}>
                     <Person2Icon className="home-input-icon" />
                     <input
                       className="home-email-input"
                       type="email"
                       placeholder="Email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={handleEmailChange}
                       onFocus={() => setIsFocused(true)}
-                      onBlur={() => setIsFocused(false)}
-                      required
+                      onBlur={() => {
+                        setIsFocused(false);
+                        if (email && !validateEmail(email)) {
+                          setErrors({...errors, email: 'Please enter a valid email address'});
+                        }
+                      }}
                     />
                   </div>
+                  {errors.email && <p className="home-error-text">{errors.email}</p>}
 
-                  <div className={`home-input-container home-password-container ${passwordFocused ? 'home-input-focused' : ''}`}>
+                  <div className={`home-input-container home-password-container ${passwordFocused ? 'home-input-focused' : ''} ${errors.password ? 'home-input-error' : ''}`}>
                     <LockIcon className="home-input-icon" />
                     <input
                       className="home-password-input"
                       type={showPassword ? 'text' : 'password'}
                       placeholder="Password"
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={handlePasswordChange}
                       onFocus={() => setPasswordFocused(true)}
-                      onBlur={() => setPasswordFocused(false)}
-                      required
+                      onBlur={() => {
+                        setPasswordFocused(false);
+                        if (password && !validatePassword(password)) {
+                          setErrors({...errors, password: 'Password must be at least 8 characters'});
+                        }
+                      }}
                     />
                     <button 
                       type="button" 
@@ -136,6 +213,8 @@ const Home = ({ handleLogin }) => {
                       {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
                     </button>
                   </div>
+                  {errors.password && <p className="home-error-text">{errors.password}</p>}
+
                   <button type="submit" className="home-login-btn">Log in</button>
                   {successMessage && <p className="home-success-message">{successMessage}</p>}
                   {errorMessage && <p className="home-error-message">{errorMessage}</p>}

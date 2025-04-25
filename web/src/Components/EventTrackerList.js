@@ -133,44 +133,45 @@ const EventTrackerList = () => {
       <h2>Event Form Tracker</h2>
       {error && <p className="event-tracker-error">{error}</p>}
 
-      {loading && (
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Loading events...</p>
-        </div>
-      )}
-
-      {!loading && (
-        <>
-          <div className="event-tracker-filters">
-            <button
-              className={`filter-button ${filter === "all" ? "active" : ""}`}
-              onClick={() => handleFilterClick("all")}
-            >
-              All Events
-            </button>
-            <button
-              className={`filter-button ${filter === "pending" ? "active" : ""}`}
-              onClick={() => handleFilterClick("pending")}
-            >
-              Pending
-            </button>
-            <button
-              className={`filter-button ${filter === "approved" ? "active" : ""}`}
-              onClick={() => handleFilterClick("approved")}
-            >
-              Approved
-            </button>
-            <button
-              className={`filter-button ${filter === "declined" ? "active" : ""}`}
-              onClick={() => handleFilterClick("declined")}
-            >
-              Declined
-            </button>
+      <div className="event-tracker-content">
+        {loading ? (
+          <div className="loading-spinner-container">
+            <div className="loading-spinner">
+              <div className="spinner"></div>
+              <p>Loading events...</p>
+            </div>
           </div>
+        ) : (
+          <>
+            <div className="event-tracker-filters">
+              <button
+                className={`filter-button ${filter === "all" ? "active" : ""}`}
+                onClick={() => handleFilterClick("all")}
+              >
+                All Events
+              </button>
+              <button
+                className={`filter-button ${filter === "pending" ? "active" : ""}`}
+                onClick={() => handleFilterClick("pending")}
+              >
+                Pending
+              </button>
+              <button
+                className={`filter-button ${filter === "approved" ? "active" : ""}`}
+                onClick={() => handleFilterClick("approved")}
+              >
+                Approved
+              </button>
+              <button
+                className={`filter-button ${filter === "declined" ? "active" : ""}`}
+                onClick={() => handleFilterClick("declined")}
+              >
+                Declined
+              </button>
+            </div>
 
-          <div className="event-tracker-table-wrapper">
-            <table className="event-tracker-table">
+            <div className="event-tracker-table-wrapper">
+              <table className="event-tracker-table">
               <thead>
                 <tr>
                   <th>Organization</th>
@@ -205,6 +206,7 @@ const EventTrackerList = () => {
           </div>
         </>
       )}
+      </div>
     </div>
   );
 };

@@ -65,61 +65,131 @@ const Project = () => {
   });
   
 
-  const TimeRangePicker = ({ value, onChange }) => {
+  const TimeRangePicker = ({ value, onChange, error }) => {
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState('');
+    const [duration, setDuration] = useState('');
   
+    // Parse initial value
     useEffect(() => {
       if (value) {
         const [start, end] = value.split('-').map(t => t.trim());
         setStartTime(start || '');
         setEndTime(end || '');
+        
+        if (start && end) {
+          const minutes = calculateDurationInMinutes(start, end);
+          setDuration(formatDuration(minutes));
+        }
       }
     }, [value]);
   
-    const handleTimeChange = (type, timeValue) => {
-      if (type === 'start') {
-        setStartTime(timeValue);
-        onChange(`${timeValue}-${endTime}`);
-      } else {
-        setEndTime(timeValue);
-        onChange(`${startTime}-${timeValue}`);
+    // Calculate duration when times change
+    useEffect(() => {
+      if (startTime && endTime) {
+        const minutes = calculateDurationInMinutes(startTime, endTime);
+        setDuration(formatDuration(minutes));
+        onChange(`${startTime}-${endTime}`);
+      }
+    }, [startTime, endTime]);
+  
+    const handleStartTimeChange = (e) => {
+      const newStart = e.target.value;
+      setStartTime(newStart);
+      
+      // If end time is before new start time, clear end time
+      if (endTime && newStart > endTime) {
+        setEndTime('');
       }
     };
   
-    const durationMinutes = startTime && endTime 
-      ? convertToMinutes(endTime) - convertToMinutes(startTime)
-      : 0;
+    const handleEndTimeChange = (e) => {
+      const newEnd = e.target.value;
+      if (!startTime || newEnd >= startTime) {
+        setEndTime(newEnd);
+      }
+    };
   
-    const durationDisplay = calculateDurationDisplay(durationMinutes);
+    const calculateDurationInMinutes = (start, end) => {
+      const [startHours, startMins] = start.split(':').map(Number);
+      const [endHours, endMins] = end.split(':').map(Number);
+      
+      const totalStart = startHours * 60 + startMins;
+      const totalEnd = endHours * 60 + endMins;
+      
+      return totalEnd - totalStart;
+    };
+  
+    const formatDuration = (minutes) => {
+      if (minutes <= 0) return '0 minutes';
+      
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      
+      let parts = [];
+      if (hours > 0) parts.push(`${hours} hour${hours !== 1 ? 's' : ''}`);
+      if (mins > 0) parts.push(`${mins} minute${mins !== 1 ? 's' : ''}`);
+      
+      return parts.join(' ') || '0 minutes';
+    };
+  
+    const formatTimeDisplay = (time) => {
+      if (!time) return '';
+      const [hours, minutes] = time.split(':');
+      const hour = parseInt(hours, 10);
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      const displayHour = hour % 12 || 12;
+      return `${displayHour}:${minutes} ${ampm}`;
+    };
   
     return (
-      <div className="time-range-picker">
+      <div className={`time-range-picker ${error ? 'invalid-field' : ''}`}>
         <div className="time-inputs">
           <div className="form-group">
             <label>Start Time</label>
             <input
               type="time"
               value={startTime}
-              onChange={(e) => handleTimeChange('start', e.target.value)}
+              onChange={handleStartTimeChange}
+              className={!startTime && error ? 'error' : ''}
               required
+              step="300" // 5-minute increments
             />
           </div>
-          <span className="time-separator">to</span>
+          
+          <div className="time-separator">to</div>
+          
           <div className="form-group">
             <label>End Time</label>
             <input
               type="time"
               value={endTime}
-              onChange={(e) => handleTimeChange('end', e.target.value)}
+              onChange={handleEndTimeChange}
               min={startTime}
+              className={!endTime && error ? 'error' : ''}
               required
+              step="300" // 5-minute increments
+              disabled={!startTime}
             />
           </div>
         </div>
-        <div className="duration-display">
-          Duration: {durationDisplay}
+        
+        <div className="time-display">
+          {startTime && endTime && (
+            <>
+              <div className="formatted-time">
+                {formatTimeDisplay(startTime)} - {formatTimeDisplay(endTime)}
+              </div>
+              <div className="duration-display">
+                Duration: {duration}
+              </div>
+            </>
+          )}
         </div>
+        
+        {error && (
+          <div className="validation-error">Time range is required</div>
+        )}
       </div>
     );
   };
@@ -438,16 +508,6 @@ const calculateDurationDisplay = (minutes) => {
     display += `${mins} minute${mins > 1 ? 's' : ''}`;
   }
   return display || '0 minutes';
-};
-
-// Format 24-hour time to 12-hour with AM/PM
-const formatTimeDisplay = (timeStr) => {
-  if (!timeStr) return '';
-  const [hours, minutes] = timeStr.split(':');
-  const hour = parseInt(hours, 10);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const displayHour = hour % 12 || 12;
-  return `${displayHour}:${minutes} ${ampm}`;
 };
 
   // Remove item from array field
@@ -927,93 +987,95 @@ const formatTimeDisplay = (timeStr) => {
         );
 
         case 2: // Program Flow
-          return (
-            <div className="form-section">
-              <h2>Program Flow</h2>
+        return (
+          <div className="form-section">
+            <h2>Program Flow</h2>
+            <p className="section-description">
+              Add the sequence of activities for your event. Specify time ranges and descriptions for each segment.
+            </p>
+            
+            <div className="program-flow-container">
               <table className="program-flow-table">
                 <thead>
                   <tr>
-                    <th>TIME</th>
-                    <th>DURATION</th>
-                    <th>SEGMENT</th>
-                    <th></th>
+                    <th style={{ width: '30%' }}>TIME RANGE</th>
+                    <th style={{ width: '15%' }}>DURATION</th>
+                    <th style={{ width: '45%' }}>SEGMENT DESCRIPTION</th>
+                    <th style={{ width: '10%' }}>ACTIONS</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {formData.programFlow.map((item, index) => {
-                    const [start = '', end = ''] = item.timeRange.split('-');
-                    const formattedTime = start && end 
-                      ? `${formatTimeDisplay(start)} - ${formatTimeDisplay(end)}`
-                      : '';
-                    const duration = start && end
-                      ? calculateDurationDisplay(convertToMinutes(end) - convertToMinutes(start))
-                      : '';
-                    
-                    return (
-                      <tr key={index}>
-                        <td>
-                          <TimeRangePicker
-                            value={item.timeRange}
-                            onChange={(newRange) => {
-                              handleArrayChange('programFlow', index, {
-                                target: { name: 'timeRange', value: newRange }
-                              });
-                            }}
-                          />
-                          {fieldErrors.programFlow[index]?.timeRange && (
-                            <span className="validation-error">Time range is required</span>
-                          )}
-                        </td>
-                        <td>
-                          <input
-                            type="text"
-                            value={duration}
-                            readOnly
-                            className="duration-display"
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="text"
+                  {formData.programFlow.map((item, index) => (
+                    <tr key={index} className={index % 2 === 0 ? 'even-row' : 'odd-row'}>
+                      <td>
+                        <TimeRangePicker
+                          value={item.timeRange}
+                          onChange={(newRange) => {
+                            handleArrayChange('programFlow', index, {
+                              target: { name: 'timeRange', value: newRange }
+                            });
+                          }}
+                          error={fieldErrors.programFlow[index]?.timeRange}
+                        />
+                      </td>
+                      <td>
+                        <div className="duration-display-cell">
+                          {item.timeRange && item.timeRange.includes('-') ? (
+                            calculateDurationDisplay(
+                              convertToMinutes(item.timeRange.split('-')[1].trim()) - 
+                              convertToMinutes(item.timeRange.split('-')[0].trim())
+                            )
+                          ) : '--'}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="segment-input-container">
+                          <textarea
                             name="segment"
                             value={item.segment}
                             onChange={(e) => handleArrayChange('programFlow', index, e)}
-                            className={fieldErrors.programFlow[index]?.segment ? 'error' : ''}
+                            className={`segment-input ${fieldErrors.programFlow[index]?.segment ? 'error' : ''}`}
+                            placeholder="Describe this program segment..."
+                            rows={2}
                             required
                           />
                           {fieldErrors.programFlow[index]?.segment && (
-                            <span className="validation-error">Segment is required</span>
+                            <div className="validation-error">Segment description is required</div>
                           )}
-                        </td>
-                        <td>
-                          {index > 0 && (
-                            <button 
-                              type="button" 
-                              className="remove-btn"
-                              onClick={() => removeArrayItem('programFlow', index)}
-                            >
-                              Remove
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                        </div>
+                      </td>
+                      <td className="actions-cell">
+                        {index > 0 && (
+                          <button 
+                            type="button" 
+                            className="remove-btn"
+                            onClick={() => removeArrayItem('programFlow', index)}
+                            title="Remove this segment"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
-
-              <button 
-                type="button" 
-                className="add-btn"
-                onClick={() => addArrayItem('programFlow', { 
-                  timeRange: '', 
-                  segment: '' 
-                })}
-              >
-                Add Segment
-              </button>
+      
+              <div className="table-footer">
+                <button 
+                  type="button" 
+                  className="add-btn"
+                  onClick={() => addArrayItem('programFlow', { 
+                    timeRange: '', 
+                    segment: '' 
+                  })}
+                >
+                  + Add Another Segment
+                </button>
+              </div>
             </div>
-          );
+          </div>
+        );
 
           case 3: // Officers in Charge
           return (

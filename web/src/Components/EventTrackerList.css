@@ -1,13 +1,15 @@
 /* Main Container */
 .event-tracker-container {
   max-width: 1300px;
-  margin: 2rem auto;
+  margin: 1rem auto;
   padding: 2rem;
   background: linear-gradient(135deg, #f5f7fa 0%, #f8fafc 100%);
   border-radius: 16px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  height: 80%;
+  min-height: 600px; /* Changed from height to min-height */
+  display: flex;
+  flex-direction: column;
 }
 
 /* Heading */
@@ -24,6 +26,14 @@
   color: transparent;
   display: inline-block;
 }
+
+/* Content area that maintains consistent height */
+.event-tracker-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 
 /* Status Message */
 .event-tracker-error {
@@ -74,10 +84,11 @@
   overflow: hidden;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
   background: white;
-  height: 70%;
-  max-height: 850px;
-  overflow: hidden;
+  flex: 1;
+  min-height: 350px; /* Ensures minimum height when empty */
+  overflow-y: hidden;
 }
+
 
 /* Forms Table */
 .event-tracker-table {
@@ -151,13 +162,23 @@
   color: #4f46e5;
 }
 
+
 /* Loading Spinner */
+
+.loading-spinner-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 590px; /* Adjust as needed */
+}
+
+
 .loading-spinner {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 200px;
 }
 
 .spinner {

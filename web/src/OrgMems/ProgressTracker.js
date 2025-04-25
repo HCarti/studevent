@@ -50,16 +50,47 @@ const ProgressTracker = () => {
     };
 
     const sanitizeSignatures = (signatures) => {
+        if (!signatures) return {};
+        
         return {
-            adviser: signatures?.adviser?.signature || null,
-            dean: signatures?.dean?.signature || null,
-            admin: signatures?.admin?.signature || null,
-            academicdirector: signatures?.academicdirector?.signature || null,
-            academicservices: signatures?.academicservices?.signature || null,
-            executivedirector: signatures?.executivedirector?.signature || null,
-            president: signatures?.presidentSignature || null
+          adviser: {
+            name: signatures.adviser?.name || "ADVISER NAME",
+            signature: signatures.adviser?.signature?.url || signatures.adviser?.signature,
+            date: signatures.adviser?.date,
+            status: signatures.adviser?.status
+          },
+          dean: {
+            name: signatures.dean?.name || "DEAN NAME",
+            signature: signatures.dean?.signature?.url || signatures.dean?.signature,
+            date: signatures.dean?.date,
+            status: signatures.dean?.status
+          },
+          admin: {
+            name: signatures.admin?.name || "ADMIN NAME",
+            signature: signatures.admin?.signature?.url || signatures.admin?.signature,
+            date: signatures.admin?.date,
+            status: signatures.admin?.status
+          },
+          academicdirector: {
+            name: signatures.academicdirector?.name || "ACADEMIC DIRECTOR NAME",
+            signature: signatures.academicdirector?.signature?.url || signatures.academicdirector?.signature,
+            date: signatures.academicdirector?.date,
+            status: signatures.academicdirector?.status
+          },
+          academicservices: {
+            name: signatures.academicservices?.name || "ACADEMIC SERVICES NAME",
+            signature: signatures.academicservices?.signature?.url || signatures.academicservices?.signature,
+            date: signatures.academicservices?.date,
+            status: signatures.academicservices?.status
+          },
+          executivedirector: {
+            name: signatures.executivedirector?.name || "EXECUTIVE DIRECTOR NAME",
+            signature: signatures.executivedirector?.signature?.url || signatures.executivedirector?.signature,
+            date: signatures.executivedirector?.date,
+            status: signatures.executivedirector?.status
+          }
         };
-    };
+      };
 
     // Fetch user data
     useEffect(() => {
@@ -73,23 +104,57 @@ const ProgressTracker = () => {
         }
     }, []);
 
+    const transformBudgetData = (rawBudget) => {
+        if (!rawBudget || typeof rawBudget !== 'object') {
+          console.error('Invalid budget data:', rawBudget);
+          return null;
+        }
+      
+        try {
+          return {
+            nameOfRso: rawBudget.nameOfRso || rawBudget.nameOfiso || 'N/A', // Note: Fixing nameOfiso typo
+            eventTitle: rawBudget.eventTitle || 'N/A',
+            grandTotal: rawBudget.grandTotal || 0,
+            createdAt: rawBudget.createdAt || new Date().toISOString(),
+            items: (rawBudget.items || []).map(item => ({
+              description: item.description || 'Unspecified Item',
+              quantity: item.quantity || 0,
+              unitCost: item.unitCost || 0,
+              totalCost: item.totalCost || (item.quantity * item.unitCost) || 0,
+              unit: item.unit || '-'
+            })),
+            createdBy: {
+              name: 'Organization Representative',
+              _id: rawBudget.createdBy
+            }
+          };
+        } catch (error) {
+          console.error('Error transforming budget data:', error);
+          return null;
+        }
+      };
+
     // Main data fetching function
     const fetchBudgetData = async (budgetId) => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`https://studevent-server.vercel.app/api/budgets/${budgetId}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            setBudgetData(await response.json());
+          const token = localStorage.getItem('token');
+          const response = await fetch(`https://studevent-server.vercel.app/api/budgets/${budgetId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          
+          const rawBudgetData = await response.json();
+          return transformBudgetData(rawBudgetData);
+          
         } catch (error) {
-            console.error('Error fetching budget:', error);
-            setBudgetData(null);
+          console.error('Error fetching budget:', error);
+          return null;
         }
-    };
+      };
 
     const fetchAllData = async () => {
         try {
@@ -130,8 +195,21 @@ const ProgressTracker = () => {
             // Fetch budget if exists
             if (formData.attachedBudget) {
                 const budgetId = formData.attachedBudget._id || formData.attachedBudget;
-                await fetchBudgetData(budgetId);
-            }
+                const transformedBudget = await fetchBudgetData(budgetId);
+                setBudgetData(transformedBudget);
+              } else {
+                setBudgetData(null);
+              }
+
+            console.log("Fetched form data:", formData);
+            console.log("Fetched Signatures:", signaturesData);
+            console.log("Fetched Budget Data:", formData.attachedBudget);
+            console.log("Budget data after transformation:", {
+                exists: !!budgetData,
+                itemCount: budgetData?.items?.length,
+                sampleItem: budgetData?.items?.[0],
+                structure: Object.keys(budgetData || {})
+              });
 
             setAllDataLoaded(true);
         } catch (error) {
@@ -238,38 +316,38 @@ const ProgressTracker = () => {
         if (!allDataLoaded) return null;
         
         try {
-            return (
-                <PDFDownloadLink
-                    document={React.createElement(
-                        getPdfComponent(formDetails?.formType),
-                        { 
-                            formData: sanitizeFormData(formDetails),
-                            budgetData: budgetData || { items: [], grandTotal: 0, nameOfRso: 'N/A' },
-                            signatures: reviewSignatures
-                        }
-                    )}
-                    fileName={getPdfFileName(formDetails?.formType, formDetails)}
-                    onRender={() => setPdfStatus({ loading: true, error: null, success: false })}
-                    onError={(error) => setPdfStatus({ loading: false, error: error.message, success: false })}
-                    onLoad={() => setPdfStatus({ loading: false, error: null, success: true })}
+          return (
+            <PDFDownloadLink
+              document={React.createElement(
+                getPdfComponent(formDetails?.formType),
+                { 
+                  formData: sanitizeFormData(formDetails),
+                  budgetData: budgetData, // Already transformed
+                  signatures: reviewSignatures
+                }
+              )}
+              fileName={getPdfFileName(formDetails?.formType, formDetails)}
+              onRender={() => setPdfStatus({ loading: true, error: null, success: false })}
+              onError={(error) => setPdfStatus({ loading: false, error: error.message, success: false })}
+              onLoad={() => setPdfStatus({ loading: false, error: null, success: true })}
+            >
+              {({ loading }) => (
+                <Button 
+                  variant="contained" 
+                  color="primary"
+                  disabled={loading || pdfStatus.loading}
+                  startIcon={(loading || pdfStatus.loading) ? <CircularProgress size={20} /> : null}
                 >
-                    {({ loading }) => (
-                        <Button 
-                            variant="contained" 
-                            color="primary"
-                            disabled={loading || pdfStatus.loading}
-                            startIcon={(loading || pdfStatus.loading) ? <CircularProgress size={20} /> : null}
-                        >
-                            {loading ? 'Generating PDF...' : `Download ${formDetails?.formType || 'Form'} PDF`}
-                        </Button>
-                    )}
-                </PDFDownloadLink>
-            );
+                  {loading ? 'Generating PDF...' : `Download ${formDetails?.formType || 'Form'} PDF`}
+                </Button>
+              )}
+            </PDFDownloadLink>
+          );
         } catch (error) {
-            console.error("PDF generation error:", error);
-            return <div className="pdf-error">Failed to generate PDF</div>;
+          console.error("PDF generation error:", error);
+          return <div className="pdf-error">Failed to generate PDF</div>;
         }
-    };
+      };
 
     // Loading and error states
     if (loading) {
