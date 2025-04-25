@@ -339,7 +339,6 @@
     fireSafety = "N/A",
     weather = "N/A",
     attachedBudget = null,
-    presidentName = "N/A",
     presidentSignature = null
   } = formData;
 
@@ -500,9 +499,7 @@
     </View>
   );
 
-  console.log("FormData in PDF:", formData);
-console.log("Signatures in PDF:", signatures);
-console.log("BudgetData in PDF:", budgetData);
+  
 
 
     return (
@@ -720,13 +717,26 @@ console.log("BudgetData in PDF:", budgetData);
                 <Text style={styles.signatureTitle}>5. SIGNATURES / ENDORSEMENTS</Text>
                 
                 <View style={styles.signatureRowGap}>
-                  {/* Applicant Organization */}
+                  {/* President's Signature */}
                   <View style={styles.borderedSignatureColumn}>
-                    <Text style={styles.signatureLabel}>a. Applicant Organization</Text>
+                    <Text style={styles.signatureLabel}>a. Organization President</Text>
                     <View style={styles.signatureDivider} />
-                    <View style={styles.signatureValue}></View>
-                    <Text style={styles.signatureName}>Printed Name and Signature</Text>
-                    <Text style={styles.dateText}>Date: ___________________</Text>
+                    {presidentSignature ? (
+                      <>
+                        <Image 
+                          src={presidentSignature} 
+                          style={styles.signatureImage}
+                        />
+                        <Text style={styles.signatureName}>President's Signature</Text>
+                        <Text style={styles.dateText}>Date: ___________________</Text>
+                      </>
+                    ) : (
+                      <>
+                        <View style={styles.signatureValue}></View>
+                        <Text style={styles.signatureName}>President's Signature</Text>
+                        <Text style={styles.dateText}>Date: ___________________</Text>
+                      </>
+                    )}
                   </View>
                   
                   {/* Faculty Adviser */}
