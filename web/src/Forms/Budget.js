@@ -305,7 +305,7 @@ const BudgetForm = () => {
             />
           </div>
           
-          <button type="button" onClick={() => removeRow(index)} className="remove-btn">
+          <button type="button" onClick={() => removeRow(index)} className="bgd-remove-btn">
             Remove
           </button>
         </div>
@@ -511,15 +511,7 @@ const BudgetForm = () => {
         </div>
       </div>
 
-      <div className="form-actions">
-        <button 
-          type="button" 
-          onClick={() => navigate(-1)} 
-          className="cancel-btn"
-        >
-          Cancel
-        </button>
-        
+      <div className="form-actions">        
         <button 
           type="button" 
           onClick={handleSubmit} 

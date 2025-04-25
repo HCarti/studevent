@@ -85,7 +85,7 @@ const Forms = ({ role }) => {
     <div className="modal-content small" ref={modalRef}>
       <h3>Instructions for Document Forms</h3>
       <ul>
-        <li>Select the appropriate form for your activity.</li>
+        <li>Create First a Budget Proposal before creating an event proposal.</li>
         <li>Complete all required fields and attach necessary files.</li>
         <li>After submission, your form will be routed to your Adviser and Dean for review.</li>
         <li>You can monitor the status in the Proposal Tracker.</li>

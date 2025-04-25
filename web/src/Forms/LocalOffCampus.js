@@ -7,9 +7,9 @@ import "react-datepicker/dist/react-datepicker.css";
 const Localoffcampus = () => {
   const [formData, setFormData] = useState({
     formPhase: 'BEFORE',
-    nameOfHei: "",
-    region: "",
-    address: "",
+    nameOfHei: "National University MOA",
+    region: "NCR",
+    address: "Coral Way, Pasay, Metro Manila",
     basicInformation: [{
       programName: "", 
       course: "", 
@@ -311,11 +311,12 @@ const Localoffcampus = () => {
   
     if (formPhase === 'BEFORE') {
       if (step === 0) {
-        newErrors.nameOfHei = !formData.nameOfHei.trim();
-        newErrors.region = !formData.region.trim();
-        newErrors.address = !formData.address.trim();
-        isValid = !newErrors.nameOfHei && !newErrors.region && !newErrors.address;
-      } 
+        // These fields are now always valid since they're pre-filled and read-only
+        newErrors.nameOfHei = false;
+        newErrors.region = false;
+        newErrors.address = false;
+        isValid = true; // This section is always valid now
+      }
       else if (step === 1) {
         formData.basicInformation.forEach((info, index) => {
           newErrors.basicInformation[index] = {
@@ -605,44 +606,47 @@ const Localoffcampus = () => {
   const renderStepContent = () => {
     switch (currentStep) {
       case 0: // School Information (BEFORE)
-        return (
-          <div >
-            <h2>School Information</h2>
-            <div >
-              <label className={fieldErrors.nameOfHei ? 'required-field' : ''}>Name of HEI:</label>
-              <input
-                type="text"
-                name="nameOfHei"
-                value={formData.nameOfHei}
-                onChange={(e) => handleChange(e)}
-                className={fieldErrors.nameOfHei ? 'input-error' : ''}
-              />
-              {fieldErrors.nameOfHei && <div className="error-message">This field is required</div>}
-            </div>
-            <div >
-              <label className={fieldErrors.region ? 'required-field' : ''}>Region:</label>
-              <input
-                type="text"
-                name="region"
-                value={formData.region}
-                onChange={(e) => handleChange(e)}
-                className={fieldErrors.region ? 'input-error' : ''}
-              />
-              {fieldErrors.region && <div className="error-message">This field is required</div>}
-            </div>
-            <div >
-              <label className={fieldErrors.address ? 'required-field' : ''}>Address:</label>
-              <input
-                type="text"
-                name="address"
-                value={formData.address}
-                onChange={(e) => handleChange(e)}
-                className={fieldErrors.address ? 'input-error' : ''}
-              />
-              {fieldErrors.address && <div className="error-message">This field is required</div>}
-            </div>
-          </div>
-        );
+  return (
+    <div>
+      <h2>School Information</h2>
+      <div>
+        <label className={fieldErrors.nameOfHei ? 'required-field' : ''}>Name of HEI:</label>
+        <input
+          type="text"
+          name="nameOfHei"
+          value={formData.nameOfHei}
+          onChange={(e) => handleChange(e)}
+          className={fieldErrors.nameOfHei ? 'input-error' : ''}
+          readOnly
+        />
+        {fieldErrors.nameOfHei && <div className="error-message">This field is required</div>}
+      </div>
+      <div>
+        <label className={fieldErrors.region ? 'required-field' : ''}>Region:</label>
+        <input
+          type="text"
+          name="region"
+          value={formData.region}
+          onChange={(e) => handleChange(e)}
+          className={fieldErrors.region ? 'input-error' : ''}
+          readOnly
+        />
+        {fieldErrors.region && <div className="error-message">This field is required</div>}
+      </div>
+      <div>
+        <label className={fieldErrors.address ? 'required-field' : ''}>Address:</label>
+        <input
+          type="text"
+          name="address"
+          value={formData.address}
+          onChange={(e) => handleChange(e)}
+          className={fieldErrors.address ? 'input-error' : ''}
+          readOnly
+        />
+        {fieldErrors.address && <div className="error-message">This field is required</div>}
+      </div>
+    </div>
+  );
   
       case 1: // Basic Information (BEFORE)
         return (
