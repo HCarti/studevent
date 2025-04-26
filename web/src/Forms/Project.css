@@ -65,7 +65,8 @@
 
 /* Textarea Specific Styles */
 .inner-forms-2 textarea {
-  min-height: 200px;
+  height: auto;
+  max-height: 200px;
   resize: vertical;
   font-family: inherit;
   padding: 10px;

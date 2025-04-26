@@ -500,17 +500,20 @@ if (['Activity', 'Project'].includes(form.formType)) {
   }
 }
     // Create progress tracker
-    const tracker = new EventTracker({
-      formId: form._id,
-      formType: form.formType,
-      steps: getRequiredReviewers(form.formType).map(reviewer => ({
-        stepName: reviewer.stepName,
-        reviewerRole: reviewer.reviewerRole,
-        status: "pending"
-      })),
-      currentStep: 0
-    });
-    await tracker.save({ session });
+// Create progress tracker
+const requiredReviewers = getRequiredReviewers(form.formType);
+const tracker = new EventTracker({
+  formId: form._id,
+  formType: form.formType,
+  steps: requiredReviewers.map(reviewer => ({
+    stepName: reviewer.stepName,
+    reviewerRole: reviewer.reviewerRole,
+    status: "pending"
+  })),
+  currentStep: 0,
+  currentAuthority: requiredReviewers[0].reviewerRole // Explicitly set to first reviewer's role
+});
+await tracker.save({ session });
 
     // Send notification
     if (form.emailAddress) {
