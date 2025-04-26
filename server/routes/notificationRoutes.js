@@ -31,7 +31,7 @@ router.post("/tracker-notification", authenticateToken, createTrackerNotificatio
 router.post("/mark-read", authenticateToken, markNotificationAsRead); // Protect route
 
 // In your server code
-router.post('/mark-read-batch', auth, async (req, res) => {
+router.post('/mark-read-batch', authenticateToken, async (req, res) => {
   try {
     const { notificationIds } = req.body;
     await Notification.updateMany(
