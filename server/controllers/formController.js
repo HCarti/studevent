@@ -559,32 +559,36 @@ exports.deleteForm = async (req, res) => {
     const userEmail = req.user?.email;
     const isAdmin = req.user?.role === 'Admin';
 
-    const form = await Form.findById(formId);
+    // Find the form - check both Form and LocalOffCampus collections
+    let form = await Form.findById(formId);
     if (!form) {
-      return res.status(404).json({ message: 'Form not found' });
+      form = await LocalOffCampus.findById(formId);
+      if (!form) {
+        return res.status(404).json({ message: 'Form not found' });
+      }
     }
 
-    const isSubmitter = form.emailAddress === userEmail;
+    const isSubmitter = form.emailAddress === userEmail || 
+                      (form.createdBy && form.createdBy.equals(req.user._id));
     if (!isAdmin && !isSubmitter) {
       return res.status(403).json({ 
         message: 'Only the form submitter or admin can delete this form' 
       });
     }
 
-    const tracker = await EventTracker.findOne({ formId });
-    if (form.formType !== 'Budget' && !tracker) {
-      return res.status(404).json({ message: 'Progress tracker not found' });
+    // Get tracker if it's not a Budget form
+    const tracker = form.formType === 'Budget' ? null : await EventTracker.findOne({ formId });
+    
+    // Define restricted stages based on form type
+    let restrictedStages = [];
+    if (form.formType === 'Project') {
+      restrictedStages = ['Admin', 'Academic Services', 'Executive Director'];
+    } else if (form.formType === 'Activity') {
+      restrictedStages = ['Dean', 'Admin', 'Academic Services', 'Academic Director', 'Executive Director'];
     }
+    // LocalOffCampus forms might have different restrictions
 
-    const restrictedStages = [
-      'Dean',
-      'Admin',
-      'Academic Services',
-      'Academic Director',
-      'Executive Director'
-    ];
-
-    if (tracker) {
+    if (tracker && restrictedStages.length > 0) {
       const hasPassedRestrictedStage = tracker.steps.some(step => {
         return restrictedStages.includes(step.reviewerRole) && 
                (step.status === 'approved' || step.status === 'declined');
@@ -601,18 +605,38 @@ exports.deleteForm = async (req, res) => {
     session.startTransaction();
 
     try {
-      await Form.findByIdAndDelete(formId).session(session);
+      // Delete from appropriate collection
+      if (form instanceof LocalOffCampus) {
+        await LocalOffCampus.findByIdAndDelete(formId).session(session);
+      } else {
+        await Form.findByIdAndDelete(formId).session(session);
+      }
 
+      // Delete tracker if exists
       if (tracker) {
         await EventTracker.deleteOne({ formId }).session(session);
       }
 
+      // Delete calendar event if exists
       await CalendarEvent.deleteOne({ formId }).session(session);
 
-      await Notification.deleteMany({
-        userEmail: form.emailAddress,
-        message: { $regex: form.formType, $options: 'i' }
-      }).session(session);
+      // Delete notifications
+      const emailToCheck = form.emailAddress || req.user.email;
+      if (emailToCheck) {
+        await Notification.deleteMany({
+          userEmail: emailToCheck,
+          message: { $regex: form.formType, $options: 'i' }
+        }).session(session);
+      }
+
+      // If it's a Project form with attached budget, handle budget
+      if (form.formType === 'Project' && form.attachedBudget) {
+        await BudgetProposal.findByIdAndUpdate(
+          form.attachedBudget,
+          { isActive: false },
+          { session }
+        );
+      }
 
       await session.commitTransaction();
       session.endSession();
@@ -625,6 +649,7 @@ exports.deleteForm = async (req, res) => {
     } catch (transactionError) {
       await session.abortTransaction();
       session.endSession();
+      console.error("Transaction Error:", transactionError);
       throw transactionError;
     }
 

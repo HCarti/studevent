@@ -81,6 +81,12 @@ const OrgSubmittedForms = () => {
     }, []);
 
     const isFormEditable = (form) => {
+        // First check if the form is already approved - if so, it's not editable
+        const status = form.finalStatus?.toLowerCase() || form.status?.toLowerCase();
+        if (status === 'approved') {
+            return false;
+        }
+    
         if (form.formType === 'LocalOffCampus') {
             return form.formPhase === 'BEFORE' && 
                    (form.status === 'submitted' || form.status === 'pending' || form.status === 'draft');
@@ -315,22 +321,22 @@ const OrgSubmittedForms = () => {
                                             </td>
                                             <td>
                                                 <div className="action-buttons">
-                                                    {isFormEditable(form) && (
-                                                        <button 
-                                                            className="edit-button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                navigate(
-                                                                    form.formType === 'LocalOffCampus'
-                                                                        ? `/edit-local-off-campus/${form._id}`
-                                                                        : `/edit-form/${form._id}`,
-                                                                    { state: { formData: form } }
-                                                                );
-                                                            }}
-                                                        >
-                                                            Edit
-                                                        </button>
-                                                    )}
+                                                {isFormEditable(form) && (
+                                                                <button 
+                                                                    className="edit-button"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        navigate(
+                                                                            form.formType === 'LocalOffCampus'
+                                                                                ? `/edit-local-off-campus/${form._id}`
+                                                                                : `/edit-form/${form._id}`,
+                                                                            { state: { formData: form } }
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    Edit
+                                                                </button>
+                                                            )}
                                                     {isFormDeletable(form) && (
                                                         <button 
                                                             className="delete-button"
