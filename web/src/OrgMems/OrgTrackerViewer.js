@@ -10,48 +10,92 @@ import StarIcon from '@mui/icons-material/Star';
 const OrgTrackerViewer = () => {
     const navigate = useNavigate();
     const { state } = useLocation();
-    const form = state?.form;
     const { formId } = useParams();
     const [trackerData, setTrackerData] = useState(null);
+    const [formDetails, setFormDetails] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [rating, setRating] = useState(0);
     const [feedbackText, setFeedbackText] = useState('');
     const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
     const [feedbackError, setFeedbackError] = useState('');
 
-    useEffect(() => {
-        if (!formId) return;
+    // Determine if this is a Local Off-Campus form
+    const isLocalOffCampus = state?.formType === 'LocalOffCampus' || 
+                           state?.form?.formType === 'LocalOffCampus';
 
-        const fetchTrackerData = async () => {
-            try {
-                const token = localStorage.getItem("token");
-                if (!token) throw new Error("No token found. Please log in again.");
-
-                const response = await fetch(`https://studevent-server.vercel.app/api/tracker/${formId}`, {
-                    method: "GET",
-                    headers: {
-                        "Authorization": `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                });
-
-                if (!response.ok) throw new Error(`Error fetching tracker data: ${response.statusText}`);
-
-                const data = await response.json();
-                setTrackerData(data);
-                
-                if (data.feedback) {
-                    setFeedbackSubmitted(true);
-                }
-            } catch (error) {
-                console.error("Error fetching tracker data:", error.message);
-            }
-        };
-
-        fetchTrackerData();
-    }, [formId]);
+                           useEffect(() => {
+                            if (!formId) return;
+                        
+                            const fetchData = async () => {
+                                try {
+                                    const token = localStorage.getItem("token");
+                                    if (!token) throw new Error("No token found. Please log in again.");
+                        
+                                    // Determine endpoint based on form type
+                                    let trackerEndpoint;
+                                    if (isLocalOffCampus) {
+                                        trackerEndpoint = `https://studevent-server.vercel.app/api/local-off-campus/${formId}/tracker`;
+                                    } else {
+                                        trackerEndpoint = `https://studevent-server.vercel.app/api/tracker/${formId}`;
+                                    }
+                        
+                                    // Fetch tracker data
+                                    const trackerRes = await fetch(trackerEndpoint, {
+                                        headers: {
+                                            "Authorization": `Bearer ${token}`,
+                                            "Content-Type": "application/json",
+                                        },
+                                    });
+                        
+                                    if (!trackerRes.ok) {
+                                        throw new Error(`Error fetching tracker data: ${trackerRes.statusText}`);
+                                    }
+                        
+                                    const trackerData = await trackerRes.json();
+                                    setTrackerData(trackerData);
+                        
+                                    // Fetch form details only for regular forms
+                                    if (!isLocalOffCampus) {
+                                        const formRes = await fetch(`https://studevent-server.vercel.app/api/forms/${formId}`, {
+                                            headers: {
+                                                "Authorization": `Bearer ${token}`,
+                                                "Content-Type": "application/json",
+                                            },
+                                        });
+                                        
+                                        if (!formRes.ok) throw new Error(`Error fetching form data: ${formRes.statusText}`);
+                                        setFormDetails(await formRes.json());
+                                    }
+                        
+                                    // Check for existing feedback
+                                    if (trackerData.feedback) {
+                                        setFeedbackSubmitted(true);
+                                    }
+                                } catch (error) {
+                                    console.error("Error fetching data:", error.message);
+                                    setError(`Failed to load tracker: ${error.message}`);
+                                } finally {
+                                    setLoading(false);
+                                }
+                            };
+                        
+                            fetchData();
+                        }, [formId, isLocalOffCampus]);
 
     const handleViewForms = () => {
-        navigate(`/formdetails/${formId}`, { state: { form } });
+        if (isLocalOffCampus) {
+            const formPhase = trackerData?.formPhase || state?.formPhase;
+            navigate(formPhase === 'BEFORE' 
+                ? `/local-off-campus-before/${formId}`
+                : `/local-off-campus-after/${formId}`,
+                { state: { formData: state?.form } }
+            );
+        } else {
+            navigate(`/formdetails/${formId}`, { 
+                state: { form: formDetails || state?.form } 
+            });
+        }
     };
 
     const handleFeedbackSubmit = async () => {
@@ -72,13 +116,11 @@ const OrgTrackerViewer = () => {
                     formId,
                     feedback: feedbackText,
                     rating, 
-                    formType: form?.formType || 'Activity', // Adjust based on your form type
+                    formType: isLocalOffCampus ? 'LocalOffCampus' : formDetails?.formType || 'Activity',
                 }),
             });
     
-            if (!response.ok) {
-                throw new Error('Failed to submit feedback');
-            }
+            if (!response.ok) throw new Error('Failed to submit feedback');
     
             setFeedbackSubmitted(true);
             setFeedbackText('');
@@ -88,53 +130,86 @@ const OrgTrackerViewer = () => {
             setFeedbackError('Failed to submit feedback. Please try again later.');
         }
     };
-    const isTrackerCompleted = trackerData?.steps.every(step => step.status === 'approved');
+
+    const getTrackerTitle = () => {
+        if (isLocalOffCampus) {
+            const formPhase = trackerData?.formPhase || state?.formPhase;
+            return formPhase === 'BEFORE' 
+                ? 'Local Off-Campus Event Tracker' 
+                : 'After Report Tracker';
+        }
+        return 'Event Proposal Tracker';
+    };
+
+    const isTrackerCompleted = trackerData?.steps?.every(step => step.status === 'approved');
+
+    if (loading) {
+        return (
+            <div className="org-floating-loader">
+                <CircularProgress className="org-spinner" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="org-error-container">
+                <h3>Error Loading Tracker</h3>
+                <p>{error}</p>
+                <Button 
+                    variant="contained" 
+                    onClick={() => window.location.reload()}
+                >
+                    Retry
+                </Button>
+            </div>
+        );
+    }
 
     return (
         <div className='org-prog-box'>
-            {!trackerData && (
-                <div className="org-floating-loader">
-                    <CircularProgress className="org-spinner" />
-                </div>
-            )}
-            <h3 style={{ textAlign: 'center' }} className="proposal-ttl">Event Proposal Tracker</h3>
+            <h3 style={{ textAlign: 'center' }} className="proposal-ttl">
+                {getTrackerTitle()}
+            </h3>
             
             <div className="org-tracker-content-wrapper">
                 {/* Left Column - Tracker Steps */}
                 <div className="org-tracker-steps-column">
                     <div className="org-progress-bar-container">
-                        {trackerData ? (
-                            trackerData.steps.filter(step => step.color !== 'yellow').map((step, index) => (
-                                <div key={index} className="org-step-container">
-                                    <div className="org-progress-step">
-                                        {step.color === 'green' ? (
-                                            <CheckCircleIcon style={{ color: '#4caf50', fontSize: 24 }} />
-                                        ) : step.color === 'red' ? (
-                                            <CheckCircleIcon style={{ color: 'red', fontSize: 24 }} />
-                                        ) : (
-                                            <RadioButtonUncheckedIcon style={{ color: '#ffeb3b', fontSize: 24 }} />
-                                        )}
-                                    </div>
-                                    <div className="org-step-label">
-                                        <strong>{step.stepName}</strong>
-                                        {step.reviewedBy && (
-                                            <div className="org-reviewer-info">
-                                                <small>Reviewed by: {step.reviewedByRole} </small>
-                                            </div>
-                                        )}
-                                        {step.timestamp && (
-                                            <div className="org-timestamp">
-                                                <small>{new Date(step.timestamp).toLocaleString()}</small>
-                                            </div>
-                                        )}
-                                    </div>
+                        {trackerData?.steps?.map((step, index) => (
+                            <div key={index} className="org-step-container">
+                                <div className="org-progress-step">
+                                    {step.status === 'approved' ? (
+                                        <CheckCircleIcon style={{ color: '#4caf50', fontSize: 24 }} />
+                                    ) : step.status === 'rejected' ? (
+                                        <CheckCircleIcon style={{ color: 'red', fontSize: 24 }} />
+                                    ) : (
+                                        <RadioButtonUncheckedIcon style={{ color: '#ffeb3b', fontSize: 24 }} />
+                                    )}
                                 </div>
-                            ))
-                        ) : null}
+                                <div className="org-step-label">
+                                    <strong>{step.stepName}</strong>
+                                    {step.reviewedBy && (
+                                        <div className="org-reviewer-info">
+                                            <small>Reviewed by: {step.reviewedByRole || step.reviewerRole}</small>
+                                        </div>
+                                    )}
+                                    {step.timestamp && (
+                                        <div className="org-timestamp">
+                                            <small>{new Date(step.timestamp).toLocaleString()}</small>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
                     </div>
                     <div className="org-action-buttons">
-                        <Button variant="contained" className="org-action-button" onClick={handleViewForms}>
-                            VIEW FORMS
+                        <Button 
+                            variant="contained" 
+                            className="org-action-button" 
+                            onClick={handleViewForms}
+                        >
+                            {isLocalOffCampus ? 'VIEW FORM' : 'VIEW FORMS'}
                         </Button>
                     </div>
                 </div>

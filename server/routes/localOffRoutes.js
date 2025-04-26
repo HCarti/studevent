@@ -35,4 +35,38 @@ router.post('/after', localOffController.submitLocalOffCampusAfter);
 
 router.get('/:offId', localOffController.getLocalOffCampusForms);
 
+
+// Add this route to localOffRoutes.js
+router.get('/:offId/tracker', async (req, res) => {
+  try {
+    const formId = req.params.offId;
+    
+    // First get the form to check its phase
+    const form = await LocalOffCampus.findById(formId);
+    if (!form) {
+      return res.status(404).json({ error: "Local Off-Campus form not found" });
+    }
+
+    // Then get the tracker
+    const tracker = await EventTracker.findOne({ formId });
+    if (!tracker) {
+      return res.status(404).json({ error: "Tracker not found for this form" });
+    }
+
+    // Return both tracker and form phase
+    res.status(200).json({
+      ...tracker.toObject(),
+      formPhase: form.formPhase
+    });
+
+  } catch (error) {
+    console.error("Error fetching tracker:", error);
+    res.status(500).json({ 
+      success: false,
+      message: "Internal Server Error",
+      error: error.message 
+    });
+  }
+});
+
 module.exports = router;

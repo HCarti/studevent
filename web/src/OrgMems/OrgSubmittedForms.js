@@ -15,76 +15,67 @@ const OrgSubmittedForms = () => {
     useEffect(() => {
         const fetchForms = async () => {
             try {
-                const token = localStorage.getItem("token");
-                const user = JSON.parse(localStorage.getItem("user"));
-                
-                if (!token || !user?._id) {
-                    setError("Authentication failed! Please log in again.");
-                    setLoading(false);
-                    return;
-                }
-        
-                console.log("Fetching forms for user:", user._id, "with email:", user.email);
-        
-                // Fetch all form types in parallel
-                const [formsRes, localOffRes] = await Promise.all([
-                    fetch(`https://studevent-server.vercel.app/api/forms/by-email/${user.email}`, {
-                        headers: { 
-                            "Authorization": `Bearer ${token}`,
-                            "Content-Type": "application/json"
-                        }
-                    }),
-                    fetch(`https://studevent-server.vercel.app/api/local-off-campus/by-user/${user._id}`, {
-                        headers: { 
-                            "Authorization": `Bearer ${token}`,
-                            "Content-Type": "application/json"
-                        }
-                    })
-                ]);
-        
-                console.log("Forms response status:", formsRes.status);
-                console.log("Local Off-Campus response status:", localOffRes.status);
-        
-                if (!formsRes.ok || !localOffRes.ok) {
-                    throw new Error(`Failed to fetch forms: ${formsRes.statusText || localOffRes.statusText}`);
-                }
-        
-                const formsData = await formsRes.json();
-                const localOffData = await localOffRes.json();
-        
-                console.log("Regular forms data:", formsData);
-                console.log("Local Off-Campus data:", localOffData);
-        
-                // Transform Local Off-Campus forms
-                const transformedLocalOffForms = (localOffData.data || localOffData).map(form => ({
-                    ...form,
-                    _id: form._id,
-                    formType: "LocalOffCampus",
-                    finalStatus: form.status || 'submitted',
-                    applicationDate: form.submittedAt,
-                    eventTitle: form.formPhase === 'BEFORE' 
-                        ? `Local Off-Campus: ${form.nameOfHei || 'Untitled'}`
-                        : `After Report: ${form.nameOfHei || 'Untitled'}`,
-                    isLocalOffCampus: true
-                }));
-        
-                console.log("Transformed Local Off-Campus forms:", transformedLocalOffForms);
-        
-                const combinedForms = [
-                    ...(Array.isArray(formsData) ? formsData : []),
-                    ...transformedLocalOffForms
-                ];
-        
-                console.log("Combined forms:", combinedForms);
-        
-                setAllForms(combinedForms);
-            } catch (error) {
-                console.error("Error fetching forms:", error);
-                setError(error.message);
-            } finally {
+              const token = localStorage.getItem("token");
+              const user = JSON.parse(localStorage.getItem("user"));
+              
+              if (!token || !user?._id) {
+                setError("Authentication failed! Please log in again.");
                 setLoading(false);
+                return;
+              }
+          
+              // Fetch all forms in parallel with better error handling
+              const [regularFormsRes, localOffRes] = await Promise.all([
+                fetch(`https://studevent-server.vercel.app/api/forms/by-email/${user.email}`, {
+                  headers: { 
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                  }
+                }),
+                fetch(`https://studevent-server.vercel.app/api/local-off-campus/by-user/${user._id}`, {
+                  headers: { 
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                  }
+                })
+              ]);
+          
+              // Handle regular forms response
+              let regularForms = [];
+              if (regularFormsRes.ok) {
+                regularForms = await regularFormsRes.json();
+              } else {
+                console.error("Failed to fetch regular forms:", regularFormsRes.status);
+              }
+          
+              // Handle local off-campus forms response
+              let localOffForms = [];
+              if (localOffRes.ok) {
+                const localOffData = await localOffRes.json();
+                localOffForms = (localOffData.data || localOffData).map(form => ({
+                  ...form,
+                  _id: form._id,
+                  formType: "LocalOffCampus",
+                  finalStatus: form.status || 'submitted',
+                  applicationDate: form.submittedAt,
+                  eventTitle: form.formPhase === 'BEFORE' 
+                    ? `Local Off-Campus: ${form.nameOfHei || 'Untitled'}`
+                    : `After Report: ${form.nameOfHei || 'Untitled'}`,
+                  isLocalOffCampus: true,
+                  formPhase: form.formPhase // Include formPhase explicitly
+                }));
+              } else {
+                console.error("Failed to fetch local off-campus forms:", localOffRes.status);
+              }
+          
+              setAllForms([...regularForms, ...localOffForms]);
+            } catch (error) {
+              console.error("Error fetching forms:", error);
+              setError("Failed to load forms. Please try again later.");
+            } finally {
+              setLoading(false);
             }
-        };
+          };
 
         fetchForms();
     }, []);
@@ -187,7 +178,20 @@ const OrgSubmittedForms = () => {
         setError(null);
     };
 
-    const getStatusBadgeClass = (status) => {
+    const getStatusBadgeClass = (form) => {
+        const status = form.finalStatus?.toLowerCase() || form.status?.toLowerCase();
+  
+        if (form.formType === 'LocalOffCampus') {
+          switch(status) {
+            case 'approved': return 'approved';
+            case 'rejected':
+            case 'declined': return 'rejected';
+            case 'draft': return 'draft';
+            case 'submitted':
+            case 'pending': 
+            default: return 'pending';
+          }
+        }
         if (!status) return 'pending';
         status = status.toLowerCase();
         if (status === 'approved') return 'approved';
@@ -195,13 +199,17 @@ const OrgSubmittedForms = () => {
         if (status === 'draft') return 'draft';
         return 'pending';
     };
-
+    
     const formatFormType = (form) => {
         if (form.formType === 'LocalOffCampus') {
-            return `Local Off-Campus (${form.formPhase})`;
+          return form.formPhase === 'BEFORE' 
+            ? 'Off-Campus Event Proposal' 
+            : 'Off-Campus After Report';
         }
-        return form.formType || 'N/A';
-    };
+        return form.formType === 'ActivityProposal' 
+          ? 'Activity Proposal' 
+          : 'Project Proposal';
+      };
 
     const formatDate = (dateString) => {
         if (!dateString) return 'No Date';
@@ -270,11 +278,21 @@ const OrgSubmittedForms = () => {
                                     {getFilteredForms().map((form) => (
                                         <tr 
                                             key={form._id}
-                                            onClick={() => navigate(
-                                                form.formType === 'LocalOffCampus'
-                                                    ? `/local-off-campus/${form._id}`
-                                                    : `/orgTrackerViewer/${form._id}`
-                                            )}
+                                            // Replace your current row onClick handler with this:
+                                            // In your table row onClick handler:
+                                    onClick={() => {
+                                        if (form.isLocalOffCampus || form.formType === 'LocalOffCampus') {
+                                        navigate(`/orgTrackerViewer/${form._id}`, { 
+                                            state: { 
+                                            form,
+                                            formType: 'LocalOffCampus',
+                                            formPhase: form.formPhase // 'BEFORE' or 'AFTER'
+                                            } 
+                                        });
+                                        } else {
+                                        navigate(`/orgTrackerViewer/${form._id}`, { state: { form } });
+                                        }
+                                    }}
                                             className="clickable-row"
                                         >
                                             <td>
