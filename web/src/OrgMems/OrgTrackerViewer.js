@@ -169,7 +169,7 @@ const OrgTrackerViewer = () => {
     return (
         <div className='org-prog-box'>
             <h3 style={{ textAlign: 'center' }} className="proposal-ttl">
-                {getTrackerTitle()}
+                Event Proposal Tracker
             </h3>
             
             <div className="org-tracker-content-wrapper">

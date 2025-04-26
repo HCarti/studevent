@@ -7,7 +7,10 @@
   border-radius: 16px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  height: 70%;
+  min-height: 650px; /* Set a minimum height */
+  height: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Heading */
@@ -83,7 +86,10 @@
   overflow: hidden;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
   background: white;
-  height: 70%;
+  flex: 1; /* This makes it fill available space */
+  min-height: 400px; /* Minimum height for empty states */
+  display: flex;
+  flex-direction: column;
 }
 
 /* Forms Table */
@@ -204,6 +210,11 @@
   background: #f8fafc;
   border-radius: 12px;
   margin: 1rem;
+  flex: 1; /* Fill available space */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
 }
 
 /* Loading Spinner */
@@ -212,7 +223,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 200px;
+  flex: 1; /* Fill available space */
+  min-height: 400px;
 }
 
 .spinner {

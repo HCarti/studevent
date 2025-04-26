@@ -1,6 +1,6 @@
 /* ===== Base Styles ===== */
 .wrap {
-  padding: 2rem;
+  padding: 1px;
   min-height: 100vh;
   background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), 
               url('../Images/Nu_building2.png') no-repeat center center fixed;
@@ -43,7 +43,7 @@
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  height: calc(100vh - 200px); /* Adjust based on your header height */
+  height: calc(90vh - 190px); /* Adjust based on your header height */
   min-height: 600px; /* Minimum height */
 }
 
@@ -57,30 +57,67 @@
   height: 100%;
 }
 
-.calendar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #eaeaea;
-}
-
 .month-title {
   font-size: 1.5rem;
   font-weight: 600;
   color: #2c3e50;
 }
 
-/* ===== React Big Calendar Overrides ===== */
-.rbc-month-view {
-  border: none;
+/* ===== Calendar Toolbar Styles ===== */
+.rbc-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 10px;
 }
 
-.rbc-month-header {
-  background: #f8f9fa;
-  border-radius: 8px 8px 0 0;
+.rbc-toolbar button {
+  color: #1a3ab5;
+  background: white;
+  border: 1px solid #d9d9d9;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 80px;
+  background: linear-gradient(to bottom, #ffffff, #f9f9f9);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  font-weight: 500;
 }
+
+.rbc-toolbar button:hover {
+  background: linear-gradient(to bottom, #f5f8ff, #e6edff);
+  box-shadow: 0 2px 8px rgba(26, 58, 181, 0.2);
+}
+
+.rbc-toolbar button:active {
+  background: linear-gradient(to bottom, #e1ebff, #d0ddff);
+  transform: translateY(1px);
+}
+
+.rbc-toolbar button.rbc-active {
+  background: #1a3ab5;
+  color: white;
+  border-color: #1a3ab5;
+}
+
+.rbc-toolbar .rbc-btn-group {
+  display: flex;
+  gap: 8px;
+}
+
+.rbc-toolbar .rbc-toolbar-label {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #1a3ab5;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ===== React Big Calendar Overrides ===== */
 
 .rbc-header {
   padding: 10px 0;
@@ -144,7 +181,7 @@
 /* ===== Event Details Panel ===== */
 .event-details {
   flex: 1;
-  padding: 2rem;
+  padding: 1rem;
   background: #f8f9fa;
   border-left: 1px solid #eaeaea;
   display: flex;

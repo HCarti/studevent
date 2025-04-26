@@ -66,149 +66,80 @@ const Project = () => {
   
 
   const TimeRangePicker = ({ value, onChange, error }) => {
-    const [internalValue, setInternalValue] = useState({
-      startTime: '',
-      endTime: '',
-      duration: ''
-    });
+    const [startTime, setStartTime] = useState('');
+    const [endTime, setEndTime] = useState('');
   
-    // Parse initial value only once
+    // Initialize values
     useEffect(() => {
       if (value) {
         const [start, end] = value.split('-').map(t => t.trim());
-        setInternalValue(prev => ({
-          ...prev,
-          startTime: start || '',
-          endTime: end || ''
-        }));
+        setStartTime(start || '');
+        setEndTime(end || '');
       }
-    }, []); // Empty dependency array to run only once
+    }, [value]);
   
-    // Calculate duration whenever times change
-    useEffect(() => {
-      if (internalValue.startTime && internalValue.endTime) {
-        const minutes = calculateDurationInMinutes(
-          internalValue.startTime,
-          internalValue.endTime
-        );
-        setInternalValue(prev => ({
-          ...prev,
-          duration: formatDuration(minutes)
-        }));
-        onChange(`${internalValue.startTime}-${internalValue.endTime}`);
-      }
-    }, [internalValue.startTime, internalValue.endTime, onChange]);
-  
-    const handleTimeChange = (type, newValue) => {
-      if (type === 'start') {
-        // If changing start time and new start is after current end, clear end time
-        const shouldClearEnd = internalValue.endTime && 
-                            isTimeAfter(newValue, internalValue.endTime);
-        
-        setInternalValue(prev => ({
-          ...prev,
-          startTime: newValue,
-          endTime: shouldClearEnd ? '' : prev.endTime
-        }));
-      } else {
-        // Only set end time if it's valid
-        if (!internalValue.startTime || !isTimeAfter(newValue, internalValue.startTime)) {
-          setInternalValue(prev => ({
-            ...prev,
-            endTime: newValue
-          }));
-        }
-      }
+    const handleStartTimeChange = (e) => {
+      const newStart = e.target.value;
+      setStartTime(newStart);
+      // Always update the value, even if end time needs to be cleared
+      onChange(endTime && !isTimeAfter(newStart, endTime) 
+        ? `${newStart}-${endTime}`
+        : `${newStart}-`);
     };
   
-    // Helper function to compare times (returns true if time1 is after time2)
+    const handleEndTimeChange = (e) => {
+      const newEnd = e.target.value;
+      setEndTime(newEnd);
+      onChange(`${startTime}-${newEnd}`);
+    };
+  
+    // More permissive time comparison
     const isTimeAfter = (time1, time2) => {
+      if (!time1 || !time2) return false;
       const [h1, m1] = time1.split(':').map(Number);
       const [h2, m2] = time2.split(':').map(Number);
-      
-      // Compare hours first, then minutes
-      return h1 > h2 || (h1 === h2 && m1 > m2);
-    };
-  
-    const calculateDurationInMinutes = (start, end) => {
-      const [startHours, startMins] = start.split(':').map(Number);
-      const [endHours, endMins] = end.split(':').map(Number);
-      
-      const totalStart = startHours * 60 + startMins;
-      const totalEnd = endHours * 60 + endMins;
-      
-      return Math.max(0, totalEnd - totalStart); // Ensure non-negative
-    };
-  
-    const formatDuration = (minutes) => {
-      if (minutes <= 0) return '0 minutes';
-      
-      const hours = Math.floor(minutes / 60);
-      const mins = minutes % 60;
-      
-      return [
-        hours > 0 ? `${hours} hour${hours !== 1 ? 's' : ''}` : '',
-        mins > 0 ? `${mins} minute${mins !== 1 ? 's' : ''}` : ''
-      ].filter(Boolean).join(' ') || '0 minutes';
-    };
-  
-    const formatTimeDisplay = (time) => {
-      if (!time) return '';
-      const [hours, minutes] = time.split(':');
-      const hour = parseInt(hours, 10);
-      return `${hour % 12 || 12}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
+      return h1 > h2 || (h1 === h2 && m1 >= m2); // Changed to >= to allow same time
     };
   
     return (
       <div className={`time-range-picker ${error ? 'invalid-field' : ''}`}>
         <div className="time-inputs">
-          <div className="form-group">
-            <label>Start Time</label>
+          <div className="time-input-group">
             <input
               type="time"
-              value={internalValue.startTime}
-              onChange={(e) => handleTimeChange('start', e.target.value)}
-              className={!internalValue.startTime && error ? 'error' : ''}
+              value={startTime}
+              onChange={handleStartTimeChange}
+              className={`time-input ${!startTime && error ? 'error' : ''}`}
               required
-              step="300" // 5-minute increments
+              step="300"
             />
+            {!startTime && error && (
+              <span className="time-error-message">Required</span>
+            )}
           </div>
           
           <div className="time-separator">to</div>
           
-          <div className="form-group">
-            <label>End Time</label>
+          <div className="time-input-group">
             <input
               type="time"
-              value={internalValue.endTime}
-              onChange={(e) => handleTimeChange('end', e.target.value)}
-              min={internalValue.startTime}
-              className={!internalValue.endTime && error ? 'error' : ''}
+              value={endTime}
+              onChange={handleEndTimeChange}
+              min={startTime || undefined} // Only set min if startTime exists
+              className={`time-input ${!endTime && error ? 'error' : ''}`}
               required
-              step="300" // 5-minute increments
-              disabled={!internalValue.startTime}
+              step="300"
+              disabled={!startTime}
             />
+            {!endTime && error && (
+              <span className="time-error-message">Required</span>
+            )}
           </div>
         </div>
-        
-        {internalValue.startTime && internalValue.endTime && (
-          <div className="time-display">
-            <div className="formatted-time">
-              {formatTimeDisplay(internalValue.startTime)} - {formatTimeDisplay(internalValue.endTime)}
-            </div>
-            <div className="duration-display">
-              Duration: {internalValue.duration}
-            </div>
-          </div>
-        )}
-        
-        {error && (
-          <div className="validation-error">Time range is required</div>
-        )}
       </div>
     );
   };
-
+  
   
   const [currentStep, setCurrentStep] = useState(0);
   const [formSent, setFormSent] = useState(false);

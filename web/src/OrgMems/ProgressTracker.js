@@ -137,88 +137,126 @@ const ProgressTracker = () => {
     // Main data fetching function
     const fetchBudgetData = async (budgetId) => {
         try {
-          const token = localStorage.getItem('token');
-          const response = await fetch(`https://studevent-server.vercel.app/api/budgets/${budgetId}`, {
+          console.log("Fetching budget with ID:", budgetId);
+          
+          const response = await fetch(`https://stundevelop-server.vercel.app/api/budgets/${budgetId}`, {
             headers: {
-              'Authorization': `Bearer ${token}`,
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
               'Content-Type': 'application/json'
             }
           });
-          
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-          
-          const rawBudgetData = await response.json();
-          return transformBudgetData(rawBudgetData);
-          
+      
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error("API Error Response:", {
+              status: response.status,
+              error: errorData
+            });
+            throw new Error(errorData.error || "Budget fetch failed");
+          }
+      
+          return await response.json();
         } catch (error) {
-          console.error('Error fetching budget:', error);
+          console.error("Budget fetch error:", {
+            budgetId,
+            error: error.message,
+            stack: error.stack
+          });
           return null;
         }
       };
 
-    const fetchAllData = async () => {
+      const fetchAllData = async () => {
         try {
-            setLoading(true);
-            setFetchError(null);
-            const token = localStorage.getItem("token");
-            
-            // Fetch form data and signatures in parallel
-            const [formRes, signaturesRes, trackerRes] = await Promise.all([
-                fetch(`https://studevent-server.vercel.app/api/forms/${formId}`, {
-                    headers: { "Authorization": `Bearer ${token}` }
-                }),
-                fetch(`https://studevent-server.vercel.app/api/tracker/signatures/${formId}`, {
-                    headers: { "Authorization": `Bearer ${token}` }
-                }),
-                fetch(`https://studevent-server.vercel.app/api/tracker/${formId}`, {
-                    headers: { "Authorization": `Bearer ${token}` }
-                })
-            ]);
-
-            // Check all responses
-            if (!formRes.ok || !signaturesRes.ok || !trackerRes.ok) {
-                throw new Error('Failed to fetch one or more data sources');
-            }
-
-            // Process data
-            const [formData, signaturesData, trackerData] = await Promise.all([
-                formRes.json(),
-                signaturesRes.json(),
-                trackerRes.json()
-            ]);
-
-            setFormDetails(sanitizeFormData(formData));
-            setReviewSignatures(sanitizeSignatures(signaturesData));
-            setTrackerData(trackerData);
-            setCurrentStep(String(trackerData.currentStep));
-
-            // Fetch budget if exists
-            if (formData.attachedBudget) {
-                const budgetId = formData.attachedBudget._id || formData.attachedBudget;
-                const transformedBudget = await fetchBudgetData(budgetId);
-                setBudgetData(transformedBudget);
+          setLoading(true);
+          setFetchError(null);
+          const token = localStorage.getItem("token");
+          
+          // 1. First fetch all parallel data
+          const [formRes, signaturesRes, trackerRes] = await Promise.all([
+            fetch(`https://studevent-server.vercel.app/api/forms/${formId}`, {
+              headers: { "Authorization": `Bearer ${token}` }
+            }),
+            fetch(`https://studevent-server.vercel.app/api/tracker/signatures/${formId}`, {
+              headers: { "Authorization": `Bearer ${token}` }
+            }),
+            fetch(`https://studevent-server.vercel.app/api/tracker/${formId}`, {
+              headers: { "Authorization": `Bearer ${token}` }
+            })
+          ]);
+      
+          // Check responses
+          if (!formRes.ok || !signaturesRes.ok || !trackerRes.ok) {
+            throw new Error('Failed to fetch one or more data sources');
+          }
+      
+          // Process initial data
+          const [formData, signaturesData, trackerData] = await Promise.all([
+            formRes.json(),
+            signaturesRes.json(),
+            trackerRes.json()
+          ]);
+      
+          // Debug: Check the attachedBudget structure
+          console.log("Form data attachedBudget:", {
+            exists: !!formData.attachedBudget,
+            type: typeof formData.attachedBudget,
+            value: formData.attachedBudget
+          });
+      
+          // 2. Handle budget data
+          let budgetData = null;
+          if (formData.attachedBudget) {
+            try {
+              // Get the budget ID (handling both object and string cases)
+              const budgetId = typeof formData.attachedBudget === 'object' 
+                ? formData.attachedBudget._id 
+                : formData.attachedBudget;
+      
+              console.log("Fetching budget with ID:", budgetId);
+              
+              budgetData = await fetchBudgetData(budgetId);
+              
+              // Validate the budget data
+              if (!budgetData || !Array.isArray(budgetData.items)) {
+                console.error("Invalid budget data structure:", budgetData);
+                budgetData = null;
               } else {
-                setBudgetData(null);
+                console.log("Successfully fetched budget data:", {
+                  itemCount: budgetData.items.length,
+                  grandTotal: budgetData.grandTotal
+                });
               }
-
-            console.log("Fetched form data:", formData);
-            console.log("Fetched Signatures:", signaturesData);
-            console.log("Fetched Budget Data:", formData.attachedBudget);
-            console.log("Budget data after transformation:", {
-                exists: !!budgetData,
-                itemCount: budgetData?.items?.length,
-                sampleItem: budgetData?.items?.[0],
-                structure: Object.keys(budgetData || {})
-              });
-
-            setAllDataLoaded(true);
+            } catch (budgetError) {
+              console.error("Error fetching budget:", budgetError);
+              budgetData = null;
+            }
+          }
+      
+          // 3. Update all states together
+          setFormDetails(sanitizeFormData(formData));
+          setReviewSignatures(sanitizeSignatures(signaturesData));
+          setTrackerData(trackerData);
+          setCurrentStep(String(trackerData.currentStep));
+          setBudgetData(budgetData); // This will be null if no valid budget
+      
+          // Final debug log
+          console.log("All data loaded successfully:", {
+            formData: sanitizeFormData(formData),
+            signatures: sanitizeSignatures(signaturesData),
+            trackerData,
+            budgetData // Using local variable for accurate logging
+          });
+      
+          setAllDataLoaded(true);
         } catch (error) {
-            console.error("Error loading data:", error);
-            setFetchError(error.message);
+          console.error("Error in fetchAllData:", error);
+          setFetchError(error.message);
+          setAllDataLoaded(false);
         } finally {
-            setLoading(false);
+          setLoading(false);
         }
-    };
+      };
 
     useEffect(() => {
         if (formId) fetchAllData();

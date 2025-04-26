@@ -87,7 +87,7 @@ const Forms = ({ role }) => {
       <ul>
         <li>Create First a Budget Proposal before creating an event proposal.</li>
         <li>Complete all required fields and attach necessary files.</li>
-        <li>After submission, your form will be routed to your Adviser and Dean for review.</li>
+        <li>After submission, your form will be submitted to the first reviewee for approval.</li>
         <li>You can monitor the status in the Proposal Tracker.</li>
       </ul>
     </div>

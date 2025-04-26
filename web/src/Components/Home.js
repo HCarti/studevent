@@ -40,7 +40,7 @@ const Home = ({ handleLogin }) => {
   };
 
   const validatePassword = (password) => {
-    return password.length >= 8;
+    return password.length >= 6;
   };
 
   const validateForm = () => {
@@ -62,7 +62,7 @@ const Home = ({ handleLogin }) => {
       newErrors.password = 'Password is required';
       valid = false;
     } else if (!validatePassword(password)) {
-      newErrors.password = 'Password must be at least 8 characters';
+      newErrors.password = 'Password must be at least 6 characters';
       valid = false;
     }
 

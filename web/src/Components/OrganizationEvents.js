@@ -231,6 +231,27 @@ const calculateDuration = (start, end) => {
     </div>
   );
 
+  const CustomToolbar = ({ label, onNavigate }) => {
+    return (
+      <div className="rbc-toolbar">
+        <div className="rbc-btn-group">
+          <button type="button" onClick={() => onNavigate('PREV')}>
+            Back
+          </button>
+          <button type="button" onClick={() => onNavigate('TODAY')}>
+            Today
+          </button>
+          <button type="button" onClick={() => onNavigate('NEXT')}>
+            Next
+          </button>
+        </div>
+        <div className="rbc-toolbar-label">
+          {label}
+        </div>
+      </div>
+    );
+  };
+
 
   return (
     <div className="wrap">
@@ -248,11 +269,6 @@ const calculateDuration = (start, end) => {
 
       <div className="calendar-container">
         <div className="calendar-wrapper">
-          <div className="calendar-header">
-            <span className="month-title">
-              {moment(selectedDate).format('MMMM YYYY')}
-            </span>
-          </div>
           <div style={{ height: 500 }}>
           <Calendar
             localizer={localizer}
@@ -266,13 +282,15 @@ const calculateDuration = (start, end) => {
             onNavigate={handleNavigate}
             eventPropGetter={eventStyleGetter}
             components={{
-              event: EventComponent
+              event: EventComponent,
+              toolbar: CustomToolbar
             }}
-            // Add these props:
             defaultView="month"
-            showMultiDayTimes // This helps with multi-day events
+            showMultiDayTimes
             step={60}
             timeslots={1}
+            // Add these props for toolbar customization
+            toolbar={true}
           />
           </div>
         </div>
