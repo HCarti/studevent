@@ -30,5 +30,19 @@ router.post("/tracker-notification", authenticateToken, createTrackerNotificatio
 
 router.post("/mark-read", authenticateToken, markNotificationAsRead); // Protect route
 
+// In your server code
+router.post('/mark-read-batch', auth, async (req, res) => {
+  try {
+    const { notificationIds } = req.body;
+    await Notification.updateMany(
+      { _id: { $in: notificationIds }, user: req.user._id },
+      { $set: { read: true } }
+    );
+    res.status(200).send({ message: 'Notifications marked as read' });
+  } catch (error) {
+    res.status(500).send({ message: 'Error marking notifications as read' });
+  }
+});
+
 
 module.exports = router;

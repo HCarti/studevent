@@ -108,9 +108,14 @@ const Liquidation = () => {
     setSuccess('');
   
     try {
+      // Get organization name from localStorage
+      const userData = JSON.parse(localStorage.getItem('user'));
+      const organizationName = userData?.organizationName || 'Unknown Organization';
+  
       const formData = new FormData();
       formData.append('file', fileBlob);
-      formData.append('organization', 'Your Organization Name'); // Add organization
+      formData.append('organization', organizationName); // Use the organizationName from localStorage
+      formData.append('organizationName', organizationName); // Also send as organizationName for the notification
       
       // If you have processed data to send:
       if (processedData) {

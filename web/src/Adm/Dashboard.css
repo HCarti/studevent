@@ -157,6 +157,31 @@
   margin-bottom: 0;
 }
 
+/* Pie Chart Styles */
+.recharts-surface {
+  overflow: visible;
+}
+
+.recharts-legend-item {
+  margin-top: 8px !important;
+}
+
+.recharts-default-legend {
+  padding-top: 20px !important;
+  text-align: center !important;
+}
+
+.recharts-legend-item-text {
+  color: #2c3e50 !important;
+  font-size: 0.85rem !important;
+}
+
+.recharts-pie-label {
+  font-size: 0.75rem;
+  fill: #fff;
+  font-weight: 500;
+}
+
 /* Responsive Design */
 @media (max-width: 960px) {
   .dashboard-wrapper {
