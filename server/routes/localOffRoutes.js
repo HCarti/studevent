@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const localOffController = require('../controllers/localOffController');
 const LocalOffCampus = require('../models/LocalOffCampus');
+const EventTracker = require('../models/EventTracker');
 
 router.get("/by-user/:userId", async (req, res) => {
   try {
