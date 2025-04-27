@@ -327,7 +327,10 @@ const updateTrackerStep = async (req, res) => {
     await form.save();
 
     // Enhanced notification handling
-    const formName = form.name || `Form ${form._id}`;
+    const formName = form.formType === 'Activity' 
+  ? form.eventTitle || `Activity Form ${form._id}`
+  : form.projectTitle || `Project Form ${form._id}`;
+  
     const currentStepName = step.stepName;
 
     const getOrganizationContact = () => {
