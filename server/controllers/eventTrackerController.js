@@ -33,44 +33,33 @@ const getNextReviewers = async (tracker, currentStepIndex) => {
 
     console.log('🔍 Organization ID from form:', form.organizationId);
     
-    // Debug: Check all users in the organization first
-    const allOrgUsers = await User.find({
-      organizationId: form.organizationId
-    }).select('email role organizationId').lean();
-
-    console.log('👥 All users in organization:', 
-      allOrgUsers.map(u => ({
-        email: u.email,
-        role: u.role,
-        orgId: u.organizationId
-      }))
-    );
-
-    // Get reviewers with the exact required role (case-sensitive)
+    // Get reviewers where:
+    // role is "Authority" AND faculty matches the nextStep.reviewerRole
     const reviewers = await User.find({
-      role: nextStep.reviewerRole,
-      organizationId: form.organizationId
-    }).select('email role name').lean();
+      role: "Authority",
+      faculty: nextStep.reviewerRole,
+      organizationId: form.organizationId,
+      status: "Active" // Only active users
+    }).select('email firstName lastName faculty').lean();
 
     console.log('✅ Matching reviewers:', reviewers.map(r => ({
       email: r.email,
-      role: r.role,
-      name: r.name
+      name: `${r.firstName} ${r.lastName}`,
+      faculty: r.faculty
     })));
 
     if (reviewers.length === 0) {
-      console.warn('⚠️ No reviewers found for role:', nextStep.reviewerRole);
-      console.warn('Available roles in organization:', 
-        [...new Set(allOrgUsers.map(u => u.role))]
-      );
+      console.warn('⚠️ No reviewers found for faculty role:', nextStep.reviewerRole);
       
-      // Check if role exists but no users assigned
-      const roleExists = allOrgUsers.some(u => u.role === nextStep.reviewerRole);
-      if (roleExists) {
-        console.warn('⚠️ Role exists but no active users assigned');
-      } else {
-        console.warn('⚠️ Role does not exist in organization');
-      }
+      // Debug: Check all authority users in organization
+      const allAuthorityUsers = await User.find({
+        role: "Authority",
+        organizationId: form.organizationId
+      }).select('email faculty').lean();
+      
+      console.warn('Available faculty roles in organization:', 
+        [...new Set(allAuthorityUsers.map(u => u.faculty))]
+      );
     }
     
     return reviewers;
@@ -209,7 +198,6 @@ const updateTrackerStep = async (req, res) => {
     const reviewerRoles = [
       "Adviser", 
       "Dean", 
-      "Admin",
       "Academic Services", 
       "Academic Director", 
       "Executive Director"
