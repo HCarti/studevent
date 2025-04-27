@@ -17,7 +17,11 @@ const getNextReviewers = async (tracker, currentStepIndex) => {
     }
 
     const nextStep = tracker.steps[currentStepIndex + 1];
-    console.log('🔍 Next Step Details:', nextStep);
+    console.log('🔍 Next Step Details:', {
+      stepName: nextStep.stepName,
+      reviewerRole: nextStep.reviewerRole,
+      _id: nextStep._id
+    });
 
     const Form = mongoose.model('Form');
     const form = await Form.findById(tracker.formId);
@@ -27,9 +31,20 @@ const getNextReviewers = async (tracker, currentStepIndex) => {
       return [];
     }
 
-    // Get all possible reviewer roles from the tracker steps
-    const allReviewerRoles = [...new Set(tracker.steps.map(step => step.reviewerRole))];
-    console.log('🔍 All reviewer roles in tracker:', allReviewerRoles);
+    console.log('🔍 Organization ID from form:', form.organizationId);
+    
+    // Debug: Check all users in the organization first
+    const allOrgUsers = await User.find({
+      organizationId: form.organizationId
+    }).select('email role organizationId').lean();
+
+    console.log('👥 All users in organization:', 
+      allOrgUsers.map(u => ({
+        email: u.email,
+        role: u.role,
+        orgId: u.organizationId
+      }))
+    );
 
     // Get reviewers with the exact required role (case-sensitive)
     const reviewers = await User.find({
@@ -37,19 +52,24 @@ const getNextReviewers = async (tracker, currentStepIndex) => {
       organizationId: form.organizationId
     }).select('email role name').lean();
 
-    console.log('✅ Matching reviewers:', reviewers);
+    console.log('✅ Matching reviewers:', reviewers.map(r => ({
+      email: r.email,
+      role: r.role,
+      name: r.name
+    })));
 
     if (reviewers.length === 0) {
-      // Check if role exists in system at all
-      const roleExists = await User.exists({
-        organizationId: form.organizationId,
-        role: nextStep.reviewerRole
-      });
+      console.warn('⚠️ No reviewers found for role:', nextStep.reviewerRole);
+      console.warn('Available roles in organization:', 
+        [...new Set(allOrgUsers.map(u => u.role))]
+      );
       
-      if (!roleExists) {
-        console.error(`❌ Role ${nextStep.reviewerRole} doesn't exist in organization`);
+      // Check if role exists but no users assigned
+      const roleExists = allOrgUsers.some(u => u.role === nextStep.reviewerRole);
+      if (roleExists) {
+        console.warn('⚠️ Role exists but no active users assigned');
       } else {
-        console.warn(`⚠️ No active users found for role: ${nextStep.reviewerRole}`);
+        console.warn('⚠️ Role does not exist in organization');
       }
     }
     
@@ -296,30 +316,25 @@ const updateTrackerStep = async (req, res) => {
       
       if (nextStepIndex < tracker.steps.length) {
         const nextStep = tracker.steps[nextStepIndex];
+        console.log('🔍 Looking for reviewers for next step:', nextStep.stepName);
+        
         const nextReviewers = await getNextReviewers(tracker, firstPendingOrDeclinedStepIndex);
-
-        // Get the current reviewer's name for the notification
+        console.log('🔍 Found reviewers:', nextReviewers);
+    
         const currentReviewerName = currentUserName || 
                                   (step.reviewedBy?.name || 
                                   req.user.email.split('@')[0] || 
                                   'a reviewer');
-
-        // Get form details for more context
-        const formDetails = `Form: ${formName} (ID: ${form._id})`;
-        const currentStepDetails = `Current Step: ${step.stepName}`;
-        const nextStepDetails = `Next Step: ${nextStep.stepName}`;
-
-        if (nextReviewers && nextReviewers.length > 0) {
-          // Send notifications to all next reviewers
-          const notificationPromises = nextReviewers.map(async (reviewer) => {
+    
+        if (nextReviewers.length > 0) {
+          console.log(`📨 Sending notifications to ${nextReviewers.length} reviewer(s)`);
+          
+          // Send notifications to next reviewers
+          for (const reviewer of nextReviewers) {
             try {
-              const message = `
-                Action Required: ${formDetails}\n
-                ${currentStepDetails} has been approved by ${currentReviewerName}\n
-                ${nextStepDetails} now requires your review.\n
-                Please log in to the system to take action.
-              `;
+              const message = `Form ${formName} has been approved by ${currentReviewerName} and now requires your ${nextStep.stepName} review.`;
               
+              console.log(`✉️ Sending to ${reviewer.email}:`, message);
               await notificationController.createNotification(
                 reviewer.email,
                 `Action Required: ${formName} needs your ${nextStep.stepName} review`,
@@ -330,75 +345,58 @@ const updateTrackerStep = async (req, res) => {
             } catch (error) {
               console.error(`❌ Failed to notify ${reviewer.email}:`, error);
             }
-          });
-
-          await Promise.all(notificationPromises);
-
-          // Confirmation to current reviewer
-          const confirmationMessage = `
-            You approved ${formDetails} at ${step.stepName} stage.\n
-            The form has been forwarded to ${nextReviewers.length} reviewer(s) for ${nextStep.stepName} approval.\n
-            Reviewers notified: ${nextReviewers.map(r => r.email).join(', ')}
-          `;
-          
+          }
+    
+          // Notify current reviewer
           await notificationController.createNotification(
             currentUserEmail,
-            `Approval Confirmation: ${formName} forwarded`,
-            confirmationMessage
+            `Approval Complete: ${formName}`,
+            `You approved ${formName}. It has been sent to ${nextReviewers.length} reviewer(s) for ${nextStep.stepName} approval.`
           );
         } else {
-          // No reviewers found for next step - admin should be alerted
-          console.error(`❌ No reviewers found for next step: ${nextStep.stepName}`);
+          console.error('❌ No reviewers found for next step');
           
-          const adminMessage = `
-            URGENT: Workflow Blocked\n\n
-            ${formDetails}\n
-            ${currentStepDetails} was approved by ${currentReviewerName}\n
-            ${nextStepDetails} has no assigned reviewers.\n
-            Please assign reviewers for ${nextStep.stepName} role to continue the workflow.
-          `;
-          
-          // Find admin users to notify
-          const admins = await User.find({ 
-            organizationId: form.organizationId, 
-            role: 'Admin' 
-          }).select('email');
-          
+          // Notify admins about missing reviewers
+          const admins = await User.find({
+            organizationId: form.organizationId,
+            role: 'Admin'
+          }).select('email').lean();
+    
           if (admins.length > 0) {
-            await Promise.all(admins.map(admin => 
-              notificationController.createNotification(
-                admin.email,
-                `Workflow Blocked: Missing reviewers for ${nextStep.stepName}`,
-                adminMessage
-              )
-            ));
+            const adminMessage = `Workflow blocked for ${formName}. No reviewers found for ${nextStep.stepName} role.`;
+            
+            for (const admin of admins) {
+              try {
+                await notificationController.createNotification(
+                  admin.email,
+                  `Workflow Blocked: Missing reviewers for ${nextStep.stepName}`,
+                  adminMessage
+                );
+                console.log(`⚠️ Admin notified: ${admin.email}`);
+              } catch (error) {
+                console.error(`❌ Failed to notify admin ${admin.email}:`, error);
+              }
+            }
           }
-          
-          // Still notify current user
+    
+          // Notify current user
           await notificationController.createNotification(
             currentUserEmail,
             `Approval Complete - Action Needed`,
-            `You approved ${formDetails}, but no reviewers were found for the next step (${nextStep.stepName}). 
-             An admin has been notified to resolve this issue.`
+            `You approved ${formName}, but no reviewers were found for ${nextStep.stepName}. Admins have been notified.`
           );
         }
       } else {
-        // Final approval case - notify submitter
+        // Final approval case
         try {
           const submitter = await User.findById(form.submittedBy).select('email name');
           if (submitter) {
-            const approvalMessage = `
-              Congratulations!\n\n
-              Your form "${formName}" (ID: ${form._id}) has been fully approved by all reviewers.\n
-              Final approval completed on: ${new Date().toLocaleString()}\n
-              You can now proceed with the next steps for your event.
-            `;
-            
             await notificationController.createNotification(
               submitter.email,
-              `Final Approval: ${formName}`,
-              approvalMessage
+              `Approved: ${formName}`,
+              `Your form "${formName}" has been fully approved by all reviewers.`
             );
+            console.log(`🎉 Final approval notification sent to submitter: ${submitter.email}`);
           }
         } catch (error) {
           console.error("❌ Final approval notification failed:", error);
