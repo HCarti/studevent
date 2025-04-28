@@ -1,5 +1,5 @@
 /* Sidebar container */
-.sidebar {
+.sidebar-superadmin {
   display: flex;
   flex-direction: column;
   width: 60px;

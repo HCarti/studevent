@@ -59,7 +59,7 @@ const OrgSubmittedForms = () => {
                   finalStatus: form.status || 'submitted',
                   applicationDate: form.submittedAt,
                   eventTitle: form.formPhase === 'BEFORE' 
-                    ? `Local Off-Campus: ${form.nameOfHei || 'Untitled'}`
+                    ? ` ${form.nameOfHei || 'Untitled'}`
                     : `After Report: ${form.nameOfHei || 'Untitled'}`,
                   isLocalOffCampus: true,
                   formPhase: form.formPhase // Include formPhase explicitly
@@ -209,7 +209,7 @@ const OrgSubmittedForms = () => {
     const formatFormType = (form) => {
         if (form.formType === 'LocalOffCampus') {
           return form.formPhase === 'BEFORE' 
-            ? 'Off-Campus Event Proposal' 
+            ? 'Local-Off-Campus Before Report' 
             : 'Off-Campus After Report';
         }
         return form.formType === 'ActivityProposal' 

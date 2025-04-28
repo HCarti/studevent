@@ -20,7 +20,7 @@ const Sidebar = () => {
 
   return (
     <div 
-      className={`sidebar ${isHovered ? 'expanded' : 'collapsed'}`}
+      className={`sidebar-superadmin ${isHovered ? 'expanded' : 'collapsed'}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

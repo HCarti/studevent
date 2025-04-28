@@ -207,6 +207,21 @@ const Localoffcampus = () => {
     });
   };
 
+  const COURSE_OPTIONS = [
+    "Bachelor of Science in Dental Medicine",
+    "Bachelor of Science in Information Technology",
+    "Bachelor of Science in Business Administration",
+    "Bachelor of Science in Accountancy",
+    "Bachelor of Science in Tourism Management",
+    "Bachelor of Science in Psychology",
+    "Bachelor of Science in Nursing",
+    "Bachelor of Science in Medical Technology",
+    "Doctor Of Optometry",
+    "Doctor Of Dental Medicine",
+    "Doctor Hygiene Level IV",
+    "Dental Technology NCIV"
+  ];
+
   // Handle activity compliance changes
   const handleActivityChange = React.useCallback((section, field, value, remarks = "", index = 0) => {
     setFormData(prev => {
@@ -648,130 +663,134 @@ const Localoffcampus = () => {
     </div>
   );
   
-      case 1: // Basic Information (BEFORE)
-        return (
-          <div >
-            <h2>Basic Information</h2>
-            <div className="table-container">
-              <table className="basic-info-table">
-                <thead>
-                  <tr>
-                    <th>Program Name</th>
-                    <th>Course</th>
-                    <th>Destination & Venue</th>
-                    <th>Inclusive Dates</th>
-                    <th>No. of Students</th>
-                    <th>Personnel In-Charge</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="tbody-fields">
-                  {formData.basicInformation.map((info, index) => (
-                    <tr key={index}>
-                      <td>
-                        <input
-                          type="text"
-                          name="programName"
-                          value={info.programName}
-                          onChange={(e) => handleChange(e, index, 'basicInformation')}
-                          className={fieldErrors.basicInformation[index]?.programName ? 'input-error' : ''}
-                        />
-                        {fieldErrors.basicInformation[index]?.programName && (
-                          <div className="error-message">This field is required</div>
-                        )}
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          name="course"
-                          value={info.course}
-                          onChange={(e) => handleChange(e, index, 'basicInformation')}
-                          className={fieldErrors.basicInformation[index]?.course ? 'input-error' : ''}
-                        />
-                        {fieldErrors.basicInformation[index]?.course && (
-                          <div className="error-message">This field is required</div>
-                        )}
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          name="destinationAndVenue"
-                          value={info.destinationAndVenue}
-                          onChange={(e) => handleChange(e, index, 'basicInformation')}
-                          className={fieldErrors.basicInformation[index]?.destinationAndVenue ? 'input-error' : ''}
-                        />
-                        {fieldErrors.basicInformation[index]?.destinationAndVenue && (
-                          <div className="error-message">This field is required</div>
-                        )}
-                      </td>
-                      <td>
-                        <DatePicker
-                          selected={info.inclusiveDates ? new Date(info.inclusiveDates) : null}
-                          onChange={(date) => {
-                            const updatedBasicInfo = [...formData.basicInformation];
-                            updatedBasicInfo[index].inclusiveDates = date.toISOString();
-                            setFormData({
-                              ...formData,
-                              basicInformation: updatedBasicInfo
-                            });
-                          }}
-                          dateFormat="yyyy-MM-dd"
-                          minDate={new Date()}
-                          className={fieldErrors.basicInformation[index]?.inclusiveDates ? 'input-error' : ''}
-                        />
-                        {fieldErrors.basicInformation[index]?.inclusiveDates && (
-                          <div className="error-message">This field is required</div>
-                        )}
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          name="numberOfStudents"
-                          value={info.numberOfStudents}
-                          onChange={(e) => handleChange(e, index, 'basicInformation')}
-                          className={fieldErrors.basicInformation[index]?.numberOfStudents ? 'input-error' : ''}
-                        />
-                        {fieldErrors.basicInformation[index]?.numberOfStudents && (
-                          <div className="error-message">This field is required</div>
-                        )}
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          name="listOfPersonnelIncharge"
-                          value={info.listOfPersonnelIncharge}
-                          onChange={(e) => handleChange(e, index, 'basicInformation')}
-                          className={fieldErrors.basicInformation[index]?.listOfPersonnelIncharge ? 'input-error' : ''}
-                        />
-                        {fieldErrors.basicInformation[index]?.listOfPersonnelIncharge && (
-                          <div className="error-message">This field is required</div>
-                        )}
-                      </td>
-                      <td>
-                        {formData.basicInformation.length > 1 && (
-                          <button 
-                            type="button"
-                            className="remove-row-btn"
-                            onClick={() => removeBasicInfoRow(index)}
-                          >
-                            Remove
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <button
-                type="button"
-                className="add-row-btn"
-                onClick={addBasicInfoRow}
-              >
-                Add Row
-              </button>
-            </div>
-          </div>
-        );
+  case 1: // Basic Information (BEFORE)
+  return (
+    <div>
+      <h2>Basic Information</h2>
+      <div className="table-container">
+        <table className="basic-info-table">
+          <thead>
+            <tr>
+              <th>Program Name</th>
+              <th>Course</th>
+              <th>Destination & Venue</th>
+              <th>Inclusive Dates</th>
+              <th>No. of Students</th>
+              <th>Personnel In-Charge</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody className="tbody-fields">
+            {formData.basicInformation.map((info, index) => (
+              <tr key={index}>
+                <td>
+                  <input
+                    type="text"
+                    name="programName"
+                    value={info.programName}
+                    onChange={(e) => handleChange(e, index, 'basicInformation')}
+                    className={fieldErrors.basicInformation[index]?.programName ? 'input-error' : ''}
+                  />
+                  {fieldErrors.basicInformation[index]?.programName && (
+                    <div className="error-message">This field is required</div>
+                  )}
+                </td>
+                <td>
+                  <select
+                    name="course"
+                    value={info.course}
+                    onChange={(e) => handleChange(e, index, 'basicInformation')}
+                    className={fieldErrors.basicInformation[index]?.course ? 'input-error' : ''}
+                  >
+                    <option value="">Select a course</option>
+                    {COURSE_OPTIONS.map((course, i) => (
+                      <option key={i} value={course}>{course}</option>
+                    ))}
+                  </select>
+                  {fieldErrors.basicInformation[index]?.course && (
+                    <div className="error-message">This field is required</div>
+                  )}
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    name="destinationAndVenue"
+                    value={info.destinationAndVenue}
+                    onChange={(e) => handleChange(e, index, 'basicInformation')}
+                    className={fieldErrors.basicInformation[index]?.destinationAndVenue ? 'input-error' : ''}
+                  />
+                  {fieldErrors.basicInformation[index]?.destinationAndVenue && (
+                    <div className="error-message">This field is required</div>
+                  )}
+                </td>
+                <td>
+                  <DatePicker
+                    selected={info.inclusiveDates ? new Date(info.inclusiveDates) : null}
+                    onChange={(date) => {
+                      const updatedBasicInfo = [...formData.basicInformation];
+                      updatedBasicInfo[index].inclusiveDates = date.toISOString();
+                      setFormData({
+                        ...formData,
+                        basicInformation: updatedBasicInfo
+                      });
+                    }}
+                    dateFormat="yyyy-MM-dd"
+                    minDate={new Date()}
+                    className={fieldErrors.basicInformation[index]?.inclusiveDates ? 'input-error' : ''}
+                  />
+                  {fieldErrors.basicInformation[index]?.inclusiveDates && (
+                    <div className="error-message">This field is required</div>
+                  )}
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    name="numberOfStudents"
+                    value={info.numberOfStudents}
+                    onChange={(e) => handleChange(e, index, 'basicInformation')}
+                    className={fieldErrors.basicInformation[index]?.numberOfStudents ? 'input-error' : ''}
+                  />
+                  {fieldErrors.basicInformation[index]?.numberOfStudents && (
+                    <div className="error-message">This field is required</div>
+                  )}
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    name="listOfPersonnelIncharge"
+                    value={info.listOfPersonnelIncharge}
+                    onChange={(e) => handleChange(e, index, 'basicInformation')}
+                    className={fieldErrors.basicInformation[index]?.listOfPersonnelIncharge ? 'input-error' : ''}
+                  />
+                  {fieldErrors.basicInformation[index]?.listOfPersonnelIncharge && (
+                    <div className="error-message">This field is required</div>
+                  )}
+                </td>
+                <td>
+                  {formData.basicInformation.length > 1 && (
+                    <button 
+                      type="button"
+                      className="remove-row-btn"
+                      onClick={() => removeBasicInfoRow(index)}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <button
+          type="button"
+          className="add-row-btn"
+          onClick={addBasicInfoRow}
+        >
+          Add Row
+        </button>
+      </div>
+    </div>
+  );
   
       case 2: // Activities Off Campus (BEFORE)
         return (
