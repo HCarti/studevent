@@ -36,7 +36,7 @@ app.use(
   helmet.contentSecurityPolicy({
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", 'https:', "'unsafe-inline'"], 
+      scriptSrc: ["'self'", 'https:', "'unsafe-inline'"],
       styleSrc: ["'self'", 'https:', "'unsafe-inline'"],
       imgSrc: ["'self'", 'https:', 'data:'],
       connectSrc: ["'self'", 'https:'],
@@ -51,17 +51,6 @@ app.use(
 app.use(
   helmet.referrerPolicy({
     policy: 'no-referrer-when-downgrade',
-  })
-);
-
-// Permissions Policy (restrict features like camera/mic etc.)
-app.use(
-  helmet.permissionsPolicy({
-    features: {
-      geolocation: ["'none'"],
-      microphone: ["'none'"],
-      camera: ["'none'"],
-    },
   })
 );
 
