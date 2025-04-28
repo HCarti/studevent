@@ -100,7 +100,7 @@ app.use(
 
 // MongoDB connection
 mongoose
-  .connect(".....................", {
+  .connect("mongodb+srv://StudEvent:StudEvent2024@studevent.nvsci.mongodb.net/", {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
