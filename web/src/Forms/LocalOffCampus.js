@@ -50,6 +50,9 @@ const Localoffcampus = () => {
   const [shouldValidate, setShouldValidate] = useState(false);
   const [formPhase, setFormPhase] = useState('BEFORE');
   const [beforeSubmitted, setBeforeSubmitted] = useState(false);
+  const [isBeforeApproved, setIsBeforeApproved] = useState(false);
+  const [isCheckingApproval, setIsCheckingApproval] = useState(false);
+  const [approvalCheckError, setApprovalCheckError] = useState(null);
 
   // Field errors state
   const [fieldErrors, setFieldErrors] = useState({
@@ -156,24 +159,73 @@ const Localoffcampus = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
-
-      const response = await fetch('https://studevent-server.vercel.app/api/local-off-campus/check-before', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
+  
+      const response = await fetch(
+        'https://studevent-server.vercel.app/api/local-off-campus/check-before', 
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+  
       if (response.ok) {
         const data = await response.json();
         if (data.exists) {
           setBeforeSubmitted(true);
           setEventId(data.eventId);
-          setFormPhase('AFTER');
-          setCurrentStep(3); // Start at AFTER form first step
+          setIsBeforeApproved(data.status === 'approved');
+          // Don't automatically set formPhase to 'AFTER' here
         }
       }
     } catch (error) {
       console.error('Error checking for BEFORE form:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (!beforeSubmitted || isBeforeApproved) return;
+  
+    const checkApprovalStatus = async () => {
+      try {
+        setIsCheckingApproval(true);
+        const token = localStorage.getItem('token');
+        const response = await fetch(
+          `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/status`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          }
+        );
+  
+        if (response.ok) {
+          const data = await response.json();
+          if (data.status === 'approved') {
+            setIsBeforeApproved(true);
+            // Don't automatically switch to AFTER phase - let user do it via OrgSubmittedForms
+          }
+        }
+      } catch (error) {
+        console.error('Error checking approval status:', error);
+        setApprovalCheckError('Failed to check approval status');
+      } finally {
+        setIsCheckingApproval(false);
+      }
+    };
+  
+    // Initial check
+    checkApprovalStatus();
+    
+    // Set up periodic checking every 30 seconds
+    const interval = setInterval(checkApprovalStatus, 30000);
+    return () => clearInterval(interval);
+  }, [beforeSubmitted, eventId, isBeforeApproved]);
+  
+  const startAfterForm = () => {
+    if (isBeforeApproved) {
+      setFormPhase('AFTER');
+      setCurrentStep(3);
     }
   };
 
@@ -1071,63 +1123,109 @@ const Localoffcampus = () => {
             )}
             Activities Off Campus
           </li>
-
-          {/* AFTER Sections - disabled if BEFORE not submitted */}
-          <li className={`${currentStep === 3 ? 'active' : ''} ${!beforeSubmitted ? 'disabled-section' : ''}`}>
-            {beforeSubmitted && validationResults.afterActivity[0].programs && 
+  
+          {/* AFTER Sections - disabled if BEFORE not approved */}
+          <li className={`${currentStep === 3 ? 'active' : ''} ${!isBeforeApproved ? 'disabled-section' : ''}`}
+              onClick={() => isBeforeApproved && setCurrentStep(3)}>
+            {currentStep > 3 && validationResults.afterActivity[0].programs && 
              validationResults.afterActivity[0].destination && 
              validationResults.afterActivity[0].noOfStudents && 
              validationResults.afterActivity[0].noofHeiPersonnel ? (
               <FaCheck className="check-icon green" />
             ) : (
-              beforeSubmitted && <span className="error-icon">!</span>
+              currentStep > 2 && <span className="error-icon">!</span>
             )}
             After Activity Report
           </li>
           
-          <li className={`${currentStep === 4 ? 'active' : ''} ${!beforeSubmitted ? 'disabled-section' : ''}`}>
-            {beforeSubmitted && validationResults.problemsEncountered ? (
+          <li className={`${currentStep === 4 ? 'active' : ''} ${!isBeforeApproved ? 'disabled-section' : ''}`}>
+            {currentStep > 4 && validationResults.problemsEncountered ? (
               <FaCheck className="check-icon green" />
             ) : (
-              beforeSubmitted && <span className="error-icon">!</span>
+              currentStep > 3 && <span className="error-icon">!</span>
             )}
             Problems Encountered
           </li>
           
-          <li className={`${currentStep === 5 ? 'active' : ''} ${!beforeSubmitted ? 'disabled-section' : ''}`}>
-            {beforeSubmitted && validationResults.recommendation ? (
+          <li className={`${currentStep === 5 ? 'active' : ''} ${!isBeforeApproved ? 'disabled-section' : ''}`}>
+            {currentStep > 5 && validationResults.recommendation ? (
               <FaCheck className="check-icon green" />
             ) : (
-              beforeSubmitted && <span className="error-icon">!</span>
+              currentStep > 4 && <span className="error-icon">!</span>
             )}
             Recommendations
           </li>
         </ul>
+  
+        {/* Approval Status Indicator */}
+        {beforeSubmitted && (
+          <div className="approval-status">
+            {isCheckingApproval ? (
+              <div className="loading-approval">Checking approval status...</div>
+            ) : isBeforeApproved ? (
+              <div className="approved-status">
+                <FaCheck className="check-icon green" />
+                <span>BEFORE Form Approved</span>
+              </div>
+            ) : (
+              <div className="pending-approval">
+                <span className="pending-icon">!</span>
+                <span>Pending Approval</span>
+              </div>
+            )}
+            {approvalCheckError && (
+              <div className="approval-error">{approvalCheckError}</div>
+            )}
+          </div>
+        )}
       </div>
       
       <div className="inner-forms-4">
         <h1>{formPhase === 'BEFORE' ? 'Local Off-Campus Proposal' : 'After Activity Report'}</h1>
+        
+        {/* AFTER Form Activation Prompt */}
+        {!formSent && beforeSubmitted && isBeforeApproved && formPhase === 'BEFORE' && (
+          <div className="after-form-prompt">
+            <h2>Your BEFORE form has been approved!</h2>
+            <p>You can now submit the AFTER activity report to complete your application.</p>
+            <button 
+              onClick={startAfterForm}
+              className="start-after-form-btn"
+            >
+              Start AFTER Report
+            </button>
+          </div>
+        )}
+        
         {renderStepContent()}
         
         <div className="form-navigation">
-          {currentStep > 0 && (
-            <button onClick={handleBack}>Back</button>
-          )}
-          
-          {formPhase === 'BEFORE' && currentStep < 2 && (
-            <button onClick={handleNext}>Next</button>
-          )}
-          
-          {formPhase === 'BEFORE' && currentStep === 2 && (
-            <button onClick={handleSubmitBefore}>Submit BEFORE Form</button>
-          )}
-          
-          {formPhase === 'AFTER' && currentStep < 5 && (
-            <button onClick={handleNext}>Next</button>
-          )}
-          
-          {formPhase === 'AFTER' && currentStep === 5 && (
-            <button onClick={handleSubmitAfter}>Submit AFTER Report</button>
+          {formPhase === 'BEFORE' ? (
+            <>
+              {currentStep > 0 && (
+                <button onClick={handleBack}>Back</button>
+              )}
+              {currentStep < 2 && (
+                <button onClick={handleNext}>Next</button>
+              )}
+              {currentStep === 2 && (
+                <button onClick={handleSubmitBefore}>
+                  {beforeSubmitted ? 'Update BEFORE Form' : 'Submit BEFORE Form'}
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              {currentStep > 3 && (
+                <button onClick={handleBack}>Back</button>
+              )}
+              {currentStep < 5 && (
+                <button onClick={handleNext}>Next</button>
+              )}
+              {currentStep === 5 && (
+                <button onClick={handleSubmitAfter}>Submit AFTER Report</button>
+              )}
+            </>
           )}
         </div>
       </div>
