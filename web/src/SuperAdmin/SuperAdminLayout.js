@@ -1,16 +1,15 @@
-// SuperAdminLayout.js
-// SuperAdminLayout.js
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
-
+import './SuperAdminLayout.css';
 
 const SuperAdminLayout = () => {
-
   return (
-    <div className="superadmin-layout">
-      <Sidebar />
-      <div className="superadmin-content">
-        <Outlet /> {/* This will render the matched child route */}
+    <div className="admin-dashboard-container">
+      <div className="sidebar-content-wrapper">
+        <Sidebar />
+        <main className="dashboard-main-content">
+          <Outlet />
+        </main>
       </div>
     </div>
   );

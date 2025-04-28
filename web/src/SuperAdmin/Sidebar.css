@@ -2,100 +2,86 @@
 .sidebar {
   display: flex;
   flex-direction: column;
-  width: 15%; /* Set the desired width */
-  height: 100vh;
-  padding: 20px 10px;
-  background-color: #f5f5f5;
+  width: 60px;
+  height: calc(100vh - 60px); /* Subtract navbar height */
+  padding: 20px 0;
+  background-color: #2c3e50;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-  justify-content: flex-start;
-  transition: width 0.3s ease, padding 0.3s ease; /* Maintain transition for width and padding */
+  position: fixed;
+  left: 0;
+  top: 60px; /* Position below navbar */
+  z-index: 900; /* Below navbar but above content */
+  transition: all 0.3s ease;
+  overflow-x: hidden;
 }
 
-/* Expanded state styling */
+/* Expanded state */
 .sidebar.expanded {
-  width: 200px; /* Width when expanded */
-  padding: 20px; /* Full padding */
+  width: 200px;
+  padding: 20px;
 }
 
-/* Collapsed state styling */
-.sidebar.collapsed {
-  width: 60px; /* Width when collapsed */
-  padding: 10px 0; /* Reduced padding */
-  opacity: 0.9; /* Slight opacity change for effect */
-}
-
-/* Sidebar item styling */
+/* Sidebar items */
 .sidebar-item {
   display: flex;
   align-items: center;
-  padding: 15px 10px;
-  margin-bottom: 15px;
-  margin-left: 4px;
+  padding: 12px 15px;
+  margin: 5px 0;
   cursor: pointer;
-  border-radius: 8px;
-  transition: background-color 0.3s, box-shadow 0.3s, transform 0.3s;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  color: white;
 }
 
-/* Hover effect on sidebar item */
 .sidebar-item:hover {
-  background-color: #1a3ab5;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transform: translateX(5px); /* Sliding effect */
+  background-color: #34495e;
 }
 
-/* Sidebar item active state */
-.sidebar-item:active {
-  background-color: #005bb5;
-  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+/* Active state for current route */
+.sidebar-item.active {
+  background-color: #1a3ab5;
+  font-weight: bold;
 }
 
 /* Icon styling */
 .sidebar-icon {
-  font-size: 30px;
-  color: #1a3ab5;
-  margin-right: 10px;
-  transition: color 0.3s, transform 0.3s;
-
+  font-size: 1.25rem;
+  color: #ecf0f1;
+  margin-right: 15px;
+  min-width: 24px;
+  display: flex;
+  justify-content: center;
 }
 
 /* Text styling */
 .sidebar-text {
-  font-size: 16px;
+  font-size: 0.95rem;
   font-weight: 500;
-  color: #333;
-  opacity: 1;
-  transition: opacity 0.3s ease, transform 0.3s ease; /* Smooth transition */
+  transition: all 0.3s ease;
 }
 
-/* Hide text when collapsed */
 .sidebar-text.hidden {
-  opacity: 0; /* Fade out text */
-  transform: translateX(10px); /* Slide out */
+  display: none;
 }
 
-/* Animation on hover - reveal text */
-.sidebar-item:hover .sidebar-text {
-  color: #fff;
+/* Visual connection between sidebar and content */
+.sidebar::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 2px;
+  background: linear-gradient(to bottom, #1a3ab5, #2c3e50);
 }
 
-/* Icon color changes on hover */
-.sidebar-item:hover .sidebar-icon {
-  color: #fff;
-}
-
-/* Keyframe animations */
+/* Animation */
 @keyframes fadeInUp {
-  0% {
-      opacity: 0;
-      transform: translateY(20px);
-  }
-  100% {
-      opacity: 1;
-      transform: translateY(0);
-  }
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
-/* Apply animation to sidebar items on load */
 .sidebar-item {
-  animation: fadeInUp 0.5s ease both;
+  animation: fadeInUp 0.3s ease both;
+  animation-delay: calc(var(--index) * 0.1s);
 }

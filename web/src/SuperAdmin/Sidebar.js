@@ -1,40 +1,42 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import './Sidebar.css';
 import { FaUser, FaUserPlus, FaUsers } from "react-icons/fa";
 import { GrDocumentUser } from "react-icons/gr";
 import { MdDashboard } from "react-icons/md";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const Sidebar = () => {
   const navigate = useNavigate();
-  const sidebarRef = useRef(null);
+  const location = useLocation();
   const [isHovered, setIsHovered] = useState(false);
 
   const menuItems = [
-    { name: 'Dashboard', icon: <MdDashboard />, onClick: () => navigate('/superadmin/controlpanel') },
-    { name: 'Admin', icon: <FaUser />, onClick: () => navigate('/superadmin/admintab') },
-    { name: 'Authorities', icon: <GrDocumentUser />, onClick: () => navigate('/superadmin/authorities') },
-    { name: 'Users', icon: <FaUsers />, onClick: () => navigate('/superadmin/adminuser') },
-    { name: 'Add User', icon: <FaUserPlus />, onClick: () => navigate('/superadmin/adduser') }
+    { name: 'Dashboard', icon: <MdDashboard />, path: '/superadmin/controlpanel' },
+    { name: 'Admin', icon: <FaUser />, path: '/superadmin/admintab' },
+    { name: 'Authorities', icon: <GrDocumentUser />, path: '/superadmin/authorities' },
+    { name: 'Users', icon: <FaUsers />, path: '/superadmin/adminuser' },
+    { name: 'Add User', icon: <FaUserPlus />, path: '/superadmin/adduser' }
   ];
 
   return (
     <div 
-      className={`sidebar ${isHovered ? 'expanded' : 'collapsed'}`} 
-      ref={sidebarRef}
+      className={`sidebar ${isHovered ? 'expanded' : 'collapsed'}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {menuItems.map((item, index) => (
         <div 
-          key={index} 
-          className="sidebar-item" 
-          onClick={item.onClick}
+          key={index}
+          className={`sidebar-item ${location.pathname === item.path ? 'active' : ''}`}
+          onClick={() => navigate(item.path)}
+          style={{ '--index': index }}
           aria-label={item.name}
           title={item.name}
         >
           <div className="sidebar-icon">{item.icon}</div>
-          <span className={`sidebar-text ${isHovered ? '' : 'hidden'}`}>{item.name}</span>
+          <span className={`sidebar-text ${isHovered ? '' : 'hidden'}`}>
+            {item.name}
+          </span>
         </div>
       ))}
     </div>

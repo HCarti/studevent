@@ -3,6 +3,7 @@ const User = require("../models/User"); // Import User model
 const Form = require("../models/Form"); // Import User model
 const mongoose = require('mongoose');
 const notificationController = require('./notificationController');
+const LocalOffCampus = require('../models/LocalOffCampus');
 
 
 // HELPER
@@ -248,12 +249,24 @@ const updateTrackerStep = async (req, res) => {
       return res.status(404).json({ message: "Tracker not found" });
     }
 
-    const Form = mongoose.model('Form');
-    const form = await Form.findById(tracker.formId)
-      .populate('studentOrganization', 'email organizationName');
-    if (!form) {
-      return res.status(404).json({ message: "Form not found" });
-    }
+    let form;
+      try {
+        // First try the LocalOffCampus collection
+        form = await LocalOffCampus.findById(tracker.formId);
+        if (!form) {
+          // If not found, try the regular Form collection
+          const Form = mongoose.model('Form');
+          form = await Form.findById(tracker.formId)
+            .populate('studentOrganization', 'email organizationName');
+        }
+      } catch (error) {
+        console.error("Error finding form:", error);
+        return res.status(404).json({ message: "Form not found" });
+      }
+
+      if (!form) {
+        return res.status(404).json({ message: "Form not found" });
+      }
 
     // Find the step
     const step = tracker.steps.find(step => step._id.toString() === stepId);
@@ -320,24 +333,39 @@ const updateTrackerStep = async (req, res) => {
     // Save the updated tracker
     await tracker.save();
 
-    // Update form status
+      // Update form status
     const isDeclined = tracker.steps.some(step => step.status === 'declined');
     const isApproved = tracker.steps.every(step => step.status === 'approved');
-    form.finalStatus = isDeclined ? 'declined' : isApproved ? 'approved' : 'pending';
+
+    // Check if the form is a LocalOffCampus form by checking for formPhase
+    if (form.formPhase) {
+      // Local Off-Campus form - update both status fields
+      form.finalStatus = isDeclined ? 'declined' : isApproved ? 'approved' : 'pending';
+      form.status = isDeclined ? 'rejected' : isApproved ? 'approved' : 'submitted';
+    } else {
+      // Regular Form - update just finalStatus
+      form.finalStatus = isDeclined ? 'declined' : isApproved ? 'approved' : 'pending';
+    }
+
     await form.save();
 
     // Enhanced notification handling
-    const formName = form.formType === 'Activity' 
-  ? form.eventTitle || `Activity Form ${form._id}`
-  : form.projectTitle || `Project Form ${form._id}`;
-  
-    const currentStepName = step.stepName;
+    // Enhanced notification handling
+const formName = form.formType === 'Activity' 
+? form.eventTitle || `Activity Form ${form._id}`
+: form.formType === 'Project' 
+  ? form.projectTitle || `Project Form ${form._id}`
+  : form.formType === 'LocalOffCampus' 
+    ? `Local Off-Campus ${form.formPhase} Form ${form._id}`
+    : `Form ${form._id}`;
+
+const currentStepName = step.stepName;
 
     const getOrganizationContact = () => {
       if (form.studentOrganization) {
         return {
           email: form.studentOrganization.email || 
-                `${form.studentOrganization.organizationName.toLowerCase().replace(/\s+/g, '')}@nu-mos.edu.sh`,
+                `${form.studentOrganization.organizationName.toLowerCase().replace(/\s+/g, '')}@nu-moa.edu.ph`,
           name: form.studentOrganization.organizationName
         };
       }

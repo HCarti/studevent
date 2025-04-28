@@ -131,27 +131,24 @@ const App = () => {
           <Route path="/formss" element={<FormsandSig />} />
 
 
-        {/* SuperAdmin Routes */}
-        // App.js
-        <Route path="/superadmin" element={
-          <ProtectedRoute allowedRoles={['SuperAdmin']}>
-            <SuperAdminHome />
-          </ProtectedRoute>
-        } />
+{/* SuperAdmin Routes */}
+<Route path="/superadmin" element={
+  <ProtectedRoute allowedRoles={['SuperAdmin']}>
+    <SuperAdminHome /> {/* Standalone home without layout */}
+  </ProtectedRoute>
+} />
 
-        <Route path="/superadmin/*" element={
-          <ProtectedRoute allowedRoles={['SuperAdmin']}>
-            <SuperAdminLayout> {/* This wraps all child routes */}
-              <Routes>
-                <Route path="controlpanel" element={<AdminControlPanel />} />
-                <Route path="authorities" element={<SuperAdminAuthorities />} />
-                <Route path="adminuser" element={<SuperAdminUsers />} />
-                <Route path="adduser" element={<SuperAdminAddUser />} />
-                <Route path="admintab" element={<AdminTab />} />
-              </Routes>
-            </SuperAdminLayout>
-          </ProtectedRoute>
-        } />
+<Route path="/superadmin" element={
+  <ProtectedRoute allowedRoles={['SuperAdmin']}>
+    <SuperAdminLayoutWrapper /> {/* Layout wrapper for sidebar routes */}
+  </ProtectedRoute>
+}>
+  <Route path="controlpanel" element={<AdminControlPanel />} />
+  <Route path="authorities" element={<SuperAdminAuthorities />} />
+  <Route path="adminuser" element={<SuperAdminUsers />} />
+  <Route path="adduser" element={<SuperAdminAddUser />} />
+  <Route path="admintab" element={<AdminTab />} />
+</Route>
 
           {/* Admin Routes */}
           <Route path="/admin" element={
