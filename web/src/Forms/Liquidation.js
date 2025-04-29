@@ -183,7 +183,7 @@ const Liquidation = () => {
                   <p className="file-name">{fileName}</p>
                   <p className="file-size">{fileBlob && (fileBlob.size / 1024).toFixed(2)} KB</p>
                 </div>
-                <button 
+                {/* <button 
                   className="change-file-btn"
                   onClick={() => {
                     setFileName('');
@@ -192,7 +192,7 @@ const Liquidation = () => {
                   }}
                 >
                   Change File
-                </button>
+                </button> */}
               </div>
             ) : (
               <>

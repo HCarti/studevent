@@ -250,12 +250,12 @@ const BudgetForm = () => {
               id={`unit-${index}`}
               value={row.unit}
               onChange={(e) => handleRowChange(index, 'unit', e.target.value)}
-              placeholder="Unit"
+              placeholder="Item"
               className={rowErrors.unit ? 'error' : ''}
             />
             {rowErrors.unit && (
               <ErrorMessage 
-                message="Unit is required" 
+                message="Item is required" 
                 targetId={`unit-${index}`}
               />
             )}
@@ -486,7 +486,7 @@ const BudgetForm = () => {
       <div className="budget-items">
         <div className="budget-header">
           <span>Quantity</span>
-          <span className="others">Unit</span>
+          <span className="others">Item</span>
           <span className="others">Description</span>
           <span className="others2">Unit Cost</span>
           <span className="others2">Total</span>

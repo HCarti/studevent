@@ -336,7 +336,7 @@
       <View style={styles.signatureColumn}>
         <Text style={styles.signatureLabel}>{title}</Text>
         
-        <Text style={styles.signatureName}>{name || 'Not specified'}</Text>
+        {/* <Text style={styles.signatureName}>{name || 'Not specified'}</Text> */}
         
         {signature ? (
           <Image 
@@ -717,7 +717,7 @@ console.log("Received presidentSignature:", presidentSignature);
                     <View style={styles.signatureValue}></View>
                   )}
                   <Text style={styles.signatureName}>
-                    {signatures.adviser.name || "ADVISER NAME"}
+                    {/* {signatures.adviser.name || "ADVISER NAME"} */}
                   </Text>
                   <Text style={styles.dateText}>
                     Date: {signatures.adviser.date ? formatDate(signatures.adviser.date) : "___________________"}
@@ -749,7 +749,7 @@ console.log("Received presidentSignature:", presidentSignature);
             <View style={styles.borderedSignatureColumn}>
               <SignatureField 
                 title="a. Dean"
-                name={signatures.dean?.name || "DEAN NAME"}
+                // name={signatures.dean?.name || "DEAN NAME"}
                 signature={signatures.dean?.signature}
                 date={signatures.dean?.date}
                 status={signatures.dean?.status}
@@ -759,7 +759,7 @@ console.log("Received presidentSignature:", presidentSignature);
             <View style={styles.borderedSignatureColumn}>
               <SignatureField 
                 title="b. Admin"
-                name={signatures.admin?.name || "ADMIN NAME"}
+                // name={signatures.admin?.name || "ADMIN NAME"}
                 signature={signatures.admin?.signature}
                 date={signatures.admin?.date}
                 status={signatures.admin?.status}
@@ -772,7 +772,7 @@ console.log("Received presidentSignature:", presidentSignature);
             <View style={styles.borderedSignatureColumn}>
               <SignatureField 
                 title="c. Academic Services"
-                name={signatures.academicservices?.name || "ACADEMIC SERVICE NAME"}
+                // name={signatures.academicservices?.name || "ACADEMIC SERVICE NAME"}
                 signature={signatures.academicservices?.signature}
                 date={signatures.academicservices?.date}
                 status={signatures.academicservices?.status}
@@ -782,7 +782,7 @@ console.log("Received presidentSignature:", presidentSignature);
             <View style={styles.borderedSignatureColumn}>
               <SignatureField 
                 title="d. Academic Director"
-                name={signatures.academicdirector?.name || "ACADEMIC DIRECTOR NAME"}
+                // name={signatures.academicdirector?.name || "ACADEMIC DIRECTOR NAME"}
                 signature={signatures.academicdirector?.signature}
                 date={signatures.academicdirector?.date}
                 status={signatures.academicdirector?.status}
@@ -794,7 +794,7 @@ console.log("Received presidentSignature:", presidentSignature);
           <View style={[styles.borderedSignatureColumn, { width: '100%' }]}>
             <SignatureField 
               title="e. Executive Director"
-              name={signatures.executivedirector?.name || "EXECUTIVE DIRECTOR NAME"}
+              // name={signatures.executivedirector?.name || "EXECUTIVE DIRECTOR NAME"}
               signature={signatures.executivedirector?.signature}
               date={signatures.executivedirector?.date}
               status={signatures.executivedirector?.status}

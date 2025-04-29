@@ -134,12 +134,12 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.7);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(3px);
   }
   
   /* Edit Form Styles */
@@ -222,6 +222,16 @@
   .cancel-btn:hover {
     background-color: #7f8c8d;
   }
+
+  .error-message {
+    color: #e74c3c;
+    font-weight: 500;
+    margin: 10px 0;
+    padding: 8px;
+    background-color: #fde8e8;
+    border-radius: 4px;
+    text-align: center;
+  }
   
   /* Delete Confirmation Modal */
   .modal-overlay-superadmin {
@@ -301,6 +311,13 @@
   .cancel-delete-btn:hover {
     background-color: #7f8c8d !important;
   }
+
+  .edit-form-container,
+.delete-confirmation-modal {
+  position: relative;
+  z-index: 1001;
+}
+
   
   /* Responsive Adjustments */
   @media (max-width: 768px) {

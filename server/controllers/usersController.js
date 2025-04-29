@@ -283,6 +283,51 @@ const getAcademicOrganizations = async (req, res) => {
   }
 };
 
+// Add this to usersController.js
+const updateOrganization = async (req, res) => {
+  const { id } = req.params;
+  const { email, organizationType, status } = req.body;
+
+  try {
+    // Validate input
+    if (!email || !status) {
+      return res.status(400).json({ message: 'Email and status are required' });
+    }
+
+    // Find the organization
+    const organization = await User.findOne({ 
+      _id: id,
+      role: 'Organization'
+    });
+
+    if (!organization) {
+      return res.status(404).json({ message: 'Organization not found' });
+    }
+
+    // Update the organization
+    organization.email = email;
+    if (organizationType) organization.organizationType = organizationType;
+    organization.status = status;
+
+    await organization.save();
+
+    res.status(200).json({
+      message: 'Organization updated successfully',
+      organization: {
+        _id: organization._id,
+        email: organization.email,
+        organizationType: organization.organizationType,
+        organizationName: organization.organizationName,
+        status: organization.status,
+        logo: organization.logo
+      }
+    });
+  } catch (error) {
+    console.error('Error updating organization:', error);
+    res.status(500).json({ message: 'Error updating organization' });
+  }
+};
+
 module.exports = { 
   getUserById, 
   updateUser, 
@@ -291,5 +336,6 @@ module.exports = {
   login, 
   getCurrentUser, 
   getOrganizations,
-  getAcademicOrganizations
+  getAcademicOrganizations,
+  updateOrganization
 };

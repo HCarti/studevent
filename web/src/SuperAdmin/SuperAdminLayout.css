@@ -24,7 +24,6 @@
   justify-content: center;
   margin: 0 auto;
   border-radius: 8px;
-  padding: 2rem;
   min-height: calc(50vh - 80px); /* Adjust based on your header/footer */
 }
 /* Table styling for organizations */

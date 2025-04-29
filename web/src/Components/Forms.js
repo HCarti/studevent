@@ -55,16 +55,16 @@ const Forms = ({ role }) => {
       path: '/activity',
     },
     {
-      name: 'Liquidation Form',
-      description: 'After Event Form.',
-      icon: <FaMoneyBillWave />,
-      path: '/liquidation',
-    },
-    {
       name: 'Local Off-Campus Form',
       description: 'For events outside the campus.',
       icon: <FaMapMarkedAlt />,
       path: '/localoffcampus',
+    },
+    {
+      name: 'Liquidation Form',
+      description: 'After Event Form.',
+      icon: <FaMoneyBillWave />,
+      path: '/liquidation',
     },
   ];
 

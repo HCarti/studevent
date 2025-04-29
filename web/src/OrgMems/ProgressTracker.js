@@ -54,37 +54,37 @@ const ProgressTracker = () => {
         
         return {
           adviser: {
-            name: signatures.adviser?.name || "ADVISER NAME",
+            // name: signatures.adviser?.name || "ADVISER NAME",
             signature: signatures.adviser?.signature?.url || signatures.adviser?.signature,
             date: signatures.adviser?.date,
             status: signatures.adviser?.status
           },
           dean: {
-            name: signatures.dean?.name || "DEAN NAME",
+            // name: signatures.dean?.name || "DEAN NAME",
             signature: signatures.dean?.signature?.url || signatures.dean?.signature,
             date: signatures.dean?.date,
             status: signatures.dean?.status
           },
           admin: {
-            name: signatures.admin?.name || "ADMIN NAME",
+            // name: signatures.admin?.name || "ADMIN NAME",
             signature: signatures.admin?.signature?.url || signatures.admin?.signature,
             date: signatures.admin?.date,
             status: signatures.admin?.status
           },
           academicdirector: {
-            name: signatures.academicdirector?.name || "ACADEMIC DIRECTOR NAME",
+            // name: signatures.academicdirector?.name || "ACADEMIC DIRECTOR NAME",
             signature: signatures.academicdirector?.signature?.url || signatures.academicdirector?.signature,
             date: signatures.academicdirector?.date,
             status: signatures.academicdirector?.status
           },
           academicservices: {
-            name: signatures.academicservices?.name || "ACADEMIC SERVICES NAME",
+            // name: signatures.academicservices?.name || "ACADEMIC SERVICES NAME",
             signature: signatures.academicservices?.signature?.url || signatures.academicservices?.signature,
             date: signatures.academicservices?.date,
             status: signatures.academicservices?.status
           },
           executivedirector: {
-            name: signatures.executivedirector?.name || "EXECUTIVE DIRECTOR NAME",
+            // name: signatures.executivedirector?.name || "EXECUTIVE DIRECTOR NAME",
             signature: signatures.executivedirector?.signature?.url || signatures.executivedirector?.signature,
             date: signatures.executivedirector?.date,
             status: signatures.executivedirector?.status
@@ -112,7 +112,7 @@ const ProgressTracker = () => {
       
         try {
           return {
-            nameOfRso: rawBudget.nameOfRso || rawBudget.nameOfiso || 'N/A', // Note: Fixing nameOfiso typo
+            nameOfRso: rawBudget.nameOfRso || rawBudget.nameOfiso || 'N/A',
             eventTitle: rawBudget.eventTitle || 'N/A',
             grandTotal: rawBudget.grandTotal || 0,
             createdAt: rawBudget.createdAt || new Date().toISOString(),
@@ -238,14 +238,14 @@ const ProgressTracker = () => {
           setReviewSignatures(sanitizeSignatures(signaturesData));
           setTrackerData(trackerData);
           setCurrentStep(String(trackerData.currentStep));
-          setBudgetData(budgetData); // This will be null if no valid budget
+          setBudgetData(budgetData);
       
           // Final debug log
           console.log("All data loaded successfully:", {
             formData: sanitizeFormData(formData),
             signatures: sanitizeSignatures(signaturesData),
             trackerData,
-            budgetData // Using local variable for accurate logging
+            budgetData
           });
       
           setAllDataLoaded(true);
@@ -360,7 +360,7 @@ const ProgressTracker = () => {
                 getPdfComponent(formDetails?.formType),
                 { 
                   formData: sanitizeFormData(formDetails),
-                  budgetData: budgetData, // Already transformed
+                  budgetData: budgetData,
                   signatures: reviewSignatures
                 }
               )}
@@ -483,9 +483,26 @@ const ProgressTracker = () => {
                                     <SafePDFDownload />
                                 </div>
                             )}
-                            <Button variant="contained" onClick={() => navigate(`/formdetails/${formId}`, { state: { form } })}>
-                                VIEW FORMS
-                            </Button>
+                            <PDFDownloadLink
+                                document={React.createElement(
+                                    getPdfComponent(formDetails?.formType),
+                                    { 
+                                        formData: sanitizeFormData(formDetails),
+                                        budgetData: budgetData,
+                                        signatures: reviewSignatures
+                                    }
+                                )}
+                                fileName={getPdfFileName(formDetails?.formType, formDetails)}
+                            >
+                                {({ loading }) => (
+                                    <Button 
+                                        variant="contained" 
+                                        disabled={loading}
+                                    >
+                                        {loading ? 'Preparing PDF...' : 'VIEW FORMS'}
+                                    </Button>
+                                )}
+                            </PDFDownloadLink>
                             {(trackerData.currentAuthority === user?.faculty || trackerData.currentAuthority === user?.role) && (
                                 <Button variant="contained" onClick={() => setIsEditing(true)}>
                                     EDIT TRACKER

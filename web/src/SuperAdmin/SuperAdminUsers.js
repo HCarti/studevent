@@ -9,6 +9,7 @@ const SuperAdminUsers = () => {
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+  const [deleteError, setDeleteError] = useState(null);
 
   useEffect(() => {
     const fetchOrganizations = async () => {
@@ -36,6 +37,7 @@ const SuperAdminUsers = () => {
   const handleDeleteClick = (userId) => {
     setUserToDelete(userId);
     setShowDeleteModal(true);
+    setDeleteError(null);
   };
 
   const confirmDelete = async () => {
@@ -51,14 +53,17 @@ const SuperAdminUsers = () => {
       );
       setOrganizations(organizations.filter((user) => user._id !== userToDelete));
       setShowDeleteModal(false);
+      setUserToDelete(null);
     } catch (error) {
       console.error("Error deleting user:", error);
+      setDeleteError("Failed to delete user. Please try again.");
     }
   };
 
   const cancelDelete = () => {
     setShowDeleteModal(false);
     setUserToDelete(null);
+    setDeleteError(null);
   };
 
   const handleEditClick = (organization) => {
@@ -83,7 +88,7 @@ const SuperAdminUsers = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        `https://studevent-server.vercel.app/api/users/${editingOrg}`,
+        `https://studevent-server.vercel.app/api/users/organizations/${editingOrg}`,
         editFormData,
         {
           headers: {
@@ -220,28 +225,33 @@ const SuperAdminUsers = () => {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-  <div className="modal-overlay-superadmin">
-    <div className="delete-confirmation-modal">
-      <h3>Confirm Deletion</h3>
-      <p>Are you sure you want to delete this organization permanently?</p>
-      <p className="warning-text">This action cannot be undone.</p>
-      <div className="modal-actions">
-        <button 
-          className="confirm-delete-btn"
-          onClick={confirmDelete}
-        >
-          Delete
-        </button>
-        <button 
-          className="cancel-delete-btn"
-          onClick={cancelDelete}
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+        <div className="modal-overlay">
+          <div className="delete-confirmation-modal">
+            <h3>Confirm Deletion</h3>
+            <p>Are you sure you want to delete this organization permanently?</p>
+            <p className="warning-text">This action cannot be undone.</p>
+            
+            {deleteError && (
+              <p className="error-message">{deleteError}</p>
+            )}
+            
+            <div className="modal-actions">
+              <button 
+                className="confirm-delete-btn"
+                onClick={confirmDelete}
+              >
+                Delete
+              </button>
+              <button 
+                className="cancel-delete-btn"
+                onClick={cancelDelete}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
