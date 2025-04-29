@@ -348,3 +348,123 @@ exports.getLocalOffCampusForms = async (req, res) => {
     });
   }
 };
+
+// Add this to localOffController
+exports.checkBeforeFormApproval = async (req, res) => {
+  try {
+    const beforeForm = await LocalOffCampus.findOne({
+      submittedBy: req.user._id,
+      formPhase: "BEFORE",
+      finalStatus: "approved"
+    }).select('_id status hasAfterReport');
+
+    res.status(200).json({
+      approved: !!beforeForm,
+      hasAfterReport: beforeForm?.hasAfterReport || false,
+      eventId: beforeForm?._id
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.updateToAfterPhase = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { formId } = req.params;
+    const { afterActivity, problemsEncountered, recommendation } = req.body;
+
+    // Validate input
+    if (!afterActivity || !problemsEncountered || !recommendation) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ error: "All AFTER phase fields are required" });
+    }
+
+    // Find and validate the BEFORE form
+    const beforeForm = await LocalOffCampus.findOne({
+      _id: formId,
+      formPhase: 'BEFORE',
+      status: 'approved'
+    }).session(session);
+
+    if (!beforeForm) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ error: "Approved BEFORE form not found" });
+    }
+
+    // Update to AFTER phase
+    const updatedForm = await LocalOffCampus.findByIdAndUpdate(
+      formId,
+      {
+        formPhase: 'AFTER',
+        afterActivity,
+        problemsEncountered,
+        recommendation,
+        status: 'submitted',
+        phaseCompleted: false,
+        $set: {
+          'reviewStages.$[].status': 'pending'
+        }
+      },
+      { new: true, session }
+    );
+
+    // Update tracker
+    const requiredReviewers = getRequiredReviewers('AFTER');
+    await EventTracker.findOneAndUpdate(
+      { formId },
+      {
+        formPhase: 'AFTER',
+        steps: requiredReviewers.map(reviewer => ({
+          stepName: reviewer.stepName,
+          reviewerRole: reviewer.reviewerRole,
+          status: 'pending',
+          remarks: '',
+          timestamp: null
+        })),
+        currentStep: 0
+      },
+      { session }
+    );
+
+    // Send notifications
+    const academicServicesUsers = await User.find({ 
+      role: "Academic Services" 
+    }).session(session);
+
+    await Notification.insertMany(
+      academicServicesUsers.map(user => ({
+        userId: user._id,
+        message: `Local Off-Campus AFTER form submitted by ${req.user.name}`,
+        read: false,
+        timestamp: new Date(),
+        type: "review-request",
+        link: `/review/local-off-campus/${formId}`
+      })),
+      { session }
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(200).json({
+      success: true,
+      message: "Successfully updated to AFTER phase",
+      form: updatedForm
+    });
+
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error("Error updating to AFTER phase:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error updating form phase",
+      error: error.message
+    });
+  }
+};

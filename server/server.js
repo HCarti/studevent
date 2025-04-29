@@ -31,29 +31,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
-    origin: allowedOrigins, // Already defined in your code
-    credentials: true,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true, // Allow cookies if needed
     allowedHeaders: ['Authorization', 'Content-Type'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    // Optional: Set CORS headers explicitly
-    exposedHeaders: ['Content-Security-Policy', 'Strict-Transport-Security']
   })
 );
-
-// Add this right after app.use(cors(...));
-app.use((req, res, next) => {
-  // 🔒 Security Headers
-  res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'none'; object-src 'none'");
-  res.setHeader("X-Frame-Options", "SAMEORIGIN");
-  res.setHeader("X-Content-Type-Options", "nosniff");
-  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-  res.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=(), payment=()");
-  res.setHeader("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
-  
-  // 🛡️ Hide server info (replace/remove 'Vercel' in raw headers)
-  res.removeHeader("X-Powered-By"); // Express default
-  next();
-});
 
 // MongoDB connection
 mongoose

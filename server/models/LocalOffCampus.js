@@ -187,6 +187,20 @@ const localOffCampusSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
+    // Add these fields to localOffCampusSchema:
+hasAfterReport: {
+    type: Boolean,
+    default: false
+  },
+  phaseCompleted: {
+    type: Boolean,
+    default: false
+  },
+  trackerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'EventTracker'
+  },
+  
     status: {
         type: String,
         enum: ['draft', 'submitted', 'approved', 'rejected'],

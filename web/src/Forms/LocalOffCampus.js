@@ -3,6 +3,7 @@ import './LocalOff.css';
 import { FaCheck } from 'react-icons/fa';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const Localoffcampus = () => {
   const [formData, setFormData] = useState({
@@ -46,6 +47,9 @@ const Localoffcampus = () => {
   const [formSent, setFormSent] = useState(false);
   const [eventId, setEventId] = useState(null);
   const [notificationVisible, setNotificationVisible] = useState(false);
+  const [isEditingAfter, setIsEditingAfter] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
   const [validationTrigger, setValidationTrigger] = useState(0);
   const [shouldValidate, setShouldValidate] = useState(false);
   const [formPhase, setFormPhase] = useState('BEFORE');
@@ -523,6 +527,33 @@ const Localoffcampus = () => {
     }));
   };
 
+  useEffect(() => {
+    const userData = JSON.parse(localStorage.getItem('user'));
+    if (userData) setUser(userData);
+
+    // Check if coming from OrgSubmittedForms to edit AFTER phase
+    if (location.state?.editAfterForm) {
+      const { formData } = location.state;
+      setEventId(formData._id);
+      setIsBeforeApproved(true);
+      setFormPhase('AFTER');
+      setIsEditingAfter(true);
+      setCurrentStep(3);
+      
+      // Set existing AFTER data if available
+      if (formData.afterActivity) {
+        setFormData(prev => ({
+          ...prev,
+          afterActivity: formData.afterActivity,
+          problemsEncountered: formData.problemsEncountered || '',
+          recommendation: formData.recommendation || ''
+        }));
+      }
+    } else {
+      checkForSubmittedBeforeForm();
+    }
+  }, [location.state]);
+
   // Submit BEFORE form
   const handleSubmitBefore = async () => {
     const isValid = validateSection(2); // Validate Activities Off Campus
@@ -584,87 +615,43 @@ const Localoffcampus = () => {
   
   // Submit AFTER form
   const handleSubmitAfter = async () => {
-    const isValid = validateSection(5); // Validate Recommendations
+    const isValid = validateSection(5);
     
     if (isValid) {
       try {
         const token = localStorage.getItem('token');
-        if (!token) {
-          alert('Authentication token not found. Please log in again.');
-          return;
-        }
-  
-        const userData = JSON.parse(localStorage.getItem('user'));
-    
-        const response = await fetch('https://studevent-server.vercel.app/api/local-off-campus/after', {
-          method: 'POST',
+        const endpoint = isEditingAfter 
+          ? `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/update-after`
+          : `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/update-to-after`;
+
+        const response = await fetch(endpoint, {
+          method: isEditingAfter ? 'PUT' : 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify({
-            ...formData,
-            formPhase: 'AFTER',
-            eventId: eventId,
-            submittedBy: userData?._id
+            afterActivity: formData.afterActivity,
+            problemsEncountered: formData.problemsEncountered,
+            recommendation: formData.recommendation
           }),
         });
-  
+
         if (!response.ok) {
           const errorData = await response.json();
-          alert(`Error: ${errorData.error || 'Submission failed'}`);
-          return;
+          throw new Error(errorData.error || 'Submission failed');
         }
-  
-        const result = await response.json();
+
         setFormSent(true);
         setNotificationVisible(true);
         setTimeout(() => setNotificationVisible(false), 3000);
-  
-        // Reset form
-        setFormData({
-          formPhase: 'BEFORE',
-          nameOfHei: "",
-          region: "",
-          address: "",
-          basicInformation: [{
-            programName: "", 
-            course: "", 
-            destinationAndVenue: "", 
-            inclusiveDates: "", 
-            numberOfStudents: "", 
-            listOfPersonnelIncharge: ""
-          }],
-          activitiesOffCampus: [{
-            curriculumRequirement: { compliance: "", remarks: "" },
-            destination: { compliance: "", remarks: "" },
-            handbook: { compliance: "", remarks: "" },
-            guardianConsent: { compliance: "", remarks: "" },
-            personnelInCharge: { compliance: "", remarks: "" },
-            firstAidKit: { compliance: "", remarks: "" },
-            feesFunds: { compliance: "", remarks: "" },
-            insurance: { compliance: "", remarks: "" },
-            studentVehicles: { compliance: "", remarks: "" },
-            lgusNgos: { compliance: "", remarks: "" },
-            consultationAnnouncements: { compliance: "", remarks: "" },
-          }],
-          afterActivity: [{
-            programs: "",
-            destination: "",
-            noOfStudents: "",
-            noofHeiPersonnel: ""
-          }],
-          problemsEncountered: "",
-          recommendation: "",
-        });
-        setCurrentStep(0);
-        setFormPhase('BEFORE');
-        setBeforeSubmitted(false);
-        setEventId(null);
-  
+        
+        // Redirect to submitted forms
+        navigate('/org-submitted-forms');
+
       } catch (error) {
         console.error('Error:', error);
-        alert('An error occurred while submitting the form.');
+        alert(`An error occurred: ${error.message}`);
       }
     }
   };

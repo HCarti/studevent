@@ -36,6 +36,8 @@ router.post('/after', localOffController.submitLocalOffCampusAfter);
 
 router.get('/:offId', localOffController.getLocalOffCampusForms);
 
+router.put('/:formId/update-to-after', localOffController.updateToAfterPhase);
+
 
 // Add this route to localOffRoutes.js
 router.get('/:offId/tracker', async (req, res) => {

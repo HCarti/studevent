@@ -4,13 +4,13 @@ import './SuperAdminLayout.css';
 
 const SuperAdminLayout = () => {
   return (
-    <div className="admin-dashboard-container">
-      <div className="sidebar-content-wrapper">
-        <Sidebar />
-        <main className="dashboard-main-content">
+    <div className="admin-container">
+      <Sidebar />
+      <main className="admin-content">
+        <div className="content-wrapper">
           <Outlet />
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 };
