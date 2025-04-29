@@ -46,7 +46,7 @@ const AdminControlPanel = () => {
       try {
         // Fetch all users
         const usersResponse = await axios.get(
-          'https://studevent-server.vercel.app/api/getall',
+          'https://studevent-server.vercel.app/api/users/getall',
           config
         );
         setTotalUsers(usersResponse.data.length);
