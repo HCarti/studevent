@@ -408,19 +408,19 @@ const currentStepName = step.stepName;
             role: 'Admin' 
           }).select('email').lean();
           
-          if (admins.length > 0) {
-            for (const admin of admins) {
-              try {
-                await notificationController.createNotification(
-                  admin.email,
-                  `Workflow Blocked: Missing reviewers for ${nextStep.stepName}`,
-                  `Workflow blocked for ${formName}. No reviewers found for ${nextStep.stepName} role.`
-                );
-              } catch (error) {
-                console.error(`Failed to notify admin ${admin.email}:`, error);
-              }
-            }
-          }
+          // if (admins.length > 0) {
+          //   for (const admin of admins) {
+          //     try {
+          //       await notificationController.createNotification(
+          //         admin.email,
+          //         `Workflow Blocked: Missing reviewers for ${nextStep.stepName}`,
+          //         `Workflow blocked for ${formName}. No reviewers found for ${nextStep.stepName} role.`
+          //       );
+          //     } catch (error) {
+          //       console.error(`Failed to notify admin ${admin.email}:`, error);
+          //     }
+          //   }
+          // }
           
           await notificationController.createNotification(
             currentUserEmail,

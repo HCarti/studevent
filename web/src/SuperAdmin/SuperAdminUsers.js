@@ -4,23 +4,24 @@ import "./SuperAdminUsers.css";
 
 const SuperAdminUsers = () => {
   const [organizations, setOrganizations] = useState([]);
-  const [editingOrg, setEditingOrg] = useState(null); // State to track editing org
-  const [editFormData, setEditFormData] = useState({}); // State to store edit form data
-  const [loading, setLoading] = useState(true); // Loading state for data fetching
+  const [editingOrg, setEditingOrg] = useState(null);
+  const [editFormData, setEditFormData] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
 
   useEffect(() => {
     const fetchOrganizations = async () => {
       try {
-        const token = localStorage.getItem('token'); // Get the token from localStorage
+        const token = localStorage.getItem('token');
         const response = await axios.get(
           "https://studevent-server.vercel.app/api/users/organizations",
           {
             headers: {
-              Authorization: `Bearer ${token}`, // Include the token in the request
+              Authorization: `Bearer ${token}`,
             },
           }
         );
-        console.log("API Response:", response.data);
         setOrganizations(response.data);
       } catch (error) {
         console.error("Error fetching organizations:", error);
@@ -32,22 +33,39 @@ const SuperAdminUsers = () => {
     fetchOrganizations();
   }, []);
 
-  const deleteUser = async (userId) => {
+  const handleDeleteClick = (userId) => {
+    setUserToDelete(userId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
     try {
+      const token = localStorage.getItem('token');
       await axios.delete(
-        `https://studevent-server.vercel.app/api/users/${userId}`
+        `https://studevent-server.vercel.app/api/users/${userToDelete}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
-      setOrganizations(organizations.filter((user) => user._id !== userId)); // Update the UI by removing the user
+      setOrganizations(organizations.filter((user) => user._id !== userToDelete));
+      setShowDeleteModal(false);
     } catch (error) {
       console.error("Error deleting user:", error);
     }
   };
 
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setUserToDelete(null);
+  };
+
   const handleEditClick = (organization) => {
-    setEditingOrg(organization._id); // Set the currently editing org ID
+    setEditingOrg(organization._id);
     setEditFormData({
       email: organization.email,
-      organizationType: organization.organizationType || "", // Default to empty string if undefined
+      organizationType: organization.organizationType || "",
       status: organization.status,
     });
   };
@@ -63,16 +81,22 @@ const SuperAdminUsers = () => {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
+      const token = localStorage.getItem('token');
       await axios.put(
         `https://studevent-server.vercel.app/api/users/${editingOrg}`,
-        editFormData
+        editFormData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       setOrganizations(
         organizations.map((org) =>
           org._id === editingOrg ? { ...org, ...editFormData } : org
         )
       );
-      setEditingOrg(null); // Close the edit form
+      setEditingOrg(null);
     } catch (error) {
       console.error("Error updating organization:", error);
     }
@@ -82,7 +106,7 @@ const SuperAdminUsers = () => {
     <div className="table-container">
       <h2>Organizations List</h2>
       {loading ? (
-        <p>Loading organizations...</p>
+        <p className="loading-message">Loading organizations...</p>
       ) : (
         <>
           <table>
@@ -102,31 +126,37 @@ const SuperAdminUsers = () => {
                   <td>
                     {organization.logo ? (
                       <img
-                        src={organization.logo} // Use the full blob URL stored in the database
+                        src={organization.logo}
                         alt="Organization Logo"
-                        width="50"
-                        height="50"
+                        className="org-logo"
                       />
                     ) : (
-                      "No Logo"
+                      <div className="no-logo">No Logo</div>
                     )}
                   </td>
-
                   <td>{organization.organizationName}</td>
                   <td>{organization.email}</td>
                   <td>
-                    {organization.organizationType !== undefined
-                      ? organization.organizationType
-                      : "Not Provided"}
+                    {organization.organizationType || "Not Provided"}
                   </td>
-                  <td>{organization.status}</td>
+                  <td className={`status-${organization.status.toLowerCase()}`}>
+                    {organization.status}
+                  </td>
                   <td>
-                    <button onClick={() => deleteUser(organization._id)}>
-                      Delete
-                    </button>
-                    <button onClick={() => handleEditClick(organization)}>
-                      Edit
-                    </button>
+                    <div className="action-buttons">
+                      <button 
+                        className="delete-btn"
+                        onClick={() => handleDeleteClick(organization._id)}
+                      >
+                        Delete
+                      </button>
+                      <button 
+                        className="edit-btn"
+                        onClick={() => handleEditClick(organization)}
+                      >
+                        Edit
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -135,41 +165,83 @@ const SuperAdminUsers = () => {
         </>
       )}
 
-      {/* Edit form modal or section */}
+      {/* Edit Form Modal */}
       {editingOrg && (
-        <div className="edit-form-container">
-          <h2>Edit Organization</h2>
-          <form onSubmit={handleEditSubmit}>
-            <input
-              type="email"
-              name="email"
-              value={editFormData.email}
-              onChange={handleInputChange}
-              placeholder="Email"
-              required
-            />
-            <input
-              type="text"
-              name="organizationType"
-              value={editFormData.organizationType}
-              onChange={handleInputChange}
-              placeholder="Organization Type"
-            />
-            <select
-              name="status"
-              value={editFormData.status}
-              onChange={handleInputChange}
-            >
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-            <button type="submit">Update</button>
-            <button type="button" onClick={() => setEditingOrg(null)}>
-              Cancel
-            </button>
-          </form>
+        <div className="modal-overlay">
+          <div className="edit-form-container">
+            <h2>Edit Organization</h2>
+            <form onSubmit={handleEditSubmit}>
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={editFormData.email}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Organization Type</label>
+                <input
+                  type="text"
+                  name="organizationType"
+                  value={editFormData.organizationType}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="form-group">
+                <label>Status</label>
+                <select
+                  name="status"
+                  value={editFormData.status}
+                  onChange={handleInputChange}
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+              </div>
+              <div className="form-actions">
+                <button type="submit" className="update-btn">
+                  Update
+                </button>
+                <button 
+                  type="button" 
+                  className="cancel-btn"
+                  onClick={() => setEditingOrg(null)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+  <div className="modal-overlay-superadmin">
+    <div className="delete-confirmation-modal">
+      <h3>Confirm Deletion</h3>
+      <p>Are you sure you want to delete this organization permanently?</p>
+      <p className="warning-text">This action cannot be undone.</p>
+      <div className="modal-actions">
+        <button 
+          className="confirm-delete-btn"
+          onClick={confirmDelete}
+        >
+          Delete
+        </button>
+        <button 
+          className="cancel-delete-btn"
+          onClick={cancelDelete}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 };

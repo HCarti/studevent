@@ -960,106 +960,151 @@ const Localoffcampus = () => {
           </div>
         );
 
-      case 3: // After Activity (AFTER)
+        case 3: // After Activity (AFTER)
         return (
-          <div >
-            <h2>After Activity Report</h2>
-            {formData.afterActivity.map((activity, index) => (
-              <div key={index} className="after-activity-group">
-                <div >
-                  <label className={fieldErrors.afterActivity[index]?.programs ? 'required-field' : ''}>Programs:</label>
-                  <input
-                    type="text"
-                    name="programs"
-                    value={activity.programs}
-                    onChange={(e) => handleChange(e, index, 'afterActivity')}
-                    className={fieldErrors.afterActivity[index]?.programs ? 'input-error' : ''}
-                  />
-                  {fieldErrors.afterActivity[index]?.programs && (
-                    <div className="error-message">This field is required</div>
-                  )}
+          <div className={`after-phase-container ${formPhase === 'AFTER' ? 'active-phase' : 'disabled-phase'}`}>
+            <div className="phase-header">
+              <h2>After Activity Report</h2>
+              {formPhase !== 'AFTER' && (
+                <div className="phase-notice">
+                  Complete and submit the BEFORE form to unlock this section
                 </div>
-                <div >
-                  <label className={fieldErrors.afterActivity[index]?.destination ? 'required-field' : ''}>Destination:</label>
-                  <input
-                    type="text"
-                    name="destination"
-                    value={activity.destination}
-                    onChange={(e) => handleChange(e, index, 'afterActivity')}
-                    className={fieldErrors.afterActivity[index]?.destination ? 'input-error' : ''}
-                  />
-                  {fieldErrors.afterActivity[index]?.destination && (
-                    <div className="error-message">This field is required</div>
-                  )}
-                </div>
-                <div >
-                  <label className={fieldErrors.afterActivity[index]?.noOfStudents ? 'required-field' : ''}>Number of Students:</label>
-                  <input
-                    type="number"
-                    name="noOfStudents"
-                    value={activity.noOfStudents}
-                    onChange={(e) => handleChange(e, index, 'afterActivity')}
-                    className={fieldErrors.afterActivity[index]?.noOfStudents ? 'input-error' : ''}
-                  />
-                  {fieldErrors.afterActivity[index]?.noOfStudents && (
-                    <div className="error-message">This field is required</div>
-                  )}
-                </div>
-                <div >
-                  <label className={fieldErrors.afterActivity[index]?.noofHeiPersonnel ? 'required-field' : ''}>Number of HEI Personnel:</label>
-                  <input
-                    type="number"
-                    name="noofHeiPersonnel"
-                    value={activity.noofHeiPersonnel}
-                    onChange={(e) => handleChange(e, index, 'afterActivity')}
-                    className={fieldErrors.afterActivity[index]?.noofHeiPersonnel ? 'input-error' : ''}
-                  />
-                  {fieldErrors.afterActivity[index]?.noofHeiPersonnel && (
-                    <div className="error-message">This field is required</div>
-                  )}
-                </div>
+              )}
+            </div>
+            
+            {formPhase === 'AFTER' && (
+              <div className="after-activity-content">
+                {formData.afterActivity.map((activity, index) => (
+                  <div key={index} className="after-activity-group">
+                    <div className="form-group">
+                      <label className={fieldErrors.afterActivity[index]?.programs ? 'required-field' : ''}>
+                        Programs:
+                      </label>
+                      <input
+                        type="text"
+                        name="programs"
+                        value={activity.programs}
+                        onChange={(e) => handleChange(e, index, 'afterActivity')}
+                        className={`form-input ${fieldErrors.afterActivity[index]?.programs ? 'input-error' : ''}`}
+                        disabled={formPhase !== 'AFTER'}
+                      />
+                      {fieldErrors.afterActivity[index]?.programs && (
+                        <div className="error-message">This field is required</div>
+                      )}
+                    </div>
+        
+                    <div className="form-group">
+                      <label className={fieldErrors.afterActivity[index]?.destination ? 'required-field' : ''}>
+                        Destination:
+                      </label>
+                      <input
+                        type="text"
+                        name="destination"
+                        value={activity.destination}
+                        onChange={(e) => handleChange(e, index, 'afterActivity')}
+                        className={`form-input ${fieldErrors.afterActivity[index]?.destination ? 'input-error' : ''}`}
+                        disabled={formPhase !== 'AFTER'}
+                      />
+                      {fieldErrors.afterActivity[index]?.destination && (
+                        <div className="error-message">This field is required</div>
+                      )}
+                    </div>
+        
+                    <div className="form-group">
+                      <label className={fieldErrors.afterActivity[index]?.noOfStudents ? 'required-field' : ''}>
+                        Number of Students:
+                      </label>
+                      <input
+                        type="number"
+                        name="noOfStudents"
+                        value={activity.noOfStudents}
+                        onChange={(e) => handleChange(e, index, 'afterActivity')}
+                        className={`form-input ${fieldErrors.afterActivity[index]?.noOfStudents ? 'input-error' : ''}`}
+                        disabled={formPhase !== 'AFTER'}
+                        min="0"
+                      />
+                      {fieldErrors.afterActivity[index]?.noOfStudents && (
+                        <div className="error-message">This field is required</div>
+                      )}
+                    </div>
+        
+                    <div className="form-group">
+                      <label className={fieldErrors.afterActivity[index]?.noofHeiPersonnel ? 'required-field' : ''}>
+                        Number of HEI Personnel:
+                      </label>
+                      <input
+                        type="number"
+                        name="noofHeiPersonnel"
+                        value={activity.noofHeiPersonnel}
+                        onChange={(e) => handleChange(e, index, 'afterActivity')}
+                        className={`form-input ${fieldErrors.afterActivity[index]?.noofHeiPersonnel ? 'input-error' : ''}`}
+                        disabled={formPhase !== 'AFTER'}
+                        min="0"
+                      />
+                      {fieldErrors.afterActivity[index]?.noofHeiPersonnel && (
+                        <div className="error-message">This field is required</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         );
-
-      case 4: // Problems Encountered (AFTER)
+        
+        case 4: // Problems Encountered (AFTER)
         return (
-          <div >
+          <div className={`after-phase-container ${formPhase === 'AFTER' ? 'active-phase' : 'disabled-phase'}`}>
             <h2>Problems Encountered</h2>
-            <div >
-              <label className={fieldErrors.problemsEncountered ? 'required-field' : ''}>Describe any problems encountered:</label>
-              <textarea
-                name="problemsEncountered"
-                value={formData.problemsEncountered}
-                onChange={(e) => handleChange(e)}
-                rows={5}
-                className={fieldErrors.problemsEncountered ? 'input-error' : ''}
-              />
-              {fieldErrors.problemsEncountered && (
-                <div className="error-message">This field is required</div>
-              )}
-            </div>
+            {formPhase === 'AFTER' ? (
+              <div className="form-group">
+                <label className={fieldErrors.problemsEncountered ? 'required-field' : ''}>
+                  Describe any problems encountered:
+                </label>
+                <textarea
+                  name="problemsEncountered"
+                  value={formData.problemsEncountered}
+                  onChange={(e) => handleChange(e)}
+                  rows={5}
+                  className={`form-textarea ${fieldErrors.problemsEncountered ? 'input-error' : ''}`}
+                />
+                {fieldErrors.problemsEncountered && (
+                  <div className="error-message">This field is required</div>
+                )}
+              </div>
+            ) : (
+              <div className="phase-notice">
+                Complete and submit the BEFORE form to unlock this section
+              </div>
+            )}
           </div>
         );
-
-      case 5: // Recommendations (AFTER)
+        
+        case 5: // Recommendations (AFTER)
         return (
-          <div >
+          <div className={`after-phase-container ${formPhase === 'AFTER' ? 'active-phase' : 'disabled-phase'}`}>
             <h2>Recommendations</h2>
-            <div >
-              <label className={fieldErrors.recommendation ? 'required-field' : ''}>Provide your recommendations:</label>
-              <textarea
-                name="recommendation"
-                value={formData.recommendation}
-                onChange={(e) => handleChange(e)}
-                rows={5}
-                className={fieldErrors.recommendation ? 'input-error' : ''}
-              />
-              {fieldErrors.recommendation && (
-                <div className="error-message">This field is required</div>
-              )}
-            </div>
+            {formPhase === 'AFTER' ? (
+              <div className="form-group">
+                <label className={fieldErrors.recommendation ? 'required-field' : ''}>
+                  Provide your recommendations:
+                </label>
+                <textarea
+                  name="recommendation"
+                  value={formData.recommendation}
+                  onChange={(e) => handleChange(e)}
+                  rows={5}
+                  className={`form-textarea ${fieldErrors.recommendation ? 'input-error' : ''}`}
+                />
+                {fieldErrors.recommendation && (
+                  <div className="error-message">This field is required</div>
+                )}
+              </div>
+            ) : (
+              <div className="phase-notice">
+                Complete and submit the BEFORE form to unlock this section
+              </div>
+            )}
           </div>
         );
         
@@ -1114,31 +1159,31 @@ const Localoffcampus = () => {
           {/* AFTER Sections - disabled if BEFORE not approved */}
           <li className={`${currentStep === 3 ? 'active' : ''} ${!isBeforeApproved ? 'disabled-section' : ''}`}
               onClick={() => isBeforeApproved && setCurrentStep(3)}>
-            {currentStep > 3 && validationResults.afterActivity[0].programs && 
-             validationResults.afterActivity[0].destination && 
-             validationResults.afterActivity[0].noOfStudents && 
-             validationResults.afterActivity[0].noofHeiPersonnel ? (
+            {formPhase === 'AFTER' && validationResults.afterActivity[0]?.programs && 
+             validationResults.afterActivity[0]?.destination && 
+             validationResults.afterActivity[0]?.noOfStudents && 
+             validationResults.afterActivity[0]?.noofHeiPersonnel ? (
               <FaCheck className="check-icon green" />
             ) : (
-              currentStep > 2 && <span className="error-icon">!</span>
+              formPhase === 'AFTER' && <span className="error-icon">!</span>
             )}
             After Activity Report
           </li>
           
           <li className={`${currentStep === 4 ? 'active' : ''} ${!isBeforeApproved ? 'disabled-section' : ''}`}>
-            {currentStep > 4 && validationResults.problemsEncountered ? (
+            {formPhase === 'AFTER' && validationResults.problemsEncountered ? (
               <FaCheck className="check-icon green" />
             ) : (
-              currentStep > 3 && <span className="error-icon">!</span>
+              formPhase === 'AFTER' && <span className="error-icon">!</span>
             )}
             Problems Encountered
           </li>
           
           <li className={`${currentStep === 5 ? 'active' : ''} ${!isBeforeApproved ? 'disabled-section' : ''}`}>
-            {currentStep > 5 && validationResults.recommendation ? (
+            {formPhase === 'AFTER' && validationResults.recommendation ? (
               <FaCheck className="check-icon green" />
             ) : (
-              currentStep > 4 && <span className="error-icon">!</span>
+              formPhase === 'AFTER' && <span className="error-icon">!</span>
             )}
             Recommendations
           </li>
@@ -1153,6 +1198,14 @@ const Localoffcampus = () => {
               <div className="approved-status">
                 <FaCheck className="check-icon green" />
                 <span>BEFORE Form Approved</span>
+                {formPhase === 'BEFORE' && (
+                  <button 
+                    onClick={startAfterForm}
+                    className="start-after-mini-btn"
+                  >
+                    Continue to AFTER
+                  </button>
+                )}
               </div>
             ) : (
               <div className="pending-approval">
@@ -1174,12 +1227,12 @@ const Localoffcampus = () => {
         {!formSent && beforeSubmitted && isBeforeApproved && formPhase === 'BEFORE' && (
           <div className="after-form-prompt">
             <h2>Your BEFORE form has been approved!</h2>
-            <p>You can now submit the AFTER activity report to complete your application.</p>
+            <p>You can now complete the AFTER activity report.</p>
             <button 
               onClick={startAfterForm}
               className="start-after-form-btn"
             >
-              Start AFTER Report
+              Continue to AFTER Report
             </button>
           </div>
         )}
@@ -1210,7 +1263,12 @@ const Localoffcampus = () => {
                 <button onClick={handleNext}>Next</button>
               )}
               {currentStep === 5 && (
-                <button onClick={handleSubmitAfter}>Submit AFTER Report</button>
+                <button 
+                  onClick={handleSubmitAfter}
+                  disabled={!isBeforeApproved}
+                >
+                  {isEditingAfter ? 'Update AFTER Report' : 'Submit AFTER Report'}
+                </button>
               )}
             </>
           )}

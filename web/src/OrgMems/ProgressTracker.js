@@ -462,6 +462,7 @@ const ProgressTracker = () => {
                                 </label>
                             </div>
                             <textarea
+                                className="feedback-textarea"
                                 placeholder='Remarks'
                                 value={remarks}
                                 onChange={(e) => setRemarks(e.target.value)}
@@ -505,7 +506,8 @@ const ProgressTracker = () => {
                         ) : (
                             <>
                                 <textarea
-                                    placeholder="Your feedback..."
+                                    placeholder="Your feedback message here..."
+                                    className="feedback-textarea"
                                     value={feedbackText}
                                     onChange={(e) => setFeedbackText(e.target.value)}
                                     disabled={isSubmittingFeedback}
