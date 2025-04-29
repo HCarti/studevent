@@ -46,6 +46,8 @@ router.get('/:id', authenticateToken, usersController.getUserById);
 router.delete('/:id', authenticateToken, usersController.deleteUserById);
 router.get('/organizations/academic', authenticateToken, usersController.getAcademicOrganizations);
 router.put('/organizations/:id', authenticateToken, usersController.updateOrganization);
+// Add this with your other routes
+router.get('/getall', authenticateToken, usersController.getAllUsers);
 
 // User registration route with dual signature support
 router.post('/', 

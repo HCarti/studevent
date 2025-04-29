@@ -328,6 +328,34 @@ const updateOrganization = async (req, res) => {
   }
 };
 
+// Add this to your usersController.js
+const getAllUsers = async (req, res) => {
+  try {
+    // Get query parameters for filtering (optional)
+    const { role, status, faculty } = req.query;
+    
+    // Build the filter object
+    const filter = {};
+    if (role) filter.role = role;
+    if (status) filter.status = status;
+    if (faculty) filter.faculty = faculty;
+
+    // Find users with optional filters
+    const users = await User.find(filter).select('-password'); // Exclude passwords
+    
+    // Transform the data to include appropriate signature based on role
+    const transformedUsers = users.map(user => ({
+      ...user.toObject(),
+      signature: user.role === 'Organization' ? user.presidentSignature : user.signature
+    }));
+
+    res.status(200).json(transformedUsers);
+  } catch (error) {
+    console.error('Error fetching all users:', error);
+    res.status(500).json({ message: 'Error fetching users' });
+  }
+};
+
 module.exports = { 
   getUserById, 
   updateUser, 
@@ -337,5 +365,6 @@ module.exports = {
   getCurrentUser, 
   getOrganizations,
   getAcademicOrganizations,
-  updateOrganization
+  updateOrganization,
+  getAllUsers
 };
