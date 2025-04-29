@@ -140,7 +140,7 @@ const SuperAdminUsers = () => {
                     )}
                   </td>
                   <td>{organization.organizationName}</td>
-                  <td>{organization.email}</td>
+                  <td>{organization.emailAddress}</td>
                   <td>
                     {organization.organizationType || "Not Provided"}
                   </td>

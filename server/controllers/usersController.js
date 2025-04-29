@@ -261,7 +261,7 @@ const deleteUserById = async (req, res) => {
 const getOrganizations = async (req, res) => {
   try {
     const organizations = await User.find({ role: 'Organization' })
-      .select('organizationName organizationType presidentName presidentSignature status logo');
+      .select('organizationName organizationType presidentName presidentSignature status logo email');
     res.status(200).json(organizations);
   } catch (error) {
     console.error('Error fetching organizations:', error);
