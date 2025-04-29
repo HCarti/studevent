@@ -1,6 +1,6 @@
 /* ===== Base Styles ===== */
 .wrap {
-  padding: 1px;
+  padding: 2rem;
   min-height: 100vh;
   background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), 
               url('../Images/Nu_building2.png') no-repeat center center fixed;
@@ -43,8 +43,7 @@
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  height: calc(90vh - 190px); /* Adjust based on your header height */
-  min-height: 600px; /* Minimum height */
+  flex-direction: row;
 }
 
 /* ===== Calendar Wrapper ===== */
@@ -52,72 +51,18 @@
   flex: 2;
   padding: 1.5rem;
   background: white;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.month-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-/* ===== Calendar Toolbar Styles ===== */
-.rbc-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 1rem;
-  gap: 10px;
-}
-
-.rbc-toolbar button {
-  color: #1a3ab5;
-  background: white;
-  border: 1px solid #d9d9d9;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  min-width: 80px;
-  background: linear-gradient(to bottom, #ffffff, #f9f9f9);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  font-weight: 500;
-}
-
-.rbc-toolbar button:hover {
-  background: linear-gradient(to bottom, #f5f8ff, #e6edff);
-  box-shadow: 0 2px 8px rgba(26, 58, 181, 0.2);
-}
-
-.rbc-toolbar button:active {
-  background: linear-gradient(to bottom, #e1ebff, #d0ddff);
-  transform: translateY(1px);
-}
-
-.rbc-toolbar button.rbc-active {
-  background: #1a3ab5;
-  color: white;
-  border-color: #1a3ab5;
-}
-
-.rbc-toolbar .rbc-btn-group {
-  display: flex;
-  gap: 8px;
-}
-
-.rbc-toolbar .rbc-toolbar-label {
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: #1a3ab5;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  min-width: 0;
 }
 
 /* ===== React Big Calendar Overrides ===== */
+.rbc-month-view {
+  border: none;
+}
+
+.rbc-month-header {
+  background: #f8f9fa;
+  border-radius: 8px 8px 0 0;
+}
 
 .rbc-header {
   padding: 10px 0;
@@ -181,20 +126,11 @@
 /* ===== Event Details Panel ===== */
 .event-details {
   flex: 1;
-  padding: 1rem;
+  padding: 2rem;
   background: #f8f9fa;
   border-left: 1px solid #eaeaea;
-  display: flex;
-  flex-direction: column;
-  height: 100%; /* Take full height of parent */
-  max-height: 800px; /* Maximum height */
-  overflow: hidden; /* Hide overflow */
-}
-
-.event-details-content {
-  overflow-y: auto; /* Make content scrollable */
-  flex: 1; /* Take remaining space */
-  padding-right: 0.5rem; /* Add some space for scrollbar */
+  overflow-y: auto;
+  max-height: 800px;
 }
 
 .event-details h2 {
@@ -203,11 +139,6 @@
   padding-bottom: 1rem;
   border-bottom: 1px solid #eaeaea;
   font-size: 1.3rem;
-  position: sticky;
-  top: 0;
-  background: #f8f9fa;
-  z-index: 1;
-  padding-right: 1rem; /* Account for scrollbar */
 }
 
 .event-list {
@@ -263,25 +194,6 @@
   padding: 2rem;
   background: white;
   border-radius: 8px;
-}
-
-/* Custom scrollbar for event details */
-.event-details-content::-webkit-scrollbar {
-  width: 6px;
-}
-
-.event-details-content::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-.event-details-content::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
-
-.event-details-content::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
 }
 
 /* ===== Loading & Error States ===== */
@@ -358,41 +270,20 @@
   font-weight: 500;
 }
 
-/* Pulse animation alternative */
-.pulse-loader {
-  display: inline-block;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: #1a3ab5;
-  animation: pulse 1.5s infinite ease-in-out;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(0.8);
-    opacity: 0.7;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(0.8);
-    opacity: 0.7;
-  }
-}
-
-/* ===== Responsive Design ===== */
+/* ===== Responsive Design Enhancements ===== */
 @media (max-width: 1024px) {
   .calendar-container {
     flex-direction: column;
   }
-  
+
   .event-details {
     border-left: none;
     border-top: 1px solid #eaeaea;
     max-height: none;
+  }
+
+  .calendar-wrapper {
+    padding: 1rem;
   }
 }
 
@@ -400,16 +291,16 @@
   .wrap {
     padding: 1rem;
   }
-  
+
   .wrap h1 {
     font-size: 2rem;
   }
-  
+
   .calendar-wrapper,
   .event-details {
     padding: 1rem;
   }
-  
+
   .rbc-event-content {
     font-size: 0.75rem;
   }
@@ -419,20 +310,49 @@
   .wrap h1 {
     font-size: 1.75rem;
   }
-  
+
   .month-title {
     font-size: 1.2rem;
   }
-  
+
   .event-item {
     padding: 1rem;
   }
-  
+
   .event-item h3 {
     font-size: 1rem;
   }
-  
+
   .event-item p {
     font-size: 0.85rem;
   }
+
+  .event-details h2 {
+    font-size: 1.1rem;
+    text-align: center;
+  }
+
+  .calendar-container {
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .rbc-toolbar {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .rbc-toolbar .rbc-btn-group {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .rbc-toolbar-label {
+    font-size: 1rem;
+    text-align: center;
+  }
 }
+

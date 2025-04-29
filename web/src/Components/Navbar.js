@@ -22,6 +22,7 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   const notificationDropdownRef = useRef(null);
   const drawerRef = useRef(null);
   const mobileMenuIconRef = useRef(null);
+  const bellIconRef = useRef(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -143,10 +144,13 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
 
   const toggleNotificationMenu = async () => {
     // Add animation class if there are unread notifications
-    if (unreadCount > 0) {
-      const bellIcon = document.querySelector('.navbar-notifications .navbar-icon');
-      bellIcon.classList.add('bell-ring');
-      setTimeout(() => bellIcon.classList.remove('bell-ring'), 500);
+    if (unreadCount > 0 && bellIconRef.current) {
+      bellIconRef.current.classList.add('bell-ring');
+      setTimeout(() => {
+        if (bellIconRef.current) {
+          bellIconRef.current.classList.remove('bell-ring');
+        }
+      }, 500);
     }
   
     setNotificationMenuOpen(!notificationMenuOpen);
@@ -247,7 +251,7 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
               onClick={toggleNotificationMenu}
               ref={notificationDropdownRef}
             >
-              <FiBell className="navbar-icon" />
+              <FiBell className="navbar-icon" ref={bellIconRef} />
               {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
               {notificationMenuOpen && (
                 <div className="notification-dropdown">
