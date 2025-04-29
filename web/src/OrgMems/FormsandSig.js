@@ -46,7 +46,7 @@ const FormsandSig = () => {
 
     if (userRole === 'Organization') {
       navigate('/forms');
-    } else if (userRole === 'Admin' || userRole === 'Authority') {
+    } else if (userRole === 'Admin' || userRole === 'Authority' || userRole === 'SuperAdmin') {
       navigate('/trackerlist');
     } else {
       alert("Unauthorized access");

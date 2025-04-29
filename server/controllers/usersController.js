@@ -341,18 +341,28 @@ const getAllUsers = async (req, res) => {
     if (faculty) filter.faculty = faculty;
 
     // Find users with optional filters
-    const users = await User.find(filter).select('-password'); // Exclude passwords
-    
+    const users = await User.find(filter)
+      .select('-password') // Exclude passwords
+      .lean(); // Convert to plain JavaScript objects
+
     // Transform the data to include appropriate signature based on role
     const transformedUsers = users.map(user => ({
-      ...user.toObject(),
+      ...user,
       signature: user.role === 'Organization' ? user.presidentSignature : user.signature
     }));
 
-    res.status(200).json(transformedUsers);
+    res.status(200).json({
+      success: true,
+      count: transformedUsers.length,
+      data: transformedUsers
+    });
   } catch (error) {
     console.error('Error fetching all users:', error);
-    res.status(500).json({ message: 'Error fetching users' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error while fetching users',
+      error: error.message 
+    });
   }
 };
 
