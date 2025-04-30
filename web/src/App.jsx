@@ -37,6 +37,7 @@ import OrgTrackerViewer from './OrgMems/OrgTrackerViewer';
 import Footer from './Components/footer';
 import EventTrackerList from './Components/EventTrackerList';
 import OrgSubmittedForms from './OrgMems/OrgSubmittedForms';
+import SuperAdminProfile from './SuperAdmin/SuperAdminProfile';
 
 
 // Protected Route Components
@@ -135,6 +136,12 @@ const App = () => {
 <Route path="/superadmin" element={
   <ProtectedRoute allowedRoles={['SuperAdmin']}>
     <SuperAdminHome /> {/* Standalone home without layout */}
+  </ProtectedRoute>
+} />
+
+<Route path="/superadminprofile" element={
+  <ProtectedRoute allowedRoles={['SuperAdmin']}>
+    <SuperAdminProfile /> {/* Standalone profile without layout */}
   </ProtectedRoute>
 } />
 

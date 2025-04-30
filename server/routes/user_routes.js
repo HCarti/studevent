@@ -48,6 +48,8 @@ router.get('/organizations/academic', authenticateToken, usersController.getAcad
 router.put('/organizations/:id', authenticateToken, usersController.updateOrganization);
 // Add this with your other routes
 router.get('/getall', authenticateToken, usersController.getAllUsers);
+router.patch('/update/profile', authenticateToken, usersController.updateProfile);
+router.patch('/change-password', authenticateToken, usersController.changePassword);
 
 // User registration route with dual signature support
 router.post('/', 

@@ -1,0 +1,386 @@
+/* Super Admin Profile Styles */
+.sap-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 80px);
+    font-family: "Poppins", sans-serif;
+    background: linear-gradient(135deg, #f5f9ff, #e0ebff);
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.sap-profile-container {
+    display: flex;
+    max-width: 900px;
+    width: 100%;
+    padding: 30px;
+    border-radius: 20px;
+    background: white;
+    box-shadow: 0 10px 30px rgba(0, 70, 173, 0.15);
+    animation: fadeIn 0.8s ease-in-out;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.sap-action-button {
+    background: #0046ad;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    width: 100%;
+  }
+
+.sap-profile-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 8px;
+    background: linear-gradient(90deg, #0046ad, #3a7bd5);
+}
+
+.sap-profile-container:hover {
+    box-shadow: 0 12px 35px rgba(0, 70, 173, 0.2);
+    transform: translateY(-5px);
+}
+
+.sap-profile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+    width: 100%;
+  }
+
+  .sap-action-button:hover {
+    background: #00358a;
+    transform: translateY(-2px);
+  }
+  
+  .action-icon {
+    font-size: 1rem;
+  }
+  
+  /* Error Messages */
+  .sap-error {
+    color: #e74c3c;
+    font-size: 0.8rem;
+    margin-top: 5px;
+  }
+  
+  /* Password Input Fields */
+  .sap-modal-input[type="password"] {
+    letter-spacing: 1px;
+  }
+
+/* Profile Left Section */
+.sap-profile-left {
+    flex: 1;
+    text-align: center;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-right: 1px solid #e0e9ff;
+    position: relative;
+}
+
+.sap-profile-pic {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    border: 5px solid white;
+    box-shadow: 0 5px 15px rgba(0, 70, 173, 0.2);
+    transition: all 0.3s ease;
+    background-color: #f0f5ff;
+    position: relative;
+    overflow: hidden;
+}
+
+.sap-profile-pic:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(0, 70, 173, 0.3);
+}
+
+.sap-profile-left h2 {
+    margin: 15px 0 5px;
+    color: #0046ad;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.sap-profile-left p {
+    color: #6b7c93;
+    font-size: 0.95rem;
+    margin-top: 5px;
+    background: #f5f9ff;
+    padding: 5px 15px;
+    border-radius: 20px;
+    display: inline-block;
+}
+
+/* Profile Right Section */
+.sap-profile-right {
+    flex: 2;
+    padding: 20px 30px;
+}
+
+.sap-profile-right h2 {
+    color: #0046ad;
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+    text-align: center;
+    position: relative;
+    padding-bottom: 10px;
+}
+
+.sap-profile-right h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(90deg, #0046ad, #3a7bd5);
+    border-radius: 3px;
+}
+
+/* Form Styling */
+.sap-profile-right form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background: #f9fbff;
+    border-radius: 12px;
+    padding: 25px;
+    border: 1px solid #e0e9ff;
+}
+
+.sap-profile-right label {
+    font-weight: 500;
+    color: #3a516e;
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.95rem;
+}
+
+.sap-proflie-input {
+    width: 100%;
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid #d0ddf0;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: white;
+    color: #2c3e50;
+}
+
+.sap-proflie-input:focus {
+    border-color: #0046ad;
+    box-shadow: 0 0 0 3px rgba(0, 70, 173, 0.1);
+    outline: none;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .sap-profile-container {
+        flex-direction: column;
+        padding: 25px 20px;
+    }
+
+    .sap-profile-left {
+        border-right: none;
+        border-bottom: 1px solid #e0e9ff;
+        padding-bottom: 30px;
+        margin-bottom: 20px;
+    }
+
+    .sap-profile-right {
+        padding: 0;
+    }
+
+    .sap-profile-right form {
+        padding: 20px;
+    }
+}
+
+/* Sophisticated Loader Styles */
+.sophisticated-loader {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    gap: 20px;
+}
+
+/* Edit Button */
+.sap-edit-button {
+    background: #0046ad;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+  }
+  
+  .sap-edit-button:hover {
+    background: #00358a;
+    transform: translateY(-2px);
+  }
+  
+  .edit-icon {
+    font-size: 1rem;
+  }
+  
+  /* Modal Styles */
+  .sap-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .sap-modal {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    padding: 25px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    animation: modalFadeIn 0.3s ease-out;
+  }
+  
+  .sap-modal h2 {
+    color: #0046ad;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  .sap-modal-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .sap-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .sap-modal-input {
+    padding: 10px 15px;
+    border-radius: 6px;
+    border: 1px solid #d0ddf0;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+  }
+  
+  .sap-modal-input:focus {
+    border-color: #0046ad;
+    box-shadow: 0 0 0 3px rgba(0, 70, 173, 0.1);
+    outline: none;
+  }
+  
+  .sap-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 25px;
+  }
+  
+  .sap-modal-cancel {
+    background: #f0f4ff;
+    color: #0046ad;
+    border: 1px solid #d0ddf0;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .sap-modal-cancel:hover {
+    background: #e0e9ff;
+  }
+  
+  .sap-modal-save {
+    background: #0046ad;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .sap-modal-save:hover {
+    background: #00358a;
+  }
+  
+  .sap-modal-save:disabled {
+    background: #a0b4d0;
+    cursor: not-allowed;
+  }
+  
+  @keyframes modalFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+.loading-text {
+    color: #0046ad;
+    font-size: 1.3rem;
+    font-weight: 500;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; transform: scale(0.98); }
+    50% { opacity: 1; transform: scale(1.02); }
+    100% { opacity: 0.6; transform: scale(0.98); }
+}

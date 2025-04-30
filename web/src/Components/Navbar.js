@@ -36,21 +36,18 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   // Handle clicks outside dropdowns
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Close account dropdown if clicked outside
       if (accountMenuOpen && 
           accountDropdownRef.current && 
           !accountDropdownRef.current.contains(event.target)) {
         setAccountMenuOpen(false);
       }
       
-      // Close notification dropdown if clicked outside
       if (notificationMenuOpen && 
           notificationDropdownRef.current && 
           !notificationDropdownRef.current.contains(event.target)) {
         setNotificationMenuOpen(false);
       }
       
-      // Close drawer if clicked outside (for mobile)
       if (drawerOpen && 
           drawerRef.current && 
           !drawerRef.current.contains(event.target) &&
@@ -116,14 +113,12 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
         throw new Error(`Failed to mark notification as read: ${response.status}`);
       }
   
-      // Optimistically update the UI
       setNotifications(prevNotifications =>
         prevNotifications.map(notification =>
           notification._id === notificationId ? { ...notification, read: true } : notification
         )
       );
   
-      // Only decrement unreadCount if the notification was previously unread
       setUnreadCount(prevCount => {
         const notification = notifications.find(n => n._id === notificationId);
         return notification && !notification.read ? Math.max(prevCount - 1, 0) : prevCount;
@@ -143,7 +138,6 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   };
 
   const toggleNotificationMenu = async () => {
-    // Add animation class if there are unread notifications
     if (unreadCount > 0 && bellIconRef.current) {
       bellIconRef.current.classList.add('bell-ring');
       setTimeout(() => {
@@ -200,7 +194,13 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   };
 
   const handleProfileClick = () => {
-    navigate('/orgprof');
+    if (user.role === 'SuperAdmin') {
+      navigate('/superadminprofile');
+    } else if (user.role === 'Organization' || user.role === 'Authority' || user.role === 'Admin') {
+      navigate('/orgprof');
+    } else {
+      navigate('/profile');
+    }
     setDrawerOpen(false);
   };
 
@@ -308,7 +308,7 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
                 <div className="account-dropdown-menu">
                   <div className="dropdown-item" onClick={handleProfileClick}>
                     <CgProfile className="navbar-icon" />
-                    <span>Profile</span>
+                    <span>{user.role === 'SuperAdmin' ? 'Super Admin Profile' : 'Profile'}</span>
                   </div>
                   <div className="dropdown-item" onClick={handleLogoutClick}>
                     <FiLogOut className="navbar-icon" />
@@ -347,7 +347,7 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
               </li>
               <li className="drawer-list-item" onClick={handleProfileClick}>
                 <CgProfile className="navbars-icon" />
-                <span>Profile</span>
+                <span>{user.role === 'SuperAdmin' ? 'Super Admin Profile' : 'Profile'}</span>
               </li>
               <li className="drawer-list-item" onClick={handleLogoutClick}>
                 <FiLogOut className="navbars-icon" />

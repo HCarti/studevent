@@ -333,6 +333,7 @@ const Localoffcampus = () => {
           [field]: field === 'compliance' ? value : remarks
         };
       } else {
+        // This handles the case where section is null (legacy calls)
         updatedActivities[index][field] = { 
           compliance: value, 
           remarks: remarks 
@@ -347,7 +348,7 @@ const Localoffcampus = () => {
   }, []);
 
   // Compliance row component
-  const ComplianceRow = ({ 
+  const ComplianceRow = React.memo(({ 
     label, 
     value, 
     remarks, 
@@ -356,20 +357,31 @@ const Localoffcampus = () => {
     indent = false,
     hasError = false
   }) => {
-    // Create a local state for the remarks to prevent losing focus
+    // Create a ref to track if it's the initial render
+    const isInitialRender = React.useRef(true);
+    // Local state for remarks
     const [localRemarks, setLocalRemarks] = React.useState(remarks || "");
     
-    // Update the parent state when localRemarks changes
+    // Update local remarks when parent remarks change (but not on initial render)
     React.useEffect(() => {
-      if (remarks !== localRemarks) {
-        onChange(value, localRemarks);
+      if (isInitialRender.current) {
+        isInitialRender.current = false;
+      } else {
+        setLocalRemarks(remarks || "");
       }
-    }, [localRemarks]);
-  
-    // Update localRemarks when the parent remarks prop changes
-    React.useEffect(() => {
-      setLocalRemarks(remarks || "");
     }, [remarks]);
+  
+    // Handle local remarks change
+    const handleRemarksChange = (e) => {
+      const newRemarks = e.target.value;
+      setLocalRemarks(newRemarks);
+      onChange(value, newRemarks);
+    };
+  
+    // Handle compliance change
+    const handleComplianceChange = (newValue) => {
+      onChange(newValue, localRemarks);
+    };
   
     return (
       <tr className={`compliance-row ${nested ? 'nested-row' : ''} ${indent ? 'indent-row' : ''} ${hasError ? 'compliance-error' : ''}`}>
@@ -384,7 +396,7 @@ const Localoffcampus = () => {
                 type="radio"
                 name={`${label}-compliance`}
                 checked={value === "yes"}
-                onChange={() => onChange("yes", localRemarks)}
+                onChange={() => handleComplianceChange("yes")}
               /> Yes
             </label>
             <label>
@@ -392,7 +404,7 @@ const Localoffcampus = () => {
                 type="radio"
                 name={`${label}-compliance`}
                 checked={value === "no"}
-                onChange={() => onChange("no", localRemarks)}
+                onChange={() => handleComplianceChange("no")}
               /> No
             </label>
           </div>
@@ -401,13 +413,21 @@ const Localoffcampus = () => {
           <input
             type="text"
             value={localRemarks}
-            onChange={(e) => setLocalRemarks(e.target.value)}
+            onChange={handleRemarksChange}
             placeholder="Enter remarks..."
           />
         </td>
       </tr>
     );
-  };
+  }, (prevProps, nextProps) => {
+    // Only re-render if these specific props change
+    return (
+      prevProps.label === nextProps.label &&
+      prevProps.value === nextProps.value &&
+      prevProps.remarks === nextProps.remarks &&
+      prevProps.hasError === nextProps.hasError
+    );
+  });
 
   // Validate current section
   const validateSection = useCallback((step) => {
