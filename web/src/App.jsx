@@ -38,6 +38,7 @@ import Footer from './Components/footer';
 import EventTrackerList from './Components/EventTrackerList';
 import OrgSubmittedForms from './OrgMems/OrgSubmittedForms';
 import SuperAdminProfile from './SuperAdmin/SuperAdminProfile';
+import NotificationsPage from './Components/NotificationsPage';
 
 // Global styles to hide scrollbar
 const globalStyles = `
@@ -98,7 +99,10 @@ const App = () => {
       document.head.appendChild(newStyleElement);
       setStyleElement(newStyleElement);
     } else if (!isMobile && styleElement) {
-      document.head.removeChild(styleElement);
+      // Safely check if element exists and is a child before removing
+      if (document.head.contains(styleElement)) {
+        document.head.removeChild(styleElement);
+      }
       setStyleElement(null);
     }
   };
@@ -122,7 +126,7 @@ const App = () => {
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
-      if (styleElement) {
+      if (styleElement && document.head.contains(styleElement)) {
         document.head.removeChild(styleElement);
       }
     };
@@ -174,6 +178,16 @@ const App = () => {
           <Route path="/organizations" element={<Organizations />} />
           <Route path="/view-all-organizations" element={<ViewAllOrganizations />} />
           <Route path="/formss" element={<FormsandSig />} />
+
+          {/* Notifications Route */}
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute allowedRoles={['Organization', 'Admin', 'Authority', 'SuperAdmin']}>
+                <NotificationsPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* SuperAdmin Routes */}
           <Route

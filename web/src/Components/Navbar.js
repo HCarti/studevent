@@ -2,13 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './Navbar.css';
 import StudeventLogo from '../Images/Studevent.png';
-import { FiLogOut, FiHome, FiUsers, FiBell } from "react-icons/fi";
-import { CgProfile } from "react-icons/cg";
+import { FiLogOut, FiHome, FiUsers, FiBell } from 'react-icons/fi';
+import { CgProfile } from 'react-icons/cg';
 
 const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
@@ -35,23 +35,29 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
 
   // Handle clicks outside dropdowns
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (accountMenuOpen && 
-          accountDropdownRef.current && 
-          !accountDropdownRef.current.contains(event.target)) {
+    const handleClickOutside = event => {
+      if (
+        accountMenuOpen &&
+        accountDropdownRef.current &&
+        !accountDropdownRef.current.contains(event.target)
+      ) {
         setAccountMenuOpen(false);
       }
-      
-      if (notificationMenuOpen && 
-          notificationDropdownRef.current && 
-          !notificationDropdownRef.current.contains(event.target)) {
+
+      if (
+        notificationMenuOpen &&
+        notificationDropdownRef.current &&
+        !notificationDropdownRef.current.contains(event.target)
+      ) {
         setNotificationMenuOpen(false);
       }
-      
-      if (drawerOpen && 
-          drawerRef.current && 
-          !drawerRef.current.contains(event.target) &&
-          (!mobileMenuIconRef.current || !mobileMenuIconRef.current.contains(event.target))) {
+
+      if (
+        drawerOpen &&
+        drawerRef.current &&
+        !drawerRef.current.contains(event.target) &&
+        (!mobileMenuIconRef.current || !mobileMenuIconRef.current.contains(event.target))
+      ) {
         setDrawerOpen(false);
       }
     };
@@ -70,67 +76,66 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
       return () => clearInterval(interval);
     }
   }, [isLoggedIn, user]);
-  
+
   const fetchNotifications = async () => {
     if (!user || !user.email) return;
-    
+
     try {
-      const token = localStorage.getItem("token");     
-      const response = await fetch(
-        `https://studevent-server.vercel.app/api/notifications`,
-        {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://studevent-server.vercel.app/api/notifications`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
-      );
+      });
 
       if (!response.ok) throw new Error('Failed to fetch notifications');
-      
+
       const data = await response.json();
       setNotifications(data);
       setUnreadCount(data.filter(n => !n.read).length);
-      
     } catch (error) {
-      console.error("Error fetching notifications:", error);
+      console.error('Error fetching notifications:', error);
     }
   };
-  
-  const markNotificationAsRead = async (notificationId) => {
+
+  const markNotificationAsRead = async notificationId => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`https://studevent-server.vercel.app/api/notifications/mark-read`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({ notificationId })
-      });
-  
+      const token = localStorage.getItem('token');
+      const response = await fetch(
+        `https://studevent-server.vercel.app/api/notifications/mark-read`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ notificationId })
+        }
+      );
+
       if (!response.ok) {
         throw new Error(`Failed to mark notification as read: ${response.status}`);
       }
-  
+
       setNotifications(prevNotifications =>
         prevNotifications.map(notification =>
           notification._id === notificationId ? { ...notification, read: true } : notification
         )
       );
-  
+
       setUnreadCount(prevCount => {
         const notification = notifications.find(n => n._id === notificationId);
         return notification && !notification.read ? Math.max(prevCount - 1, 0) : prevCount;
       });
-  
+
       return true;
     } catch (error) {
-      console.error("Error:", error);
+      console.error('Error:', error);
       return false;
     }
   };
-  
+
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
     setAccountMenuOpen(false);
@@ -146,27 +151,26 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
         }
       }, 500);
     }
-  
+
+    // Only toggle dropdown in desktop navbar
     setNotificationMenuOpen(!notificationMenuOpen);
     setAccountMenuOpen(false);
-    
+
     if (!notificationMenuOpen && notifications.length > 0) {
       try {
-        const token = localStorage.getItem("token");
-        
+        const token = localStorage.getItem('token');
+
         await Promise.all(
-          notifications.map((notification) => 
-            markNotificationAsRead(notification._id)
-          )
+          notifications.map(notification => markNotificationAsRead(notification._id))
         );
-  
+
         setUnreadCount(0);
       } catch (error) {
-        console.error("Error marking notifications as read:", error);
+        console.error('Error marking notifications as read:', error);
       }
     }
   };
-  
+
   const toggleAccountMenu = () => {
     setAccountMenuOpen(!accountMenuOpen);
     setNotificationMenuOpen(false);
@@ -188,7 +192,7 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
     navigate('/');
     setShowLogoutModal(false);
   };
-  
+
   const cancelLogout = () => {
     setShowLogoutModal(false);
   };
@@ -233,21 +237,25 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
     </>
   );
 
+  // Function to handle drawer notification click - always navigate to notifications page
+  const handleDrawerNotificationClick = () => {
+    navigate('/notifications');
+    setDrawerOpen(false);
+  };
+
   return (
     <div className="navbar">
       <div className="navbar-logo" onClick={handleNavbarClick}>
         <img src={StudeventLogo} alt="StudEvent Logo" />
         <div className="navbar-title">StudEvent</div>
       </div>
-      
+
       <div className="navbar-menu">
-        <ul>
-          {renderMenuItems()}
-        </ul>
+        <ul>{renderMenuItems()}</ul>
         {isLoggedIn && user && !isMobile && (
           <div className="navbar-icons-container">
-            <div 
-              className="navbar-notifications" 
+            <div
+              className="navbar-notifications"
               onClick={toggleNotificationMenu}
               ref={notificationDropdownRef}
             >
@@ -256,9 +264,9 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
               {notificationMenuOpen && (
                 <div className="notification-dropdown">
                   {notifications.length > 0 ? (
-                    notifications.map((notification) => (
-                      <div 
-                        key={notification._id} 
+                    notifications.map(notification => (
+                      <div
+                        key={notification._id}
                         className={`notification-item ${notification.read ? 'read' : 'unread'}`}
                         onClick={() => {
                           markNotificationAsRead(notification._id);
@@ -269,9 +277,9 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
                           {new Date(notification.createdAt).toLocaleString()}
                         </div>
                         {notification.type === 'tracker' && (
-                          <button 
+                          <button
                             className="view-tracker-btn"
-                            onClick={(e) => {
+                            onClick={e => {
                               e.stopPropagation();
                               navigate(`/tracker/${notification.trackerId}`);
                             }}
@@ -282,25 +290,15 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
                       </div>
                     ))
                   ) : (
-                    <div className="notification-item no-notifications">
-                      No new notifications
-                    </div>
+                    <div className="notification-item no-notifications">No new notifications</div>
                   )}
                 </div>
               )}
-            </div>      
+            </div>
 
-            <div 
-              className="account-dropdown" 
-              onClick={toggleAccountMenu}
-              ref={accountDropdownRef}
-            >
+            <div className="account-dropdown" onClick={toggleAccountMenu} ref={accountDropdownRef}>
               {user.logo ? (
-                <img
-                  src={user.logo}
-                  alt="Profile"
-                  className="navbar-profile-pic"
-                />
+                <img src={user.logo} alt="Profile" className="navbar-profile-pic" />
               ) : (
                 <CgProfile className="navbar-profile-icon" />
               )}
@@ -317,18 +315,14 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
                 </div>
               )}
             </div>
-          </div>       
+          </div>
         )}
       </div>
-      
-      <div 
-        className="mobile-menu-icon" 
-        onClick={toggleDrawer}
-        ref={mobileMenuIconRef}
-      >
+
+      <div className="mobile-menu-icon" onClick={toggleDrawer} ref={mobileMenuIconRef}>
         &#9776;
       </div>
-      
+
       <div className={`drawer ${drawerOpen ? 'open' : ''}`} ref={drawerRef}>
         <div className="drawer-header">
           <div className="drawer-title">Menu</div>
@@ -340,7 +334,7 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
           {renderMenuItems()}
           {isLoggedIn && user && (
             <>
-              <li className="drawer-list-item" onClick={toggleNotificationMenu}>
+              <li className="drawer-list-item" onClick={handleDrawerNotificationClick}>
                 <FiBell className="navbars-icon" />
                 <span>Notifications</span>
                 {unreadCount > 0 && <span className="drawer-badge">{unreadCount}</span>}
@@ -356,13 +350,14 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
             </>
           )}
         </ul>
-        
-        {isLoggedIn && user && notificationMenuOpen && (
+
+        {/* Never show notifications dropdown in drawer, always navigate to page instead */}
+        {false && isLoggedIn && user && notificationMenuOpen && (
           <div className="drawer-notification-dropdown">
             {notifications.length > 0 ? (
-              notifications.map((notification) => (
-                <div 
-                  key={notification._id} 
+              notifications.map(notification => (
+                <div
+                  key={notification._id}
                   className={`drawer-notification-item ${notification.read ? 'read' : 'unread'}`}
                   onClick={() => {
                     markNotificationAsRead(notification._id);
@@ -374,9 +369,9 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
                     {new Date(notification.createdAt).toLocaleString()}
                   </div>
                   {notification.type === 'tracker' && (
-                    <button 
+                    <button
                       className="drawer-view-tracker-btn"
-                      onClick={(e) => {
+                      onClick={e => {
                         e.stopPropagation();
                         navigate(`/tracker/${notification.trackerId}`);
                         setNotificationMenuOpen(false);
@@ -388,9 +383,7 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
                 </div>
               ))
             ) : (
-              <div className="drawer-notification-item no-notifications">
-                No new notifications
-              </div>
+              <div className="drawer-notification-item no-notifications">No new notifications</div>
             )}
           </div>
         )}
@@ -403,16 +396,10 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
             <h3>Confirm Logout</h3>
             <p>Are you sure you want to log out?</p>
             <div className="logout-modal-buttons">
-              <button 
-                className="logout-modal-cancel"
-                onClick={cancelLogout}
-              >
+              <button className="logout-modal-cancel" onClick={cancelLogout}>
                 Cancel
               </button>
-              <button 
-                className="logout-modal-confirm"
-                onClick={confirmLogout}
-              >
+              <button className="logout-modal-confirm" onClick={confirmLogout}>
                 Log Out
               </button>
             </div>
