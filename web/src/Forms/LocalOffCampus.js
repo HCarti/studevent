@@ -4,6 +4,8 @@ import { FaCheck } from 'react-icons/fa';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { useLocation, useNavigate } from "react-router-dom";
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 
 const Localoffcampus = () => {
   const [formData, setFormData] = useState({
@@ -57,6 +59,11 @@ const Localoffcampus = () => {
   const [isBeforeApproved, setIsBeforeApproved] = useState(false);
   const [isCheckingApproval, setIsCheckingApproval] = useState(false);
   const [approvalCheckError, setApprovalCheckError] = useState(null);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'info' // can be 'error', 'warning', 'info', 'success'
+  });
 
   // Field errors state
   const [fieldErrors, setFieldErrors] = useState({
@@ -597,15 +604,21 @@ const Localoffcampus = () => {
         setBeforeSubmitted(true);
         setFormPhase('AFTER');
         setCurrentStep(3);
-        setNotificationVisible(true);
-        setTimeout(() => setNotificationVisible(false), 3000);
-  
-        // Show success message
-        alert('BEFORE form submitted successfully!');
+        
+        // Show success snackbar
+        setSnackbar({
+          open: true,
+          message: 'BEFORE form submitted successfully!',
+          severity: 'success'
+        });
   
       } catch (error) {
         console.error('Error:', error);
-        alert(`An error occurred while submitting the form: ${error.message}`);
+        setSnackbar({
+          open: true,
+          message: `An error occurred while submitting the form: ${error.message}`,
+          severity: 'error'
+        });
       }
     } else {
       setNotificationVisible(true);
@@ -644,10 +657,10 @@ const Localoffcampus = () => {
 
         setFormSent(true);
         setNotificationVisible(true);
-        setTimeout(() => setNotificationVisible(false), 3000);
+        setTimeout(() => setNotificationVisible(false), 1000);
         
         // Redirect to submitted forms
-        navigate('/org-submitted-forms');
+        navigate('/');
 
       } catch (error) {
         console.error('Error:', error);
@@ -1274,6 +1287,20 @@ const Localoffcampus = () => {
           )}
         </div>
       </div>
+      <Snackbar
+      open={snackbar.open}
+      autoHideDuration={6000}
+      onClose={() => setSnackbar({...snackbar, open: false})}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+    >
+      <Alert 
+        onClose={() => setSnackbar({...snackbar, open: false})} 
+        severity={snackbar.severity}
+        sx={{ width: '100%' }}
+      >
+        {snackbar.message}
+      </Alert>
+    </Snackbar>
     </div>
   );
 };

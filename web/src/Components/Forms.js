@@ -90,7 +90,7 @@ const Forms = ({ role }) => {
         <li>After submission, your form will be submitted to the first reviewee for approval.</li>
         <li>You can monitor the status in the Proposal Tracker.</li>
         <li>Once approved, the form will be sent to the next reviewer.</li>
-        <li>Once the last reviwer is done checking the submitted form it will be sent back to you</li>
+        <li>Once the last reviewer is done checking the submitted form it will be sent back to you</li>
       </ul>
     </div>
   </div>
