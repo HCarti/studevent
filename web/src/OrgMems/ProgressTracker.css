@@ -88,12 +88,19 @@
 
 /* Edit Tracker Section */
 .edit-tracker {
-  display: flex;
-  flex-direction: column;
-  background-color: #0047ab;
-  padding: 20px;
-  border-radius: 10px;
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
   margin-top: 20px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.edit-tracker h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 18px;
+  text-align: center;
 }
 
 .edit-tracker-title {
@@ -105,8 +112,37 @@
 
 .edit-tracker-options {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  gap: 15px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.edit-tracker-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #555;
+  cursor: pointer;
+}
+
+.edit-tracker-options input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.edit-tracker .MuiButton-contained {
+  background-color: #1976d2;
+  color: white;
+  text-transform: none;
+  padding: 8px 16px;
+  align-self: flex-end;
+}
+
+.edit-tracker .MuiButton-contained:hover {
+  background-color: #1565c0;
 }
 
 .checkbox-container {
@@ -192,14 +228,16 @@
 }
 
 .feedback-textarea {
-  width: 95%;
+  width: 100%;
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 4px;
   margin-bottom: 15px;
   font-family: inherit;
-  resize: none;
-  min-height: 100px;
+  resize: vertical;
+  min-height: 80px;
+  font-size: 14px;
+  box-sizing: border-box;
 }
 
 .feedback-submit-button {

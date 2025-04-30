@@ -207,15 +207,28 @@ const OrgSubmittedForms = () => {
     };
     
     const formatFormType = (form) => {
-        if (form.formType === 'LocalOffCampus') {
-          return form.formPhase === 'BEFORE' 
-            ? 'Local-Off-Campus Before Report' 
-            : 'Off-Campus After Report';
+        if (!form) return 'Unknown Form Type';
+        
+        // Handle LocalOffCampus forms first
+        if (form.formType === 'LocalOffCampus' || form.isLocalOffCampus) {
+            return form.formPhase === 'BEFORE' 
+                ? 'Local Off-Campus Before Report' 
+                : 'Local Off-Campus After Report';
         }
-        return form.formType === 'ActivityProposal' 
-          ? 'Activity Proposal' 
-          : 'Project Proposal';
-      };
+        
+        // Handle all other form types
+        const rawFormType = form.formType || '';
+        switch(rawFormType.toLowerCase()) {
+            case 'activity':
+                return 'Activity Proposal';
+            case 'project':
+                return 'Project Proposal';
+            case 'budget':
+                return 'Budget Proposal';
+            default:
+                return rawFormType || 'Form';
+        }
+    };
 
     const formatDate = (dateString) => {
         if (!dateString) return 'No Date';

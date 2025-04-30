@@ -443,34 +443,59 @@ const ProgressTracker = () => {
                     </div>
 
                     {isEditing ? (
-                        <div className="edit-tracker">
-                            <h3>EDIT TRACKER</h3>
-                            <div className="edit-tracker-options">
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        checked={isApprovedChecked}
-                                        onChange={() => setIsApprovedChecked(!isApprovedChecked)}
-                                    /> Approved
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        checked={isDeclinedChecked}
-                                        onChange={() => setIsDeclinedChecked(!isDeclinedChecked)}
-                                    /> Declined
-                                </label>
-                            </div>
-                            <textarea
-                                className="feedback-textarea"
-                                placeholder='Remarks'
-                                value={remarks}
-                                onChange={(e) => setRemarks(e.target.value)}
+                      <div className="edit-tracker">
+                        <h3>Review Submission</h3>
+                        <div className="edit-tracker-options">
+                          <label>
+                            <input
+                              type="checkbox"
+                              checked={isApprovedChecked}
+                              onChange={() => {
+                                setIsApprovedChecked(!isApprovedChecked);
+                                if (isDeclinedChecked) setIsDeclinedChecked(false);
+                              }}
                             />
-                            <Button variant="contained" onClick={handleSaveClick}>
-                                SAVE
-                            </Button>
+                            Approve
+                          </label>
+                          <label>
+                            <input
+                              type="checkbox"
+                              checked={isDeclinedChecked}
+                              onChange={() => {
+                                setIsDeclinedChecked(!isDeclinedChecked);
+                                if (isApprovedChecked) setIsApprovedChecked(false);
+                              }}
+                            />
+                            Decline
+                          </label>
                         </div>
+                        <textarea
+                          className="feedback-textarea"
+                          placeholder="Enter your remarks..."
+                          value={remarks}
+                          onChange={(e) => setRemarks(e.target.value)}
+                        />
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                          <Button 
+                            variant="outlined" 
+                            onClick={() => {
+                              setIsEditing(false);
+                              setIsApprovedChecked(false);
+                              setIsDeclinedChecked(false);
+                              setRemarks('');
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button 
+                            variant="contained" 
+                            onClick={handleSaveClick}
+                            disabled={!isApprovedChecked && !isDeclinedChecked}
+                          >
+                            Submit Review
+                          </Button>
+                        </div>
+                      </div>
                     ) : (
                         <div className="action-buttons">
                             {isTrackerCompleted && (

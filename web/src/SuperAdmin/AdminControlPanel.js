@@ -29,7 +29,7 @@ useEffect(() => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        'https://studevent-server.vercel.app/api/users', // Updated endpoint
+        'https://studevent-server.vercel.app/api/users/getall', // Updated endpoint
         {
           headers: {
             'Authorization': `Bearer ${token}`

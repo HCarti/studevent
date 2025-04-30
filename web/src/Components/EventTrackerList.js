@@ -97,7 +97,7 @@ const EventTrackerList = () => {
 
   const getFilteredForms = () => {
     return forms.filter((form) => {
-      const status = (form.finalStatus || form.status || '').trim().toLowerCase();
+      const status = (form.finalStatus).trim().toLowerCase();
       switch (filter) {
         case "pending": return status === "pending";
         case "approved": return status === "approved";
