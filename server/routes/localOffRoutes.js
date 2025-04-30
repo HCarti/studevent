@@ -31,13 +31,12 @@ router.get("/by-user/:userId", async (req, res) => {
 //before phase routes
 router.post('/before', localOffController.submitLocalOffCampusBefore);
 
-//after phase routes
-router.post('/after', localOffController.submitLocalOffCampusAfter);
-
 router.get('/:offId', localOffController.getLocalOffCampusForms);
 
-router.put('/:eventId/update-to-after', localOffController.updateToAfterPhase);
-
+// After phase routes
+router.post('/after', localOffController.submitLocalOffCampusAfter); // For new submissions
+router.put('/:eventId/after', localOffController.updateLocalOffCampusAfter); // For updates
+router.put('/:eventId/update-to-after', localOffController.updateToAfterPhase); // For phase transition
 
 // Add this route to localOffRoutes.js
 router.get('/:offId/tracker', async (req, res) => {

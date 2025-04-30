@@ -656,33 +656,54 @@ const Localoffcampus = () => {
     if (isValid) {
       try {
         const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('Authentication token not found. Please log in again.');
+        }
+  
+        // Determine the endpoint and method based on whether we're editing or creating
         const endpoint = isEditingAfter 
-          ? `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/update-after`
+          ? `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/after`
           : `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/update-to-after`;
-
+  
+        const method = isEditingAfter ? 'PUT' : 'POST';
+  
+        // Prepare the request body in the correct format
+        const requestBody = {
+          localOffCampus: {
+            afterActivity: formData.afterActivity,
+            problemsEncountered: formData.problemsEncountered,
+            recommendation: formData.recommendation
+          },
+          formPhase: 'AFTER'
+        };
+  
         const response = await fetch(endpoint, {
-          method: isEditingAfter ? 'PUT' : 'POST',
+          method,
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            afterActivity: formData.afterActivity,
-            problemsEncountered: formData.problemsEncountered,
-            recommendation: formData.recommendation,
-            formPhase: 'AFTER' // Ensure phase is explicitly set
-          }),
+          body: JSON.stringify(requestBody),
         });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Submission failed');
+  
+        // Check response content type before parsing
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const text = await response.text();
+          throw new Error(`Server returned ${response.status}: ${text}`);
         }
-
+  
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Submission failed');
+        }
+  
         setFormSent(true);
         setSnackbar({
           open: true,
-          message: 'AFTER report submitted successfully!',
+          message: isEditingAfter 
+            ? 'AFTER report updated successfully!' 
+            : 'AFTER report submitted successfully!',
           severity: 'success'
         });
         
@@ -690,17 +711,17 @@ const Localoffcampus = () => {
         setTimeout(() => {
           navigate('/org-submitted-forms');
         }, 1500);
-
+  
       } catch (error) {
         console.error('Error:', error);
         setSnackbar({
           open: true,
-          message: `Error submitting AFTER report: ${error.message}`,
+          message: `Error ${isEditingAfter ? 'updating' : 'submitting'} AFTER report: ${error.message}`,
           severity: 'error'
         });
       }
     }
-};
+  };
 
   // Render step content
   const renderStepContent = () => {
