@@ -342,18 +342,32 @@ exports.updateToAfterPhase = async (req, res) => {
 
   try {
     const { formId } = req.params;
-    const { localOffCampus } = req.body; // Get the nested object
+    const { localOffCampus } = req.body;
 
-    // Validate input using the nested fields
-    if (!localOffCampus?.afterActivity || 
-        !localOffCampus?.problemsEncountered || 
-        !localOffCampus?.recommendation) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ error: "All AFTER phase fields are required" });
+    // 1. Enhanced validation
+    if (!localOffCampus || typeof localOffCampus !== 'object') {
+      throw new Error('Invalid request format');
     }
 
-    // Find and validate the BEFORE form
+    const { afterActivity, problemsEncountered, recommendation } = localOffCampus;
+
+    if (!Array.isArray(afterActivity)) {
+      throw new Error('afterActivity must be an array');
+    }
+
+    if (afterActivity.length === 0) {
+      throw new Error('At least one activity is required');
+    }
+
+    if (!problemsEncountered?.trim()) {
+      throw new Error('Problems encountered is required');
+    }
+
+    if (!recommendation?.trim()) {
+      throw new Error('Recommendation is required');
+    }
+
+    // 2. Find BEFORE form
     const beforeForm = await LocalOffCampus.findOne({
       _id: formId,
       formPhase: 'BEFORE',
@@ -361,12 +375,10 @@ exports.updateToAfterPhase = async (req, res) => {
     }).session(session);
 
     if (!beforeForm) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(404).json({ error: "Approved BEFORE form not found" });
+      throw new Error('Approved BEFORE form not found');
     }
 
-    // Update to AFTER phase using nested fields
+    // 3. Update to AFTER phase
     const updatedForm = await LocalOffCampus.findByIdAndUpdate(
       formId,
       {
@@ -374,11 +386,7 @@ exports.updateToAfterPhase = async (req, res) => {
         afterActivity: localOffCampus.afterActivity,
         problemsEncountered: localOffCampus.problemsEncountered,
         recommendation: localOffCampus.recommendation,
-        status: 'submitted',
-        phaseCompleted: false,
-        $set: {
-          'reviewStages.$[].status': 'pending'
-        }
+        status: 'submitted'
       },
       { new: true, session }
     );
@@ -421,19 +429,18 @@ exports.updateToAfterPhase = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      message: "Successfully updated to AFTER phase",
+      message: "AFTER phase updated successfully",
       form: updatedForm
     });
 
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
-    console.error("Error updating to AFTER phase:", error);
-    res.status(500).json({
+    console.error("Update error:", error.message);
+    return res.status(400).json({
       success: false,
-      message: "Error updating form phase",
       error: error.message
     });
   }

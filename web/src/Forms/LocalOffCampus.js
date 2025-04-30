@@ -656,81 +656,60 @@ const Localoffcampus = () => {
     if (isValid) {
       try {
         const token = localStorage.getItem('token');
-        if (!token) {
-          throw new Error('Authentication token not found. Please log in again.');
-        }
+        if (!token) throw new Error('Authentication token not found');
   
-        // 1. First verify all required fields are present and valid
-        const afterActivityValid = formData.afterActivity?.length > 0 && 
-                                 formData.afterActivity.every(activity => 
-                                   activity.programs?.trim() && 
-                                   activity.destination?.trim() &&
-                                   activity.noOfStudents &&
-                                   activity.noofHeiPersonnel
-                                 );
-        
-        const problemsValid = formData.problemsEncountered?.trim();
-        const recommendationValid = formData.recommendation?.trim();
-  
-        if (!afterActivityValid || !problemsValid || !recommendationValid) {
-          throw new Error('Please fill all AFTER report fields completely');
-        }
-  
-        // 2. Prepare the request data in EXACT backend format
+        // 1. Prepare the EXACT data structure backend expects
         const requestData = {
-          afterActivity: formData.afterActivity.map(activity => ({
-            programs: activity.programs,
-            destination: activity.destination,
-            noOfStudents: activity.noOfStudents,
-            noofHeiPersonnel: activity.noofHeiPersonnel
-          })),
-          problemsEncountered: formData.problemsEncountered,
-          recommendation: formData.recommendation,
+          localOffCampus: {
+            afterActivity: formData.afterActivity.map(item => ({
+              programs: item.programs,
+              destination: item.destination,
+              noOfStudents: item.noOfStudents,
+              noofHeiPersonnel: item.noofHeiPersonnel
+            })),
+            problemsEncountered: formData.problemsEncountered,
+            recommendation: formData.recommendation
+          },
           formPhase: 'AFTER'
         };
   
-        // 3. Determine endpoint
-        const endpoint = isEditingAfter
-          ? `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/after`
-          : `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/update-to-after`;
-  
-        // 4. Debug output
-        console.log('Submitting AFTER report with:', {
-          endpoint,
-          method: isEditingAfter ? 'PUT' : 'POST',
-          payload: requestData
+        // 2. Debug output
+        console.log('Submitting:', {
+          endpoint: `.../${eventId}/update-to-after`,
+          payload: requestData,
+          method: 'POST'
         });
   
-        // 5. Make the request
-        const response = await fetch(endpoint, {
-          method: isEditingAfter ? 'PUT' : 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(requestData)
-        });
+        // 3. Make the request
+        const response = await fetch(
+          `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/update-to-after`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(requestData)
+          }
+        );
   
-        // 6. Handle response
+        // 4. Handle response
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || `Server returned ${response.status}`);
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Submission failed');
         }
   
-        // 7. Success handling
+        // Success
         setFormSent(true);
         setSnackbar({
           open: true,
-          message: isEditingAfter 
-            ? 'AFTER report updated successfully!'
-            : 'AFTER report submitted successfully!',
+          message: 'AFTER report submitted successfully!',
           severity: 'success'
         });
-  
         setTimeout(() => navigate('/org-submitted-forms'), 1500);
   
       } catch (error) {
-        console.error('AFTER submission error:', error);
+        console.error('Submission error:', error);
         setSnackbar({
           open: true,
           message: `Error: ${error.message}`,
