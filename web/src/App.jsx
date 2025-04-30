@@ -86,6 +86,22 @@ const MemberLayout = ({ children }) => (
 
 const App = () => {
   const [user, setUser] = useState(null);
+  const [styleElement, setStyleElement] = useState(null);
+
+  // Function to check window width and apply/remove styles accordingly
+  const handleResize = () => {
+    const isMobile = window.innerWidth < 500;
+
+    if (isMobile && !styleElement) {
+      const newStyleElement = document.createElement('style');
+      newStyleElement.innerHTML = globalStyles;
+      document.head.appendChild(newStyleElement);
+      setStyleElement(newStyleElement);
+    } else if (!isMobile && styleElement) {
+      document.head.removeChild(styleElement);
+      setStyleElement(null);
+    }
+  };
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -97,15 +113,20 @@ const App = () => {
       }
     }
 
-    // Apply global styles
-    const styleElement = document.createElement('style');
-    styleElement.innerHTML = globalStyles;
-    document.head.appendChild(styleElement);
+    // Initial check for screen size
+    handleResize();
 
+    // Add event listener for window resize
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup
     return () => {
-      document.head.removeChild(styleElement);
+      window.removeEventListener('resize', handleResize);
+      if (styleElement) {
+        document.head.removeChild(styleElement);
+      }
     };
-  }, []);
+  }, [styleElement]);
 
   const handleLogin = userData => {
     localStorage.setItem('user', JSON.stringify(userData));
