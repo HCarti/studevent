@@ -12,8 +12,6 @@ const Sidebar = () => {
 
   const menuItems = [
     { name: 'Dashboard', icon: <MdDashboard />, path: '/superadmin/controlpanel' },
-    { name: 'Admin', icon: <FaUser />, path: '/superadmin/admintab' },
-    { name: 'Authorities', icon: <GrDocumentUser />, path: '/superadmin/authorities' },
     { name: 'Users', icon: <FaUsers />, path: '/superadmin/adminuser' },
     { name: 'Add User', icon: <FaUserPlus />, path: '/superadmin/adduser' }
   ];

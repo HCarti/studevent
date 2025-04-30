@@ -660,81 +660,86 @@ const Localoffcampus = () => {
           throw new Error('Authentication token not found. Please log in again.');
         }
   
-        // Determine endpoint and method
-        const endpoint = isEditingAfter 
-          ? `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/after`
-          : `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/update-to-after`;
+        // 1. First verify all required fields are present and valid
+        const afterActivityValid = formData.afterActivity?.length > 0 && 
+                                 formData.afterActivity.every(activity => 
+                                   activity.programs?.trim() && 
+                                   activity.destination?.trim() &&
+                                   activity.noOfStudents &&
+                                   activity.noofHeiPersonnel
+                                 );
+        
+        const problemsValid = formData.problemsEncountered?.trim();
+        const recommendationValid = formData.recommendation?.trim();
   
-        const method = isEditingAfter ? 'PUT' : 'POST';
+        if (!afterActivityValid || !problemsValid || !recommendationValid) {
+          throw new Error('Please fill all AFTER report fields completely');
+        }
   
-        // Prepare the request body in the correct structure
-        const requestBody = {
-          afterActivity: formData.afterActivity,
+        // 2. Prepare the request data in EXACT backend format
+        const requestData = {
+          afterActivity: formData.afterActivity.map(activity => ({
+            programs: activity.programs,
+            destination: activity.destination,
+            noOfStudents: activity.noOfStudents,
+            noofHeiPersonnel: activity.noofHeiPersonnel
+          })),
           problemsEncountered: formData.problemsEncountered,
           recommendation: formData.recommendation,
           formPhase: 'AFTER'
         };
   
-        // Debug log
-        console.log('Submitting AFTER report:', {
+        // 3. Determine endpoint
+        const endpoint = isEditingAfter
+          ? `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/after`
+          : `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/update-to-after`;
+  
+        // 4. Debug output
+        console.log('Submitting AFTER report with:', {
           endpoint,
-          method,
-          body: requestBody
+          method: isEditingAfter ? 'PUT' : 'POST',
+          payload: requestData
         });
   
+        // 5. Make the request
         const response = await fetch(endpoint, {
-          method,
+          method: isEditingAfter ? 'PUT' : 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
+            'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify(requestBody),
+          body: JSON.stringify(requestData)
         });
   
-        // Handle non-JSON responses
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          const text = await response.text();
-          throw new Error(`Server returned ${response.status}: ${text}`);
-        }
-  
-        const data = await response.json();
-        
+        // 6. Handle response
         if (!response.ok) {
-          throw new Error(data.error || 'Submission failed');
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `Server returned ${response.status}`);
         }
   
-        // Success handling
+        // 7. Success handling
         setFormSent(true);
         setSnackbar({
           open: true,
           message: isEditingAfter 
-            ? 'AFTER report updated successfully!' 
+            ? 'AFTER report updated successfully!'
             : 'AFTER report submitted successfully!',
           severity: 'success'
         });
-        
-        // Redirect after delay
-        setTimeout(() => {
-          navigate('/org-submitted-forms');
-        }, 1500);
+  
+        setTimeout(() => navigate('/org-submitted-forms'), 1500);
   
       } catch (error) {
-        console.error('AFTER report submission error:', error);
+        console.error('AFTER submission error:', error);
         setSnackbar({
           open: true,
-          message: `Error ${isEditingAfter ? 'updating' : 'submitting'} AFTER report: ${error.message}`,
+          message: `Error: ${error.message}`,
           severity: 'error'
         });
       }
-    } else {
-      setSnackbar({
-        open: true,
-        message: 'Please complete all required fields correctly',
-        severity: 'warning'
-      });
     }
   };
+  
   // Render step content
   const renderStepContent = () => {
     switch (currentStep) {
