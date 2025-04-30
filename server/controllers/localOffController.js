@@ -342,10 +342,12 @@ exports.updateToAfterPhase = async (req, res) => {
 
   try {
     const { formId } = req.params;
-    const { afterActivity, problemsEncountered, recommendation } = req.body;
+    const { localOffCampus } = req.body; // Get the nested object
 
-    // Validate input
-    if (!afterActivity || !problemsEncountered || !recommendation) {
+    // Validate input using the nested fields
+    if (!localOffCampus?.afterActivity || 
+        !localOffCampus?.problemsEncountered || 
+        !localOffCampus?.recommendation) {
       await session.abortTransaction();
       session.endSession();
       return res.status(400).json({ error: "All AFTER phase fields are required" });
@@ -364,14 +366,14 @@ exports.updateToAfterPhase = async (req, res) => {
       return res.status(404).json({ error: "Approved BEFORE form not found" });
     }
 
-    // Update to AFTER phase
+    // Update to AFTER phase using nested fields
     const updatedForm = await LocalOffCampus.findByIdAndUpdate(
       formId,
       {
         formPhase: 'AFTER',
-        afterActivity,
-        problemsEncountered,
-        recommendation,
+        afterActivity: localOffCampus.afterActivity,
+        problemsEncountered: localOffCampus.problemsEncountered,
+        recommendation: localOffCampus.recommendation,
         status: 'submitted',
         phaseCompleted: false,
         $set: {

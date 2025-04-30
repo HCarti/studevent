@@ -650,65 +650,91 @@ const Localoffcampus = () => {
   };
   
   // Submit AFTER form
- const handleSubmitAfter = async () => {
-  const isValid = validateSection(5);
+  const handleSubmitAfter = async () => {
+    const isValid = validateSection(5);
+    
+    if (isValid) {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('Authentication token not found. Please log in again.');
+        }
   
-  if (isValid) {
-    try {
-      const token = localStorage.getItem('token');
-      // Ensure there's no space in the endpoint URL
-      const endpoint = isEditingAfter 
-        ? `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/after`
-        : `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/update-to-after`; // No space here
-
-      const response = await fetch(endpoint, {
-        method: isEditingAfter ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          localOffCampus: { // Match backend expected structure
-            afterActivity: formData.afterActivity,
-            problemsEncountered: formData.problemsEncountered,
-            recommendation: formData.recommendation
-          },
+        // Determine endpoint and method
+        const endpoint = isEditingAfter 
+          ? `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/after`
+          : `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/update-to-after`;
+  
+        const method = isEditingAfter ? 'PUT' : 'POST';
+  
+        // Prepare the request body in the correct structure
+        const requestBody = {
+          afterActivity: formData.afterActivity,
+          problemsEncountered: formData.problemsEncountered,
+          recommendation: formData.recommendation,
           formPhase: 'AFTER'
-        }),
-      });
-
-      // Add proper error handling
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Server returned ${response.status}: ${errorText}`);
+        };
+  
+        // Debug log
+        console.log('Submitting AFTER report:', {
+          endpoint,
+          method,
+          body: requestBody
+        });
+  
+        const response = await fetch(endpoint, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(requestBody),
+        });
+  
+        // Handle non-JSON responses
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const text = await response.text();
+          throw new Error(`Server returned ${response.status}: ${text}`);
+        }
+  
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Submission failed');
+        }
+  
+        // Success handling
+        setFormSent(true);
+        setSnackbar({
+          open: true,
+          message: isEditingAfter 
+            ? 'AFTER report updated successfully!' 
+            : 'AFTER report submitted successfully!',
+          severity: 'success'
+        });
+        
+        // Redirect after delay
+        setTimeout(() => {
+          navigate('/org-submitted-forms');
+        }, 1500);
+  
+      } catch (error) {
+        console.error('AFTER report submission error:', error);
+        setSnackbar({
+          open: true,
+          message: `Error ${isEditingAfter ? 'updating' : 'submitting'} AFTER report: ${error.message}`,
+          severity: 'error'
+        });
       }
-
-      const data = await response.json();
-      
-      setFormSent(true);
+    } else {
       setSnackbar({
         open: true,
-        message: isEditingAfter 
-          ? 'AFTER report updated successfully!' 
-          : 'AFTER report submitted successfully!',
-        severity: 'success'
-      });
-      
-      setTimeout(() => {
-        navigate('/org-submitted-forms');
-      }, 1500);
-
-    } catch (error) {
-      console.error('Error:', error);
-      setSnackbar({
-        open: true,
-        message: `Error ${isEditingAfter ? 'updating' : 'submitting'} AFTER report: ${error.message}`,
-        severity: 'error'
+        message: 'Please complete all required fields correctly',
+        severity: 'warning'
       });
     }
-  }
-};
-
+  };
   // Render step content
   const renderStepContent = () => {
     switch (currentStep) {
