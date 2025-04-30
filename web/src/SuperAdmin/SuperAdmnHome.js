@@ -81,7 +81,6 @@ const SuperAdminHome = () => {
         </div>      
       </div>
        </React.Fragment>
-      <Footer></Footer>
     </ParallaxProvider>
   );
 };

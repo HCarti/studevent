@@ -3,7 +3,7 @@ body, html {
   padding: 0;
   width: 100%;
   height: 100%;
-  overflow-x: hidden; /* Disable horizontal scrolling */
+  overflow-x: hidden;
 }
 
 .superadmin-home {
@@ -34,12 +34,15 @@ body, html {
 .logo-superadmin {
   height: 180px;
   animation: fadeIn 2s ease-in-out;
+  max-width: 100%;
 }
 
 .header-superadmin h2 {
   font-size: 2.5rem;
   color: #0175c8;
   animation: fadeIn 2s ease-in-out;
+  margin: 1rem 0 0;
+  text-align: center;
 }
 
 .menu-superadmin-container {
@@ -48,6 +51,10 @@ body, html {
   gap: 1.5rem;
   padding: 1rem;
   flex-wrap: wrap;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .menu-superadmin-item {
@@ -63,6 +70,7 @@ body, html {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  padding: 1rem;
 }
 
 .menu-superadmin-item:hover {
@@ -81,13 +89,21 @@ body, html {
   margin-bottom: 0.5rem;
 }
 
+.menu-superadmin-item h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #333;
+  font-weight: 500;
+}
+
 .quote-superadmin-container {
-  margin-top: 10px;
+  margin: 2rem auto;
   padding: 20px;
   text-align: center;
-  width: 100%;
+  width: 90%;
   max-width: 700px;
   animation: fadeInText 2s ease-in-out;
+  border-radius: 10px;
 }
 
 .quote-superadmin {
@@ -95,13 +111,162 @@ body, html {
   color: #333;
   font-style: italic;
   line-height: 1.8;
+  margin: 0;
 }
 
-.parallax-sections-superadmin {
-  width: 2200px;
-  max-width: 100%;
+/* Responsive Styles */
+@media (max-width: 1024px) {
+  .header-superadmin {
+    margin-top: 50px;
+  }
+  
+  .menu-superadmin-item {
+    width: 220px;
+    height: 160px;
+  }
 }
 
+@media (max-width: 768px) {
+  .header-superadmin {
+    margin-top: 40px;
+    padding: 1rem;
+  }
+  
+  .logo-superadmin {
+    height: 140px;
+  }
+  
+  .header-superadmin h2 {
+    font-size: 2rem;
+  }
+
+  .menu-superadmin-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    padding: 0 1rem;
+  }
+
+  .menu-superadmin-item {
+    width: calc(50% - 0.5rem);
+    height: 150px;
+    margin: 0;
+    flex: 0 0 auto;
+  }
+
+  .menu-superadmin-icon {
+    font-size: 45px;
+  }
+
+  .quote-superadmin {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .header-superadmin {
+    margin-top: 30px;
+  }
+  
+  .logo-superadmin {
+    height: 120px;
+  }
+  
+  .header-superadmin h2 {
+    font-size: 1.8rem;
+  }
+
+  .menu-superadmin-container {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0 1rem;
+  }
+
+  .menu-superadmin-item {
+    width: 100%;
+    max-width: 280px;
+    height: 130px;
+    margin: 0 auto;
+  }
+
+  .menu-superadmin-icon {
+    font-size: 40px;
+  }
+
+  .quote-superadmin {
+    font-size: 1.1rem;
+    line-height: 1.6;
+  }
+}
+
+@media (max-width: 400px) {
+  .header-superadmin h2 {
+    font-size: 1.5rem;
+  }
+  
+  .menu-superadmin-item {
+    height: 110px;
+  }
+  
+  .menu-superadmin-icon {
+    font-size: 36px;
+  }
+  
+  .menu-superadmin-item h3 {
+    font-size: 1.1rem;
+  }
+  
+  .quote-superadmin {
+    font-size: 1rem;
+  }
+}
+
+/* Height-specific adjustments */
+@media (max-height: 700px) {
+  .header-superadmin {
+    margin-top: 30px;
+    padding: 0.5rem;
+  }
+  
+  .logo-superadmin {
+    height: 100px;
+  }
+  
+  .menu-superadmin-item {
+    height: 120px;
+  }
+  
+  .quote-superadmin-container {
+    margin: 1rem auto;
+    padding: 15px;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInText {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Footer styles */
 footer-superadmin {
   display: flex;
   justify-content: center;
@@ -111,15 +276,15 @@ footer-superadmin {
   width: 100%;
   padding: 20px 0;
   box-sizing: border-box;
-  margin-top: auto; /* Push the footer to the bottom of the page */
+  margin-top: auto;
 }
 
 .footer-superadmin-container {
   display: flex;
-  flex-direction: column; /* Stack items vertically */
-  justify-content: center; /* Center items horizontally */
-  align-items: center; /* Center items vertically */
-  width: 100%; /* Ensure full width for centering */
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
   text-align: center;
 }
 
@@ -150,57 +315,4 @@ footer-superadmin {
 .contact-item-superadmin span {
   margin-left: 10px;
   font-size: 15px;
-}
-
-@media (max-width: 768px) {
-  .footer-superadmin-container {
-    flex-direction: column;
-  }
-
-  .social-superadmin-icon {
-    margin-bottom: 10px;
-  }
-} 
-
-@media (max-width: 768px) {
-  .header-superadmin h2 {
-    font-size: 1.8rem;
-  }
-
-  .menu-superadmin-container {
-    flex-direction: column;
-  }
-
-  .menu-superadmin-item {
-    width: 100%;
-    max-width: 300px;
-  }
-
-  .footer-superadmin-container {
-    flex-direction: column;
-  }
-
-  .social-superadmin-icon {
-    margin-bottom: 10px;
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes fadeInText {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
