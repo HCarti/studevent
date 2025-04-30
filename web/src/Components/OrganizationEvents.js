@@ -44,7 +44,6 @@ const OrganizationEvents = () => {
       const authHeaders = getAuthHeaders();
       if (!authHeaders) return;
 
-      // Get current month's start and end dates for range query
       const startOfMonth = moment().startOf('month').toISOString();
       const endOfMonth = moment().endOf('month').toISOString();
 
@@ -59,14 +58,14 @@ const OrganizationEvents = () => {
       const formattedEvents = response.data.map(event => ({
         id: event._id,
         title: event.formType === 'Project' ? event.projectTitle : event.eventTitle || event.title,
-        start: moment.utc(event.startDate).local().startOf('day').toDate(), // Start at beginning of day
-        end: moment.utc(event.endDate).local().endOf('day').toDate(), // End at end of day
+        start: moment.utc(event.startDate).local().startOf('day').toDate(),
+        end: moment.utc(event.endDate).local().endOf('day').toDate(),
         description: event.formType === 'Project' ? event.projectDescription : event.description,
         location: event.location || 'TBA',
         organization: event.organization?.organizationName || 'N/A',
         type: event.formType,
         duration: calculateDuration(event.startDate, event.endDate),
-        allDay: true, // This is crucial for multi-day events
+        allDay: true,
         rawStart: event.startDate,
         rawEnd: event.endDate,
         projectTitle: event.projectTitle,
@@ -111,17 +110,16 @@ const OrganizationEvents = () => {
       const formattedEvents = response.data.map(event => ({
         id: event._id,
         title: event.formType === 'Project' ? event.projectTitle : event.eventTitle || event.title,
-        start: moment.utc(event.startDate).local().toDate(), // Convert UTC to local time
-        end: moment.utc(event.endDate).local().toDate(), // Convert UTC to local time
+        start: moment.utc(event.startDate).local().toDate(),
+        end: moment.utc(event.endDate).local().toDate(),
         description: event.formType === 'Project' ? event.projectDescription : event.description,
         location: event.location || 'TBA',
         organization: event.organization?.organizationName || 'N/A',
         type: event.formType,
         duration: calculateDuration(event.startDate, event.endDate),
         allDay: true,
-        rawStart: event.startDate, // Keep original for reference
-        rawEnd: event.endDate, // Keep original for reference
-        // Additional fields for display
+        rawStart: event.startDate,
+        rawEnd: event.endDate,
         projectTitle: event.projectTitle,
         eventTitle: event.eventTitle,
         formType: event.formType
@@ -143,7 +141,6 @@ const OrganizationEvents = () => {
   };
 
   // Calculate event duration
-  // Make duration calculation timezone-aware
   const calculateDuration = (start, end) => {
     const startDate = moment.utc(start).local().startOf('day');
     const endDate = moment.utc(end).local().startOf('day');
@@ -163,121 +160,62 @@ const OrganizationEvents = () => {
 
   // Handle date selection
   const handleSelectSlot = slotInfo => {
-    // Make sure we get the exact date from the slot
     const clickedDate = new Date(slotInfo.start);
-
-    // Debugging to verify we have the correct date
-    console.log('Raw clicked date:', clickedDate);
-    console.log('Slot info:', slotInfo);
-
     setSelectedDate(clickedDate);
 
-    // Use a clean date object for comparison (start of day in local time)
     const clickedDateClean = moment(clickedDate).startOf('day');
-
-    // Show exact day being used for filtering
-    console.log('Using date for filtering:', clickedDateClean.format('YYYY-MM-DD'));
-
     const filteredEvents = events.filter(event => {
-      // Get clean start/end dates at start of day for comparison
       const eventStart = moment(event.start).startOf('day');
       const eventEnd = moment(event.end).startOf('day');
-
-      // Check if clicked date falls within event range using day precision
-      const isInRange = clickedDateClean.isBetween(eventStart, eventEnd, 'day', '[]');
-
-      // Debug output for matching events
-      if (isInRange) {
-        console.log('Matching cell event:', {
-          title: event.title,
-          start: eventStart.format('YYYY-MM-DD'),
-          end: eventEnd.format('YYYY-MM-DD'),
-          isInRange
-        });
-      }
-
-      return isInRange;
+      return clickedDateClean.isBetween(eventStart, eventEnd, 'day', '[]');
     });
 
     setSelectedEvents(filteredEvents);
-
-    // Debug output
-    console.log('Cell Selection Debug:', {
-      clickedDate: clickedDateClean.format('YYYY-MM-DD'),
-      matchedEvents: filteredEvents.length,
-      eventTitles: filteredEvents.map(e => e.title)
-    });
   };
 
   // Handle event selection
   const handleSelectEvent = event => {
-    // Get the exact date of the event
     const eventDate = new Date(event.start);
-    console.log('Selected event date:', eventDate);
     setSelectedDate(eventDate);
 
-    // Create a clean date object for comparison (start of day in local time)
     const eventDateClean = moment(eventDate).startOf('day');
-
-    // Find events on the exact same day
     const sameDay = events.filter(e => {
-      // Ensure we're comparing dates at the start of day in local time
       const eStart = moment(e.start).startOf('day');
       const eEnd = moment(e.end).startOf('day');
-
-      // Check if the event date is within the range
-      const isInRange = eventDateClean.isBetween(eStart, eEnd, 'day', '[]');
-
-      // Debug output to help diagnose issues
-      if (e.id === event.id || isInRange) {
-        console.log('Matching event:', {
-          title: e.title,
-          start: eStart.format('YYYY-MM-DD'),
-          end: eEnd.format('YYYY-MM-DD'),
-          isExact: e.id === event.id,
-          isInRange
-        });
-      }
-
-      return isInRange;
+      return eventDateClean.isBetween(eStart, eEnd, 'day', '[]');
     });
 
-    // Always include the clicked event, plus any others on the same day
-    // Create a Set to ensure no duplicates
     const uniqueEvents = new Set([event, ...sameDay]);
     const filteredEvents = [...uniqueEvents];
-
     setSelectedEvents(filteredEvents);
-
-    console.log('Event Selection:', {
-      eventTitle: event.title,
-      eventDate: eventDateClean.format('YYYY-MM-DD'),
-      matchedEvents: filteredEvents.length
-    });
   };
 
   // Custom event style based on type
   const eventStyleGetter = event => {
-    let backgroundColor = '#3174ad'; // Default blue
+    let backgroundColor = '#3174ad';
+    let borderColor = '#1a3ab5';
 
     if (event.type === 'Activity') {
-      backgroundColor = '#5cb85c'; // Green
+      backgroundColor = '#5cb85c';
+      borderColor = '#4cae4c';
     } else if (event.type === 'Project') {
-      backgroundColor = '#f0ad4e'; // Orange
+      backgroundColor = '#f0ad4e';
+      borderColor = '#eea236';
     }
 
     return {
       style: {
         backgroundColor,
+        borderLeft: `4px solid ${borderColor}`,
         borderRadius: '4px',
-        opacity: 0.8,
+        opacity: 0.9,
         color: 'white',
         border: '0px',
         display: 'block',
-        // Add these for multi-day events:
         width: 'calc(100% - 4px)',
         margin: '2px',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }
     };
   };
@@ -296,25 +234,25 @@ const OrganizationEvents = () => {
   const CustomToolbar = ({ label, onNavigate }) => {
     return (
       <div className="rbc-toolbar">
-        <div className="rbc-btn-group">
-          <button type="button" onClick={() => onNavigate('PREV')}>
-            Back
-          </button>
-          <button type="button" onClick={() => onNavigate('TODAY')}>
-            Today
-          </button>
-          <button type="button" onClick={() => onNavigate('NEXT')}>
-            Next
-          </button>
-        </div>
-        <div className="rbc-toolbar-label">{label}</div>
+      <span className="rbc-toolbar-label">{label}</span>
+      <div className="rbc-btn-group">
+        <button type="button" onClick={() => onNavigate('PREV')}>
+          Prev
+        </button>
+        <button type="button" onClick={() => onNavigate('TODAY')}>
+          Today
+        </button>
+        <button type="button" onClick={() => onNavigate('NEXT')}>
+          Next
+        </button>
       </div>
+    </div>
     );
   };
 
   return (
-    <div className="wrap">
-      <h1>EVENT CALENDAR</h1>
+    <div className="calendar-page-container">
+      <h1 className="calendar-title">EVENT CALENDAR</h1>
 
       {loading && (
         <div className="loader-overlay">
@@ -326,16 +264,20 @@ const OrganizationEvents = () => {
       )}
       {error && !error.includes('Session expired') && <div className="error-message">{error}</div>}
 
-      <div className="calendar-container">
-        <div className="calendar-wrapper">
-          <div style={{ height: 500 }}>
+      <div className="calendar-content-container">
+        <div className="calendar-main-wrapper">
+          <div className="calendar-component-container">
             <Calendar
               localizer={localizer}
               events={events}
               startAccessor="start"
               endAccessor="end"
               views={['month']}
-              style={{ height: '100%' }}
+              style={{ 
+                height: '100%', 
+                minHeight: '500px',
+                width: '100%'
+              }}
               selectable={true}
               onSelectSlot={handleSelectSlot}
               onSelectEvent={handleSelectEvent}
@@ -358,7 +300,7 @@ const OrganizationEvents = () => {
           </div>
         </div>
 
-        <div className="event-details">
+        <div className="calendar-details-panel">
           <h2>{moment(selectedDate).format('dddd, MMMM D, YYYY')} - Event Details</h2>
           <div className="event-details-content">
             {selectedEvents.length > 0 ? (
