@@ -116,7 +116,7 @@ const SuperAdminProfile = () => {
       setIsSaving(true);
       const token = localStorage.getItem('token');
       await axios.put(
-        'https://studevent-server.vercel.app/api/users/update',
+        'https://studevent-server.vercel.app/api/users/update/profile',
         editedUser,
         { headers: { Authorization: `Bearer ${token}` } }
       );
