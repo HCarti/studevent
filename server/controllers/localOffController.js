@@ -322,17 +322,31 @@ exports.checkBeforeFormApproval = async (req, res) => {
   try {
     const beforeForm = await LocalOffCampus.findOne({
       submittedBy: req.user._id,
-      formPhase: "BEFORE",
-      finalStatus: "approved"
-    }).select('_id status hasAfterReport');
+      formPhase: "BEFORE"
+    }).select('_id status formPhase hasAfterReport');
+
+    if (!beforeForm) {
+      return res.status(200).json({
+        approved: false,
+        exists: false,
+        message: "No BEFORE form found"
+      });
+    }
 
     res.status(200).json({
-      approved: !!beforeForm,
-      hasAfterReport: beforeForm?.hasAfterReport || false,
-      eventId: beforeForm?._id
+      approved: beforeForm.status === 'approved',
+      hasAfterReport: beforeForm.hasAfterReport || false,
+      eventId: beforeForm._id,
+      exists: true,
+      status: beforeForm.status,
+      formPhase: beforeForm.formPhase
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error checking BEFORE form:", error);
+    res.status(500).json({ 
+      error: error.message,
+      details: "Server error while checking form status"
+    });
   }
 };
 

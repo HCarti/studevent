@@ -72,4 +72,33 @@ router.get('/:offId/tracker', async (req, res) => {
   }
 });
 
+// Add this route before module.exports
+router.get('/:id/status', async (req, res) => {
+  try {
+    const form = await LocalOffCampus.findById(req.params.id)
+      .select('formPhase status hasAfterReport');
+    
+    if (!form) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'Form not found' 
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      formPhase: form.formPhase,
+      status: form.status,
+      hasAfterReport: form.hasAfterReport || false,
+      isApproved: form.status === 'approved' && form.formPhase === 'BEFORE'
+    });
+  } catch (error) {
+    console.error("Error checking form status:", error);
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
+  }
+});
+
 module.exports = router;

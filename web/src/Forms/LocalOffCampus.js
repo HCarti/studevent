@@ -169,7 +169,18 @@ const Localoffcampus = () => {
   const checkForSubmittedBeforeForm = async () => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!token) {
+        console.log('No token found');
+        return;
+      }
+  
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user?._id) {
+        console.log('No user ID found');
+        return;
+      }
+  
+      console.log('Checking for BEFORE form for user:', user._id);
   
       const response = await fetch(
         'https://studevent-server.vercel.app/api/local-off-campus/check-before', 
@@ -180,17 +191,33 @@ const Localoffcampus = () => {
         }
       );
   
-      if (response.ok) {
-        const data = await response.json();
-        if (data.exists) {
-          setBeforeSubmitted(true);
-          setEventId(data.eventId);
-          setIsBeforeApproved(data.status === 'approved');
-          // Don't automatically set formPhase to 'AFTER' here
-        }
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('Error checking BEFORE form:', error);
+        return;
       }
+  
+      const data = await response.json();
+      console.log('BEFORE form check response:', data);
+  
+      if (data.approved) {
+        setBeforeSubmitted(true);
+        setEventId(data.eventId);
+        setIsBeforeApproved(true);
+        console.log('Found approved BEFORE form:', data.eventId);
+      } else {
+        console.log('No approved BEFORE form found');
+        setBeforeSubmitted(false);
+        setIsBeforeApproved(false);
+      }
+  
     } catch (error) {
       console.error('Error checking for BEFORE form:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to check form status',
+        severity: 'error'
+      });
     }
   };
 
@@ -201,8 +228,10 @@ const Localoffcampus = () => {
       try {
         setIsCheckingApproval(true);
         const token = localStorage.getItem('token');
+        
+        // Use the existing /:offId endpoint that already includes formPhase
         const response = await fetch(
-          `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/status`,
+          `https://studevent-server.vercel.app/api/local-off-campus/${eventId}`,
           {
             headers: {
               'Authorization': `Bearer ${token}`
@@ -212,9 +241,11 @@ const Localoffcampus = () => {
   
         if (response.ok) {
           const data = await response.json();
-          if (data.status === 'approved') {
+          // Check if the form exists and is approved
+          if (data.before?.form?.status === 'approved') {
             setIsBeforeApproved(true);
-            // Don't automatically switch to AFTER phase - let user do it via OrgSubmittedForms
+          } else {
+            setIsBeforeApproved(false);
           }
         }
       } catch (error) {
@@ -658,14 +689,36 @@ const Localoffcampus = () => {
         const token = localStorage.getItem('token');
         if (!token) throw new Error('Authentication token not found');
   
-        // 1. Prepare the EXACT data structure backend expects
+        // 1. Verify BEFORE form is approved
+        console.log('Checking BEFORE form approval status for eventId:', eventId);
+        const approvalCheck = await fetch(
+          `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/status`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          }
+        );
+  
+        if (!approvalCheck.ok) {
+          throw new Error('Failed to verify BEFORE form approval status');
+        }
+  
+        const approvalData = await approvalCheck.json();
+        console.log('Approval status response:', approvalData);
+  
+        if (approvalData.status !== 'approved') {
+          throw new Error('BEFORE form must be approved before submitting AFTER report');
+        }
+  
+        // 2. Prepare the request data
         const requestData = {
           localOffCampus: {
-            afterActivity: formData.afterActivity.map(item => ({
-              programs: item.programs,
-              destination: item.destination,
-              noOfStudents: item.noOfStudents,
-              noofHeiPersonnel: item.noofHeiPersonnel
+            afterActivity: formData.afterActivity.map(activity => ({
+              programs: activity.programs,
+              destination: activity.destination,
+              noOfStudents: activity.noOfStudents,
+              noofHeiPersonnel: activity.noofHeiPersonnel
             })),
             problemsEncountered: formData.problemsEncountered,
             recommendation: formData.recommendation
@@ -673,14 +726,9 @@ const Localoffcampus = () => {
           formPhase: 'AFTER'
         };
   
-        // 2. Debug output
-        console.log('Submitting:', {
-          endpoint: `.../${eventId}/update-to-after`,
-          payload: requestData,
-          method: 'POST'
-        });
+        console.log('Submitting AFTER report with:', requestData);
   
-        // 3. Make the request
+        // 3. Submit AFTER report
         const response = await fetch(
           `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/update-to-after`,
           {
@@ -693,26 +741,28 @@ const Localoffcampus = () => {
           }
         );
   
-        // 4. Handle response
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || 'Submission failed');
+          throw new Error(errorData.error || 'AFTER report submission failed');
         }
   
-        // Success
+        // Success handling
         setFormSent(true);
         setSnackbar({
           open: true,
           message: 'AFTER report submitted successfully!',
           severity: 'success'
         });
+        
         setTimeout(() => navigate('/org-submitted-forms'), 1500);
   
       } catch (error) {
-        console.error('Submission error:', error);
+        console.error('AFTER submission error:', error);
         setSnackbar({
           open: true,
-          message: `Error: ${error.message}`,
+          message: error.message.includes('BEFORE form must be approved') 
+            ? 'Please ensure the BEFORE form is approved first'
+            : `Error: ${error.message}`,
           severity: 'error'
         });
       }
