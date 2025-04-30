@@ -21,6 +21,137 @@ const getRequiredReviewers = (formPhase) => {
   }
 };
 
+exports.submitLocalOffCampusBefore = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { localOffCampus } = req.body;
+    
+    // Validation (existing code remains the same)
+    if (!localOffCampus) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ error: "Form data is required" });
+    }
+    
+    const { nameOfHei, region, address, basicInformation, activitiesOffCampus } = localOffCampus;
+    
+    const errors = [];
+    if (!nameOfHei?.trim()) errors.push("Name of HEI is required");
+    if (!region?.trim()) errors.push("Region is required");
+    if (!address?.trim()) errors.push("Address is required");
+    if (!Array.isArray(basicInformation) || basicInformation.length === 0) {
+      errors.push("At least one basic information entry is required");
+    }
+    if (!Array.isArray(activitiesOffCampus) || activitiesOffCampus.length === 0) {
+      errors.push("Activities off campus information is required");
+    }
+    
+    if (errors.length > 0) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ 
+        error: "Validation failed",
+        details: errors 
+      });
+    }
+
+    // Create the BEFORE form
+    const newForm = new LocalOffCampus({
+      formPhase: "BEFORE",
+      nameOfHei,
+      region,
+      address,
+      basicInformation,
+      activitiesOffCampus,
+      submittedBy: req.user._id,
+      status: "submitted",
+      emailAddress: req.user.email,
+      currentStep: 0 // Add currentStep to track progress
+    });
+
+    const savedForm = await newForm.save({ session });
+
+    // Create progress tracker - MODIFIED THIS SECTION
+    const requiredReviewers = getRequiredReviewers('BEFORE');
+    const tracker = new EventTracker({
+      formId: savedForm._id,
+      formType: "LocalOffCampus",
+      formPhase: "BEFORE",
+      steps: requiredReviewers.map(reviewer => ({
+        stepName: reviewer.stepName,
+        reviewerRole: reviewer.reviewerRole,
+        status: "pending",
+        remarks: "",
+        timestamp: null
+      })),
+      currentStep: 0,
+      currentAuthority: requiredReviewers[0].reviewerRole // Set first reviewer as current
+    });
+
+    const savedTracker = await tracker.save({ session });
+
+    // Update form with tracker reference
+    await LocalOffCampus.findByIdAndUpdate(
+      savedForm._id,
+      { trackerId: savedTracker._id },
+      { session }
+    );
+
+    // Send notification to submitter
+    if (req.user.email) {
+      await Notification.create([{
+        userEmail: req.user.email,
+        message: `Your Local Off-Campus BEFORE form has been submitted!`,
+        read: false,
+        timestamp: new Date(),
+        type: "form-submission"
+      }], { session });
+    }
+
+    // Send notifications to first reviewers (Academic Services)
+    const academicServicesUsers = await User.find({ 
+      role: "Academic Services" 
+    }).session(session);
+
+    const reviewerNotifications = academicServicesUsers.map(user => ({
+      userEmail: user.email,
+      message: `New Local Off-Campus BEFORE form submitted by ${req.user.name || 'an organization'}`,
+      read: false,
+      timestamp: new Date(),
+      type: "review-request",
+      link: `/review/local-off-campus/${savedForm._id}`,
+      formId: savedForm._id,
+      trackerId: savedTracker._id
+    }));
+
+    await Notification.insertMany(reviewerNotifications, { session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(201).json({
+      success: true,
+      message: "BEFORE form submitted successfully",
+      form: savedForm,
+      tracker: savedTracker,
+      eventId: savedForm._id
+    });
+
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    
+    console.error("Error submitting BEFORE form:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error submitting BEFORE form",
+      error: error.message
+    });
+  }
+};
+
 exports.submitLocalOffCampusAfter = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -307,41 +438,9 @@ exports.updateToAfterPhase = async (req, res) => {
 };
 
 exports.updateLocalOffCampusAfter = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
     const { eventId } = req.params;
-    const { localOffCampus, formPhase } = req.body;
-    
-    if (!localOffCampus) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ error: "Form data is required" });
-    }
-    
-    const { afterActivity, problemsEncountered, recommendation } = localOffCampus;
-    
-    // Validation
-    const errors = [];
-    if (!Array.isArray(afterActivity) || afterActivity.length === 0) {
-      errors.push("At least one after activity entry is required");
-    }
-    if (!problemsEncountered?.trim()) {
-      errors.push("Problems encountered is required");
-    }
-    if (!recommendation?.trim()) {
-      errors.push("Recommendation is required");
-    }
-    
-    if (errors.length > 0) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ 
-        error: "Validation failed",
-        details: errors 
-      });
-    }
+    const { afterActivity, problemsEncountered, recommendation, formPhase } = req.body;
 
     const updatedForm = await LocalOffCampus.findByIdAndUpdate(
       eventId,
@@ -349,37 +448,15 @@ exports.updateLocalOffCampusAfter = async (req, res) => {
         afterActivity,
         problemsEncountered,
         recommendation,
-        formPhase: formPhase || 'AFTER',
-        updatedAt: Date.now(),
-        status: "submitted" // Reset status on update
+        formPhase,
+        updatedAt: Date.now()
       },
-      { new: true, session }
+      { new: true }
     );
 
     if (!updatedForm) {
-      await session.abortTransaction();
-      session.endSession();
       return res.status(404).json({ error: "Local Off-Campus form not found" });
     }
-
-    // Reset tracker if needed
-    await EventTracker.findOneAndUpdate(
-      { formId: eventId },
-      {
-        steps: getRequiredReviewers('AFTER').map(reviewer => ({
-          stepName: reviewer.stepName,
-          reviewerRole: reviewer.reviewerRole,
-          status: "pending",
-          remarks: "",
-          timestamp: null
-        })),
-        currentStep: 0
-      },
-      { session }
-    );
-
-    await session.commitTransaction();
-    session.endSession();
 
     res.status(200).json({
       success: true,
@@ -387,8 +464,6 @@ exports.updateLocalOffCampusAfter = async (req, res) => {
       data: updatedForm
     });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
     console.error("Error updating AFTER report:", error);
     res.status(500).json({
       success: false,
