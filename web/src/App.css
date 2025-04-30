@@ -40,3 +40,27 @@
 .main-content {
   padding-top: 70px; /* Adjust this value to the height of your navbar */
 }
+
+/* Hide scrollbar for all screen sizes */
+html,
+body {
+  overflow-x: hidden;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+  width: 0;
+}
+
+@media (max-width: 500px) {
+  body::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+  }
+  body {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+}

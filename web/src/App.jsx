@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from 'react-router-dom';
 import Navbar from './Components/Navbar';
 import Home from './Components/Home';
@@ -39,66 +39,81 @@ import EventTrackerList from './Components/EventTrackerList';
 import OrgSubmittedForms from './OrgMems/OrgSubmittedForms';
 import SuperAdminProfile from './SuperAdmin/SuperAdminProfile';
 
+// Global styles to hide scrollbar
+const globalStyles = `
+  body, html {
+    overflow-x: hidden;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  body::-webkit-scrollbar, html::-webkit-scrollbar {
+    display: none;
+    width: 0;
+  }
+`;
 
 // Protected Route Components
 const ProtectedRoute = ({ children, allowedRoles }) => {
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = JSON.parse(localStorage.getItem('user'));
   const isAuthenticated = !!user;
   const userRole = user?.role || '';
-  
+
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
   }
-  
+
   if (allowedRoles && !allowedRoles.includes(userRole)) {
     return <Navigate to="/unauthorized" replace />;
   }
-  
+
   return children;
 };
 
 // Role-specific layout components
 const AdminLayout = ({ children }) => (
-  <ProtectedRoute allowedRoles={['Admin', 'Authority']}>
-    {children}
-  </ProtectedRoute>
+  <ProtectedRoute allowedRoles={['Admin', 'Authority']}>{children}</ProtectedRoute>
 );
 
 const SuperAdminLayoutWrapper = ({ children }) => (
   <ProtectedRoute allowedRoles={['SuperAdmin']}>
-    <SuperAdminLayout>
-      {children}
-    </SuperAdminLayout>
+    <SuperAdminLayout>{children}</SuperAdminLayout>
   </ProtectedRoute>
 );
 
 const MemberLayout = ({ children }) => (
-  <ProtectedRoute allowedRoles={['Organization']}>
-    {children}
-  </ProtectedRoute>
+  <ProtectedRoute allowedRoles={['Organization']}>{children}</ProtectedRoute>
 );
 
 const App = () => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    if (savedUser && savedUser !== "undefined") {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser && savedUser !== 'undefined') {
       try {
         setUser(JSON.parse(savedUser));
       } catch (error) {
-        console.error("Error parsing user data:", error);
+        console.error('Error parsing user data:', error);
       }
     }
+
+    // Apply global styles
+    const styleElement = document.createElement('style');
+    styleElement.innerHTML = globalStyles;
+    document.head.appendChild(styleElement);
+
+    return () => {
+      document.head.removeChild(styleElement);
+    };
   }, []);
 
-  const handleLogin = (userData) => {
-    localStorage.setItem("user", JSON.stringify(userData));
+  const handleLogin = userData => {
+    localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    localStorage.removeItem('user');
     setUser(null);
   };
 
@@ -110,20 +125,28 @@ const App = () => {
       <Navbar isLoggedIn={isSignedIn} user={user} handleLogout={handleLogout} />
       <div className="main-content">
         <Routes>
-          <Route 
-            path="/" 
-            element={isSignedIn ? 
-              <Navigate to={
-                role === 'Organization' ? '/member' : 
-                role === 'Authority' || role === 'Admin' ? '/admin' : 
-                role === 'SuperAdmin' ? '/superadmin' : 
-                '/unauthorized'
-              } /> 
-              : <Home handleLogin={handleLogin} />
-            } 
+          <Route
+            path="/"
+            element={
+              isSignedIn ? (
+                <Navigate
+                  to={
+                    role === 'Organization'
+                      ? '/member'
+                      : role === 'Authority' || role === 'Admin'
+                      ? '/admin'
+                      : role === 'SuperAdmin'
+                      ? '/superadmin'
+                      : '/unauthorized'
+                  }
+                />
+              ) : (
+                <Home handleLogin={handleLogin} />
+              )
+            }
           />
           <Route path="/unauthorized" element={<Unauthorized />} />
-          
+
           {/* Public Routes */}
           <Route path="/calendar" element={<OrganizationEvents />} />
           <Route path="/trackerlist" element={<EventTrackerList />} />
@@ -131,153 +154,218 @@ const App = () => {
           <Route path="/view-all-organizations" element={<ViewAllOrganizations />} />
           <Route path="/formss" element={<FormsandSig />} />
 
+          {/* SuperAdmin Routes */}
+          <Route
+            path="/superadmin"
+            element={
+              <ProtectedRoute allowedRoles={['SuperAdmin']}>
+                <SuperAdminHome /> {/* Standalone home without layout */}
+              </ProtectedRoute>
+            }
+          />
 
-{/* SuperAdmin Routes */}
-<Route path="/superadmin" element={
-  <ProtectedRoute allowedRoles={['SuperAdmin']}>
-    <SuperAdminHome /> {/* Standalone home without layout */}
-  </ProtectedRoute>
-} />
+          <Route
+            path="/superadminprofile"
+            element={
+              <ProtectedRoute allowedRoles={['SuperAdmin']}>
+                <SuperAdminProfile /> {/* Standalone profile without layout */}
+              </ProtectedRoute>
+            }
+          />
 
-<Route path="/superadminprofile" element={
-  <ProtectedRoute allowedRoles={['SuperAdmin']}>
-    <SuperAdminProfile /> {/* Standalone profile without layout */}
-  </ProtectedRoute>
-} />
-
-<Route path="/superadmin" element={
-  <ProtectedRoute allowedRoles={['SuperAdmin']}>
-    <SuperAdminLayoutWrapper /> {/* Layout wrapper for sidebar routes */}
-  </ProtectedRoute>
-}>
-  <Route path="controlpanel" element={<AdminControlPanel />} />
-  <Route path="authorities" element={<SuperAdminAuthorities />} />
-  <Route path="adminuser" element={<SuperAdminUsers />} />
-  <Route path="adduser" element={<SuperAdminAddUser />} />
-  <Route path="admintab" element={<AdminTab />} />
-</Route>
+          <Route
+            path="/superadmin"
+            element={
+              <ProtectedRoute allowedRoles={['SuperAdmin']}>
+                <SuperAdminLayoutWrapper /> {/* Layout wrapper for sidebar routes */}
+              </ProtectedRoute>
+            }
+          >
+            <Route path="controlpanel" element={<AdminControlPanel />} />
+            <Route path="authorities" element={<SuperAdminAuthorities />} />
+            <Route path="adminuser" element={<SuperAdminUsers />} />
+            <Route path="adduser" element={<SuperAdminAddUser />} />
+            <Route path="admintab" element={<AdminTab />} />
+          </Route>
 
           {/* Admin Routes */}
-          <Route path="/admin" element={
-            <AdminLayout>
-              <AdminHome />
-            </AdminLayout>
-          } />
-          
-          <Route path="/formdetails/:formId" element={
-            <AdminLayout>
-              <FormDetails />
-            </AdminLayout>
-          } />
-          
-          <Route path="/dashboard" element={
-            <AdminLayout>
-              <Dashboard />
-            </AdminLayout>
-          } />
-          
-          <Route path="/adminprofile" element={
-            <AdminLayout>
-              <AdminProfile />
-            </AdminLayout>
-          } />
-          
-          <Route path="/adminproposal" element={
-            <AdminLayout>
-              <Proposal />
-            </AdminLayout>
-          } />
-          
-          <Route path="/adminformview" element={
-            <AdminLayout>
-              <AdminFormView />
-            </AdminLayout>
-          } />
+          <Route
+            path="/admin"
+            element={
+              <AdminLayout>
+                <AdminHome />
+              </AdminLayout>
+            }
+          />
+
+          <Route
+            path="/formdetails/:formId"
+            element={
+              <AdminLayout>
+                <FormDetails />
+              </AdminLayout>
+            }
+          />
+
+          <Route
+            path="/dashboard"
+            element={
+              <AdminLayout>
+                <Dashboard />
+              </AdminLayout>
+            }
+          />
+
+          <Route
+            path="/adminprofile"
+            element={
+              <AdminLayout>
+                <AdminProfile />
+              </AdminLayout>
+            }
+          />
+
+          <Route
+            path="/adminproposal"
+            element={
+              <AdminLayout>
+                <Proposal />
+              </AdminLayout>
+            }
+          />
+
+          <Route
+            path="/adminformview"
+            element={
+              <AdminLayout>
+                <AdminFormView />
+              </AdminLayout>
+            }
+          />
 
           {/* Member Routes */}
-          <Route path="/member" element={
-            <MemberLayout>
-              <OrgMemHome />
-            </MemberLayout>
-          } />
-          
-          <Route path="/forms" element={
-            <MemberLayout>
-              <Forms role={role} />
-            </MemberLayout>
-          } />
-          
-          <Route path="/orgTrackerViewer/:formId" element={
-            <MemberLayout>
-              <OrgTrackerViewer />
-            </MemberLayout>
-          } />
-          
-          <Route path="/organization/:studentOrganization/forms" element={
-            <MemberLayout>
-              <OrgSubmittedForms />
-            </MemberLayout>
-          } />
-          
-          <Route path="/edit-budget/:formId" element={
-            <MemberLayout>
-              <Budget />
-            </MemberLayout>
-          } />
-          
-          <Route path="/edit-form/:formId" element={
-            <MemberLayout>
-              <Aap />
-            </MemberLayout>
-          } />
-          
-          <Route path="/localoffcampus" element={
-            <MemberLayout>
-              <LocalOffCampus />
-            </MemberLayout>
-          } />
+          <Route
+            path="/member"
+            element={
+              <MemberLayout>
+                <OrgMemHome />
+              </MemberLayout>
+            }
+          />
 
-          <Route path="/liquidation" element={
-            <MemberLayout>
-              <Liquidation />
-            </MemberLayout>
-          } />
+          <Route
+            path="/forms"
+            element={
+              <MemberLayout>
+                <Forms role={role} />
+              </MemberLayout>
+            }
+          />
+
+          <Route
+            path="/orgTrackerViewer/:formId"
+            element={
+              <MemberLayout>
+                <OrgTrackerViewer />
+              </MemberLayout>
+            }
+          />
+
+          <Route
+            path="/organization/:studentOrganization/forms"
+            element={
+              <MemberLayout>
+                <OrgSubmittedForms />
+              </MemberLayout>
+            }
+          />
+
+          <Route
+            path="/edit-budget/:formId"
+            element={
+              <MemberLayout>
+                <Budget />
+              </MemberLayout>
+            }
+          />
+
+          <Route
+            path="/edit-form/:formId"
+            element={
+              <MemberLayout>
+                <Aap />
+              </MemberLayout>
+            }
+          />
+
+          <Route
+            path="/localoffcampus"
+            element={
+              <MemberLayout>
+                <LocalOffCampus />
+              </MemberLayout>
+            }
+          />
+
+          <Route
+            path="/liquidation"
+            element={
+              <MemberLayout>
+                <Liquidation />
+              </MemberLayout>
+            }
+          />
 
           {/* Common Form Routes */}
-          <Route path="/orgprof" element={
-            <ProtectedRoute allowedRoles={['Organization', 'Admin', 'Authority']}>
-              <OrgProf />
-            </ProtectedRoute>
-          } />
+          <Route
+            path="/orgprof"
+            element={
+              <ProtectedRoute allowedRoles={['Organization', 'Admin', 'Authority']}>
+                <OrgProf />
+              </ProtectedRoute>
+            }
+          />
 
-          <Route path="/progtrack/:formId" element={
-            <ProtectedRoute allowedRoles={['Admin', 'Authority']}>
-              <ProgressTracker />
-            </ProtectedRoute>
-          } />
+          <Route
+            path="/progtrack/:formId"
+            element={
+              <ProtectedRoute allowedRoles={['Admin', 'Authority']}>
+                <ProgressTracker />
+              </ProtectedRoute>
+            }
+          />
 
-          <Route path="/activity" element={
-            <ProtectedRoute allowedRoles={['Organization', 'Admin', 'Authority']}>
-              <Aap />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/project" element={
-            <ProtectedRoute allowedRoles={['Organization', 'Admin', 'Authority']}>
-              <Project />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/budget" element={
-            <ProtectedRoute allowedRoles={['Organization', 'Admin', 'Authority']}>
-              <Budget />
-            </ProtectedRoute>
-          } />
+          <Route
+            path="/activity"
+            element={
+              <ProtectedRoute allowedRoles={['Organization', 'Admin', 'Authority']}>
+                <Aap />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/project"
+            element={
+              <ProtectedRoute allowedRoles={['Organization', 'Admin', 'Authority']}>
+                <Project />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/budget"
+            element={
+              <ProtectedRoute allowedRoles={['Organization', 'Admin', 'Authority']}>
+                <Budget />
+              </ProtectedRoute>
+            }
+          />
 
           <Route path="*" element={<PageNotFound />} />
         </Routes>
       </div>
-      <Footer/>
+      <Footer />
     </Router>
   );
 };
