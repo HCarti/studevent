@@ -650,78 +650,64 @@ const Localoffcampus = () => {
   };
   
   // Submit AFTER form
-  const handleSubmitAfter = async () => {
-    const isValid = validateSection(5);
-    
-    if (isValid) {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          throw new Error('Authentication token not found. Please log in again.');
-        }
+ const handleSubmitAfter = async () => {
+  const isValid = validateSection(5);
   
-        // Determine the endpoint and method based on whether we're editing or creating
-        const endpoint = isEditingAfter 
-          ? `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/after`
-          : `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/update-to-after`;
-  
-        const method = isEditingAfter ? 'PUT' : 'POST';
-  
-        // Prepare the request body in the correct format
-        const requestBody = {
-          localOffCampus: {
+  if (isValid) {
+    try {
+      const token = localStorage.getItem('token');
+      // Ensure there's no space in the endpoint URL
+      const endpoint = isEditingAfter 
+        ? `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/after`
+        : `https://studevent-server.vercel.app/api/local-off-campus/${eventId}/update-to-after`; // No space here
+
+      const response = await fetch(endpoint, {
+        method: isEditingAfter ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          localOffCampus: { // Match backend expected structure
             afterActivity: formData.afterActivity,
             problemsEncountered: formData.problemsEncountered,
             recommendation: formData.recommendation
           },
           formPhase: 'AFTER'
-        };
-  
-        const response = await fetch(endpoint, {
-          method,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify(requestBody),
-        });
-  
-        // Check response content type before parsing
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          const text = await response.text();
-          throw new Error(`Server returned ${response.status}: ${text}`);
-        }
-  
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error || 'Submission failed');
-        }
-  
-        setFormSent(true);
-        setSnackbar({
-          open: true,
-          message: isEditingAfter 
-            ? 'AFTER report updated successfully!' 
-            : 'AFTER report submitted successfully!',
-          severity: 'success'
-        });
-        
-        // Redirect to submitted forms after a brief delay
-        setTimeout(() => {
-          navigate('/org-submitted-forms');
-        }, 1500);
-  
-      } catch (error) {
-        console.error('Error:', error);
-        setSnackbar({
-          open: true,
-          message: `Error ${isEditingAfter ? 'updating' : 'submitting'} AFTER report: ${error.message}`,
-          severity: 'error'
-        });
+        }),
+      });
+
+      // Add proper error handling
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Server returned ${response.status}: ${errorText}`);
       }
+
+      const data = await response.json();
+      
+      setFormSent(true);
+      setSnackbar({
+        open: true,
+        message: isEditingAfter 
+          ? 'AFTER report updated successfully!' 
+          : 'AFTER report submitted successfully!',
+        severity: 'success'
+      });
+      
+      setTimeout(() => {
+        navigate('/org-submitted-forms');
+      }, 1500);
+
+    } catch (error) {
+      console.error('Error:', error);
+      setSnackbar({
+        open: true,
+        message: `Error ${isEditingAfter ? 'updating' : 'submitting'} AFTER report: ${error.message}`,
+        severity: 'error'
+      });
     }
-  };
+  }
+};
 
   // Render step content
   const renderStepContent = () => {

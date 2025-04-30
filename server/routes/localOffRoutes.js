@@ -35,8 +35,9 @@ router.get('/:offId', localOffController.getLocalOffCampusForms);
 
 // After phase routes
 router.post('/after', localOffController.submitLocalOffCampusAfter); // For new submissions
+// In your localOffRoutes.js
+router.post('/:eventId/update-to-after', localOffController.updateToAfterPhase); // For new submissions
 router.put('/:eventId/after', localOffController.updateLocalOffCampusAfter); // For updates
-router.put('/:eventId/update-to-after', localOffController.updateToAfterPhase); // For phase transition
 
 // Add this route to localOffRoutes.js
 router.get('/:offId/tracker', async (req, res) => {
