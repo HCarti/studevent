@@ -237,8 +237,13 @@ const Localoffcampus = () => {
     if (isBeforeApproved) {
       setFormPhase('AFTER');
       setCurrentStep(3);
+      // Preserve the existing BEFORE data when transitioning
+      setFormData(prev => ({
+        ...prev,
+        formPhase: 'AFTER'
+      }));
     }
-  };
+};
 
   // Handle form field changes
   const handleChange = (e, index, fieldType) => {
@@ -538,28 +543,46 @@ const Localoffcampus = () => {
     const userData = JSON.parse(localStorage.getItem('user'));
     if (userData) setUser(userData);
 
-    // Check if coming from OrgSubmittedForms to edit AFTER phase
-    if (location.state?.editAfterForm) {
-      const { formData } = location.state;
-      setEventId(formData._id);
-      setIsBeforeApproved(true);
-      setFormPhase('AFTER');
-      setIsEditingAfter(true);
-      setCurrentStep(3);
-      
-      // Set existing AFTER data if available
-      if (formData.afterActivity) {
-        setFormData(prev => ({
-          ...prev,
-          afterActivity: formData.afterActivity,
-          problemsEncountered: formData.problemsEncountered || '',
-          recommendation: formData.recommendation || ''
-        }));
-      }
+    // Check if coming from OrgSubmittedForms
+    if (location.state) {
+        if (location.state.startAfterForm) {
+            // Starting new AFTER form for approved BEFORE form
+            setEventId(location.state.beforeFormId);
+            setIsBeforeApproved(true);
+            setFormPhase('AFTER');
+            setCurrentStep(3);
+            setIsEditingAfter(false);
+        } 
+        else if (location.state.editAfterForm) {
+            // Editing existing AFTER form
+            const { formData, beforeFormId } = location.state;
+            setEventId(beforeFormId);
+            setIsBeforeApproved(true);
+            setFormPhase('AFTER');
+            setCurrentStep(3);
+            setIsEditingAfter(true);
+            
+            // Only set AFTER phase data
+            setFormData(prev => ({
+                ...prev,
+                afterActivity: formData.afterActivity || prev.afterActivity,
+                problemsEncountered: formData.problemsEncountered || prev.problemsEncountered,
+                recommendation: formData.recommendation || prev.recommendation,
+                formPhase: 'AFTER'
+            }));
+        }
+        else if (location.state.editBeforeForm) {
+            // Editing BEFORE form
+            const { formData } = location.state;
+            setFormData(formData);
+            setEventId(formData._id);
+            setBeforeSubmitted(true);
+            setIsBeforeApproved(formData.status === 'approved');
+        }
     } else {
-      checkForSubmittedBeforeForm();
+        checkForSubmittedBeforeForm();
     }
-  }, [location.state]);
+}, [location.state]);
 
   // Submit BEFORE form
   const handleSubmitBefore = async () => {
@@ -646,7 +669,8 @@ const Localoffcampus = () => {
           body: JSON.stringify({
             afterActivity: formData.afterActivity,
             problemsEncountered: formData.problemsEncountered,
-            recommendation: formData.recommendation
+            recommendation: formData.recommendation,
+            formPhase: 'AFTER' // Ensure phase is explicitly set
           }),
         });
 
@@ -656,18 +680,27 @@ const Localoffcampus = () => {
         }
 
         setFormSent(true);
-        setNotificationVisible(true);
-        setTimeout(() => setNotificationVisible(false), 1000);
+        setSnackbar({
+          open: true,
+          message: 'AFTER report submitted successfully!',
+          severity: 'success'
+        });
         
-        // Redirect to submitted forms
-        navigate('/');
+        // Redirect to submitted forms after a brief delay
+        setTimeout(() => {
+          navigate('/org-submitted-forms');
+        }, 1500);
 
       } catch (error) {
         console.error('Error:', error);
-        alert(`An error occurred: ${error.message}`);
+        setSnackbar({
+          open: true,
+          message: `Error submitting AFTER report: ${error.message}`,
+          severity: 'error'
+        });
       }
     }
-  };
+};
 
   // Render step content
   const renderStepContent = () => {
@@ -1134,48 +1167,54 @@ const Localoffcampus = () => {
       
       <div className="sidebar">
         <ul>
-          {/* BEFORE Sections */}
-          <li className={`${currentStep === 0 ? 'active' : ''} ${beforeSubmitted ? 'completed-phase' : ''}`}>
-            {validationResults.nameOfHei && validationResults.region && validationResults.address ? (
-              <FaCheck className="check-icon green" />
-            ) : (
-              <span className="error-icon">!</span>
-            )}
-            School Information
-          </li>
-          
-          <li className={`${currentStep === 1 ? 'active' : ''} ${beforeSubmitted ? 'completed-phase' : ''}`}>
-            {validationResults.basicInformation.every(field => 
-              field.programName &&
-              field.course &&
-              field.destinationAndVenue &&
-              field.inclusiveDates &&
-              field.numberOfStudents &&
-              field.listOfPersonnelIncharge
-            ) ? (
-              <FaCheck className="check-icon green" />
-            ) : (
-              <span className="error-icon">!</span>
-            )}
-            Basic Information
-          </li>
-          
-          <li className={`${currentStep === 2 ? 'active' : ''} ${beforeSubmitted ? 'completed-phase' : ''}`}>
-            {Object.values(validationResults.activitiesOffCampus[0]).every(Boolean) ? (
-              <FaCheck className="check-icon green" />
-            ) : (
-              <span className="error-icon">!</span>
-            )}
-            Activities Off Campus
-          </li>
+          {/* BEFORE Sections - only show if in BEFORE phase */}
+          {formPhase === 'BEFORE' && (
+            <>
+              <li className={`${currentStep === 0 ? 'active' : ''} ${beforeSubmitted ? 'completed-phase' : ''}`}>
+                {validationResults.nameOfHei && validationResults.region && validationResults.address ? (
+                  <FaCheck className="check-icon green" />
+                ) : (
+                  <span className="error-icon">!</span>
+                )}
+                School Information
+              </li>
+              
+              <li className={`${currentStep === 1 ? 'active' : ''} ${beforeSubmitted ? 'completed-phase' : ''}`}>
+                {validationResults.basicInformation.every(field => 
+                  field.programName &&
+                  field.course &&
+                  field.destinationAndVenue &&
+                  field.inclusiveDates &&
+                  field.numberOfStudents &&
+                  field.listOfPersonnelIncharge
+                ) ? (
+                  <FaCheck className="check-icon green" />
+                ) : (
+                  <span className="error-icon">!</span>
+                )}
+                Basic Information
+              </li>
+              
+              <li className={`${currentStep === 2 ? 'active' : ''} ${beforeSubmitted ? 'completed-phase' : ''}`}>
+                {Object.values(validationResults.activitiesOffCampus[0]).every(Boolean) ? (
+                  <FaCheck className="check-icon green" />
+                ) : (
+                  <span className="error-icon">!</span>
+                )}
+                Activities Off Campus
+              </li>
+            </>
+          )}
   
-          {/* AFTER Sections - disabled if BEFORE not approved */}
-          <li className={`${currentStep === 3 ? 'active' : ''} ${!isBeforeApproved ? 'disabled-section' : ''}`}
-              onClick={() => isBeforeApproved && setCurrentStep(3)}>
+          {/* AFTER Sections - always show when in AFTER phase */}
+          <li 
+            className={`${currentStep === 3 ? 'active' : ''} ${formPhase === 'AFTER' ? 'active-phase' : ''}`}
+            onClick={() => formPhase === 'AFTER' && setCurrentStep(3)}
+          >
             {formPhase === 'AFTER' && validationResults.afterActivity[0]?.programs && 
-             validationResults.afterActivity[0]?.destination && 
-             validationResults.afterActivity[0]?.noOfStudents && 
-             validationResults.afterActivity[0]?.noofHeiPersonnel ? (
+              validationResults.afterActivity[0]?.destination && 
+              validationResults.afterActivity[0]?.noOfStudents && 
+              validationResults.afterActivity[0]?.noofHeiPersonnel ? (
               <FaCheck className="check-icon green" />
             ) : (
               formPhase === 'AFTER' && <span className="error-icon">!</span>
@@ -1183,7 +1222,10 @@ const Localoffcampus = () => {
             After Activity Report
           </li>
           
-          <li className={`${currentStep === 4 ? 'active' : ''} ${!isBeforeApproved ? 'disabled-section' : ''}`}>
+          <li 
+            className={`${currentStep === 4 ? 'active' : ''} ${formPhase === 'AFTER' ? 'active-phase' : ''}`}
+            onClick={() => formPhase === 'AFTER' && setCurrentStep(4)}
+          >
             {formPhase === 'AFTER' && validationResults.problemsEncountered ? (
               <FaCheck className="check-icon green" />
             ) : (
@@ -1192,7 +1234,10 @@ const Localoffcampus = () => {
             Problems Encountered
           </li>
           
-          <li className={`${currentStep === 5 ? 'active' : ''} ${!isBeforeApproved ? 'disabled-section' : ''}`}>
+          <li 
+            className={`${currentStep === 5 ? 'active' : ''} ${formPhase === 'AFTER' ? 'active-phase' : ''}`}
+            onClick={() => formPhase === 'AFTER' && setCurrentStep(5)}
+          >
             {formPhase === 'AFTER' && validationResults.recommendation ? (
               <FaCheck className="check-icon green" />
             ) : (
@@ -1288,19 +1333,19 @@ const Localoffcampus = () => {
         </div>
       </div>
       <Snackbar
-      open={snackbar.open}
-      autoHideDuration={6000}
-      onClose={() => setSnackbar({...snackbar, open: false})}
-      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-    >
-      <Alert 
-        onClose={() => setSnackbar({...snackbar, open: false})} 
-        severity={snackbar.severity}
-        sx={{ width: '100%' }}
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({...snackbar, open: false})}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        {snackbar.message}
-      </Alert>
-    </Snackbar>
+        <Alert 
+          onClose={() => setSnackbar({...snackbar, open: false})} 
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };

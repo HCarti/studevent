@@ -81,15 +81,22 @@ const OrgSubmittedForms = () => {
     }, []);
 
     const isFormEditable = (form) => {
-        // First check if the form is already approved - if so, it's not editable
         const status = form.finalStatus?.toLowerCase() || form.status?.toLowerCase();
-        if (status === 'approved') {
+        
+        // For Local Off-Campus forms
+        if (form.formType === 'LocalOffCampus' || form.isLocalOffCampus) {
+            // Allow editing AFTER forms that aren't approved
+            if (form.formPhase === 'AFTER') {
+                return status !== 'approved';
+            }
+            // Allow editing BEFORE forms that are approved (to start AFTER report)
+            if (form.formPhase === 'BEFORE') {
+                return status === 'approved' || 
+                       status === 'submitted' || 
+                       status === 'pending' || 
+                       status === 'draft';
+            }
             return false;
-        }
-    
-        if (form.formType === 'LocalOffCampus') {
-            return form.formPhase === 'BEFORE' && 
-                   (form.status === 'submitted' || form.status === 'pending' || form.status === 'draft');
         }
         
         // Original logic for other forms
@@ -184,6 +191,43 @@ const OrgSubmittedForms = () => {
         setError(null);
     };
 
+    // In OrgSubmittedForms.js
+    const handleEditClick = (e, form) => {
+        e.stopPropagation();
+        
+        if (form.formType === 'LocalOffCampus' || form.isLocalOffCampus) {
+            if (form.formPhase === 'AFTER') {
+                // Edit existing AFTER report
+                navigate('/localoffcampus', { 
+                    state: { 
+                        editAfterForm: true,
+                        formData: form,
+                        beforeFormId: form.eventId
+                    } 
+                });
+            } else if (form.status === 'approved') {
+                // Start new AFTER report for approved BEFORE form
+                navigate('/localoffcampus', { 
+                    state: { 
+                        startAfterForm: true,  // Changed from editAfterForm
+                        beforeFormId: form._id
+                    } 
+                });
+            } else {
+                // Edit BEFORE form
+                navigate('/localoffcampus', { 
+                    state: { 
+                        editBeforeForm: true,
+                        formData: form 
+                    } 
+                });
+            }
+        } else {
+            // Original edit logic for other forms
+            navigate(`/edit-form/${form._id}`, { state: { formData: form } });
+        }
+    };
+
     const getStatusBadgeClass = (form) => {
         const status = form.finalStatus?.toLowerCase() || form.status?.toLowerCase();
   
@@ -250,7 +294,7 @@ const OrgSubmittedForms = () => {
                     {error}
                 </p>
             )}
-
+    
             {loading ? (
                 <div className="loading-spinner">
                     <div className="spinner"></div>
@@ -278,7 +322,7 @@ const OrgSubmittedForms = () => {
                             Approved
                         </button>
                     </div>
-
+    
                     <div className="table-wrapper">
                         {allForms.length === 0 ? (
                             <p className="no-forms-message">No submitted forms found.</p>
@@ -297,21 +341,19 @@ const OrgSubmittedForms = () => {
                                     {getFilteredForms().map((form) => (
                                         <tr 
                                             key={form._id}
-                                            // Replace your current row onClick handler with this:
-                                            // In your table row onClick handler:
-                                    onClick={() => {
-                                        if (form.isLocalOffCampus || form.formType === 'LocalOffCampus') {
-                                        navigate(`/orgTrackerViewer/${form._id}`, { 
-                                            state: { 
-                                            form,
-                                            formType: 'LocalOffCampus',
-                                            formPhase: form.formPhase // 'BEFORE' or 'AFTER'
-                                            } 
-                                        });
-                                        } else {
-                                        navigate(`/orgTrackerViewer/${form._id}`, { state: { form } });
-                                        }
-                                    }}
+                                            onClick={() => {
+                                                if (form.isLocalOffCampus || form.formType === 'LocalOffCampus') {
+                                                    navigate(`/orgTrackerViewer/${form._id}`, { 
+                                                        state: { 
+                                                            form,
+                                                            formType: 'LocalOffCampus',
+                                                            formPhase: form.formPhase
+                                                        } 
+                                                    });
+                                                } else {
+                                                    navigate(`/orgTrackerViewer/${form._id}`, { state: { form } });
+                                                }
+                                            }}
                                             className="clickable-row"
                                         >
                                             <td>
@@ -333,32 +375,25 @@ const OrgSubmittedForms = () => {
                                                 {formatDate(form.applicationDate || form.submittedAt)}
                                             </td>
                                             <td>
-                                                <div className="action-buttons">
+                                            <div className="action-buttons">
                                                 {isFormEditable(form) && (
-                                                                <button 
-                                                                    className="edit-button"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        navigate(
-                                                                            form.formType === 'LocalOffCampus'
-                                                                                ? `/edit-local-off-campus/${form._id}`
-                                                                                : `/edit-form/${form._id}`,
-                                                                            { state: { formData: form } }
-                                                                        );
-                                                                    }}
-                                                                >
-                                                                    Edit
-                                                                </button>
-                                                            )}
-                                                    {isFormDeletable(form) && (
-                                                        <button 
-                                                            className="delete-button"
-                                                            onClick={(e) => handleDeleteClick(e, form._id, form.formType)}
-                                                        >
-                                                            Delete
-                                                        </button>
-                                                    )}
-                                                </div>
+                                                    <button 
+                                                        className="edit-button"
+                                                        onClick={(e) => handleEditClick(e, form)}
+                                                    >
+                                                        {form.formType === 'LocalOffCampus' && 
+                                                        form.formPhase === 'BEFORE' && 
+                                                        (form.status === 'approved' || form.finalStatus === 'approved')
+                                                            ? 'Complete AFTER'
+                                                            : 'Edit'}
+                                                    </button>
+                                                )}
+                                                {isFormDeletable(form) && (
+                                                    <button className="delete-button" onClick={(e) => handleDeleteClick(e, form._id, form.formType)}>
+                                                        Delete
+                                                    </button>
+                                                )}
+                                            </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -366,7 +401,7 @@ const OrgSubmittedForms = () => {
                             </table>
                         )}
                     </div>
-
+    
                     {showDeleteModal && (
                         <div className="modal-overlay">
                             <div className="delete-modal">
