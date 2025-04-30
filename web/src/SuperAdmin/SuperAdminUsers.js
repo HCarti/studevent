@@ -2,6 +2,19 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "./SuperAdminUsers.css";
 
+// Icons
+const EditIcon = () => (
+  <svg className="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+  </svg>
+);
+
+const DeleteIcon = () => (
+  <svg className="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+  </svg>
+);
+
 const SuperAdminUsers = () => {
   const [organizations, setOrganizations] = useState([]);
   const [editingOrg, setEditingOrg] = useState(null);
@@ -109,18 +122,20 @@ const SuperAdminUsers = () => {
 
   return (
     <div className="table-container">
-      <h2>Organizations List</h2>
+      <h2>Organizations Management</h2>
+      
       {loading ? (
         <p className="loading-message">Loading organizations...</p>
       ) : (
         <>
+          {/* Desktop Table */}
           <table>
             <thead>
               <tr>
                 <th>Logo</th>
                 <th>Organization</th>
                 <th>Email</th>
-                <th>Organization Type</th>
+                <th>Type</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -144,22 +159,26 @@ const SuperAdminUsers = () => {
                   <td>
                     {organization.organizationType || "Not Provided"}
                   </td>
-                  <td className={`status-${organization.status.toLowerCase()}`}>
-                    {organization.status}
+                  <td>
+                    <span className={`status-badge status-${organization.status.toLowerCase()}`}>
+                      {organization.status}
+                    </span>
                   </td>
                   <td>
                     <div className="action-buttons">
                       <button 
-                        className="delete-btn"
+                        className="btn btn-sm delete-btn"
                         onClick={() => handleDeleteClick(organization._id)}
                       >
-                        Delete
+                        <DeleteIcon /> 
+                        <span>Delete</span>
                       </button>
                       <button 
-                        className="edit-btn"
+                        className="btn btn-sm edit-btn"
                         onClick={() => handleEditClick(organization)}
                       >
-                        Edit
+                        <EditIcon /> 
+                        <span>Edit</span>
                       </button>
                     </div>
                   </td>
@@ -167,6 +186,62 @@ const SuperAdminUsers = () => {
               ))}
             </tbody>
           </table>
+
+          {/* Mobile Cards */}
+          <div className="mobile-cards-container">
+            {organizations.map((organization) => (
+              <div key={`mobile-${organization._id}`} className="mobile-card">
+                <div className="mobile-card-header">
+                  {organization.logo ? (
+                    <img 
+                      src={organization.logo} 
+                      alt="Organization Logo" 
+                      className="mobile-card-logo" 
+                    />
+                  ) : (
+                    <div className="mobile-card-no-logo">No Logo</div>
+                  )}
+                  <div>
+                    <div className="mobile-card-title">{organization.organizationName}</div>
+                    <div className="mobile-card-email">{organization.email}</div>
+                  </div>
+                </div>
+                
+                <div className="mobile-card-details">
+                  <div className="mobile-card-row">
+                    <span className="mobile-card-label">Organization Type</span>
+                    <span className="mobile-card-value">
+                      {organization.organizationType || "Not Provided"}
+                    </span>
+                  </div>
+                  
+                  <div className="mobile-card-row">
+                    <span className="mobile-card-label">Status</span>
+                    <span className={`mobile-card-value status-badge status-${organization.status.toLowerCase()}`}>
+                      {organization.status}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="mobile-card-actions">
+                  <button 
+                    className="btn btn-sm delete-btn"
+                    onClick={() => handleDeleteClick(organization._id)}
+                  >
+                    <DeleteIcon /> 
+                    <span>Delete</span>
+                  </button>
+                  <button 
+                    className="btn btn-sm edit-btn"
+                    onClick={() => handleEditClick(organization)}
+                  >
+                    <EditIcon /> 
+                    <span>Edit</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </>
       )}
 
@@ -207,15 +282,14 @@ const SuperAdminUsers = () => {
                 </select>
               </div>
               <div className="form-actions">
-                <button type="submit" className="update-btn">
-                  Update
-                </button>
-                <button 
-                  type="button" 
-                  className="cancel-btn"
+                <button type="button" 
+                  className="btn cancel-btn"
                   onClick={() => setEditingOrg(null)}
                 >
                   Cancel
+                </button>
+                <button type="submit" className="btn update-btn">
+                  Save Changes
                 </button>
               </div>
             </form>
@@ -237,16 +311,16 @@ const SuperAdminUsers = () => {
             
             <div className="modal-actions">
               <button 
-                className="confirm-delete-btn"
-                onClick={confirmDelete}
-              >
-                Delete
-              </button>
-              <button 
-                className="cancel-delete-btn"
+                className="btn cancel-delete-btn"
                 onClick={cancelDelete}
               >
                 Cancel
+              </button>
+              <button 
+                className="btn confirm-delete-btn"
+                onClick={confirmDelete}
+              >
+                Delete Organization
               </button>
             </div>
           </div>
