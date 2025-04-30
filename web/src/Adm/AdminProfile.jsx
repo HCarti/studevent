@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './AdminProfile.css';
-import { FaEdit, FaSave, FaTimes } from 'react-icons/fa';
-import { MdSecurity } from 'react-icons/md'; // Updated icon for manage password
+import { FaEdit, FaSave, FaTimes, FaUserCircle, FaCamera } from 'react-icons/fa';
+import { MdSecurity } from 'react-icons/md';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const AdminProfile = () => {
@@ -26,24 +26,24 @@ const AdminProfile = () => {
     confirmPassword: '',
   });
 
-  const [isEditing, setIsEditing] = useState(false); // For editing account info
-  const [isEditingPassword, setIsEditingPassword] = useState(false); // For editing password info
+  const [isEditing, setIsEditing] = useState(false);
+  const [isEditingPassword, setIsEditingPassword] = useState(false);
   const [profilePic, setProfilePic] = useState(null);
+  const [activeTab, setActiveTab] = useState('account');
 
   // Toggle editing mode for account info
   const handleEditClick = () => {
     if (!isEditing) {
-      // Initialize editAccountData with current accountData
       setEditAccountData({ ...accountData });
     }
     setIsEditing(!isEditing);
-    setIsEditingPassword(false); // Disable password editing if it's active
+    setIsEditingPassword(false);
+    setActiveTab('account');
   };
 
   // Toggle editing mode for password and security
   const handlePasswordEditClick = () => {
     if (!isEditingPassword) {
-      // Initialize editPasswordData with empty fields
       setEditPasswordData({
         currentPassword: '',
         newPassword: '',
@@ -51,7 +51,8 @@ const AdminProfile = () => {
       });
     }
     setIsEditingPassword(!isEditingPassword);
-    setIsEditing(false); // Disable account editing if it's active
+    setIsEditing(false);
+    setActiveTab('security');
   };
 
   // Handle profile picture upload
@@ -60,9 +61,9 @@ const AdminProfile = () => {
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        setProfilePic(reader.result); // Set the image as a base64 URL
+        setProfilePic(reader.result);
       };
-      reader.readAsDataURL(file); // Read the file as a data URL
+      reader.readAsDataURL(file);
     }
   };
 
@@ -81,29 +82,25 @@ const AdminProfile = () => {
   // Handle form submission for account info
   const handleSave = (e) => {
     e.preventDefault();
-    // Implement save functionality here (e.g., API call)
     setAccountData({ ...editAccountData });
     setIsEditing(false);
-    // Optionally, show a success message
   };
 
   // Handle form submission for password
   const handlePasswordSave = (e) => {
     e.preventDefault();
-    // Implement password update functionality here (e.g., API call)
     setEditPasswordData({
       currentPassword: '',
       newPassword: '',
       confirmPassword: '',
     });
     setIsEditingPassword(false);
-    // Optionally, show a success message
   };
 
   // Handle cancel for account edit
   const handleAccountCancel = () => {
     setIsEditing(false);
-    setEditAccountData({ ...accountData }); // Reset editAccountData
+    setEditAccountData({ ...accountData });
   };
 
   // Handle cancel for password edit
@@ -113,46 +110,70 @@ const AdminProfile = () => {
       currentPassword: '',
       newPassword: '',
       confirmPassword: '',
-    }); // Reset editPasswordData
+    });
   };
 
   return (
     <motion.div
-      className="m-container"
+      className="admin-profile-container"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <h2 className="profile-title">Admin Profile</h2>
-      <div className="profile-container">
-        <div className="profile-left">
-          <motion.div
-            className="profile-pic"
-            whileHover={{ scale: 1.05 }}
-            transition={{ type: 'spring', stiffness: 300 }}
+      <div className="profile-header">
+        <h2 className="profile-title">Admin Profile</h2>
+        <div className="profile-tabs">
+          <button
+            className={`tab-btn ${activeTab === 'account' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('account');
+              setIsEditingPassword(false);
+            }}
           >
-            {profilePic ? (
-              <img src={profilePic} alt="Profile" className="profile-image" />
-            ) : (
-              <div className="placeholder-pic">
-                <FaEdit size={40} color="#bbb" />
-              </div>
-            )}
-          </motion.div>
-          <input
-            type="file"
-            accept="image/*"
-            className="upload-input"
-            onChange={handlePictureUpload}
-            id="upload-input"
-          />
-          <label htmlFor="upload-input" className="upload-btn">
-            Upload Picture
-          </label>
+            Account
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'security' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('security');
+              setIsEditing(false);
+            }}
+          >
+            Security
+          </button>
+        </div>
+      </div>
+
+      <div className="profile-content">
+        <div className="profile-sidebar">
+          <div className="profile-pic-container">
+            <motion.div
+              className="profile-pic"
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: 'spring', stiffness: 300 }}
+            >
+              {profilePic ? (
+                <img src={profilePic} alt="Profile" className="profile-image" />
+              ) : (
+                <FaUserCircle className="placeholder-icon" />
+              )}
+              <label className="camera-icon" htmlFor="upload-input">
+                <FaCamera />
+              </label>
+            </motion.div>
+            <input
+              type="file"
+              accept="image/*"
+              className="upload-input"
+              onChange={handlePictureUpload}
+              id="upload-input"
+            />
+          </div>
 
           <h3 className="admin-name">
             {accountData.firstName} {accountData.lastName}
           </h3>
+          <p className="admin-email">{accountData.email}</p>
           <p className="join-date">Joined June 6, 2023</p>
 
           <button className="edit-btn" onClick={handleEditClick}>
@@ -162,157 +183,165 @@ const AdminProfile = () => {
               </>
             ) : (
               <>
-                <FaEdit /> Edit Account
+                <FaEdit /> Edit Profile
               </>
             )}
           </button>
         </div>
 
-        <div className="profile-right">
+        <div className="profile-main">
           <AnimatePresence>
-            {isEditing && (
-              <motion.form
-                className="edit-form"
-                onSubmit={handleSave}
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 50 }}
-                transition={{ duration: 0.3 }}
-              >
-                <div className="form-group">
-                  <label htmlFor="firstName">First Name:</label>
-                  <input
-                    type="text"
-                    id="firstName"
-                    name="firstName"
-                    value={editAccountData.firstName}
-                    onChange={handleAccountChange}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="lastName">Last Name:</label>
-                  <input
-                    type="text"
-                    id="lastName"
-                    name="lastName"
-                    value={editAccountData.lastName}
-                    onChange={handleAccountChange}
-                    required
-                  />
-                </div>
-                <div className="form-group full-width">
-                  <label htmlFor="email">Email:</label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={editAccountData.email}
-                    onChange={handleAccountChange}
-                    required
-                  />
-                </div>
-                <div className="button-group">
-                  <button type="submit" className="save-btn">
-                    <FaSave /> Save
-                  </button>
-                  <button type="button" className="cancel-btn" onClick={handleAccountCancel}>
-                    <FaTimes /> Cancel
-                  </button>
-                </div>
-              </motion.form>
-            )}
-
-            {isEditingPassword && (
-              <motion.form
-                className="password-form"
-                onSubmit={handlePasswordSave}
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -50 }}
-                transition={{ duration: 0.3 }}
-              >
-                <h3>Password & Security</h3>
-                <div className="form-group">
-                  <label htmlFor="currentPassword">Current Password:</label>
-                  <input
-                    type="password"
-                    id="currentPassword"
-                    name="currentPassword"
-                    value={editPasswordData.currentPassword}
-                    onChange={handlePasswordChange}
-                    placeholder="Enter current password"
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="newPassword">New Password:</label>
-                  <input
-                    type="password"
-                    id="newPassword"
-                    name="newPassword"
-                    value={editPasswordData.newPassword}
-                    onChange={handlePasswordChange}
-                    placeholder="Enter new password"
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="confirmPassword">Confirm Password:</label>
-                  <input
-                    type="password"
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    value={editPasswordData.confirmPassword}
-                    onChange={handlePasswordChange}
-                    placeholder="Confirm new password"
-                    required
-                  />
-                </div>
-                <div className="button-group">
-                  <button type="submit" className="save-btn">
-                    <FaSave /> Save
-                  </button>
-                  <button type="button" className="cancel-btn" onClick={handlePasswordCancel}>
-                    <FaTimes /> Cancel
-                  </button>
-                </div>
-              </motion.form>
-            )}
-
-            {!isEditing && !isEditingPassword && (
+            {activeTab === 'account' && (
               <motion.div
-                className="view-info"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.5 }}
+                className="tab-content"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
               >
-                <div className="info-group">
-                  <h3>Account Information</h3>
-                  <p>
-                    <strong>First Name:</strong> {accountData.firstName}
-                  </p>
-                  <p>
-                    <strong>Last Name:</strong> {accountData.lastName}
-                  </p>
-                  <p>
-                    <strong>Email:</strong> {accountData.email}
-                  </p>
-                </div>
-                <motion.div
-                  className="password-security"
-                  onClick={handlePasswordEditClick}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: 'spring', stiffness: 300 }}
-                >
-                  <MdSecurity className="security-icon" style={{height:50, width:50,padding:5, marginBottom:5}}/> {/* Updated icon */}
-                  <div className="security-text">
-                    <p>Password and Security</p>
-                    <small>Manage your password and security settings</small>
+                {isEditing ? (
+                  <form className="edit-form" onSubmit={handleSave}>
+                    <div className="form-grid">
+                      <div className="form-group">
+                        <label htmlFor="firstName">First Name</label>
+                        <input
+                          type="text"
+                          id="firstName"
+                          name="firstName"
+                          value={editAccountData.firstName}
+                          onChange={handleAccountChange}
+                          required
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label htmlFor="lastName">Last Name</label>
+                        <input
+                          type="text"
+                          id="lastName"
+                          name="lastName"
+                          value={editAccountData.lastName}
+                          onChange={handleAccountChange}
+                          required
+                        />
+                      </div>
+                      <div className="form-group full-width">
+                        <label htmlFor="email">Email</label>
+                        <input
+                          type="email"
+                          id="email"
+                          name="email"
+                          value={editAccountData.email}
+                          onChange={handleAccountChange}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="form-actions">
+                      <button type="submit" className="save-btn">
+                        <FaSave /> Save Changes
+                      </button>
+                      <button type="button" className="cancel-btn" onClick={handleAccountCancel}>
+                        <FaTimes /> Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="account-info">
+                    <div className="info-card">
+                      <h3>Personal Information</h3>
+                      <div className="info-item">
+                        <span className="info-label">First Name</span>
+                        <span className="info-value">{accountData.firstName}</span>
+                      </div>
+                      <div className="info-item">
+                        <span className="info-label">Last Name</span>
+                        <span className="info-value">{accountData.lastName}</span>
+                      </div>
+                      <div className="info-item">
+                        <span className="info-label">Email</span>
+                        <span className="info-value">{accountData.email}</span>
+                      </div>
+                    </div>
                   </div>
-                </motion.div>
+                )}
+              </motion.div>
+            )}
+
+            {activeTab === 'security' && (
+              <motion.div
+                className="tab-content"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                {isEditingPassword ? (
+                  <form className="password-form" onSubmit={handlePasswordSave}>
+                    <h3>Change Password</h3>
+                    <div className="form-grid">
+                      <div className="form-group">
+                        <label htmlFor="currentPassword">Current Password</label>
+                        <input
+                          type="password"
+                          id="currentPassword"
+                          name="currentPassword"
+                          value={editPasswordData.currentPassword}
+                          onChange={handlePasswordChange}
+                          placeholder="Enter current password"
+                          required
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label htmlFor="newPassword">New Password</label>
+                        <input
+                          type="password"
+                          id="newPassword"
+                          name="newPassword"
+                          value={editPasswordData.newPassword}
+                          onChange={handlePasswordChange}
+                          placeholder="Enter new password"
+                          required
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label htmlFor="confirmPassword">Confirm Password</label>
+                        <input
+                          type="password"
+                          id="confirmPassword"
+                          name="confirmPassword"
+                          value={editPasswordData.confirmPassword}
+                          onChange={handlePasswordChange}
+                          placeholder="Confirm new password"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="form-actions">
+                      <button type="submit" className="save-btn">
+                        <FaSave /> Update Password
+                      </button>
+                      <button type="button" className="cancel-btn" onClick={handlePasswordCancel}>
+                        <FaTimes /> Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="security-info">
+                    <div className="info-card">
+                      <h3>Security Settings</h3>
+                      <div className="security-card" onClick={handlePasswordEditClick}>
+                        <MdSecurity className="security-icon" />
+                        <div className="security-details">
+                          <h4>Password</h4>
+                          <p>Last changed 3 months ago</p>
+                        </div>
+                        <button className="edit-security-btn">
+                          <FaEdit />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
