@@ -22,14 +22,14 @@ const OrganizationEvents = () => {
     const token = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
     const parsedUser = storedUser ? JSON.parse(storedUser) : null;
-    
+
     if (!token || !parsedUser) {
       return null;
     }
 
     return {
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     };
@@ -40,27 +40,27 @@ const OrganizationEvents = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const authHeaders = getAuthHeaders();
       if (!authHeaders) return;
 
       // Get current month's start and end dates for range query
       const startOfMonth = moment().startOf('month').toISOString();
       const endOfMonth = moment().endOf('month').toISOString();
-      
+
       const response = await axios.get(
-        'https://studevent-server.vercel.app/api/calendar/events/range', 
+        'https://studevent-server.vercel.app/api/calendar/events/range',
         {
           params: { start: startOfMonth, end: endOfMonth },
           ...authHeaders
         }
       );
-      
+
       const formattedEvents = response.data.map(event => ({
         id: event._id,
         title: event.formType === 'Project' ? event.projectTitle : event.eventTitle || event.title,
         start: moment.utc(event.startDate).local().startOf('day').toDate(), // Start at beginning of day
-        end: moment.utc(event.endDate).local().endOf('day').toDate(),       // End at end of day
+        end: moment.utc(event.endDate).local().endOf('day').toDate(), // End at end of day
         description: event.formType === 'Project' ? event.projectDescription : event.description,
         location: event.location || 'TBA',
         organization: event.organization?.organizationName || 'N/A',
@@ -73,11 +73,11 @@ const OrganizationEvents = () => {
         eventTitle: event.eventTitle,
         formType: event.formType
       }));
-      
+
       setEvents(formattedEvents);
     } catch (err) {
       console.error('Error fetching calendar events:', err);
-      
+
       if (err.response?.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -92,27 +92,27 @@ const OrganizationEvents = () => {
   };
 
   // Fetch events for specific month
-  const fetchCalendarEventsForMonth = async (date) => {
+  const fetchCalendarEventsForMonth = async date => {
     try {
       const authHeaders = getAuthHeaders();
       if (!authHeaders) return;
 
       const startOfMonth = moment(date).startOf('month').toISOString();
       const endOfMonth = moment(date).endOf('month').toISOString();
-      
+
       const response = await axios.get(
-        'https://studevent-server.vercel.app/api/calendar/events/range', 
+        'https://studevent-server.vercel.app/api/calendar/events/range',
         {
           params: { start: startOfMonth, end: endOfMonth },
           ...authHeaders
         }
       );
-      
+
       const formattedEvents = response.data.map(event => ({
         id: event._id,
         title: event.formType === 'Project' ? event.projectTitle : event.eventTitle || event.title,
         start: moment.utc(event.startDate).local().toDate(), // Convert UTC to local time
-        end: moment.utc(event.endDate).local().toDate(),     // Convert UTC to local time
+        end: moment.utc(event.endDate).local().toDate(), // Convert UTC to local time
         description: event.formType === 'Project' ? event.projectDescription : event.description,
         location: event.location || 'TBA',
         organization: event.organization?.organizationName || 'N/A',
@@ -120,17 +120,17 @@ const OrganizationEvents = () => {
         duration: calculateDuration(event.startDate, event.endDate),
         allDay: true,
         rawStart: event.startDate, // Keep original for reference
-        rawEnd: event.endDate,      // Keep original for reference
+        rawEnd: event.endDate, // Keep original for reference
         // Additional fields for display
         projectTitle: event.projectTitle,
         eventTitle: event.eventTitle,
         formType: event.formType
       }));
-      
+
       setEvents(formattedEvents);
     } catch (err) {
       console.error('Error fetching calendar events:', err);
-      
+
       if (err.response?.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -143,16 +143,16 @@ const OrganizationEvents = () => {
   };
 
   // Calculate event duration
-// Make duration calculation timezone-aware
-const calculateDuration = (start, end) => {
-  const startDate = moment.utc(start).local().startOf('day');
-  const endDate = moment.utc(end).local().startOf('day');
-  const duration = endDate.diff(startDate, 'days') + 1;
-  return duration === 1 ? '1 day' : `${duration} days`;
-};
+  // Make duration calculation timezone-aware
+  const calculateDuration = (start, end) => {
+    const startDate = moment.utc(start).local().startOf('day');
+    const endDate = moment.utc(end).local().startOf('day');
+    const duration = endDate.diff(startDate, 'days') + 1;
+    return duration === 1 ? '1 day' : `${duration} days`;
+  };
 
   // Handle month change to fetch new events
-  const handleNavigate = (newDate) => {
+  const handleNavigate = newDate => {
     setSelectedDate(newDate);
     fetchCalendarEventsForMonth(newDate);
   };
@@ -162,48 +162,110 @@ const calculateDuration = (start, end) => {
   }, []);
 
   // Handle date selection
-  const handleSelectSlot = (slotInfo) => {
-    const clickedDate = slotInfo.start;
+  const handleSelectSlot = slotInfo => {
+    // Make sure we get the exact date from the slot
+    const clickedDate = new Date(slotInfo.start);
+
+    // Debugging to verify we have the correct date
+    console.log('Raw clicked date:', clickedDate);
+    console.log('Slot info:', slotInfo);
+
     setSelectedDate(clickedDate);
-    
-    // Create comparison dates at start of day in local timezone
-    const clickedDateStart = moment(clickedDate).startOf('day');
-    const clickedDateEnd = moment(clickedDate).endOf('day');
-    
+
+    // Use a clean date object for comparison (start of day in local time)
+    const clickedDateClean = moment(clickedDate).startOf('day');
+
+    // Show exact day being used for filtering
+    console.log('Using date for filtering:', clickedDateClean.format('YYYY-MM-DD'));
+
     const filteredEvents = events.filter(event => {
-      // Convert event dates to local timezone moments
+      // Get clean start/end dates at start of day for comparison
       const eventStart = moment(event.start).startOf('day');
       const eventEnd = moment(event.end).startOf('day');
-      
-      // Check if clicked date falls within event range
-      return clickedDateStart.isBetween(eventStart, eventEnd, null, '[]') || 
-             clickedDateStart.isSame(eventStart) || 
-             clickedDateEnd.isSame(eventEnd);
+
+      // Check if clicked date falls within event range using day precision
+      const isInRange = clickedDateClean.isBetween(eventStart, eventEnd, 'day', '[]');
+
+      // Debug output for matching events
+      if (isInRange) {
+        console.log('Matching cell event:', {
+          title: event.title,
+          start: eventStart.format('YYYY-MM-DD'),
+          end: eventEnd.format('YYYY-MM-DD'),
+          isInRange
+        });
+      }
+
+      return isInRange;
     });
-  
+
     setSelectedEvents(filteredEvents);
-    
+
     // Debug output
-    console.log('Date Selection Debug:', {
-      clickedDate: clickedDateStart.format('YYYY-MM-DD'),
-      clickedLocal: clickedDate,
-      matchedEvents: filteredEvents.map(e => ({
-        title: e.title,
-        start: moment(e.start).format('YYYY-MM-DD'),
-        end: moment(e.end).format('YYYY-MM-DD')
-      }))
+    console.log('Cell Selection Debug:', {
+      clickedDate: clickedDateClean.format('YYYY-MM-DD'),
+      matchedEvents: filteredEvents.length,
+      eventTitles: filteredEvents.map(e => e.title)
     });
   };
+
+  // Handle event selection
+  const handleSelectEvent = event => {
+    // Get the exact date of the event
+    const eventDate = new Date(event.start);
+    console.log('Selected event date:', eventDate);
+    setSelectedDate(eventDate);
+
+    // Create a clean date object for comparison (start of day in local time)
+    const eventDateClean = moment(eventDate).startOf('day');
+
+    // Find events on the exact same day
+    const sameDay = events.filter(e => {
+      // Ensure we're comparing dates at the start of day in local time
+      const eStart = moment(e.start).startOf('day');
+      const eEnd = moment(e.end).startOf('day');
+
+      // Check if the event date is within the range
+      const isInRange = eventDateClean.isBetween(eStart, eEnd, 'day', '[]');
+
+      // Debug output to help diagnose issues
+      if (e.id === event.id || isInRange) {
+        console.log('Matching event:', {
+          title: e.title,
+          start: eStart.format('YYYY-MM-DD'),
+          end: eEnd.format('YYYY-MM-DD'),
+          isExact: e.id === event.id,
+          isInRange
+        });
+      }
+
+      return isInRange;
+    });
+
+    // Always include the clicked event, plus any others on the same day
+    // Create a Set to ensure no duplicates
+    const uniqueEvents = new Set([event, ...sameDay]);
+    const filteredEvents = [...uniqueEvents];
+
+    setSelectedEvents(filteredEvents);
+
+    console.log('Event Selection:', {
+      eventTitle: event.title,
+      eventDate: eventDateClean.format('YYYY-MM-DD'),
+      matchedEvents: filteredEvents.length
+    });
+  };
+
   // Custom event style based on type
-  const eventStyleGetter = (event) => {
+  const eventStyleGetter = event => {
     let backgroundColor = '#3174ad'; // Default blue
-    
+
     if (event.type === 'Activity') {
       backgroundColor = '#5cb85c'; // Green
     } else if (event.type === 'Project') {
       backgroundColor = '#f0ad4e'; // Orange
     }
-    
+
     return {
       style: {
         backgroundColor,
@@ -245,19 +307,16 @@ const calculateDuration = (start, end) => {
             Next
           </button>
         </div>
-        <div className="rbc-toolbar-label">
-          {label}
-        </div>
+        <div className="rbc-toolbar-label">{label}</div>
       </div>
     );
   };
 
-
   return (
     <div className="wrap">
       <h1>EVENT CALENDAR</h1>
-      
-        {loading && (
+
+      {loading && (
         <div className="loader-overlay">
           <div className="loader-container">
             <ClipLoader color="#1a3ab5" size={50} />
@@ -270,58 +329,76 @@ const calculateDuration = (start, end) => {
       <div className="calendar-container">
         <div className="calendar-wrapper">
           <div style={{ height: 500 }}>
-          <Calendar
-            localizer={localizer}
-            events={events}
-            startAccessor="start"
-            endAccessor="end"
-            views={['month']}
-            style={{ height: '100%' }}
-            selectable
-            onSelectSlot={handleSelectSlot}
-            onNavigate={handleNavigate}
-            eventPropGetter={eventStyleGetter}
-            components={{
-              event: EventComponent,
-              toolbar: CustomToolbar
-            }}
-            defaultView="month"
-            showMultiDayTimes
-            step={60}
-            timeslots={1}
-            // Add these props for toolbar customization
-            toolbar={true}
-          />
+            <Calendar
+              localizer={localizer}
+              events={events}
+              startAccessor="start"
+              endAccessor="end"
+              views={['month']}
+              style={{ height: '100%' }}
+              selectable={true}
+              onSelectSlot={handleSelectSlot}
+              onSelectEvent={handleSelectEvent}
+              onNavigate={handleNavigate}
+              eventPropGetter={eventStyleGetter}
+              components={{
+                event: EventComponent,
+                toolbar: CustomToolbar
+              }}
+              defaultView="month"
+              showMultiDayTimes
+              step={60}
+              timeslots={1}
+              toolbar={true}
+              getDrilldownView={() => null}
+              popup={true}
+              longPressThreshold={20}
+              dateFormat="DD"
+            />
           </div>
         </div>
 
         <div className="event-details">
-        <h2>{moment(selectedDate).format('dddd, MMMM D, YYYY')} - Event Details</h2>
-        <div className="event-details-content">
-          {selectedEvents.length > 0 ? (
-            <ul className="event-list">
-              {selectedEvents.map((event, index) => (
-                <li key={index} className={`event-item ${event.type.toLowerCase()}`}>
-                  <h3>
-                    {event.type === 'Project' ? (
-                      <>Project: <span className="event-title">{event.projectTitle}</span></>
-                    ) : (
-                      <>Activity: <span className="event-title">{event.eventTitle}</span></>
-                    )}
-                  </h3>
-                  <p><strong>Type:</strong> {event.type}</p>
-                  <p><strong>Organization:</strong> {event.organization}</p>
-                  <p><strong>Duration:</strong> {event.duration}</p>
-                  <p><strong>Location:</strong> {event.location}</p>
-                  <p><strong>Description:</strong> {event.description}</p>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="no-events">No events scheduled for this day.</p>
-          )}
+          <h2>{moment(selectedDate).format('dddd, MMMM D, YYYY')} - Event Details</h2>
+          <div className="event-details-content">
+            {selectedEvents.length > 0 ? (
+              <ul className="event-list">
+                {selectedEvents.map((event, index) => (
+                  <li key={index} className={`event-item ${event.type.toLowerCase()}`}>
+                    <h3>
+                      {event.type === 'Project' ? (
+                        <>
+                          Project: <span className="event-title">{event.projectTitle}</span>
+                        </>
+                      ) : (
+                        <>
+                          Activity: <span className="event-title">{event.eventTitle}</span>
+                        </>
+                      )}
+                    </h3>
+                    <p>
+                      <strong>Type:</strong> {event.type}
+                    </p>
+                    <p>
+                      <strong>Organization:</strong> {event.organization}
+                    </p>
+                    <p>
+                      <strong>Duration:</strong> {event.duration}
+                    </p>
+                    <p>
+                      <strong>Location:</strong> {event.location}
+                    </p>
+                    <p>
+                      <strong>Description:</strong> {event.description}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="no-events">No events scheduled for this day.</p>
+            )}
+          </div>
         </div>
-      </div>
       </div>
     </div>
   );
