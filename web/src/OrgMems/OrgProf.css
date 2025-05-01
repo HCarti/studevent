@@ -8,6 +8,10 @@
   background: linear-gradient(135deg, #f0f4ff, #d9e6ff);
   padding: 0; /* Remove unnecessary padding */
   margin-top: -20px; /* Adjust margin if needed */
+  background-image: url('../Images/Nu_building2.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
 }
 
 
