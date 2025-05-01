@@ -16,6 +16,94 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+/* Mobile Step Tracker */
+.mobile-step-tracker {
+  display: none;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+}
+
+.mobile-step-tracker .steps {
+  display: flex;
+  align-items: center;
+  position: relative;
+  min-width: max-content; /* Ensure the steps don't wrap */
+  padding: 0 10px;
+}
+
+.mobile-step-tracker .step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 2;
+  position: relative;
+  padding: 0 5px;
+  margin: 0 15px; /* Add space between steps */
+  min-width: 60px; /* Minimum width for each step */
+}
+
+.mobile-step-tracker .step-number {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #ccc;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.mobile-step-tracker .step-label {
+  font-size: 11px;
+  text-align: center;
+  color: #555;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobile-step-tracker .step-item.active .step-number {
+  background-color: #1a3ab5;
+}
+
+.mobile-step-tracker .step-item.completed .step-number {
+  background-color: #4caf50;
+}
+
+.mobile-step-tracker .step-item.active .step-label {
+  color: #1a3ab5;
+  font-weight: bold;
+}
+
+.mobile-step-tracker .progress-line {
+  position: absolute;
+  top: 15px;
+  left: 0;
+  height: 2px;
+  background-color: #ccc;
+  width: 100%;
+  z-index: 1;
+}
+
+.mobile-step-tracker .progress-line-filled {
+  position: absolute;
+  top: 15px;
+  left: 0;
+  height: 2px;
+  background-color: #4caf50;
+  z-index: 1;
+  transition: width 0.3s ease;
+}
+
 /* Main Form Content Area */
 .inner-forms-2 {
   background-color: #fff;
@@ -458,8 +546,42 @@
     width: 100%;
     padding: 15px;
     max-height: 85vh; /* Increase the visible area on mobile */
-    border-radius: 0 0 12px 12px; /* Adjust border radius to match with sidebar */
+    border-radius: 12px; /* Adjust border radius to match with sidebar */
     margin: 0;
+    scrollbar-width: none; /* Hide scrollbar for Firefox */
+    -ms-overflow-style: none; /* Hide scrollbar for IE and Edge */
+  }
+
+  .inner-forms-2::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for Chrome, Safari, and Opera */
+  }
+
+  /* Hide sidebar and show mobile step tracker on mobile */
+  .sidebar {
+    display: none;
+  }
+
+  .mobile-step-tracker {
+    display: block;
+    padding: 15px 5px;
+    scrollbar-width: none; /* Hide scrollbar for Firefox */
+    -ms-overflow-style: none; /* Hide scrollbar for IE and Edge */
+  }
+
+  .mobile-step-tracker::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for Chrome, Safari, and Opera */
+  }
+
+  .mobile-step-tracker .steps {
+    justify-content: flex-start; /* Align steps to the start for better scrolling */
+  }
+
+  .mobile-step-tracker .step-item:first-child {
+    margin-left: 5px;
+  }
+
+  .mobile-step-tracker .step-item:last-child {
+    margin-right: 5px;
   }
 
   .form-row {
@@ -510,34 +632,6 @@
     width: 100%;
     padding: 12px;
   }
-
-  /* Sidebar adjustments for tablet */
-  .sidebar {
-    width: 100%;
-    max-width: 100%;
-    border-right: none;
-    border-bottom: 1px solid #dee2e6;
-    border-radius: 12px 12px 0 0;
-    margin-bottom: 0; /* Remove margin since inner-forms will follow directly */
-    padding: 15px;
-  }
-
-  .sidebar ul {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
-  }
-
-  .sidebar li {
-    flex: 0 0 auto;
-    min-width: 120px;
-    white-space: nowrap;
-    padding: 8px 12px;
-    margin-bottom: 5px;
-    font-size: 0.9rem;
-    text-align: center;
-  }
 }
 
 /* Additional styles for very small screens */
@@ -549,30 +643,30 @@
 
   .inner-forms-2 {
     padding: 12px;
-    border-radius: 0 0 8px 8px;
+    border-radius: 8px;
     width: 100%;
     margin: 0;
   }
 
-  /* Full-width sidebar for mobile */
-  .sidebar {
+  /* Mobile step tracker adjustments for small screens */
+  .mobile-step-tracker {
     padding: 10px;
-    width: 100%;
-    box-sizing: border-box;
-    border-radius: 0;
   }
 
-  .sidebar ul {
-    flex-direction: column;
-    width: 100%;
+  .mobile-step-tracker .step-number {
+    width: 25px;
+    height: 25px;
+    font-size: 12px;
   }
 
-  .sidebar li {
-    width: 100%;
-    margin-bottom: 5px;
-    padding: 8px 10px;
-    min-width: 0;
-    text-align: left;
+  .mobile-step-tracker .step-label {
+    font-size: 9px;
+    max-width: 50px;
+  }
+
+  .mobile-step-tracker .progress-line,
+  .mobile-step-tracker .progress-line-filled {
+    top: 12px;
   }
 
   /* Adjust form elements for very small screens */
