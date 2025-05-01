@@ -320,42 +320,39 @@ exports.createForm = async (req, res) => {
     }
 
     // === 4. Handle organization lookup (FOR ACTIVITY FORMS) ===
-    if (req.body.studentOrganization) {
-      let organization = null;
+    let organization = null; // <-- Moved here for global access
 
+if (req.body.studentOrganization) {
+  if (mongoose.Types.ObjectId.isValid(req.body.studentOrganization)) {
+    organization = await User.findOne({
+      _id: req.body.studentOrganization,
+      role: "Organization"
+    }).session(session);
+  } else {
+    organization = await User.findOne({
+      organizationName: req.body.studentOrganization,
+      role: "Organization"
+    }).session(session);
+  }
 
-      if (req.body.studentOrganization) {
-        if (mongoose.Types.ObjectId.isValid(req.body.studentOrganization)) {
-          organization = await User.findOne({
-            _id: req.body.studentOrganization,
-            role: "Organization"
-          }).session(session);
-        } else {
-          organization = await User.findOne({
-            organizationName: req.body.studentOrganization,
-            role: "Organization"
-          }).session(session);
-        }
-      
-        if (!organization) {
-          await session.abortTransaction();
-          session.endSession();
-          return res.status(400).json({ error: "Organization not found" });
-        }
-      
-        req.body.studentOrganization = organization._id;
-        req.body.presidentName = organization.presidentName;
-        req.body.presidentSignature = organization.presidentSignature;
-        
-        if (!organization.presidentSignature) {
-          await session.abortTransaction();
-          session.endSession();
-          return res.status(400).json({ 
-            error: "Organization president signature is required" 
-          });
-        }
-      }
-    }
+  if (!organization) {
+    await session.abortTransaction();
+    session.endSession();
+    return res.status(400).json({ error: "Organization not found" });
+  }
+
+  req.body.studentOrganization = organization._id;
+  req.body.presidentName = organization.presidentName;
+  req.body.presidentSignature = organization.presidentSignature;
+  
+  if (!organization.presidentSignature) {
+    await session.abortTransaction();
+    session.endSession();
+    return res.status(400).json({ 
+      error: "Organization president signature is required" 
+    });
+  }
+}
 
     // === 5. Budget Attachment Logic (UPDATED TO MIRROR BUDGET PROPOSAL) ===
    // In your formController's createForm function:
