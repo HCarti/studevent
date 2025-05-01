@@ -83,7 +83,7 @@ const NotificationsPage = () => {
 
       <div className="notifications-container">
         {loading ? (
-          <div className="loading-spinner">Loading...</div>
+          <div className="loading-spinner">Loading notifications...</div>
         ) : notifications.length > 0 ? (
           notifications.map(notification => (
             <div key={notification._id} className="notification-item">
@@ -102,7 +102,10 @@ const NotificationsPage = () => {
             </div>
           ))
         ) : (
-          <div className="no-notifications">No notifications</div>
+          <div className="no-notifications">
+            <p>No notifications yet</p>
+            <p className="subtext">When you get notifications, they'll appear here</p>
+          </div>
         )}
       </div>
     </div>
