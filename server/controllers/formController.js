@@ -325,36 +325,35 @@ exports.createForm = async (req, res) => {
 
 
       if (req.body.studentOrganization) {
-      if (mongoose.Types.ObjectId.isValid(req.body.studentOrganization)) {
-        organization = await User.findOne({
-          _id: req.body.studentOrganization,
-          role: "Organization"
-        }).session(session);
-      } else {
-        organization = await User.findOne({
-          organizationName: req.body.studentOrganization,
-          role: "Organization"
-        }).session(session);
-      }
-
-      if (!organization) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(400).json({ error: "Organization not found" });
-      }
-    }
-
-
-      req.body.studentOrganization = organization._id;
-      req.body.presidentName = organization.presidentName;
-      req.body.presidentSignature = organization.presidentSignature;
+        if (mongoose.Types.ObjectId.isValid(req.body.studentOrganization)) {
+          organization = await User.findOne({
+            _id: req.body.studentOrganization,
+            role: "Organization"
+          }).session(session);
+        } else {
+          organization = await User.findOne({
+            organizationName: req.body.studentOrganization,
+            role: "Organization"
+          }).session(session);
+        }
       
-      if (!organization.presidentSignature) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(400).json({ 
-          error: "Organization president signature is required" 
-        });
+        if (!organization) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(400).json({ error: "Organization not found" });
+        }
+      
+        req.body.studentOrganization = organization._id;
+        req.body.presidentName = organization.presidentName;
+        req.body.presidentSignature = organization.presidentSignature;
+        
+        if (!organization.presidentSignature) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(400).json({ 
+            error: "Organization president signature is required" 
+          });
+        }
       }
     }
 
