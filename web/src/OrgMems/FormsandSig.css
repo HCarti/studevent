@@ -297,43 +297,54 @@
   
   .steps {
     grid-template-columns: 1fr;
-    max-width: 500px;
+    gap: 15px;
   }
   
   .step {
-    min-height: auto;
-    padding: 25px 15px;
+    min-height: 200px;
+    padding: 20px 15px;
   }
   
   .step-icon {
     font-size: 80px !important;
+    height: 160px;
+    width: 160px;
   }
   
   .bottom-links {
-    flex-direction: column;
-    align-items: center;
+    margin: 30px 0;
+    width: 100%;
+    max-width: 100%;
+    padding: 0 15px;
   }
   
   .link {
-    width: 100%;
-    max-width: 300px;
-  margin: 5px 0;
-  padding: 12px 15px;
-  margin-right: 30px;
+    min-width: 100%;
+    margin: 0 auto;
   }
 }
 
 @media (max-width: 480px) {
   .fs-title {
-    font-size: 1.8rem;
-    margin: 15px 0;
+    font-size: 1.5rem;
+    margin: 15px 0 30px;
   }
   
   .step h2 {
-    font-size: 1.2em;
+    font-size: 1.1rem;
   }
   
   .step p {
-    font-size: 0.85em;
+    font-size: 0.85rem;
+  }
+  
+  .bottom-links {
+    margin: 20px 0;
+    padding: 0 10px;
+  }
+  
+  .link {
+    padding: 12px 15px;
+    font-size: 0.9rem;
   }
 }
