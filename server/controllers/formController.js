@@ -149,25 +149,38 @@ const updateCalendarEventFromForm = async (form) => {
 };
 
 // Helper function to get required reviewers based on form type
-const getRequiredReviewers = (formType) => {
-  switch(formType) {
-    case 'Project':
-      return [
-        { stepName: "Admin", reviewerRole: "Admin" },
-        { stepName: "Academic Services", reviewerRole: "Academic Services" },
-        { stepName: "Executive Director", reviewerRole: "Executive Director" }
-      ];
-    case 'Activity':
-    default:
-      return [
-        { stepName: "Adviser", reviewerRole: "Adviser" },
-        { stepName: "Dean", reviewerRole: "Dean" },
-        { stepName: "Admin", reviewerRole: "Admin" },
-        { stepName: "Academic Services", reviewerRole: "Academic Services" },
-        { stepName: "Academic Director", reviewerRole: "Academic Director" },
-        { stepName: "Executive Director", reviewerRole: "Executive Director" }
-      ];
+const getRequiredReviewers = async (formType, organizationId = null) => {
+  // For Project forms (unchanged)
+  if (formType === 'Project') {
+    return [
+      { stepName: "Admin", reviewerRole: "Admin" },
+      { stepName: "Academic Services", reviewerRole: "Academic Services" },
+      { stepName: "Executive Director", reviewerRole: "Executive Director" }
+    ];
   }
+
+  // For Activity forms - dynamic based on organization type
+  const baseSteps = [
+    { stepName: "Adviser", reviewerRole: "Adviser" },
+    { stepName: "Admin", reviewerRole: "Admin" },
+    { stepName: "Academic Services", reviewerRole: "Academic Services" },
+    { stepName: "Academic Director", reviewerRole: "Academic Director" },
+    { stepName: "Executive Director", reviewerRole: "Executive Director" }
+  ];
+
+  // Only add Dean step if this is an academic organization
+  if (organizationId) {
+    const org = await User.findById(organizationId);
+    if (org && org.organizationType === 'Recognized Student Organization - Academic') {
+      // Insert Dean step after Adviser
+      baseSteps.splice(1, 0, { 
+        stepName: "Dean", 
+        reviewerRole: "Dean" 
+      });
+    }
+  }
+
+  return baseSteps;
 };
 
 // Main controller methods
@@ -501,18 +514,50 @@ if (['Activity', 'Project'].includes(form.formType)) {
 }
     // Create progress tracker
 // Create progress tracker
-const requiredReviewers = getRequiredReviewers(form.formType);
+const requiredReviewers = await getRequiredReviewers(
+  form.formType, 
+  organization?._id
+);
+
+// Find advisers and deans first if needed
+const adviser = organization ? await User.findOne({
+  role: "Authority",
+  faculty: "Adviser",
+  organization: organization.organizationName,
+  status: "Active"
+}).select('_id') : null;
+
+const dean = (organization?.organizationType === 'Recognized Student Organization - Academic') ? 
+  await User.findOne({  
+    role: "Authority",
+    faculty: "Dean",
+    organization: organization.organizationName,
+    status: "Active"
+  }).select('_id') : null;
+
+// Create progress tracker
 const tracker = new EventTracker({
   formId: form._id,
   formType: form.formType,
   steps: requiredReviewers.map(reviewer => ({
     stepName: reviewer.stepName,
     reviewerRole: reviewer.reviewerRole,
-    status: "pending"
+    status: "pending",
+    // For Adviser step, use pre-fetched adviser
+    ...(reviewer.reviewerRole === 'Adviser' && adviser ? {
+      assignedReviewer: adviser
+    } : {}),
+    // For Dean step, use pre-fetched dean
+    ...(reviewer.reviewerRole === 'Dean' && dean ? {
+      assignedReviewer: dean
+    } : {})
   })),
   currentStep: 0,
-  currentAuthority: requiredReviewers[0].reviewerRole // Explicitly set to first reviewer's role
+  currentAuthority: requiredReviewers[0].reviewerRole,
+  organizationId: organization?._id,
+  organizationType: organization?.organizationType
 });
+
 await tracker.save({ session });
 
     // Send notification

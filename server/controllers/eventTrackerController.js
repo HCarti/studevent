@@ -41,63 +41,68 @@ const getOrganizationEmail = async (formId) => {
 
 const getNextReviewers = async (tracker, currentStepIndex) => {
   try {
-    console.log('🔍 Getting next reviewers for step:', currentStepIndex + 1);
-    
+    // 1. Check if process is complete
     if (currentStepIndex + 1 >= tracker.steps.length) {
-      console.log('🏁 No next step - process complete');
       return [];
     }
 
     const nextStep = tracker.steps[currentStepIndex + 1];
-    console.log('🔍 Next Step Details:', {
-      stepName: nextStep.stepName,
-      reviewerRole: nextStep.reviewerRole,
-      _id: nextStep._id
-    });
-
-    const Form = mongoose.model('Form');
-    const form = await Form.findById(tracker.formId);
     
-    if (!form) {
-      console.log('❌ Form not found for tracker:', tracker.formId);
+    // 2. Handle pre-assigned reviewers (advisers/deans)
+    if (nextStep.assignedReviewer) {
+      const reviewer = await User.findById(nextStep.assignedReviewer)
+        .select('email firstName lastName faculty role')
+        .lean();
+      return reviewer ? [reviewer] : [];
+    }
+
+    // 3. Get common fields for all queries
+    const baseFields = 'email firstName lastName faculty role organization';
+    
+    // 4. Handle standard roles (Admin, Academic Services, etc.)
+    if (['Admin', 'Academic Services', 'Academic Director', 'Executive Director'].includes(nextStep.reviewerRole)) {
+      return await User.find({
+        role: "Authority",
+        faculty: nextStep.reviewerRole,
+        status: "Active"
+      }).select(baseFields).lean();
+    }
+
+    // 5. Get organization info once (for both Adviser and Dean cases)
+    const form = await Form.findById(tracker.formId)
+      .populate('studentOrganization', 'organizationName organizationType')
+      .lean();
+
+    if (!form?.studentOrganization) {
       return [];
     }
 
-    console.log('🔍 Organization ID from form:', form.organizationId);
-    
-    // Get reviewers where:
-    // role is "Authority" AND faculty matches the nextStep.reviewerRole
-    const reviewers = await User.find({
-      role: "Authority",
-      faculty: nextStep.reviewerRole,
-      organizationId: form.organizationId,
-      status: "Active" // Only active users
-    }).select('email firstName lastName faculty').lean();
+    const orgName = form.studentOrganization.organizationName;
+    const isAcademicOrg = form.studentOrganization.organizationType === 'Recognized Student Organization - Academic';
 
-    console.log('✅ Matching reviewers:', reviewers.map(r => ({
-      email: r.email,
-      name: `${r.firstName} ${r.lastName}`,
-      faculty: r.faculty
-    })));
-
-    if (reviewers.length === 0) {
-      console.warn('⚠️ No reviewers found for faculty role:', nextStep.reviewerRole);
-      
-      // Debug: Check all authority users in organization
-      const allAuthorityUsers = await User.find({
+    // 6. Handle Adviser case
+    if (nextStep.reviewerRole === 'Adviser') {
+      return await User.find({
         role: "Authority",
-        organizationId: form.organizationId
-      }).select('email faculty').lean();
-      
-      console.warn('Available faculty roles in organization:', 
-        [...new Set(allAuthorityUsers.map(u => u.faculty))]
-      );
+        faculty: "Adviser",
+        organization: orgName,
+        status: "Active"
+      }).select(baseFields).lean();
     }
-    
-    return reviewers;
-    
+
+    // 7. Handle Dean case (only for academic orgs)
+    if (nextStep.reviewerRole === 'Dean' && isAcademicOrg) {
+      return await User.find({
+        role: "Authority",
+        faculty: "Dean",
+        organization: orgName, // Changed from organizationId to orgName
+        status: "Active"
+      }).select(baseFields).lean();
+    }
+
+    return [];
   } catch (error) {
-    console.error("❌ Error getting next reviewers:", error);
+    console.error("Error in getNextReviewers:", error);
     return [];
   }
 };
@@ -373,11 +378,11 @@ const currentStepName = step.stepName;
     };
 
     if (status === "approved") {
-      const nextStepIndex = firstPendingOrDeclinedStepIndex + 1;
+      const nextStepIndex = tracker.steps.findIndex(s => s._id.equals(step._id)) + 1;
       
       if (nextStepIndex < tracker.steps.length) {
         const nextStep = tracker.steps[nextStepIndex];
-        const nextReviewers = await getNextReviewers(tracker, firstPendingOrDeclinedStepIndex);
+        const nextReviewers = await getNextReviewers(tracker, nextStepIndex - 1); // Updated
 
         const currentReviewerName = currentUserName || 
                                   (step.reviewedBy?.name || 

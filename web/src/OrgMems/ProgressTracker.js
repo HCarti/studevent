@@ -32,6 +32,7 @@ const ProgressTracker = () => {
     const [budgetData, setBudgetData] = useState(null);
     const [allDataLoaded, setAllDataLoaded] = useState(false);
     const [fetchError, setFetchError] = useState(null);
+    const [organizationType, setOrganizationType] = useState(null);
 
     const [pdfStatus, setPdfStatus] = useState({
         loading: false,
@@ -39,230 +40,178 @@ const ProgressTracker = () => {
         success: false
     });
 
-    // Data sanitization functions
     const sanitizeFormData = (formData) => {
         if (!formData) return {};
         return {
             ...formData,
             presidentSignature: formData.presidentSignature?.url || formData.presidentSignature,
-            studentOrganization: formData.studentOrganization?.organizationName || formData.studentOrganization
+            studentOrganization: formData.studentOrganization?.organizationName || formData.studentOrganization,
+            organizationType: formData.studentOrganization?.organizationType || formData.organizationType
         };
     };
 
-    const sanitizeSignatures = (signatures) => {
+    const sanitizeSignatures = (signatures, orgType) => {
         if (!signatures) return {};
         
-        return {
-          adviser: {
-            // name: signatures.adviser?.name || "ADVISER NAME",
-            signature: signatures.adviser?.signature?.url || signatures.adviser?.signature,
-            date: signatures.adviser?.date,
-            status: signatures.adviser?.status
-          },
-          dean: {
-            // name: signatures.dean?.name || "DEAN NAME",
-            signature: signatures.dean?.signature?.url || signatures.dean?.signature,
-            date: signatures.dean?.date,
-            status: signatures.dean?.status
-          },
-          admin: {
-            // name: signatures.admin?.name || "ADMIN NAME",
-            signature: signatures.admin?.signature?.url || signatures.admin?.signature,
-            date: signatures.admin?.date,
-            status: signatures.admin?.status
-          },
-          academicdirector: {
-            // name: signatures.academicdirector?.name || "ACADEMIC DIRECTOR NAME",
-            signature: signatures.academicdirector?.signature?.url || signatures.academicdirector?.signature,
-            date: signatures.academicdirector?.date,
-            status: signatures.academicdirector?.status
-          },
-          academicservices: {
-            // name: signatures.academicservices?.name || "ACADEMIC SERVICES NAME",
-            signature: signatures.academicservices?.signature?.url || signatures.academicservices?.signature,
-            date: signatures.academicservices?.date,
-            status: signatures.academicservices?.status
-          },
-          executivedirector: {
-            // name: signatures.executivedirector?.name || "EXECUTIVE DIRECTOR NAME",
-            signature: signatures.executivedirector?.signature?.url || signatures.executivedirector?.signature,
-            date: signatures.executivedirector?.date,
-            status: signatures.executivedirector?.status
-          }
+        const baseSignatures = {
+            adviser: {
+                signature: signatures.adviser?.signature?.url || signatures.adviser?.signature,
+                date: signatures.adviser?.date,
+                status: signatures.adviser?.status
+            },
+            admin: {
+                signature: signatures.admin?.signature?.url || signatures.admin?.signature,
+                date: signatures.admin?.date,
+                status: signatures.admin?.status
+            },
+            academicdirector: {
+                signature: signatures.academicdirector?.signature?.url || signatures.academicdirector?.signature,
+                date: signatures.academicdirector?.date,
+                status: signatures.academicdirector?.status
+            },
+            academicservices: {
+                signature: signatures.academicservices?.signature?.url || signatures.academicservices?.signature,
+                date: signatures.academicservices?.date,
+                status: signatures.academicservices?.status
+            },
+            executivedirector: {
+                signature: signatures.executivedirector?.signature?.url || signatures.executivedirector?.signature,
+                date: signatures.executivedirector?.date,
+                status: signatures.executivedirector?.status
+            }
         };
-      };
 
-    // Fetch user data
+        if (orgType === 'Recognized Student Organization - Academic') {
+            baseSignatures.dean = {
+                signature: signatures.dean?.signature?.url || signatures.dean?.signature,
+                date: signatures.dean?.date,
+                status: signatures.dean?.status
+            };
+        }
+
+        return baseSignatures;
+    };
+
+    const transformBudgetData = (rawBudget) => {
+        if (!rawBudget || typeof rawBudget !== 'object') {
+            return null;
+        }
+      
+        return {
+            nameOfRso: rawBudget.nameOfRso || rawBudget.nameOfiso || 'N/A',
+            eventTitle: rawBudget.eventTitle || 'N/A',
+            grandTotal: rawBudget.grandTotal || 0,
+            createdAt: rawBudget.createdAt || new Date().toISOString(),
+            items: (rawBudget.items || []).map(item => ({
+                description: item.description || 'Unspecified Item',
+                quantity: item.quantity || 0,
+                unitCost: item.unitCost || 0,
+                totalCost: item.totalCost || (item.quantity * item.unitCost) || 0,
+                unit: item.unit || '-'
+            })),
+            createdBy: {
+                name: 'Organization Representative',
+                _id: rawBudget.createdBy
+            }
+        };
+    };
+
+    const fetchBudgetData = async (budgetId) => {
+        try {
+            const response = await fetch(`https://stundevelop-server.vercel.app/api/budgets/${budgetId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+        
+            if (!response.ok) {
+                throw new Error("Budget fetch failed");
+            }
+        
+            return await response.json();
+        } catch (error) {
+            console.error("Budget fetch error:", error);
+            return null;
+        }
+    };
+
     useEffect(() => {
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
             try {
-                setUser(JSON.parse(storedUser));
+                const parsedUser = JSON.parse(storedUser);
+                setUser(parsedUser);
+                if (parsedUser.organizationType) {
+                    setOrganizationType(parsedUser.organizationType);
+                }
             } catch (error) {
                 console.error("Error parsing user data:", error);
             }
         }
     }, []);
 
-    const transformBudgetData = (rawBudget) => {
-        if (!rawBudget || typeof rawBudget !== 'object') {
-          console.error('Invalid budget data:', rawBudget);
-          return null;
-        }
-      
+    const fetchAllData = async () => {
         try {
-          return {
-            nameOfRso: rawBudget.nameOfRso || rawBudget.nameOfiso || 'N/A',
-            eventTitle: rawBudget.eventTitle || 'N/A',
-            grandTotal: rawBudget.grandTotal || 0,
-            createdAt: rawBudget.createdAt || new Date().toISOString(),
-            items: (rawBudget.items || []).map(item => ({
-              description: item.description || 'Unspecified Item',
-              quantity: item.quantity || 0,
-              unitCost: item.unitCost || 0,
-              totalCost: item.totalCost || (item.quantity * item.unitCost) || 0,
-              unit: item.unit || '-'
-            })),
-            createdBy: {
-              name: 'Organization Representative',
-              _id: rawBudget.createdBy
+            setLoading(true);
+            setFetchError(null);
+            const token = localStorage.getItem("token");
+            
+            const [formRes, signaturesRes, trackerRes] = await Promise.all([
+                fetch(`https://studevent-server.vercel.app/api/forms/${formId}`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                }),
+                fetch(`https://studevent-server.vercel.app/api/tracker/signatures/${formId}`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                }),
+                fetch(`https://studevent-server.vercel.app/api/tracker/${formId}`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                })
+            ]);
+        
+            if (!formRes.ok || !signaturesRes.ok || !trackerRes.ok) {
+                throw new Error('Failed to fetch data');
             }
-          };
-        } catch (error) {
-          console.error('Error transforming budget data:', error);
-          return null;
-        }
-      };
+        
+            const [formData, signaturesData, trackerData] = await Promise.all([
+                formRes.json(),
+                signaturesRes.json(),
+                trackerRes.json()
+            ]);
 
-    // Main data fetching function
-    const fetchBudgetData = async (budgetId) => {
-        try {
-          console.log("Fetching budget with ID:", budgetId);
-          
-          const response = await fetch(`https://stundevelop-server.vercel.app/api/budgets/${budgetId}`, {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-              'Content-Type': 'application/json'
-            }
-          });
-      
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            console.error("API Error Response:", {
-              status: response.status,
-              error: errorData
-            });
-            throw new Error(errorData.error || "Budget fetch failed");
-          }
-      
-          return await response.json();
-        } catch (error) {
-          console.error("Budget fetch error:", {
-            budgetId,
-            error: error.message,
-            stack: error.stack
-          });
-          return null;
-        }
-      };
+            const orgType = formData.studentOrganization?.organizationType || 
+                           formData.organizationType || 
+                           organizationType;
 
-      const fetchAllData = async () => {
-        try {
-          setLoading(true);
-          setFetchError(null);
-          const token = localStorage.getItem("token");
-          
-          // 1. First fetch all parallel data
-          const [formRes, signaturesRes, trackerRes] = await Promise.all([
-            fetch(`https://studevent-server.vercel.app/api/forms/${formId}`, {
-              headers: { "Authorization": `Bearer ${token}` }
-            }),
-            fetch(`https://studevent-server.vercel.app/api/tracker/signatures/${formId}`, {
-              headers: { "Authorization": `Bearer ${token}` }
-            }),
-            fetch(`https://studevent-server.vercel.app/api/tracker/${formId}`, {
-              headers: { "Authorization": `Bearer ${token}` }
-            })
-          ]);
-      
-          // Check responses
-          if (!formRes.ok || !signaturesRes.ok || !trackerRes.ok) {
-            throw new Error('Failed to fetch one or more data sources');
-          }
-      
-          // Process initial data
-          const [formData, signaturesData, trackerData] = await Promise.all([
-            formRes.json(),
-            signaturesRes.json(),
-            trackerRes.json()
-          ]);
-      
-          // Debug: Check the attachedBudget structure
-          console.log("Form data attachedBudget:", {
-            exists: !!formData.attachedBudget,
-            type: typeof formData.attachedBudget,
-            value: formData.attachedBudget
-          });
-      
-          // 2. Handle budget data
-          let budgetData = null;
-          if (formData.attachedBudget) {
-            try {
-              // Get the budget ID (handling both object and string cases)
-              const budgetId = typeof formData.attachedBudget === 'object' 
-                ? formData.attachedBudget._id 
-                : formData.attachedBudget;
-      
-              console.log("Fetching budget with ID:", budgetId);
-              
-              budgetData = await fetchBudgetData(budgetId);
-              
-              // Validate the budget data
-              if (!budgetData || !Array.isArray(budgetData.items)) {
-                console.error("Invalid budget data structure:", budgetData);
-                budgetData = null;
-              } else {
-                console.log("Successfully fetched budget data:", {
-                  itemCount: budgetData.items.length,
-                  grandTotal: budgetData.grandTotal
-                });
-              }
-            } catch (budgetError) {
-              console.error("Error fetching budget:", budgetError);
-              budgetData = null;
+            setOrganizationType(orgType);
+        
+            let budgetData = null;
+            if (formData.attachedBudget) {
+                const budgetId = typeof formData.attachedBudget === 'object' 
+                    ? formData.attachedBudget._id 
+                    : formData.attachedBudget;
+                budgetData = await fetchBudgetData(budgetId);
             }
-          }
-      
-          // 3. Update all states together
-          setFormDetails(sanitizeFormData(formData));
-          setReviewSignatures(sanitizeSignatures(signaturesData));
-          setTrackerData(trackerData);
-          setCurrentStep(String(trackerData.currentStep));
-          setBudgetData(budgetData);
-      
-          // Final debug log
-          console.log("All data loaded successfully:", {
-            formData: sanitizeFormData(formData),
-            signatures: sanitizeSignatures(signaturesData),
-            trackerData,
-            budgetData
-          });
-      
-          setAllDataLoaded(true);
+        
+            setFormDetails(sanitizeFormData(formData));
+            setReviewSignatures(sanitizeSignatures(signaturesData, orgType));
+            setTrackerData(trackerData);
+            setCurrentStep(String(trackerData.currentStep));
+            setBudgetData(budgetData);
+            setAllDataLoaded(true);
         } catch (error) {
-          console.error("Error in fetchAllData:", error);
-          setFetchError(error.message);
-          setAllDataLoaded(false);
+            console.error("Error in fetchAllData:", error);
+            setFetchError(error.message);
+            setAllDataLoaded(false);
         } finally {
-          setLoading(false);
+            setLoading(false);
         }
-      };
+    };
 
     useEffect(() => {
         if (formId) fetchAllData();
     }, [formId]);
 
-    // Feedback submission
     const handleFeedbackSubmit = async () => {
         if (!feedbackText.trim()) {
             setFeedbackError('Please enter feedback');
@@ -295,7 +244,6 @@ const ProgressTracker = () => {
         }
     };
 
-    // Tracker update
     const handleSaveClick = async () => {
         if (!trackerData || !user) return;
 
@@ -324,7 +272,6 @@ const ProgressTracker = () => {
                 }),
             });
 
-            // Refresh data
             await fetchAllData();
             setIsEditing(false);
             setRemarks("");
@@ -333,7 +280,6 @@ const ProgressTracker = () => {
         }
     };
 
-    // PDF component handling
     const getPdfComponent = (formType) => {
         switch (formType) {
             case 'Budget': return BudgetPdf;
@@ -353,41 +299,76 @@ const ProgressTracker = () => {
     const SafePDFDownload = () => {
         if (!allDataLoaded) return null;
         
-        try {
-          return (
+        return (
             <PDFDownloadLink
-              document={React.createElement(
-                getPdfComponent(formDetails?.formType),
-                { 
-                  formData: sanitizeFormData(formDetails),
-                  budgetData: budgetData,
-                  signatures: reviewSignatures
-                }
-              )}
-              fileName={getPdfFileName(formDetails?.formType, formDetails)}
-              onRender={() => setPdfStatus({ loading: true, error: null, success: false })}
-              onError={(error) => setPdfStatus({ loading: false, error: error.message, success: false })}
-              onLoad={() => setPdfStatus({ loading: false, error: null, success: true })}
+                document={React.createElement(
+                    getPdfComponent(formDetails?.formType),
+                    { 
+                        formData: sanitizeFormData(formDetails),
+                        budgetData: budgetData,
+                        signatures: reviewSignatures
+                    }
+                )}
+                fileName={getPdfFileName(formDetails?.formType, formDetails)}
             >
-              {({ loading }) => (
-                <Button 
-                  variant="contained" 
-                  color="primary"
-                  disabled={loading || pdfStatus.loading}
-                  startIcon={(loading || pdfStatus.loading) ? <CircularProgress size={20} /> : null}
-                >
-                  {loading ? 'Generating PDF...' : `Download ${formDetails?.formType || 'Form'} PDF`}
-                </Button>
-              )}
+                {({ loading }) => (
+                    <Button 
+                        variant="contained" 
+                        color="primary"
+                        disabled={loading || pdfStatus.loading}
+                        startIcon={(loading || pdfStatus.loading) ? <CircularProgress size={20} /> : null}
+                    >
+                        {loading ? 'Generating PDF...' : `Download ${formDetails?.formType || 'Form'} PDF`}
+                    </Button>
+                )}
             </PDFDownloadLink>
-          );
-        } catch (error) {
-          console.error("PDF generation error:", error);
-          return <div className="pdf-error">Failed to generate PDF</div>;
-        }
-      };
+        );
+    };
 
-    // Loading and error states
+    const renderProgressSteps = () => {
+        if (!trackerData || !trackerData.steps) return null;
+
+        return trackerData.steps.map((step, index) => {
+            if (step.stepName === 'Dean' && organizationType !== 'Recognized Student Organization - Academic') {
+                return null;
+            }
+
+            return (
+                <div key={index} className="step-container">
+                    <div className="progress-step">
+                        {step.status === 'approved' ? (
+                            <CheckCircleIcon style={{ color: '#4caf50', fontSize: 24 }} />
+                        ) : step.status === 'declined' ? (
+                            <CheckCircleIcon style={{ color: 'red', fontSize: 24 }} />
+                        ) : (
+                            <RadioButtonUncheckedIcon style={{ color: '#ffeb3b', fontSize: 24 }} />
+                        )}
+                    </div>
+                    <div className="step-label">
+                        <strong>{step.stepName}</strong>
+                        {step.reviewedBy && (
+                            <div className="reviewer-info">
+                                <small>Reviewed by: {step.reviewedByRole}</small>
+                                <small>{new Date(step.timestamp).toLocaleString()}</small>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        });
+    };
+
+    const isTrackerCompleted = () => {
+        if (!trackerData || !trackerData.steps) return false;
+
+        return trackerData.steps.every(step => {
+            if (step.stepName === 'Dean' && organizationType !== 'Recognized Student Organization - Academic') {
+                return true;
+            }
+            return step.status === 'approved';
+        });
+    };
+
     if (loading) {
         return (
             <div className="loading-spinner-container">
@@ -410,95 +391,77 @@ const ProgressTracker = () => {
         return <p>No tracker data found.</p>;
     }
 
-    const isTrackerCompleted = trackerData.steps.every(step => step.status === 'approved');
-
     return (
         <div className='prog-box'>
             <h3 style={{ textAlign: 'center' }}>Event Proposal Tracker</h3>
+            {organizationType && (
+                <p style={{ textAlign: 'center', fontStyle: 'italic' }}>
+                    Organization Type: {organizationType}
+                </p>
+            )}
             <div className="progress-content">
                 <div className="progress-tracker">
                     <div className="progress-bar-container">
-                        {trackerData.steps.map((step, index) => (
-                            <div key={index} className="step-container">
-                                <div className="progress-step">
-                                    {step.status === 'approved' ? (
-                                        <CheckCircleIcon style={{ color: '#4caf50', fontSize: 24 }} />
-                                    ) : step.status === 'declined' ? (
-                                        <CheckCircleIcon style={{ color: 'red', fontSize: 24 }} />
-                                    ) : (
-                                        <RadioButtonUncheckedIcon style={{ color: '#ffeb3b', fontSize: 24 }} />
-                                    )}
-                                </div>
-                                <div className="step-label">
-                                    <strong>{step.stepName}</strong>
-                                    {step.reviewedBy && (
-                                        <div className="reviewer-info">
-                                            <small>Reviewed by: {step.reviewedByRole}</small>
-                                            <small>{new Date(step.timestamp).toLocaleString()}</small>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
+                        {renderProgressSteps()}
                     </div>
 
                     {isEditing ? (
-                      <div className="edit-tracker">
-                        <h3>Review Submission</h3>
-                        <div className="edit-tracker-options">
-                          <label>
-                            <input
-                              type="checkbox"
-                              checked={isApprovedChecked}
-                              onChange={() => {
-                                setIsApprovedChecked(!isApprovedChecked);
-                                if (isDeclinedChecked) setIsDeclinedChecked(false);
-                              }}
+                        <div className="edit-tracker">
+                            <h3>Review Submission</h3>
+                            <div className="edit-tracker-options">
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        checked={isApprovedChecked}
+                                        onChange={() => {
+                                            setIsApprovedChecked(!isApprovedChecked);
+                                            if (isDeclinedChecked) setIsDeclinedChecked(false);
+                                        }}
+                                    />
+                                    Approve
+                                </label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        checked={isDeclinedChecked}
+                                        onChange={() => {
+                                            setIsDeclinedChecked(!isDeclinedChecked);
+                                            if (isApprovedChecked) setIsApprovedChecked(false);
+                                        }}
+                                    />
+                                    Decline
+                                </label>
+                            </div>
+                            <textarea
+                                className="feedback-textarea"
+                                placeholder="Enter your remarks..."
+                                value={remarks}
+                                onChange={(e) => setRemarks(e.target.value)}
                             />
-                            Approve
-                          </label>
-                          <label>
-                            <input
-                              type="checkbox"
-                              checked={isDeclinedChecked}
-                              onChange={() => {
-                                setIsDeclinedChecked(!isDeclinedChecked);
-                                if (isApprovedChecked) setIsApprovedChecked(false);
-                              }}
-                            />
-                            Decline
-                          </label>
+                            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                                <Button 
+                                    variant="outlined" 
+                                    onClick={() => {
+                                        setIsEditing(false);
+                                        setIsApprovedChecked(false);
+                                        setIsDeclinedChecked(false);
+                                        setRemarks('');
+                                    }}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button 
+                                    variant="contained" 
+                                    onClick={handleSaveClick}
+                                    disabled={!isApprovedChecked && !isDeclinedChecked}
+                                >
+                                    Submit Review
+                                </Button>
+                            </div>
                         </div>
-                        <textarea
-                          className="feedback-textarea"
-                          placeholder="Enter your remarks..."
-                          value={remarks}
-                          onChange={(e) => setRemarks(e.target.value)}
-                        />
-                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                          <Button 
-                            variant="outlined" 
-                            onClick={() => {
-                              setIsEditing(false);
-                              setIsApprovedChecked(false);
-                              setIsDeclinedChecked(false);
-                              setRemarks('');
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                          <Button 
-                            variant="contained" 
-                            onClick={handleSaveClick}
-                            disabled={!isApprovedChecked && !isDeclinedChecked}
-                          >
-                            Submit Review
-                          </Button>
-                        </div>
-                      </div>
                     ) : (
                         <div className="action-buttons">
-                            {isTrackerCompleted && (
+                            {isTrackerCompleted() && (
                                 <div className="pdf-download-container">
                                     {pdfStatus.error && (
                                         <div className="pdf-error-message">
@@ -537,7 +500,7 @@ const ProgressTracker = () => {
                     )}
                 </div>
 
-                {isTrackerCompleted && (
+                {isTrackerCompleted() && (
                     <div className="feedback-container">
                         <h4>Your Feedback</h4>
                         {feedbackSubmitted ? (

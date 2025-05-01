@@ -14,6 +14,7 @@ const eventTrackerSchema = new mongoose.Schema({
             remarks: { type: String, default: "" },
             timestamp: { type: Date, default: null},
             signature: { type: String, default: null }, // NEW: Signature URL
+            assignedReviewer: { type: Schema.Types.ObjectId, ref: 'User' } // Add this
         }
     ]
 });
