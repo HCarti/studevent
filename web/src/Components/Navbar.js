@@ -267,6 +267,39 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
     setDrawerOpen(false);
   };
 
+  const handleNotificationClick = async notification => {
+    // If notification is not read, mark it as read
+    if (!notification.read) {
+      await markNotificationAsRead(notification._id);
+    }
+
+    // Close the notification dropdown
+    setNotificationMenuOpen(false);
+
+    // Navigate based on notification type
+    switch (notification.type) {
+      case 'tracker':
+        navigate(`/tracker/${notification.trackerId}`);
+        break;
+      case 'event':
+        navigate(`/event/${notification.eventId}`);
+        break;
+      case 'organization':
+        navigate(`/organization/${notification.organizationId}`);
+        break;
+      case 'approval':
+        navigate(`/approvals`);
+        break;
+      case 'liquidation':
+        navigate(`/liquidations`);
+        break;
+      default:
+        // For notifications without specific navigation, just mark as read
+        console.log('No navigation defined for this notification type');
+        break;
+    }
+  };
+
   return (
     <div className="navbar" ref={navbarRef}>
       <div className="navbar-logo" onClick={handleNavbarClick}>
@@ -294,6 +327,17 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
                       <div
                         key={notification._id}
                         className={`notification-item ${notification.read ? 'read' : 'unread'}`}
+                        onClick={e => {
+                          // Don't trigger navigation if clicking on buttons
+                          if (
+                            e.target.tagName === 'BUTTON' ||
+                            e.target.closest('button') ||
+                            e.target.className === 'notification-actions'
+                          ) {
+                            return;
+                          }
+                          handleNotificationClick(notification);
+                        }}
                       >
                         <div className="notification-message">{notification.message}</div>
                         <div className="notification-time">
@@ -306,6 +350,7 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
                               onClick={e => {
                                 e.stopPropagation();
                                 navigate(`/tracker/${notification.trackerId}`);
+                                setNotificationMenuOpen(false);
                               }}
                             >
                               View Tracker

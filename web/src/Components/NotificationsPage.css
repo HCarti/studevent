@@ -73,6 +73,28 @@
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   border-left: 4px solid #4a6bff;
+  cursor: pointer;
+  position: relative;
+}
+
+.notification-item:after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-top: 2px solid #a0aec0;
+  border-right: 2px solid #a0aec0;
+  transform: translateY(-50%) rotate(45deg);
+  opacity: 0.6;
+  transition: all 0.2s ease;
+}
+
+.notification-item:hover:after {
+  right: 12px;
+  opacity: 1;
 }
 
 .notification-item.read {
@@ -88,6 +110,7 @@
 .notification-item:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  background-color: #f8fbff;
 }
 
 .notification-message {
