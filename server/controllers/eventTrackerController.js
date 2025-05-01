@@ -224,7 +224,7 @@ const updateTrackerStep = async (req, res) => {
     const { trackerId, stepId } = req.params;
     const { status, remarks, signature } = req.body;
     const userId = req.user._id;
-    const { role, faculty, email: currentUserEmail, firstName, lastName } = req.user;
+    const { role, faculty, email: currentUserEmail, firstName, lastName } = req.user; // Added firstName and lastName
 
     // Validate user and request
     if (!req.user) {
@@ -248,7 +248,7 @@ const updateTrackerStep = async (req, res) => {
     // Fetch the tracker and form with populated reviewer data
     const tracker = await EventTracker.findById(trackerId).populate({
       path: 'steps.reviewedBy',
-      select: 'firstName lastName email role faculty'
+      select: 'firstName lastName email role faculty' // Include firstName and lastName
     });
     
     if (!tracker) {
@@ -275,7 +275,7 @@ const updateTrackerStep = async (req, res) => {
       return res.status(404).json({ message: "Step not found" });
     }
 
-    // Verify step is ready for review
+    // Validate step order
     const firstPendingOrDeclinedStepIndex = tracker.steps.findIndex(step => 
       step.status === "pending" || step.status === "declined"
     );
@@ -290,7 +290,6 @@ const updateTrackerStep = async (req, res) => {
       return res.status(400).json({ message: "This step has already been reviewed." });
     }
 
-    // Verify user has permission to review this step
     if (step.stepName !== faculty && role !== "Admin") {
       return res.status(403).json({ message: `Unauthorized: Only the ${step.stepName} can review this step.` });
     }
@@ -301,10 +300,10 @@ const updateTrackerStep = async (req, res) => {
     step.timestamp = new Date();
     step.reviewedBy = {
       _id: userId,
-      firstName,
-      lastName,
-      role,
-      faculty
+      firstName: firstName,
+      lastName: lastName,
+      role: role,
+      faculty: faculty
     };
     step.reviewedByRole = faculty || role;
     step.signature = signature;
@@ -338,6 +337,25 @@ const updateTrackerStep = async (req, res) => {
     // Save the updated tracker
     await tracker.save();
 
+    // Update form status
+    const isDeclined = tracker.steps.some(step => step.status === 'declined');
+    const isApproved = tracker.steps.every(step => {
+      // Skip Dean check for non-academic orgs
+      if (step.stepName === 'Dean' && form.organizationType !== 'Recognized Student Organization - Academic') {
+        return true;
+      }
+      return step.status === 'approved';
+    });
+
+    if (form.formPhase) { // LocalOffCampus form
+      form.finalStatus = isDeclined ? 'declined' : isApproved ? 'approved' : 'pending';
+      form.status = isDeclined ? 'rejected' : isApproved ? 'approved' : 'submitted';
+    } else { // Regular Form
+      form.finalStatus = isDeclined ? 'declined' : isApproved ? 'approved' : 'pending';
+    }
+
+    await form.save();
+
     // Enhanced notification handling
     // Enhanced notification handling
 const formName = form.formType === 'Activity' 
@@ -368,10 +386,9 @@ const currentStepName = step.stepName;
         const nextStep = tracker.steps[nextStepIndex];
         const nextReviewers = await getNextReviewers(tracker, nextStepIndex - 1); // Updated
 
-        const currentReviewerName = currentUserName || 
-                                  (step.reviewedBy?.name || 
-                                  req.user.email.split('@')[0] || 
-                                  'a reviewer');
+        const currentReviewerName = `${firstName} ${lastName}` || 
+                          req.user.email.split('@')[0] || 
+                          'a reviewer';
 
         if (nextReviewers.length > 0) {
           for (const reviewer of nextReviewers) {
@@ -396,6 +413,20 @@ const currentStepName = step.stepName;
             organizationId: form.organizationId, 
             role: 'Admin' 
           }).select('email').lean();
+          
+          // if (admins.length > 0) {
+          //   for (const admin of admins) {
+          //     try {
+          //       await notificationController.createNotification(
+          //         admin.email,
+          //         `Workflow Blocked: Missing reviewers for ${nextStep.stepName}`,
+          //         `Workflow blocked for ${formName}. No reviewers found for ${nextStep.stepName} role.`
+          //       );
+          //     } catch (error) {
+          //       console.error(`Failed to notify admin ${admin.email}:`, error);
+          //     }
+          //   }
+          // }
           
           await notificationController.createNotification(
             currentUserEmail,
@@ -471,17 +502,7 @@ const currentStepName = step.stepName;
       }
     }
 
-    return res.status(200).json({ 
-      message: "Tracker step updated successfully", 
-      tracker, 
-      form,
-      reviewer: {
-        firstName,
-        lastName,
-        role,
-        faculty
-      }
-    });
+    return res.status(200).json({ message: "Tracker step updated successfully", tracker, form });
 
   } catch (error) {
     console.error("❌ Error updating progress tracker:", error);
