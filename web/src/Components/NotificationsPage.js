@@ -111,8 +111,9 @@ const NotificationsPage = () => {
 
     // Navigate based on notification type
     if (!notification.type) {
-      console.log('Notification has no type - showing notification as read only');
-      return; // Just mark as read but don't navigate if no type is available
+      // Navigate to trackerlist by default instead of just showing as read
+      navigate('/trackerlist');
+      return;
     }
 
     switch (notification.type) {
