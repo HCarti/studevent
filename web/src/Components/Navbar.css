@@ -1,3 +1,5 @@
+/* Navbar.css - Updated with modern drawer styles */
+
 /* General Navbar Styles */
 .navbar {
   position: sticky;
@@ -11,7 +13,7 @@
   align-items: center;
   padding: 10px 20px;
   border-bottom: 5px solid #ffd900;
-  z-index: 1000;
+  z-index: 1000; /* Ensure navbar stays above other content */
 }
 
 .navbar-logo {
@@ -54,7 +56,6 @@
   font-weight: bold;
 }
 
-/* Updated Navbar Menu Items to match other buttons */
 .navbar-menu-item {
   display: flex;
   align-items: center;
@@ -103,6 +104,19 @@
 
 .navbar-profile-pic:hover {
   border-color: #ffd900;
+  transform: scale(1.05);
+}
+
+.navbar-profile-icon {
+  font-size: 24px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.navbar-profile-icon:hover {
+  color: #ffd900;
+  transform: scale(1.1);
 }
 
 .navbar-icon {
@@ -111,7 +125,7 @@
   transition: color 0.3s ease;
 }
 
-.navbars-icon{
+.navbars-icon {
   font-size: 20px;
   color: white;
   transition: color 0.3s ease;
@@ -131,6 +145,13 @@
   margin-right: 30px;
 }
 
+.profile-icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+
 /* Notifications */
 .navbar-notifications {
   position: relative;
@@ -143,63 +164,27 @@
   transition: background-color 0.3s ease;
 }
 
+.bell-container {
+  position: relative;
+  display: flex;
+}
 
 .badge {
   position: absolute;
-  top: -5px;
-  right: -5px;
+  top: -5px;  /* Reduced from -8px to bring it closer */
+  right: -5px; /* Reduced from -8px to bring it closer */
   background-color: #ff4757;
   color: white;
   border-radius: 50%;
-  padding: 4px 8px;
-  font-size: 11px;
+  padding: 2px 5px; /* Reduced padding */
+  font-size: 10px;   /* Slightly smaller font */
   font-weight: bold;
-  min-width: 18px;
+  min-width: 16px;   /* Reduced minimum width */
   text-align: center;
   line-height: 1;
-}
-
-/* Account Dropdown */
-.account-dropdown {
-  position: relative;
   display: flex;
-  align-items: center;
   justify-content: center;
-  padding: 8px;
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
-  cursor: pointer;
-}
-
-.account-dropdown-menu {
-  position: absolute;
-  right: 0;
-  top: 60px;
-  background-color: white;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
-  z-index: 1000;
-  padding: 10px;
-  width: 180px;
-}
-
-.dropdown-item {
-  display: flex;
   align-items: center;
-  padding: 8px 12px;
-  color: #333;
-  text-decoration: none;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-}
-
-.dropdown-item:hover {
-  background-color: #f1f1f1;
-}
-
-.dropdown-item .navbar-icon {
-  margin-right: 8px;
-  color: #333;
 }
 
 /* Notification Dropdown */
@@ -248,14 +233,12 @@
   font-weight: 500;
 }
 
-
 .notification-time {
   font-size: 12px;
   color: #888;
   font-weight: bold;
   margin-bottom: 8px;
 }
-
 
 .view-tracker-btn {
   margin-top: 8px;
@@ -281,18 +264,38 @@
   font-size: 14px;
 }
 
-/* Drawer Styles */
+/* Modern Drawer Styles */
+.drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999; /* Just below navbar */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+} 
+
+.drawer-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
 .drawer {
   position: fixed;
   top: 0;
   right: 0;
-  width: 300px;
+  width: 320px;
   height: 100%;
-  background-color: #1a3ab5;
-  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.15);
+  background-color: #fff;
+  box-shadow: -5px 0 25px rgba(0, 0, 0, 0.1);
   transform: translateX(100%);
-  transition: transform 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1000;
+  display: flex;
+  flex-direction: column;
 }
 
 .drawer.open {
@@ -302,48 +305,178 @@
 .drawer-header {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+  padding: 25px;
+  background-color: #1a3ab5;
+  color: white;
+  position: relative;
+}
+
+.drawer-user-info {
+  display: flex;
   align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 15px;
+  flex: 1;
 }
 
-.drawer-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.drawer-close-icon {
-  font-size: 1.5rem;
+.drawer-profile-pic {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid white;
   cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.drawer-profile-pic:hover {
+  border-color: #ffd900;
+  transform: scale(1.05);
+}
+
+.drawer-profile-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.drawer-profile-icon:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.drawer-user-details {
+  flex: 1;
+  overflow: hidden;
+}
+
+.drawer-user-name {
+  font-weight: 600;
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drawer-user-email {
+  font-size: 13px;
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drawer-close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 5px;
+  margin-left: 10px;
+  transition: transform 0.2s;
+}
+
+.drawer-close-btn:hover {
+  transform: scale(1.1);
+}
+
+.drawer-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
 }
 
 .drawer-list {
   list-style: none;
   padding: 0;
   margin: 0;
+  flex: 1;
 }
 
 .drawer-list-item {
   display: flex;
   align-items: center;
-  padding: 26px 20px;
-  color: white;
+  padding: 18px 25px;
+  color: #333;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.2s ease;
+  position: relative;
 }
 
-.drawer-list-item .icon {
-  margin-right: 12px;
-  font-size: 1.2rem;
+.drawer-list-item:hover {
+  background-color: #f5f7fa;
+}
+
+.drawer-list-item.active {
+  background-color: #f0f4ff;
+  color: #1a3ab5;
+}
+
+.drawer-list-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: #1a3ab5;
+}
+
+.drawer-icon {
+  font-size: 20px;
+  margin-right: 15px;
+  color: #555;
+  min-width: 24px;
+}
+
+.drawer-list-item.active .drawer-icon {
+  color: #1a3ab5;
+}
+
+.drawer-icon-container {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .drawer-badge {
-  margin-left: auto;
-  background-color: red;
+  position: absolute;
+  top: -5px;
+  background-color: #ff4757;
   color: white;
-  border-radius: 0%;
-  padding: 2px 6px;
+  border-radius: 50%;
+  padding: 2px 5px;
+  font-size: 10px;
+  font-weight: bold;
+  min-width: 16px;
+  text-align: center;
+  line-height: 1;
+}
+
+.drawer-footer {
+  padding: 20px 25px;
+  border-top: 1px solid #eee;
+  text-align: center;
+}
+
+.app-version {
   font-size: 12px;
+  color: #888;
+  margin-bottom: 5px;
+}
+
+.app-copyright {
+  font-size: 12px;
+  color: #aaa;
 }
 
 /* Mobile Menu Icon */
@@ -385,7 +518,7 @@
 
 .logout-modal p {
   margin-bottom: 25px;
-  color:black;
+  color: black;
 }
 
 .logout-modal-buttons {
@@ -411,8 +544,6 @@
   color: white;
 }
 
-
-
 /* Responsive Styles */
 @media (max-width: 768px) {
   .navbar-menu {
@@ -426,7 +557,6 @@
   .navbar-icons-container {
     gap: 15px;
     margin-right: 15px;
-  
   }
 
   .notification-dropdown {
@@ -456,43 +586,4 @@
   50% { transform: rotate(-15deg); }
   75% { transform: rotate(10deg); }
   100% { transform: rotate(0deg); }
-}
-
-/* Drawer Notification Dropdown */
-.drawer-notification-dropdown {
-  background-color: white;
-  margin: 10px;
-  border-radius: 8px;
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.drawer-notification-item {
-  padding: 12px 15px;
-  border-bottom: 1px solid #eee;
-  color: #333;
-  font-size: 14px;
-}
-
-.drawer-notification-item.unread {
-  background-color: #f0f7ff;
-}
-
-.drawer-notification-message {
-  margin-bottom: 5px;
-}
-
-.drawer-notification-time {
-  font-size: 11px;
-  color: #888;
-  margin-bottom: 8px;
-}
-
-.drawer-view-tracker-btn {
-  padding: 4px 10px;
-  background-color: #1a3ab5;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 12px;
 }

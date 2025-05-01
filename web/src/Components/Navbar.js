@@ -10,7 +10,6 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   const navigate = useNavigate();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -18,11 +17,11 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   // Refs for dropdown containers
-  const accountDropdownRef = useRef(null);
   const notificationDropdownRef = useRef(null);
   const drawerRef = useRef(null);
   const mobileMenuIconRef = useRef(null);
   const bellIconRef = useRef(null);
+  const navbarRef = useRef(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -36,27 +35,23 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   // Handle clicks outside dropdowns
   useEffect(() => {
     const handleClickOutside = event => {
-      if (
-        accountMenuOpen &&
-        accountDropdownRef.current &&
-        !accountDropdownRef.current.contains(event.target)
-      ) {
-        setAccountMenuOpen(false);
-      }
-
+      // Close notification dropdown if clicked outside
       if (
         notificationMenuOpen &&
         notificationDropdownRef.current &&
-        !notificationDropdownRef.current.contains(event.target)
+        !notificationDropdownRef.current.contains(event.target) &&
+        (!bellIconRef.current || !bellIconRef.current.contains(event.target))
       ) {
         setNotificationMenuOpen(false);
       }
 
+      // Close drawer if clicked outside
       if (
         drawerOpen &&
         drawerRef.current &&
         !drawerRef.current.contains(event.target) &&
-        (!mobileMenuIconRef.current || !mobileMenuIconRef.current.contains(event.target))
+        (!mobileMenuIconRef.current || !mobileMenuIconRef.current.contains(event.target)) &&
+        (!navbarRef.current || !navbarRef.current.contains(event.target))
       ) {
         setDrawerOpen(false);
       }
@@ -66,7 +61,7 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [drawerOpen, accountMenuOpen, notificationMenuOpen]);
+  }, [drawerOpen, notificationMenuOpen]);
 
   // Notifications
   useEffect(() => {
@@ -138,7 +133,6 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
 
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
-    setAccountMenuOpen(false);
     setNotificationMenuOpen(false);
   };
 
@@ -154,7 +148,6 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
 
     // Only toggle dropdown in desktop navbar
     setNotificationMenuOpen(!notificationMenuOpen);
-    setAccountMenuOpen(false);
 
     if (!notificationMenuOpen && notifications.length > 0) {
       try {
@@ -171,18 +164,12 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
     }
   };
 
-  const toggleAccountMenu = () => {
-    setAccountMenuOpen(!accountMenuOpen);
-    setNotificationMenuOpen(false);
-  };
-
   const handleNavbarClick = () => {
     navigate('/');
   };
 
   const handleLogoutClick = () => {
     setShowLogoutModal(true);
-    setAccountMenuOpen(false);
     setDrawerOpen(false);
   };
 
@@ -206,6 +193,7 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
       navigate('/profile');
     }
     setDrawerOpen(false);
+    setNotificationMenuOpen(false);
   };
 
   const renderMenuItems = () => (
@@ -237,14 +225,13 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
     </>
   );
 
-  // Function to handle drawer notification click - always navigate to notifications page
   const handleDrawerNotificationClick = () => {
     navigate('/notifications');
     setDrawerOpen(false);
   };
 
   return (
-    <div className="navbar">
+    <div className="navbar" ref={navbarRef}>
       <div className="navbar-logo" onClick={handleNavbarClick}>
         <img src={StudeventLogo} alt="StudEvent Logo" />
         <div className="navbar-title">StudEvent</div>
@@ -259,8 +246,10 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
               onClick={toggleNotificationMenu}
               ref={notificationDropdownRef}
             >
-              <FiBell className="navbar-icon" ref={bellIconRef} />
-              {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
+              <div className="bell-container">
+                <FiBell className="navbar-icon" ref={bellIconRef} />
+                {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
+              </div>
               {notificationMenuOpen && (
                 <div className="notification-dropdown">
                   {notifications.length > 0 ? (
@@ -296,23 +285,19 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
               )}
             </div>
 
-            <div className="account-dropdown" onClick={toggleAccountMenu} ref={accountDropdownRef}>
+            <div className="profile-icon-container">
               {user.logo ? (
-                <img src={user.logo} alt="Profile" className="navbar-profile-pic" />
+                <img 
+                  src={user.logo} 
+                  alt="Profile" 
+                  className="navbar-profile-pic" 
+                  onClick={handleProfileClick}
+                />
               ) : (
-                <CgProfile className="navbar-profile-icon" />
-              )}
-              {accountMenuOpen && (
-                <div className="account-dropdown-menu">
-                  <div className="dropdown-item" onClick={handleProfileClick}>
-                    <CgProfile className="navbar-icon" />
-                    <span>{user.role === 'SuperAdmin' ? 'Super Admin Profile' : 'Profile'}</span>
-                  </div>
-                  <div className="dropdown-item" onClick={handleLogoutClick}>
-                    <FiLogOut className="navbar-icon" />
-                    <span>Log Out</span>
-                  </div>
-                </div>
+                <CgProfile 
+                  className="navbar-profile-icon" 
+                  onClick={handleProfileClick}
+                />
               )}
             </div>
           </div>
@@ -323,70 +308,84 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
         &#9776;
       </div>
 
+      <div className={`drawer-overlay ${drawerOpen ? 'visible' : ''}`} onClick={toggleDrawer}></div>
       <div className={`drawer ${drawerOpen ? 'open' : ''}`} ref={drawerRef}>
         <div className="drawer-header">
-          <div className="drawer-title">Menu</div>
-          <div className="drawer-close-icon" onClick={toggleDrawer}>
-            &times;
-          </div>
-        </div>
-        <ul className="drawer-list">
-          {renderMenuItems()}
-          {isLoggedIn && user && (
-            <>
-              <li className="drawer-list-item" onClick={handleDrawerNotificationClick}>
-                <FiBell className="navbars-icon" />
-                <span>Notifications</span>
-                {unreadCount > 0 && <span className="drawer-badge">{unreadCount}</span>}
-              </li>
-              <li className="drawer-list-item" onClick={handleProfileClick}>
-                <CgProfile className="navbars-icon" />
-                <span>{user.role === 'SuperAdmin' ? 'Super Admin Profile' : 'Profile'}</span>
-              </li>
-              <li className="drawer-list-item" onClick={handleLogoutClick}>
-                <FiLogOut className="navbars-icon" />
-                <span>Logout</span>
-              </li>
-            </>
-          )}
-        </ul>
-
-        {/* Never show notifications dropdown in drawer, always navigate to page instead */}
-        {false && isLoggedIn && user && notificationMenuOpen && (
-          <div className="drawer-notification-dropdown">
-            {notifications.length > 0 ? (
-              notifications.map(notification => (
-                <div
-                  key={notification._id}
-                  className={`drawer-notification-item ${notification.read ? 'read' : 'unread'}`}
-                  onClick={() => {
-                    markNotificationAsRead(notification._id);
-                    setNotificationMenuOpen(false);
-                  }}
-                >
-                  <div className="drawer-notification-message">{notification.message}</div>
-                  <div className="drawer-notification-time">
-                    {new Date(notification.createdAt).toLocaleString()}
+          <div className="drawer-user-info">
+            {user && (
+              <>
+                {user.logo ? (
+                  <img 
+                    src={user.logo} 
+                    alt="Profile" 
+                    className="drawer-profile-pic" 
+                    onClick={handleProfileClick}
+                  />
+                ) : (
+                  <div 
+                    className="drawer-profile-icon" 
+                    onClick={handleProfileClick}
+                  >
+                    <CgProfile />
                   </div>
-                  {notification.type === 'tracker' && (
-                    <button
-                      className="drawer-view-tracker-btn"
-                      onClick={e => {
-                        e.stopPropagation();
-                        navigate(`/tracker/${notification.trackerId}`);
-                        setNotificationMenuOpen(false);
-                      }}
-                    >
-                      View Tracker
-                    </button>
-                  )}
+                )}
+                <div className="drawer-user-details">
+                  <div className="drawer-user-name">{user.name || user.email}</div>
+                  <div className="drawer-user-email">{user.email}</div>
                 </div>
-              ))
-            ) : (
-              <div className="drawer-notification-item no-notifications">No new notifications</div>
+              </>
             )}
           </div>
-        )}
+          <button className="drawer-close-btn" onClick={toggleDrawer}>
+            &times;
+          </button>
+        </div>
+        <div className="drawer-content">
+          <ul className="drawer-list">
+            <li 
+              className={`drawer-list-item ${location.pathname === '/' ? 'active' : ''}`}
+              onClick={() => {
+                navigate('/');
+                setDrawerOpen(false);
+              }}
+            >
+              <FiHome className="drawer-icon" />
+              <span>Home</span>
+            </li>
+            <li 
+              className={`drawer-list-item ${location.pathname === '/organizations' ? 'active' : ''}`}
+              onClick={() => {
+                navigate('/organizations');
+                setDrawerOpen(false);
+              }}
+            >
+              <FiUsers className="drawer-icon" />
+              <span>Organizations</span>
+            </li>
+            {isLoggedIn && user && (
+              <>
+                <li 
+                  className={`drawer-list-item ${location.pathname === '/notifications' ? 'active' : ''}`}
+                  onClick={handleDrawerNotificationClick}
+                >
+                  <div className="drawer-icon-container">
+                    <FiBell className="drawer-icon" />
+                    {unreadCount > 0 && <span className="drawer-badge">{unreadCount}</span>}
+                  </div>
+                  <span>Notifications</span>
+                </li>
+                <li className="drawer-list-item" onClick={handleLogoutClick}>
+                  <FiLogOut className="drawer-icon" />
+                  <span>Logout</span>
+                </li>
+              </>
+            )}
+          </ul>
+          <div className="drawer-footer">
+            <div className="app-version">v1.0.0</div>
+            <div className="app-copyright">© 2025 StudEvent</div>
+          </div>
+        </div>
       </div>
 
       {/* Logout Confirmation Modal */}
