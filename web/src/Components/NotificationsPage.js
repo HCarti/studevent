@@ -38,17 +38,14 @@ const NotificationsPage = () => {
   const markNotificationAsRead = async notificationId => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(
-        `https://studevent-server.vercel.app/api/notifications/mark-read`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({ notificationId })
-        }
-      );
+      const response = await fetch(`https://studevent-server.vercel.app/api/mark-read`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ notificationId })
+      });
 
       if (!response.ok) {
         throw new Error(`Failed to mark notification as read: ${response.status}`);
@@ -71,17 +68,14 @@ const NotificationsPage = () => {
   const markNotificationAsUnread = async notificationId => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(
-        `https://studevent-server.vercel.app/api/notifications/mark-unread`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({ notificationId })
-        }
-      );
+      const response = await fetch(`https://studevent-server.vercel.app/api/mark-unread`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ notificationId })
+      });
 
       if (!response.ok) {
         throw new Error(`Failed to mark notification as unread: ${response.status}`);
