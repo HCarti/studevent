@@ -3,7 +3,7 @@ import './Forms.css';
 import { useNavigate } from 'react-router-dom';
 import FaceIcon from '@mui/icons-material/Face';
 import { FaFileContract, FaMoneyCheckAlt, FaProjectDiagram, FaClipboardList, FaMapMarkedAlt, FaMoneyBillWave } from 'react-icons/fa';
-
+import CloseIcon from '@mui/icons-material/Close';
 
 const Forms = ({ role }) => {
   const navigate = useNavigate();
@@ -24,7 +24,6 @@ const Forms = ({ role }) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showModal]);
-
 
   const handleNavigation = (path, formName) => {
     console.log(`${formName} has been clicked`);
@@ -71,30 +70,32 @@ const Forms = ({ role }) => {
   return (
     <div className="f-box">
       <h1 className="f-title">Document Forms</h1>
+      
       {/* Instruction Icon */}
-
       <div className="help-icon" onClick={() => setShowModal(!showModal)}>
-  <div className="help-tooltip">Click me</div>
-  <FaceIcon style={{ fontSize: '60px', color: '#2563eb' }} />
-</div>
+        <div className="help-tooltip">Click me</div>
+        <FaceIcon style={{ fontSize: '60px', color: '#2563eb' }} />
+      </div>
 
-
-{/* Instruction Modal */}
-{showModal && (
-  <div className="modal">
-    <div className="modal-content small" ref={modalRef}>
-      <h3>Instructions for Document Forms</h3>
-      <ul>
-        <li>Create First a Budget Proposal before creating an event proposal.</li>
-        <li>Complete all required fields and attach necessary files.</li>
-        <li>After submission, your form will be submitted to the first reviewee for approval.</li>
-        <li>You can monitor the status in the Proposal Tracker.</li>
-        <li>Once approved, the form will be sent to the next reviewer.</li>
-        <li>Once the last reviewer is done checking the submitted form it will be sent back to you</li>
-      </ul>
-    </div>
-  </div>
-)}
+      {/* Instruction Modal */}
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" ref={modalRef}>
+            <button className="modal-close" onClick={() => setShowModal(false)}>
+              <CloseIcon />
+            </button>
+            <h3>Instructions for Document Forms</h3>
+            <ul>
+              <li>Create First a Budget Proposal before creating an event proposal.</li>
+              <li>Complete all required fields and attach necessary files.</li>
+              <li>After submission, your form will be submitted to the first reviewee for approval.</li>
+              <li>You can monitor the status in the Proposal Tracker.</li>
+              <li>Once approved, the form will be sent to the next reviewer.</li>
+              <li>Once the last reviewer is done checking the submitted form it will be sent back to you</li>
+            </ul>
+          </div>
+        </div>
+      )}
 
       <div className="papers-box">
         {formsData.map((form, index) => (
