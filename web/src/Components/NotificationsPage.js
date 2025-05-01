@@ -103,7 +103,7 @@ const NotificationsPage = () => {
     navigate(-1);
   };
 
-  const handleNotificationClick = async (notification) => {
+  const handleNotificationClick = async notification => {
     // If notification is not read, mark it as read
     if (!notification.read) {
       await markNotificationAsRead(notification._id);
@@ -150,10 +150,10 @@ const NotificationsPage = () => {
             <div
               key={notification._id}
               className={`notification-item ${notification.read ? 'read' : 'unread'}`}
-              onClick={(e) => {
+              onClick={e => {
                 // Don't trigger navigation if clicking on buttons
                 if (
-                  e.target.tagName === 'BUTTON' || 
+                  e.target.tagName === 'BUTTON' ||
                   e.target.closest('button') ||
                   e.target.className === 'notification-actions'
                 ) {
@@ -178,7 +178,7 @@ const NotificationsPage = () => {
                 {notification.read ? (
                   <button
                     className="mark-unread-btn"
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       markNotificationAsUnread(notification._id);
                     }}
@@ -188,7 +188,7 @@ const NotificationsPage = () => {
                 ) : (
                   <button
                     className="mark-read-btn"
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       markNotificationAsRead(notification._id);
                     }}
