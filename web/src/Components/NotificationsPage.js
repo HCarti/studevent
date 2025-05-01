@@ -75,10 +75,10 @@ const NotificationsPage = () => {
   return (
     <div className="notifications-page">
       <div className="notifications-header">
+        <h1>Notifications</h1>
         <button className="back-button" onClick={handleBackClick}>
           ← Back
         </button>
-        <h1>Notifications</h1>
       </div>
 
       <div className="notifications-container">
