@@ -159,7 +159,6 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
       }, 500);
     }
 
-    // Only toggle dropdown in desktop navbar
     setNotificationMenuOpen(!notificationMenuOpen);
 
     if (!notificationMenuOpen && notifications.length > 0) {
@@ -328,9 +327,28 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
         )}
       </div>
 
-      <div className="mobile-menu-icon" onClick={toggleDrawer} ref={mobileMenuIconRef}>
-        &#9776;
-      </div>
+      {isLoggedIn && user && isMobile && (
+        <div className="mobile-menu-container">
+          <div
+            className="navbar-notifications"
+            onClick={() => navigate('/notifications')}
+          >
+            <div className="bell-container">
+              <FiBell className="navbar-icon" ref={bellIconRef} />
+              {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
+            </div>
+          </div>
+          <div className="mobile-menu-icon" onClick={toggleDrawer} ref={mobileMenuIconRef}>
+            &#9776;
+          </div>
+        </div>
+      )}
+
+      {!isLoggedIn && (
+        <div className="mobile-menu-icon" onClick={toggleDrawer} ref={mobileMenuIconRef}>
+          &#9776;
+        </div>
+      )}
 
       <div className={`drawer-overlay ${drawerOpen ? 'visible' : ''}`} onClick={toggleDrawer}></div>
       <div className={`drawer ${drawerOpen ? 'open' : ''}`} ref={drawerRef}>
@@ -388,16 +406,6 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
             </li>
             {isLoggedIn && user && (
               <>
-                <li 
-                  className={`drawer-list-item ${location.pathname === '/notifications' ? 'active' : ''}`}
-                  onClick={handleDrawerNotificationClick}
-                >
-                  <div className="drawer-icon-container">
-                    <FiBell className="drawer-icon" />
-                    {unreadCount > 0 && <span className="drawer-badge">{unreadCount}</span>}
-                  </div>
-                  <span>Notifications</span>
-                </li>
                 <li className="drawer-list-item" onClick={handleLogoutClick}>
                   <FiLogOut className="drawer-icon" />
                   <span>Logout</span>

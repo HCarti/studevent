@@ -488,6 +488,14 @@
   padding: 5px;
 }
 
+/* Mobile Menu Container */
+.mobile-menu-container {
+  display: none;
+  align-items: center;
+  gap: 15px;
+  position: relative;
+}
+
 /* Profile Modal Styles */
 .profile-modal-overlay {
   position: fixed;
@@ -628,14 +636,25 @@
     display: block;
   }
 
+  .mobile-menu-container {
+    display: flex;
+  }
+
   .navbar-icons-container {
-    gap: 15px;
-    margin-right: 15px;
+    display: none;
   }
 
   .notification-dropdown {
     width: 280px;
     right: -20px;
+  }
+
+  .mobile-menu-container .notification-dropdown {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    width: calc(100% - 40px);
+    max-width: 350px;
   }
 }
 
