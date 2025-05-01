@@ -382,7 +382,7 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
                                 markNotificationAsUnread(notification._id);
                               }}
                             >
-                              <FiCircle /> Mark as Unread
+                               Mark as Unread
                             </button>
                           ) : (
                             <button
@@ -392,7 +392,7 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
                                 markNotificationAsRead(notification._id);
                               }}
                             >
-                              <FiCheckCircle /> Mark as Read
+                               Mark as Read
                             </button>
                           )}
                         </div>
