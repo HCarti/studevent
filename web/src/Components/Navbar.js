@@ -14,6 +14,7 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   // Refs for dropdown containers
@@ -22,6 +23,7 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   const mobileMenuIconRef = useRef(null);
   const bellIconRef = useRef(null);
   const navbarRef = useRef(null);
+  const profileModalRef = useRef(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -55,13 +57,24 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
       ) {
         setDrawerOpen(false);
       }
+
+      // Close profile modal if clicked outside
+      if (
+        showProfileModal &&
+        profileModalRef.current &&
+        !profileModalRef.current.contains(event.target) &&
+        (!document.querySelector('.profile-icon-container') || 
+         !document.querySelector('.profile-icon-container').contains(event.target))
+      ) {
+        setShowProfileModal(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [drawerOpen, notificationMenuOpen]);
+  }, [drawerOpen, notificationMenuOpen, showProfileModal]);
 
   // Notifications
   useEffect(() => {
@@ -185,6 +198,16 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   };
 
   const handleProfileClick = () => {
+    if (isMobile) {
+      // In mobile view, directly navigate to profile
+      navigateToProfile();
+    } else {
+      // In web view, show profile options modal
+      setShowProfileModal(true);
+    }
+  };
+
+  const navigateToProfile = () => {
     if (user.role === 'SuperAdmin') {
       navigate('/superadminprofile');
     } else if (user.role === 'Organization' || user.role === 'Authority' || user.role === 'Admin') {
@@ -194,6 +217,7 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
     }
     setDrawerOpen(false);
     setNotificationMenuOpen(false);
+    setShowProfileModal(false);
   };
 
   const renderMenuItems = () => (
@@ -319,12 +343,12 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
                     src={user.logo} 
                     alt="Profile" 
                     className="drawer-profile-pic" 
-                    onClick={handleProfileClick}
+                    onClick={navigateToProfile}
                   />
                 ) : (
                   <div 
                     className="drawer-profile-icon" 
-                    onClick={handleProfileClick}
+                    onClick={navigateToProfile}
                   >
                     <CgProfile />
                   </div>
@@ -387,6 +411,38 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
           </div>
         </div>
       </div>
+
+      {/* Profile Options Modal */}
+      {showProfileModal && (
+        <div className="profile-modal-overlay">
+          <div className="profile-modal" ref={profileModalRef}>
+            <h3>Profile Options</h3>
+            <div className="profile-modal-buttons">
+              <button 
+                className="profile-modal-view" 
+                onClick={navigateToProfile}
+              >
+                View Profile
+              </button>
+              <button 
+                className="profile-modal-logout" 
+                onClick={() => {
+                  setShowProfileModal(false);
+                  setShowLogoutModal(true);
+                }}
+              >
+                Log Out
+              </button>
+              <button 
+                className="profile-modal-cancel" 
+                onClick={() => setShowProfileModal(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Logout Confirmation Modal */}
       {showLogoutModal && (

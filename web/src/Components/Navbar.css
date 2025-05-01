@@ -1,4 +1,4 @@
-/* Navbar.css - Updated with modern drawer styles */
+/* Navbar.css - Updated with modern drawer styles and profile modal */
 
 /* General Navbar Styles */
 .navbar {
@@ -486,6 +486,80 @@
   display: none;
   cursor: pointer;
   padding: 5px;
+}
+
+/* Profile Modal Styles */
+.profile-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.profile-modal {
+  background-color: white;
+  padding: 25px;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 350px;
+  text-align: center;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+}
+
+.profile-modal h3 {
+  margin-top: 0;
+  color: #1a3ab5;
+  margin-bottom: 20px;
+}
+
+.profile-modal-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile-modal-view,
+.profile-modal-logout,
+.profile-modal-cancel {
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.profile-modal-view {
+  background-color: #1a3ab5;
+  color: white;
+}
+
+.profile-modal-view:hover {
+  background-color: #122a8a;
+}
+
+.profile-modal-logout {
+  background-color: #ff4757;
+  color: white;
+}
+
+.profile-modal-logout:hover {
+  background-color: #e04040;
+}
+
+.profile-modal-cancel {
+  background-color: #f1f1f1;
+  color: #333;
+}
+
+.profile-modal-cancel:hover {
+  background-color: #e0e0e0;
 }
 
 /* Logout Modal */
