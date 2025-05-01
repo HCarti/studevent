@@ -321,8 +321,10 @@ exports.createForm = async (req, res) => {
 
     // === 4. Handle organization lookup (FOR ACTIVITY FORMS) ===
     if (req.body.studentOrganization) {
-      let organization;
+      let organization = null;
 
+
+      if (req.body.studentOrganization) {
       if (mongoose.Types.ObjectId.isValid(req.body.studentOrganization)) {
         organization = await User.findOne({
           _id: req.body.studentOrganization,
@@ -340,6 +342,8 @@ exports.createForm = async (req, res) => {
         session.endSession();
         return res.status(400).json({ error: "Organization not found" });
       }
+    }
+
 
       req.body.studentOrganization = organization._id;
       req.body.presidentName = organization.presidentName;
@@ -525,7 +529,7 @@ const adviser = organization ? await User.findOne({
   faculty: "Adviser",
   organization: organization.organizationName,
   status: "Active"
-}).select('_id') : null;
+}).session(session).select('_id') : null;
 
 const dean = (organization?.organizationType === 'Recognized Student Organization - Academic') ? 
   await User.findOne({  
@@ -533,7 +537,7 @@ const dean = (organization?.organizationType === 'Recognized Student Organizatio
     faculty: "Dean",
     organization: organization.organizationName,
     status: "Active"
-  }).select('_id') : null;
+  }).session(session).select('_id') : null;
 
 // Create progress tracker
 const tracker = new EventTracker({
@@ -545,11 +549,11 @@ const tracker = new EventTracker({
     status: "pending",
     // For Adviser step, use pre-fetched adviser
     ...(reviewer.reviewerRole === 'Adviser' && adviser ? {
-      assignedReviewer: adviser
+      assignedReviewer: adviser._id
     } : {}),
     // For Dean step, use pre-fetched dean
     ...(reviewer.reviewerRole === 'Dean' && dean ? {
-      assignedReviewer: dean
+      assignedReviewer: dean._id
     } : {})
   })),
   currentStep: 0,
