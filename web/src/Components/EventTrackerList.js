@@ -15,17 +15,14 @@ const EventTrackerList = () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
-          setError("Authentication token is missing! Please log in again.");
+          setError("Please log in to view events");
           setLoading(false);
           return;
         }
 
-        // First fetch all organizations to map emails to organization names
+        // Fetch organizations
         const orgsResponse = await fetch("https://studevent-server.vercel.app/api/users/organizations", {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-          },
+          headers: { "Authorization": `Bearer ${token}` },
         });
 
         if (orgsResponse.ok) {
@@ -37,51 +34,37 @@ const EventTrackerList = () => {
           setOrganizations(orgsMap);
         }
 
-        // Then fetch forms as before
+        // Fetch forms
         const formsResponse = await fetch("https://studevent-server.vercel.app/api/forms/all", {
-          method: "GET",
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`,
           },
         });
 
-        if (!formsResponse.ok) {
-          const errorText = await formsResponse.text();
-          throw new Error(`HTTP error! Status: ${formsResponse.status}, Message: ${errorText}`);
-        }
-
+        if (!formsResponse.ok) throw new Error("Failed to load events");
         const formsData = await formsResponse.json();
-        if (!Array.isArray(formsData)) {
-          throw new Error("Unexpected data format from server.");
-        }
+        
+        if (!Array.isArray(formsData)) throw new Error("Invalid data format");
 
+        // Add current step to each form
         const formsWithCurrentStep = await Promise.all(
           formsData.map(async (form) => {
-            const trackerResponse = await fetch(
-              `https://studevent-server.vercel.app/api/tracker/${form._id}`,
-              {
-                method: "GET",
-                headers: {
-                  "Authorization": `Bearer ${token}`,
-                  "Content-Type": "application/json",
-                },
-              }
-            );
-
-            if (!trackerResponse.ok) {
-              console.error(`Error fetching tracker data for form ${form._id}`);
+            try {
+              const trackerResponse = await fetch(
+                `https://studevent-server.vercel.app/api/tracker/${form._id}`,
+                { headers: { "Authorization": `Bearer ${token}` } }
+              );
+              const trackerData = trackerResponse.ok ? await trackerResponse.json() : {};
+              return { ...form, currentStep: trackerData.currentStep || "N/A" };
+            } catch {
               return { ...form, currentStep: "N/A" };
             }
-
-            const trackerData = await trackerResponse.json();
-            return { ...form, currentStep: trackerData.currentStep || "N/A" };
           })
         );
 
         setForms(formsWithCurrentStep);
       } catch (error) {
-        console.error("Error fetching data:", error);
         setError(error.message);
       } finally {
         setLoading(false);
@@ -91,122 +74,146 @@ const EventTrackerList = () => {
     fetchData();
   }, []);
 
-  const handleRedirectToProgressTracker = (form) => {
+  const handleViewDetails = (form) => {
     navigate(`/progtrack/${form._id}`, { state: { form } });
   };
 
   const getFilteredForms = () => {
-    return forms.filter((form) => {
-      const status = (form.finalStatus).trim().toLowerCase();
-      switch (filter) {
-        case "pending": return status === "pending";
-        case "approved": return status === "approved";
-        case "declined": return status === "declined";
-        default: return true;
-      }
-    });
+    const status = (form) => (form.finalStatus || "").trim().toLowerCase();
+    return forms.filter(form => 
+      filter === "all" || status(form) === filter
+    );
   };
 
-  const handleFilterClick = (filterType) => {
-    setFilter(filterType);
-  };
   const getOrganizationName = (form) => {
-    if (form.formType === 'LocalOffCampus') {
-      return form.nameOfHei || form.organizationName || 'Local Off-Campus';
-    }
+    if (form.formType === 'LocalOffCampus') return form.nameOfHei || form.organizationName || 'Local Event';
     if (form.formType === 'Budget') return form.nameOfRso;
-    if (form.formType === 'Project') return organizations[form.emailAddress] || 'Unknown Organization';
-    return form.studentOrganization?.organizationName || organizations[form.emailAddress] || 'Unknown Organization';
+    if (form.formType === 'Project') return organizations[form.emailAddress] || 'Unknown';
+    return form.studentOrganization?.organizationName || organizations[form.emailAddress] || 'Unknown';
   };
 
-  // Helper function to get event/project title
   const getEventTitle = (form) => {
-    if (form.formType === 'LocalOffCampus') {
-      return `Local Off-Campus (${form.formPhase})`;
-    }
+    if (form.formType === 'LocalOffCampus') return `Local Event (${form.formPhase})`;
     if (form.formType === 'Project') return form.projectTitle;
-    return form.eventTitle || 'No Title';
+    return form.eventTitle || 'Untitled Event';
+  };
+
+  const getStatusVariant = (status) => {
+    switch ((status || "").trim().toLowerCase()) {
+      case 'pending': return 'warning';
+      case 'approved': return 'success';
+      case 'declined': return 'danger';
+      default: return 'neutral';
+    }
   };
 
   return (
-    <div className="event-tracker-container">
-      <h2>Event Form Tracker</h2>
-      {error && <p className="event-tracker-error">{error}</p>}
+    <div className="modern-event-tracker">
+      <header className="tracker-header">
+        <div className="header-content">
+          <h1>Event Dashboard</h1>
+          <p className="subtitle">Track and manage all your events</p>
+        </div>
+      </header>
 
-      <div className="event-tracker-content">
+      <main className="tracker-content">
+        {error && (
+          <div className="alert-message error">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle cx="12" cy="12" r="10" strokeWidth="1.5"></circle>
+              <line x1="12" y1="8" x2="12" y2="12" strokeWidth="1.5"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16" strokeWidth="1.5"></line>
+            </svg>
+            <span>{error}</span>
+          </div>
+        )}
+
         {loading ? (
-          <div className="loading-spinner-container">
-            <div className="loading-spinner">
-              <div className="spinner"></div>
-              <p>Loading events...</p>
-            </div>
+          <div className="loading-container">
+            <div className="spinner"></div>
+            <p>Loading your events...</p>
           </div>
         ) : (
-          <>
-            <div className="event-tracker-filters">
-              <button
-                className={`filter-button ${filter === "all" ? "active" : ""}`}
-                onClick={() => handleFilterClick("all")}
-              >
-                All Events
-              </button>
-              <button
-                className={`filter-button ${filter === "pending" ? "active" : ""}`}
-                onClick={() => handleFilterClick("pending")}
-              >
-                Pending
-              </button>
-              <button
-                className={`filter-button ${filter === "approved" ? "active" : ""}`}
-                onClick={() => handleFilterClick("approved")}
-              >
-                Approved
-              </button>
-              <button
-                className={`filter-button ${filter === "declined" ? "active" : ""}`}
-                onClick={() => handleFilterClick("declined")}
-              >
-                Declined
-              </button>
+          <div className="tracker-body">
+            <div className="controls-section">
+              <div className="filter-buttons-container">
+                <div className="filter-buttons-scroll">
+                  {["all", "pending", "approved", "declined"].map((filterType) => (
+                    <button
+                      key={filterType}
+                      className={`filter-btn ${filter === filterType ? 'active' : ''}`}
+                      onClick={() => setFilter(filterType)}
+                    >
+                      {filterType.charAt(0).toUpperCase() + filterType.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="results-count">
+                <span className="count">{getFilteredForms().length}</span>
+                <span>events found</span>
+              </div>
             </div>
 
-            <div className="event-tracker-table-wrapper">
-              <table className="event-tracker-table">
-              <thead>
-                <tr>
-                  <th>Organization</th>
-                  <th>Form Type</th>
-                  <th>Event Title</th>
-                  <th>Status</th>
-                  <th>Application Date</th>
-                  <th>Current Step</th>
-                </tr>
-              </thead>
-              <tbody>
-          {getFilteredForms().map((form) => (
-            <tr
-              key={form._id}
-              className={`event-tracker-row ${form.finalStatus?.trim().toLowerCase()}`}
-              onClick={() => handleRedirectToProgressTracker(form)}
-            >
-              <td>{getOrganizationName(form)}</td>
-              <td>{form.formType}</td>
-              <td>{getEventTitle(form)}</td>
-              <td>
-                <span className={`status-badge ${form.finalStatus?.trim().toLowerCase()}`}>
-                  {form.finalStatus || "No Status"}
-                </span>
-              </td>
-              <td>{form.applicationDate ? new Date(form.applicationDate).toLocaleDateString() : "No Date"}</td>
-              <td>{form.currentStep}</td>
-            </tr>
-          ))}
-        </tbody>
-            </table>
+            <div className="events-container">
+              {getFilteredForms().length > 0 ? (
+                getFilteredForms().map((form) => (
+                  <div 
+                    key={form._id} 
+                    className="event-card"
+                    onClick={() => handleViewDetails(form)}
+                  >
+                    <div className="card-top">
+                      <div className="event-info">
+                        <h3 className="event-title">{getEventTitle(form)}</h3>
+                        <span className={`status-badge ${getStatusVariant(form.finalStatus)}`}>
+                          {form.finalStatus || "No Status"}
+                        </span>
+                      </div>
+                      <span className="organization">{getOrganizationName(form)}</span>
+                    </div>
+                    
+                    <div className="card-middle">
+                      <div className="info-item">
+                        <span className="label">Type</span>
+                        <span className="value">{form.formType}</span>
+                      </div>
+                      <div className="info-item">
+                        <span className="label">Date</span>
+                        <span className="value">
+                          {form.applicationDate ? 
+                            new Date(form.applicationDate).toLocaleDateString() : 
+                            'Not specified'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="card-bottom">
+                      <span className="progress">Current Step: {form.currentStep}</span>
+                      <button className="view-btn">
+                        View Details
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="empty-state">
+                  <div className="empty-icon">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                  </div>
+                  <h3>No events matching your criteria</h3>
+                  <p>Try adjusting your filters or create a new event</p>
+                </div>
+              )}
+            </div>
           </div>
-        </>
-      )}
-      </div>
+        )}
+      </main>
     </div>
   );
 };
