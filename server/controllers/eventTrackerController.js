@@ -224,7 +224,7 @@ const updateTrackerStep = async (req, res) => {
     const { trackerId, stepId } = req.params;
     const { status, remarks, signature } = req.body;
     const userId = req.user._id;
-    const { role, faculty, email: currentUserEmail, name: currentUserName } = req.user;
+    const { role, faculty, email: currentUserEmail, firstName, lastName } = req.user;
 
     // Validate user and request
     if (!req.user) {
@@ -245,33 +245,29 @@ const updateTrackerStep = async (req, res) => {
       });
     }
 
-    // Fetch the tracker and form
+    // Fetch the tracker and form with populated reviewer data
     const tracker = await EventTracker.findById(trackerId).populate({
       path: 'steps.reviewedBy',
-      select: 'email role name'
+      select: 'firstName lastName email role faculty'
     });
+    
     if (!tracker) {
       return res.status(404).json({ message: "Tracker not found" });
     }
 
     let form;
-      try {
-        // First try the LocalOffCampus collection
-        form = await LocalOffCampus.findById(tracker.formId);
-        if (!form) {
-          // If not found, try the regular Form collection
-          const Form = mongoose.model('Form');
-          form = await Form.findById(tracker.formId)
-            .populate('studentOrganization', 'email organizationName');
-        }
-      } catch (error) {
-        console.error("Error finding form:", error);
-        return res.status(404).json({ message: "Form not found" });
-      }
+    try {
+      form = await LocalOffCampus.findById(tracker.formId) || 
+             await mongoose.model('Form').findById(tracker.formId)
+               .populate('studentOrganization', 'email organizationName');
+    } catch (error) {
+      console.error("Error finding form:", error);
+      return res.status(404).json({ message: "Form not found" });
+    }
 
-      if (!form) {
-        return res.status(404).json({ message: "Form not found" });
-      }
+    if (!form) {
+      return res.status(404).json({ message: "Form not found" });
+    }
 
     // Find the step
     const step = tracker.steps.find(step => step._id.toString() === stepId);
@@ -279,33 +275,37 @@ const updateTrackerStep = async (req, res) => {
       return res.status(404).json({ message: "Step not found" });
     }
 
-    // Find the first pending or declined step
+    // Verify step is ready for review
     const firstPendingOrDeclinedStepIndex = tracker.steps.findIndex(step => 
       step.status === "pending" || step.status === "declined"
     );
 
-    // Ensure the step being updated is the first pending or declined step
     if (!tracker.steps[firstPendingOrDeclinedStepIndex] || 
         tracker.steps[firstPendingOrDeclinedStepIndex]._id.toString() !== stepId) {
       return res.status(403).json({ message: "You cannot skip steps. Approve them in order." });
     }
 
-    // Check if the step is already reviewed (only for pending steps)
     if (tracker.steps[firstPendingOrDeclinedStepIndex].status !== "pending" && 
         tracker.steps[firstPendingOrDeclinedStepIndex].status !== "declined") {
       return res.status(400).json({ message: "This step has already been reviewed." });
     }
 
-    // Ensure the user has the correct role to review this step
+    // Verify user has permission to review this step
     if (step.stepName !== faculty && role !== "Admin") {
       return res.status(403).json({ message: `Unauthorized: Only the ${step.stepName} can review this step.` });
     }
 
-    // Update the step
+    // Update the step with reviewer details
     step.status = status;
     step.remarks = remarks || "";
     step.timestamp = new Date();
-    step.reviewedBy = userId;
+    step.reviewedBy = {
+      _id: userId,
+      firstName,
+      lastName,
+      role,
+      faculty
+    };
     step.reviewedByRole = faculty || role;
     step.signature = signature;
 
@@ -337,22 +337,6 @@ const updateTrackerStep = async (req, res) => {
 
     // Save the updated tracker
     await tracker.save();
-
-      // Update form status
-    const isDeclined = tracker.steps.some(step => step.status === 'declined');
-    const isApproved = tracker.steps.every(step => step.status === 'approved');
-
-    // Check if the form is a LocalOffCampus form by checking for formPhase
-    if (form.formPhase) {
-      // Local Off-Campus form - update both status fields
-      form.finalStatus = isDeclined ? 'declined' : isApproved ? 'approved' : 'pending';
-      form.status = isDeclined ? 'rejected' : isApproved ? 'approved' : 'submitted';
-    } else {
-      // Regular Form - update just finalStatus
-      form.finalStatus = isDeclined ? 'declined' : isApproved ? 'approved' : 'pending';
-    }
-
-    await form.save();
 
     // Enhanced notification handling
     // Enhanced notification handling
@@ -412,20 +396,6 @@ const currentStepName = step.stepName;
             organizationId: form.organizationId, 
             role: 'Admin' 
           }).select('email').lean();
-          
-          // if (admins.length > 0) {
-          //   for (const admin of admins) {
-          //     try {
-          //       await notificationController.createNotification(
-          //         admin.email,
-          //         `Workflow Blocked: Missing reviewers for ${nextStep.stepName}`,
-          //         `Workflow blocked for ${formName}. No reviewers found for ${nextStep.stepName} role.`
-          //       );
-          //     } catch (error) {
-          //       console.error(`Failed to notify admin ${admin.email}:`, error);
-          //     }
-          //   }
-          // }
           
           await notificationController.createNotification(
             currentUserEmail,
@@ -501,7 +471,17 @@ const currentStepName = step.stepName;
       }
     }
 
-    return res.status(200).json({ message: "Tracker step updated successfully", tracker, form });
+    return res.status(200).json({ 
+      message: "Tracker step updated successfully", 
+      tracker, 
+      form,
+      reviewer: {
+        firstName,
+        lastName,
+        role,
+        faculty
+      }
+    });
 
   } catch (error) {
     console.error("❌ Error updating progress tracker:", error);

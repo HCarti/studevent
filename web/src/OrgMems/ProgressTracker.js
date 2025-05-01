@@ -326,38 +326,43 @@ const ProgressTracker = () => {
     };
 
     const renderProgressSteps = () => {
-        if (!trackerData || !trackerData.steps) return null;
-
-        return trackerData.steps.map((step, index) => {
-            if (step.stepName === 'Dean' && organizationType !== 'Recognized Student Organization - Academic') {
-                return null;
-            }
-
-            return (
-                <div key={index} className="step-container">
-                    <div className="progress-step">
-                        {step.status === 'approved' ? (
-                            <CheckCircleIcon style={{ color: '#4caf50', fontSize: 24 }} />
-                        ) : step.status === 'declined' ? (
-                            <CheckCircleIcon style={{ color: 'red', fontSize: 24 }} />
-                        ) : (
-                            <RadioButtonUncheckedIcon style={{ color: '#ffeb3b', fontSize: 24 }} />
-                        )}
-                    </div>
-                    <div className="step-label">
-                        <strong>{step.stepName}</strong>
-                        {step.reviewedBy && (
-                            <div className="reviewer-info">
-                                <small>Reviewed by: {step.reviewedByRole}</small>
-                                <small>{new Date(step.timestamp).toLocaleString()}</small>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        });
-    };
-
+      if (!trackerData || !trackerData.steps) return null;
+  
+      return trackerData.steps.map((step, index) => {
+          if (step.stepName === 'Dean' && organizationType !== 'Recognized Student Organization - Academic') {
+              return null;
+          }
+  
+          return (
+              <div key={index} className="step-container">
+                  <div className="progress-step">
+                      {step.status === 'approved' ? (
+                          <CheckCircleIcon style={{ color: '#4caf50', fontSize: 24 }} />
+                      ) : step.status === 'declined' ? (
+                          <CheckCircleIcon style={{ color: 'red', fontSize: 24 }} />
+                      ) : (
+                          <RadioButtonUncheckedIcon style={{ color: '#ffeb3b', fontSize: 24 }} />
+                      )}
+                  </div>
+                  <div className="step-label">
+                      <strong>{step.stepName}</strong>
+                      {step.reviewedBy && (
+                          <div className="reviewer-info">
+                              <small>
+                                  Reviewed by: {step.reviewedBy.firstName} {step.reviewedBy.lastName} 
+                                  ({step.reviewedByRole})
+                              </small>
+                              <small>{new Date(step.timestamp).toLocaleString()}</small>
+                              {step.remarks && (
+                                  <small className="remarks">Remarks: {step.remarks}</small>
+                              )}
+                          </div>
+                      )}
+                  </div>
+              </div>
+          );
+      });
+  };
     const isTrackerCompleted = () => {
         if (!trackerData || !trackerData.steps) return false;
 
