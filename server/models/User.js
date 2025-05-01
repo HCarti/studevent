@@ -65,6 +65,13 @@ const userSchema = new Schema({
       return this.role === 'Authority' && this.faculty === 'Adviser';
     }
   },
+
+  deanForOrganization: {
+    type: String,
+    required: function() {
+      return this.role === 'Authority' && this.faculty === 'Dean';
+    }
+  },
   logo: String,
   signature: {
     type: String,
