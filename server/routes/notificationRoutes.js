@@ -1,34 +1,42 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const authenticateToken = require("../middleware/authenticateToken");
-const Notification = require("../models/Notification"); // Create this model
-const { markNotificationAsRead, createTrackerNotification } = require("../controllers/notificationController");
+const authenticateToken = require('../middleware/authenticateToken');
+const Notification = require('../models/Notification'); // Create this model
+const {
+  markNotificationAsRead,
+  markNotificationAsUnread,
+  createTrackerNotification
+} = require('../controllers/notificationController');
 
 // Get notifications by user email
-router.get("/notifications", authenticateToken, async (req, res) => {
-  console.log("🟢 Authenticated user:", req.user);
+router.get('/notifications', authenticateToken, async (req, res) => {
+  console.log('🟢 Authenticated user:', req.user);
 
   if (!req.user || !req.user.email) {
-      return res.status(400).json({ message: "User email is missing" });
+    return res.status(400).json({ message: 'User email is missing' });
   }
 
-  console.log("🔹 Fetching notifications for:", req.user.email);
+  console.log('🔹 Fetching notifications for:', req.user.email);
 
   try {
-    const notifications = await Notification.find({ userEmail: req.user.email }).sort({ createdAt: -1 });
+    const notifications = await Notification.find({ userEmail: req.user.email }).sort({
+      createdAt: -1
+    });
 
-      console.log("✅ Notifications found:", notifications.length);
+    console.log('✅ Notifications found:', notifications.length);
 
-      res.json(notifications);
+    res.json(notifications);
   } catch (error) {
-      console.error("❌ Error fetching notifications:", error);
-      res.status(500).json({ message: "Server error" });
+    console.error('❌ Error fetching notifications:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-router.post("/tracker-notification", authenticateToken, createTrackerNotification);
+router.post('/tracker-notification', authenticateToken, createTrackerNotification);
 
-router.post("/mark-read", authenticateToken, markNotificationAsRead); // Protect route
+router.post('/mark-read', authenticateToken, markNotificationAsRead); // Protect route
+
+router.post('/mark-unread', authenticateToken, markNotificationAsUnread); // New route for marking as unread
 
 // In your server code
 router.post('/mark-read-batch', authenticateToken, async (req, res) => {
@@ -43,6 +51,5 @@ router.post('/mark-read-batch', authenticateToken, async (req, res) => {
     res.status(500).send({ message: 'Error marking notifications as read' });
   }
 });
-
 
 module.exports = router;

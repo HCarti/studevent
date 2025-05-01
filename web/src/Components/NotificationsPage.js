@@ -27,10 +27,7 @@ const NotificationsPage = () => {
       const data = await response.json();
       setNotifications(data);
 
-      // Mark all notifications as read
-      if (data.length > 0) {
-        await Promise.all(data.map(notification => markNotificationAsRead(notification._id)));
-      }
+      // Removed automatic marking all as read
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {
@@ -57,9 +54,49 @@ const NotificationsPage = () => {
         throw new Error(`Failed to mark notification as read: ${response.status}`);
       }
 
+      // Update local state
+      setNotifications(
+        notifications.map(notification =>
+          notification._id === notificationId ? { ...notification, read: true } : notification
+        )
+      );
+
       return true;
     } catch (error) {
       console.error('Error marking notification as read:', error);
+      return false;
+    }
+  };
+
+  const markNotificationAsUnread = async notificationId => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(
+        `https://studevent-server.vercel.app/api/notifications/mark-unread`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ notificationId })
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to mark notification as unread: ${response.status}`);
+      }
+
+      // Update local state
+      setNotifications(
+        notifications.map(notification =>
+          notification._id === notificationId ? { ...notification, read: false } : notification
+        )
+      );
+
+      return true;
+    } catch (error) {
+      console.error('Error marking notification as unread:', error);
       return false;
     }
   };
@@ -86,19 +123,39 @@ const NotificationsPage = () => {
           <div className="loading-spinner">Loading notifications...</div>
         ) : notifications.length > 0 ? (
           notifications.map(notification => (
-            <div key={notification._id} className="notification-item">
+            <div
+              key={notification._id}
+              className={`notification-item ${notification.read ? 'read' : 'unread'}`}
+            >
               <div className="notification-message">{notification.message}</div>
               <div className="notification-time">
                 {new Date(notification.createdAt).toLocaleString()}
               </div>
-              {notification.type === 'tracker' && (
-                <button
-                  className="view-tracker-btn"
-                  onClick={() => handleTrackerClick(notification.trackerId)}
-                >
-                  View Tracker
-                </button>
-              )}
+              <div className="notification-actions">
+                {notification.type === 'tracker' && (
+                  <button
+                    className="view-tracker-btn"
+                    onClick={() => handleTrackerClick(notification.trackerId)}
+                  >
+                    View Tracker
+                  </button>
+                )}
+                {notification.read ? (
+                  <button
+                    className="mark-unread-btn"
+                    onClick={() => markNotificationAsUnread(notification._id)}
+                  >
+                    Mark as Unread
+                  </button>
+                ) : (
+                  <button
+                    className="mark-read-btn"
+                    onClick={() => markNotificationAsRead(notification._id)}
+                  >
+                    Mark as Read
+                  </button>
+                )}
+              </div>
             </div>
           ))
         ) : (
