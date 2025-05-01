@@ -18,7 +18,7 @@
 
 /* Inner Form Section */
 .inner-forms-1 {
-  background-color: #fff; 
+  background-color: #fff;
   padding: 40px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -57,6 +57,88 @@
   color: #2c3e50;
   background-color: #e0e0e0;
   border-radius: 8px;
+}
+
+/* Mobile Step Tracker */
+.mobile-step-tracker {
+  display: none;
+  background-color: #f4f4f4;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.mobile-step-tracker .steps {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+
+.mobile-step-tracker .step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 2;
+  position: relative;
+  padding: 0 5px;
+}
+
+.mobile-step-tracker .step-number {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #ccc;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.mobile-step-tracker .step-label {
+  font-size: 11px;
+  text-align: center;
+  color: #555;
+  max-width: 65px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobile-step-tracker .step-item.active .step-number {
+  background-color: #1a3ab5;
+}
+
+.mobile-step-tracker .step-item.completed .step-number {
+  background-color: #4caf50;
+}
+
+.mobile-step-tracker .step-item.active .step-label {
+  color: #1a3ab5;
+  font-weight: bold;
+}
+
+.mobile-step-tracker .progress-line {
+  position: absolute;
+  top: 15px;
+  left: 0;
+  height: 2px;
+  background-color: #ccc;
+  width: 100%;
+  z-index: 1;
+}
+
+.mobile-step-tracker .progress-line-filled {
+  position: absolute;
+  top: 15px;
+  left: 0;
+  height: 2px;
+  background-color: #4caf50;
+  z-index: 1;
+  transition: width 0.3s ease;
 }
 
 /* Form Content Styles */
@@ -99,10 +181,10 @@ h1 {
   display: block;
 }
 
-.inner-forms-1 input[type="text"],
-.inner-forms-1 input[type="email"],
-.inner-forms-1 input[type="number"],
-.inner-forms-1 input[type="date"],
+.inner-forms-1 input[type='text'],
+.inner-forms-1 input[type='email'],
+.inner-forms-1 input[type='number'],
+.inner-forms-1 input[type='date'],
 .inner-forms-1 textarea,
 .inner-forms-1 select,
 .inner-forms-1 .react-datepicker-wrapper input {
@@ -136,10 +218,10 @@ h1 {
 }
 
 /* Focus State for All Inputs */
-.inner-forms-1 input[type="text"]:focus,
-.inner-forms-1 input[type="email"]:focus,
-.inner-forms-1 input[type="number"]:focus,
-.inner-forms-1 input[type="date"]:focus,
+.inner-forms-1 input[type='text']:focus,
+.inner-forms-1 input[type='email']:focus,
+.inner-forms-1 input[type='number']:focus,
+.inner-forms-1 input[type='date']:focus,
 .inner-forms-1 select:focus,
 .inner-forms-1 .react-datepicker-wrapper input:focus {
   border-color: #80bdff;
@@ -147,7 +229,7 @@ h1 {
   box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
-.form-ubox-1 textarea{
+.form-ubox-1 textarea {
   font-size: 14px;
   font-family: inherit;
   color: #202124;
@@ -174,9 +256,9 @@ h1 {
   color: #5f6368;
 }
 
-input[type="text"]:focus,
-input[type="email"]:focus,
-input[type="date"]:focus,
+input[type='text']:focus,
+input[type='email']:focus,
+input[type='date']:focus,
 textarea:focus,
 select:focus {
   border-color: #80bdff;
@@ -184,8 +266,8 @@ select:focus {
 }
 
 /* Radio & Checkbox */
-input[type="radio"],
-input[type="checkbox"] {
+input[type='radio'],
+input[type='checkbox'] {
   margin-right: 8px;
 }
 
@@ -284,14 +366,14 @@ input[type="checkbox"] {
   font-size: 16px;
 }
 
-.form-row input[type="text"],
-.form-row input[type="email"],
-.form-row input[type="date"],
+.form-row input[type='text'],
+.form-row input[type='email'],
+.form-row input[type='date'],
 .form-row textarea {
   flex: 1;
 }
 
-.form-row input[type="radio"] {
+.form-row input[type='radio'] {
   margin-top: 2px;
 }
 
@@ -333,7 +415,7 @@ input[type="checkbox"] {
 }
 
 .custom-alert.success {
-  background-color: #4CAF50;
+  background-color: #4caf50;
 }
 
 /* Navigation buttons */
@@ -358,7 +440,7 @@ input[type="checkbox"] {
 }
 
 .navigation-buttons button.next-btn {
-  background-color: #4CAF50;
+  background-color: #4caf50;
   color: white;
 }
 
@@ -367,7 +449,7 @@ input[type="checkbox"] {
 }
 
 .navigation-buttons button.submit-btn {
-  background-color: #2196F3;
+  background-color: #2196f3;
   color: white;
 }
 
@@ -393,12 +475,12 @@ input[type="checkbox"] {
 }
 
 .section-step.active {
-  background-color: #2196F3;
+  background-color: #2196f3;
   color: white;
 }
 
 .section-step.completed {
-  background-color: #4CAF50;
+  background-color: #4caf50;
   color: white;
 }
 
@@ -417,7 +499,7 @@ input[type="checkbox"] {
 }
 
 .section-step.completed::after {
-  background-color: #4CAF50;
+  background-color: #4caf50;
 }
 
 /* Event Dates */
@@ -427,7 +509,7 @@ input[type="checkbox"] {
   gap: 400px;
 }
 
-.communications{
+.communications {
   font-size: 20px;
 }
 
@@ -529,7 +611,7 @@ input[type="checkbox"] {
 }
 
 .occupied::after {
-  content: "✗";
+  content: '✗';
   position: absolute;
   right: 5px;
   top: 2px;
@@ -555,11 +637,11 @@ input[type="checkbox"] {
 }
 
 /* Add to your Aap.css */
-.react-datepicker__time-container 
-.react-datepicker__time 
-.react-datepicker__time-box 
-.react-datepicker__time-list 
-.react-datepicker__time-list-item--disabled {
+.react-datepicker__time-container
+  .react-datepicker__time
+  .react-datepicker__time-box
+  .react-datepicker__time-list
+  .react-datepicker__time-list-item--disabled {
   background-color: #ffebee;
   color: #d32f2f;
   text-decoration: line-through;
@@ -567,7 +649,7 @@ input[type="checkbox"] {
 }
 
 .react-datepicker__time-list-item--disabled::after {
-  content: "✗";
+  content: '✗';
   position: absolute;
   right: 10px;
   color: #d32f2f;
@@ -590,7 +672,6 @@ input[type="checkbox"] {
 .date-picker-popper {
   z-index: 9999 !important;
 }
-
 
 .fully-booked-day::after {
   content: 'Fully Booked';
@@ -650,7 +731,7 @@ input[type="checkbox"] {
 
 /* Add to your Aap.css file */
 .required-field::after {
-  content: " *";
+  content: ' *';
   color: red;
 }
 
@@ -669,14 +750,12 @@ input[type="checkbox"] {
   display: inline-block;
 }
 
-
 .invalid-field + .validation-error {
   display: block;
 }
 
-
 .next-btn {
-  background-color: #4CAF50;
+  background-color: #4caf50;
   color: white;
   padding: 10px 20px;
   border: none;
@@ -690,27 +769,146 @@ input[type="checkbox"] {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .form-row {
+  .form-ubox-1 {
     flex-direction: column;
+    padding: 20px 10px;
   }
 
-  .form-row label {
-    flex-basis: 100%;
+  .sidebar {
+    display: none; /* Hide the sidebar on mobile */
   }
 
-  .inner-forms {
-    padding: 20px;
+  .mobile-step-tracker {
+    display: block; /* Show the mobile step tracker */
+    width: 100%;
+    margin-bottom: 15px;
+  }
+
+  .inner-forms-1 {
+    max-width: 100%;
+    max-height: none;
+    padding: 20px 15px;
+    border-radius: 12px;
   }
 
   h1 {
     font-size: 22px;
+    margin-bottom: 20px;
   }
 
-  input[type="text"],
-  input[type="email"],
-  input[type="date"],
-  textarea,
-  select {
+  .form-header p {
+    font-size: 14px;
+  }
+
+  .inner-forms-1 label {
+    font-size: 14px;
+    margin-top: 8px;
+    margin-bottom: 6px;
+  }
+
+  .inner-forms-1 input[type='text'],
+  .inner-forms-1 input[type='email'],
+  .inner-forms-1 input[type='number'],
+  .inner-forms-1 input[type='date'],
+  .inner-forms-1 textarea,
+  .inner-forms-1 select,
+  .inner-forms-1 .react-datepicker-wrapper input {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .form-navigation {
+    justify-content: space-between;
+  }
+
+  .form-navigation button {
+    padding: 10px 15px;
+    font-size: 14px;
+    margin-left: 0;
+  }
+
+  .event-dates {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .communications {
+    font-size: 16px;
+  }
+
+  .validation-error {
+    font-size: 12px;
+  }
+
+  /* Improve date picker on mobile */
+  .react-datepicker-popper {
     width: 100%;
+    transform: none !important;
+    position: fixed !important;
+    top: 50% !important;
+    left: 0 !important;
+    z-index: 9999 !important;
+    max-width: 100vw;
+  }
+
+  .react-datepicker {
+    width: 100%;
+  }
+
+  .react-datepicker__month-container {
+    width: 100%;
+  }
+
+  .custom-alert {
+    width: 90%;
+    max-width: 300px;
+    font-size: 14px;
+    padding: 10px 15px;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+  .form-ubox-1 {
+    padding: 10px 5px;
+    border-radius: 8px;
+  }
+
+  .inner-forms-1 {
+    padding: 15px 10px;
+  }
+
+  .mobile-step-tracker {
+    padding: 10px;
+  }
+
+  .mobile-step-tracker .step-number {
+    width: 25px;
+    height: 25px;
+    font-size: 12px;
+  }
+
+  .mobile-step-tracker .step-label {
+    font-size: 9px;
+    max-width: 50px;
+  }
+
+  .mobile-step-tracker .progress-line,
+  .mobile-step-tracker .progress-line-filled {
+    top: 12px;
+  }
+
+  h1 {
+    font-size: 20px;
+  }
+
+  .form-navigation button {
+    padding: 8px 12px;
+    font-size: 13px;
+    width: 45%;
+  }
+
+  .inner-forms-1 textarea {
+    min-height: 80px;
   }
 }

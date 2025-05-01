@@ -445,14 +445,21 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .form-ubox-1 {
-    padding: 15px;
+    padding: 10px;
     flex-direction: column;
+    align-items: stretch; /* Make children stretch full width */
+    max-width: 100%;
+    width: 100%;
+    justify-content: flex-start;
   }
 
   .inner-forms-2 {
     max-width: 100%;
-    padding: 20px;
+    width: 100%;
+    padding: 15px;
     max-height: 85vh; /* Increase the visible area on mobile */
+    border-radius: 0 0 12px 12px; /* Adjust border radius to match with sidebar */
+    margin: 0;
   }
 
   .form-row {
@@ -504,25 +511,68 @@
     padding: 12px;
   }
 
-  /* Sidebar adjustments */
+  /* Sidebar adjustments for tablet */
   .sidebar {
     width: 100%;
+    max-width: 100%;
     border-right: none;
     border-bottom: 1px solid #dee2e6;
     border-radius: 12px 12px 0 0;
-    margin-bottom: 20px;
+    margin-bottom: 0; /* Remove margin since inner-forms will follow directly */
+    padding: 15px;
+  }
+
+  .sidebar ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .sidebar li {
+    flex: 0 0 auto;
+    min-width: 120px;
+    white-space: nowrap;
+    padding: 8px 12px;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+    text-align: center;
   }
 }
 
 /* Additional styles for very small screens */
 @media (max-width: 480px) {
   .form-ubox-1 {
-    padding: 10px;
+    padding: 0;
+    width: 100vw; /* Full viewport width */
   }
 
   .inner-forms-2 {
-    padding: 15px;
-    border-radius: 8px;
+    padding: 12px;
+    border-radius: 0 0 8px 8px;
+    width: 100%;
+    margin: 0;
+  }
+
+  /* Full-width sidebar for mobile */
+  .sidebar {
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 0;
+  }
+
+  .sidebar ul {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .sidebar li {
+    width: 100%;
+    margin-bottom: 5px;
+    padding: 8px 10px;
+    min-width: 0;
+    text-align: left;
   }
 
   /* Adjust form elements for very small screens */
@@ -562,6 +612,13 @@
   /* Array items in forms */
   .array-item {
     padding: 10px;
+  }
+
+  /* Project Proposal Form heading */
+  .inner-forms-2 h1 {
+    font-size: 1.5rem;
+    margin-top: 10px;
+    margin-bottom: 15px;
   }
 }
 
@@ -607,6 +664,7 @@
   border-right: 1px solid #dee2e6;
   border-radius: 12px 0 0 12px;
   overflow-y: auto;
+  flex-shrink: 0; /* Prevent sidebar from shrinking */
 }
 
 .sidebar ul {
