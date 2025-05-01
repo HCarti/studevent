@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-import moment from 'moment';
+const moment = require('moment');
 
 const CalendarEventSchema = new mongoose.Schema({
   title: {
@@ -13,12 +13,12 @@ const CalendarEventSchema = new mongoose.Schema({
   startDate: {
     type: Date,
     required: true,
-    get: (date) => moment.utc(date).format('YYYY-MM-DD') // Always output in UTC
+    get: date => moment.utc(date).format('YYYY-MM-DD') // Always output in UTC
   },
   endDate: {
     type: Date,
     required: true,
-    get: (date) => moment.utc(date).format('YYYY-MM-DD') // Always output in UTC
+    get: date => moment.utc(date).format('YYYY-MM-DD') // Always output in UTC
   },
   location: {
     type: String,
@@ -53,7 +53,7 @@ const CalendarEventSchema = new mongoose.Schema({
 });
 
 // Update the updatedAt field before saving
-CalendarEventSchema.pre('save', function(next) {
+CalendarEventSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
   next();
 });
