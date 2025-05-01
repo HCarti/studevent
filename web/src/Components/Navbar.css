@@ -722,6 +722,31 @@
     width: calc(100% - 40px);
     max-width: 350px;
   }
+
+  /* Make navbar more compact on tablets */
+  .navbar {
+    padding: 8px 15px;
+  }
+
+  .navbar-logo img {
+    height: 40px;
+  }
+
+  .navbar-title {
+    font-size: 20px;
+  }
+
+  /* Enhance drawer for better mobile experience */
+  .drawer-list-item {
+    padding: 14px 15px;
+  }
+
+  /* Profile modal adjustments */
+  .profile-modal,
+  .logout-modal {
+    width: 95%;
+    padding: 20px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -731,6 +756,85 @@
 
   .logout-modal-buttons {
     flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Additional mobile-specific styles */
+  .navbar {
+    padding: 6px 10px;
+  }
+
+  .navbar-logo img {
+    height: 35px;
+    margin-right: 5px;
+  }
+
+  .navbar-title {
+    font-size: 18px;
+  }
+
+  /* Make touch targets larger on mobile */
+  .mobile-menu-icon {
+    padding: 10px;
+    margin-right: -10px;
+  }
+
+  .drawer-list-item {
+    padding: 16px 15px;
+  }
+
+  /* Adjust notification dropdown */
+  .notification-dropdown {
+    max-height: 400px;
+    width: 95%;
+    right: 2.5%;
+    left: 2.5%;
+  }
+
+  .notification-item {
+    padding: 12px 15px;
+  }
+
+  /* Modal adjustments for very small screens */
+  .profile-modal,
+  .logout-modal {
+    padding: 15px;
+    border-radius: 15px;
+  }
+
+  .profile-modal h3,
+  .logout-modal h3 {
+    font-size: 18px;
+    margin-bottom: 15px;
+  }
+
+  .profile-modal-buttons button,
+  .logout-modal-buttons button {
+    padding: 12px;
+    font-size: 14px;
+  }
+}
+
+/* Additionally, support for very small devices */
+@media (max-width: 360px) {
+  .navbar-logo img {
+    height: 30px;
+  }
+
+  .navbar-title {
+    font-size: 16px;
+  }
+
+  .drawer {
+    width: 90%;
+  }
+
+  .drawer-user-name {
+    font-size: 16px;
+  }
+
+  .drawer-user-email {
+    font-size: 12px;
   }
 }
 
