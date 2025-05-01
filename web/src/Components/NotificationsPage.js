@@ -110,15 +110,32 @@ const NotificationsPage = () => {
     }
 
     // Navigate based on notification type
+    if (!notification.type) {
+      console.log('Notification has no type - showing notification as read only');
+      return; // Just mark as read but don't navigate if no type is available
+    }
+
     switch (notification.type) {
       case 'tracker':
-        navigate(`/tracker/${notification.trackerId}`);
+        if (notification.trackerId) {
+          navigate(`/tracker/${notification.trackerId}`);
+        } else {
+          console.log('Tracker notification missing trackerId');
+        }
         break;
       case 'event':
-        navigate(`/event/${notification.eventId}`);
+        if (notification.eventId) {
+          navigate(`/event/${notification.eventId}`);
+        } else {
+          console.log('Event notification missing eventId');
+        }
         break;
       case 'organization':
-        navigate(`/organization/${notification.organizationId}`);
+        if (notification.organizationId) {
+          navigate(`/organization/${notification.organizationId}`);
+        } else {
+          console.log('Organization notification missing organizationId');
+        }
         break;
       case 'approval':
         navigate(`/approvals`);
@@ -128,7 +145,7 @@ const NotificationsPage = () => {
         break;
       default:
         // For notifications without specific navigation, just mark as read
-        console.log('No navigation defined for this notification type');
+        console.log('No navigation defined for this notification type:', notification.type);
         break;
     }
   };

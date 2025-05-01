@@ -4,7 +4,11 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "migrate-notifications": "node utils/migrateNotifications.js",
+    "setup-test-notifications": "node utils/hardcodeTestNotifications.js",
+    "create-test-notifications": "node utils/createTestNotifications.js"
   },
   "keywords": [],
   "author": "",

@@ -5,7 +5,11 @@ const Notification = require('../models/Notification'); // Create this model
 const {
   markNotificationAsRead,
   markNotificationAsUnread,
-  createTrackerNotification
+  createTrackerNotification,
+  createEventNotification,
+  createOrganizationNotification,
+  createApprovalNotification,
+  createLiquidationNotification
 } = require('../controllers/notificationController');
 
 // Get notifications by user email
@@ -32,7 +36,12 @@ router.get('/notifications', authenticateToken, async (req, res) => {
   }
 });
 
+// Routes for different notification types
 router.post('/tracker-notification', authenticateToken, createTrackerNotification);
+router.post('/event-notification', authenticateToken, createEventNotification);
+router.post('/organization-notification', authenticateToken, createOrganizationNotification);
+router.post('/approval-notification', authenticateToken, createApprovalNotification);
+router.post('/liquidation-notification', authenticateToken, createLiquidationNotification);
 
 router.post('/mark-read', authenticateToken, markNotificationAsRead); // Protect route
 
