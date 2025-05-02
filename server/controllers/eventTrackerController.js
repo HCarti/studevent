@@ -408,6 +408,15 @@ const currentStepName = step.stepName;
 
 // In your updateTrackerStep function, replace the notification section with:
 
+// Notification type mapping
+const NOTIFICATION_TYPE_MAPPING = {
+  REVIEW_REQUIRED: 'tracker',
+  APPROVAL_COMPLETE: 'approval',
+  MISSING_REVIEWER: 'tracker',
+  FORM_APPROVED: 'approval',
+  FORM_DECLINED: 'approval'
+};
+
 if (status === "approved") {
   const nextStepIndex = tracker.steps.findIndex(s => s._id.equals(step._id)) + 1;
   
@@ -423,21 +432,20 @@ if (status === "approved") {
       // Notify all next reviewers
       await Promise.all(nextReviewers.map(async (reviewer) => {
         await notificationController.createNotification(
-          reviewer.email, // userEmail
-          `Form ${formName} has been approved by ${currentReviewerName} and now requires your ${nextStep.stepName} review.`, // message
-          'REVIEW_REQUIRED', // type
-          { formId: form._id, formType: form.formType } // data
+          reviewer.email,
+          `Form ${formName} has been approved by ${currentReviewerName} and now requires your ${nextStep.stepName} review.`,
+          NOTIFICATION_TYPE_MAPPING.REVIEW_REQUIRED,
+          { formId: form._id, formType: form.formType }
         );
       }));
 
       // Notify current reviewer
-      await notificationController.createNotification({
-        userEmail: currentUserEmail,
-        type: 'APPROVAL_COMPLETE', // Use proper enum value
-        message: `You approved ${formName}. It has been sent to ${nextReviewers.length} reviewer(s) for ${nextStep.stepName} approval.`,
-        formId: form._id,
-        formType: form.formType
-      });
+      await notificationController.createNotification(
+        currentUserEmail,
+        `You approved ${formName}. It has been sent to ${nextReviewers.length} reviewer(s) for ${nextStep.stepName} approval.`,
+        NOTIFICATION_TYPE_MAPPING.APPROVAL_COMPLETE,
+        { formId: form._id, formType: form.formType }
+      );
     } else {
       // Notify admins if no reviewers found
       const admins = await User.find({ 
@@ -447,24 +455,22 @@ if (status === "approved") {
 
       if (admins.length > 0) {
         await Promise.all(admins.map(async (admin) => {
-          await notificationController.createNotification({
-            userEmail: admin.email,
-            type: 'MISSING_REVIEWER', // Use proper enum value
-            message: `No reviewers found for ${nextStep.stepName} role for form ${formName}.`,
-            formId: form._id,
-            formType: form.formType
-          });
+          await notificationController.createNotification(
+            admin.email,
+            `No reviewers found for ${nextStep.stepName} role for form ${formName}.`,
+            NOTIFICATION_TYPE_MAPPING.MISSING_REVIEWER,
+            { formId: form._id, formType: form.formType }
+          );
         }));
       }
 
       // Notify current reviewer
-      await notificationController.createNotification({
-        userEmail: currentUserEmail,
-        type: 'APPROVAL_COMPLETE', // Use proper enum value
-        message: `You approved ${formName}, but no reviewers were found for ${nextStep.stepName}.`,
-        formId: form._id,
-        formType: form.formType
-      });
+      await notificationController.createNotification(
+        currentUserEmail,
+        `You approved ${formName}, but no reviewers were found for ${nextStep.stepName}.`,
+        NOTIFICATION_TYPE_MAPPING.APPROVAL_COMPLETE,
+        { formId: form._id, formType: form.formType }
+      );
     }
   } else {
     // Final approval notifications
@@ -472,25 +478,23 @@ if (status === "approved") {
       // Notify submitter
       const submitter = await User.findById(form.submittedBy).select('email name');
       if (submitter) {
-        await notificationController.createNotification({
-          userEmail: submitter.email,
-          type: 'FORM_APPROVED', // Use proper enum value
-          message: `Your form "${formName}" has been fully approved by all reviewers.`,
-          formId: form._id,
-          formType: form.formType
-        });
+        await notificationController.createNotification(
+          submitter.email,
+          `Your form "${formName}" has been fully approved by all reviewers.`,
+          NOTIFICATION_TYPE_MAPPING.FORM_APPROVED,
+          { formId: form._id, formType: form.formType }
+        );
       }
 
       // Notify organization
       const orgContact = getOrganizationContact();
       if (orgContact) {
-        await notificationController.createNotification({
-          userEmail: orgContact.email,
-          type: 'FORM_APPROVED', // Use proper enum value
-          message: `Your organization's form "${formName}" has been fully approved!`,
-          formId: form._id,
-          formType: form.formType
-        });
+        await notificationController.createNotification(
+          orgContact.email,
+          `Your organization's form "${formName}" has been fully approved!`,
+          NOTIFICATION_TYPE_MAPPING.FORM_APPROVED,
+          { formId: form._id, formType: form.formType }
+        );
       }
     } catch (error) {
       console.error("Final approval notification failed:", error);
@@ -501,24 +505,22 @@ if (status === "approved") {
   try {
     const submitter = await User.findById(form.submittedBy).select('email name');
     if (submitter) {
-      await notificationController.createNotification({
-        userEmail: submitter.email,
-        type: 'FORM_DECLINED', // Use proper enum value
-        message: `Form ${formName} was declined at ${step.stepName} stage. Remarks: ${remarks || "None"}`,
-        formId: form._id,
-        formType: form.formType
-      });
+      await notificationController.createNotification(
+        submitter.email,
+        `Form ${formName} was declined at ${step.stepName} stage. Remarks: ${remarks || "None"}`,
+        NOTIFICATION_TYPE_MAPPING.FORM_DECLINED,
+        { formId: form._id, formType: form.formType }
+      );
     }
 
     const orgContact = getOrganizationContact();
     if (orgContact) {
-      await notificationController.createNotification({
-        userEmail: orgContact.email,
-        type: 'FORM_DECLINED', // Use proper enum value
-        message: `Your organization's form ${formName} was declined at ${step.stepName} stage.`,
-        formId: form._id,
-        formType: form.formType
-      });
+      await notificationController.createNotification(
+        orgContact.email,
+        `Your organization's form ${formName} was declined at ${step.stepName} stage.`,
+        NOTIFICATION_TYPE_MAPPING.FORM_DECLINED,
+        { formId: form._id, formType: form.formType }
+      );
     }
   } catch (error) {
     console.error("Decline notification failed:", error);
