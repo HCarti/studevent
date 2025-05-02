@@ -387,21 +387,9 @@ const ProgressTracker = () => {
             return null;
           }
       
-          // Get reviewer name - handle both object and string cases
-          let reviewerName = '';
-          if (step.reviewedBy) {
-            if (typeof step.reviewedBy === 'object') {
-              reviewerName = `${step.reviewedBy.firstName || ''} ${step.reviewedBy.lastName || ''}`.trim();
-            } else if (typeof step.reviewedBy === 'string') {
-              // If reviewedBy is just an ID, try to find the user in the steps array
-              const reviewerStep = trackerData.steps.find(s => 
-                s.reviewedBy && typeof s.reviewedBy === 'object' && s.reviewedBy._id === step.reviewedBy
-              );
-              if (reviewerStep?.reviewedBy) {
-                reviewerName = `${reviewerStep.reviewedBy.firstName || ''} ${reviewerStep.reviewedBy.lastName || ''}`.trim();
-              }
-            }
-          }
+          const reviewerName = step.reviewedBy && typeof step.reviewedBy === 'object'
+            ? `${step.reviewedBy.firstName || ''} ${step.reviewedBy.lastName || ''}`.trim()
+            : 'Unknown Reviewer';
       
           return (
             <div key={index} className="step-container">
@@ -416,10 +404,10 @@ const ProgressTracker = () => {
               </div>
               <div className="step-label">
                 <strong>{step.stepName}</strong>
-                {step.reviewedBy && (
+                {step.status !== 'pending' && (
                   <div className="reviewer-info">
                     <small>
-                      Reviewed by: {reviewerName || 'Unknown Reviewer'} 
+                      Reviewed by: {reviewerName} 
                       {step.reviewedByRole && ` (${step.reviewedByRole})`}
                     </small>
                     {step.timestamp && (

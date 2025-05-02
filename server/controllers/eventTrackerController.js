@@ -594,7 +594,7 @@ if (status === "approved") {
 };
 
 // Get event tracker by form ID
-// In your tracker routes/controller, modify the response to populate reviewer data
+// Update your getEventTrackerByFormId function
 const getEventTrackerByFormId = async (req, res) => {
   try {
     const { formId } = req.params;
@@ -602,7 +602,8 @@ const getEventTrackerByFormId = async (req, res) => {
       .populate({
         path: 'steps.reviewedBy',
         select: 'firstName lastName email role faculty'
-      });
+      })
+      .lean();
 
     if (!tracker) {
       return res.status(404).json({ message: "Event tracker not found" });
