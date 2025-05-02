@@ -59,16 +59,35 @@ const getNextReviewers = async (tracker, currentStepIndex) => {
     // 3. Get common fields for all queries
     const baseFields = 'email firstName lastName faculty role organization';
     
-    // 4. Handle standard roles (Admin, Academic Services, etc.)
-    if (['Admin', 'Academic Services', 'Academic Director', 'Executive Director'].includes(nextStep.reviewerRole)) {
+    // 4. Handle Admin role specifically
+    if (nextStep.reviewerRole === 'Admin') {
+      // Find all active admins for the organization
+      const admins = await User.find({
+        $or: [
+          { role: "Admin", status: "Active" }, // System admins
+          { 
+            role: "Authority", 
+            faculty: "Admin", 
+            status: "Active",
+            organization: tracker.organizationId 
+          } // Organization-specific admins
+        ]
+      }).select(baseFields).lean();
+      
+      return admins;
+    }
+
+    // 5. Handle other standard roles (Academic Services, etc.)
+    if (['Academic Services', 'Academic Director', 'Executive Director'].includes(nextStep.reviewerRole)) {
       return await User.find({
         role: "Authority",
         faculty: nextStep.reviewerRole,
-        status: "Active"
+        status: "Active",
+        organization: tracker.organizationId
       }).select(baseFields).lean();
     }
 
-    // 5. Get organization info once (for both Adviser and Dean cases)
+    // 6. Get organization info once (for both Adviser and Dean cases)
     const form = await Form.findById(tracker.formId)
       .populate('studentOrganization', 'organizationName organizationType')
       .lean();
@@ -80,7 +99,7 @@ const getNextReviewers = async (tracker, currentStepIndex) => {
     const orgName = form.studentOrganization.organizationName;
     const isAcademicOrg = form.studentOrganization.organizationType === 'Recognized Student Organization - Academic';
 
-    // 6. Handle Adviser case
+    // 7. Handle Adviser case
     if (nextStep.reviewerRole === 'Adviser') {
       return await User.find({
         role: "Authority",
@@ -90,12 +109,12 @@ const getNextReviewers = async (tracker, currentStepIndex) => {
       }).select(baseFields).lean();
     }
 
-    // 7. Handle Dean case (only for academic orgs)
+    // 8. Handle Dean case (only for academic orgs)
     if (nextStep.reviewerRole === 'Dean' && isAcademicOrg) {
       return await User.find({
         role: "Authority",
         faculty: "Dean",
-        organization: orgName, // Changed from organizationId to orgName
+        organization: orgName,
         status: "Active"
       }).select(baseFields).lean();
     }
