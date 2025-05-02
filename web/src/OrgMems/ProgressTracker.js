@@ -218,7 +218,7 @@ const ProgressTracker = () => {
                 fetch(`https://studevent-server.vercel.app/api/tracker/signatures/${formId}`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 }),
-                fetch(`https://studevent-server.vercel.app/api/tracker/${formId}`, {
+                fetch(`https://studevent-server.vercel.app/api/tracker/${formId}?populate=reviewedBy}`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 })
             ]);
@@ -380,43 +380,62 @@ const ProgressTracker = () => {
     };
 
     const renderProgressSteps = () => {
-      if (!trackerData || !trackerData.steps) return null;
-  
-      return trackerData.steps.map((step, index) => {
+        if (!trackerData || !trackerData.steps) return null;
+      
+        return trackerData.steps.map((step, index) => {
           if (step.stepName === 'Dean' && organizationType !== 'Recognized Student Organization - Academic') {
-              return null;
+            return null;
           }
-  
+      
+          // Get reviewer name - handle both object and string cases
+          let reviewerName = '';
+          if (step.reviewedBy) {
+            if (typeof step.reviewedBy === 'object') {
+              reviewerName = `${step.reviewedBy.firstName || ''} ${step.reviewedBy.lastName || ''}`.trim();
+            } else if (typeof step.reviewedBy === 'string') {
+              // If reviewedBy is just an ID, try to find the user in the steps array
+              const reviewerStep = trackerData.steps.find(s => 
+                s.reviewedBy && typeof s.reviewedBy === 'object' && s.reviewedBy._id === step.reviewedBy
+              );
+              if (reviewerStep?.reviewedBy) {
+                reviewerName = `${reviewerStep.reviewedBy.firstName || ''} ${reviewerStep.reviewedBy.lastName || ''}`.trim();
+              }
+            }
+          }
+      
           return (
-              <div key={index} className="step-container">
-                  <div className="progress-step">
-                      {step.status === 'approved' ? (
-                          <CheckCircleIcon style={{ color: '#4caf50', fontSize: 24 }} />
-                      ) : step.status === 'declined' ? (
-                          <CheckCircleIcon style={{ color: 'red', fontSize: 24 }} />
-                      ) : (
-                          <RadioButtonUncheckedIcon style={{ color: '#ffeb3b', fontSize: 24 }} />
-                      )}
-                  </div>
-                  <div className="step-label">
-                      <strong>{step.stepName}</strong>
-                      {step.reviewedBy && (
-                          <div className="reviewer-info">
-                              <small>
-                                  Reviewed by: {step.reviewedBy.firstName} {step.reviewedBy.lastName} 
-                                  ({step.reviewedByRole})
-                              </small>
-                              <small>{new Date(step.timestamp).toLocaleString()}</small>
-                              {step.remarks && (
-                                  <small className="remarks">Remarks: {step.remarks}</small>
-                              )}
-                          </div>
-                      )}
-                  </div>
+            <div key={index} className="step-container">
+              <div className="progress-step">
+                {step.status === 'approved' ? (
+                  <CheckCircleIcon style={{ color: '#4caf50', fontSize: 24 }} />
+                ) : step.status === 'declined' ? (
+                  <CheckCircleIcon style={{ color: 'red', fontSize: 24 }} />
+                ) : (
+                  <RadioButtonUncheckedIcon style={{ color: '#ffeb3b', fontSize: 24 }} />
+                )}
               </div>
+              <div className="step-label">
+                <strong>{step.stepName}</strong>
+                {step.reviewedBy && (
+                  <div className="reviewer-info">
+                    <small>
+                      Reviewed by: {reviewerName || 'Unknown Reviewer'} 
+                      {step.reviewedByRole && ` (${step.reviewedByRole})`}
+                    </small>
+                    {step.timestamp && (
+                      <small>{new Date(step.timestamp).toLocaleString()}</small>
+                    )}
+                    {step.remarks && (
+                      <small className="remarks">Remarks: {step.remarks}</small>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           );
-      });
-  };
+        });
+      };
+
     const isTrackerCompleted = () => {
         if (!trackerData || !trackerData.steps) return false;
 

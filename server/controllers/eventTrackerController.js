@@ -357,11 +357,12 @@ const updateTrackerStep = async (req, res) => {
         _id: userId,
         firstName: firstName,
         lastName: lastName,
+        email: currentUserEmail,
         role: role,
         faculty: faculty
       };
       step.reviewedByRole = faculty || role;
-      step.signature = signature; // Only stored if authorized
+      step.signature = signature;
 
     // Update tracker progress
     if (status === "approved") {
@@ -593,10 +594,15 @@ if (status === "approved") {
 };
 
 // Get event tracker by form ID
+// In your tracker routes/controller, modify the response to populate reviewer data
 const getEventTrackerByFormId = async (req, res) => {
   try {
     const { formId } = req.params;
-    const tracker = await EventTracker.findOne({ formId });
+    const tracker = await EventTracker.findOne({ formId })
+      .populate({
+        path: 'steps.reviewedBy',
+        select: 'firstName lastName email role faculty'
+      });
 
     if (!tracker) {
       return res.status(404).json({ message: "Event tracker not found" });
