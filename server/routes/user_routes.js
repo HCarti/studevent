@@ -50,6 +50,7 @@ router.put('/organizations/:id', authenticateToken, usersController.updateOrgani
 router.get('/getall', authenticateToken, usersController.getAllUsers);
 router.put('/update/profile', authenticateToken, usersController.updateProfile);
 router.put('/change-password', authenticateToken, usersController.changePassword);
+router.post('/check-adviser-assignment', authenticateToken, usersController.checkAdviserAssignment);
 
 // User registration route with dual signature support
 router.post('/', 

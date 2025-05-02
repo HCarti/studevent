@@ -33,6 +33,7 @@ const ProgressTracker = () => {
     const [allDataLoaded, setAllDataLoaded] = useState(false);
     const [fetchError, setFetchError] = useState(null);
     const [organizationType, setOrganizationType] = useState(null);
+    const [isAssignedAdviser, setIsAssignedAdviser] = useState(false);
 
     const [pdfStatus, setPdfStatus] = useState({
         loading: false,
@@ -115,6 +116,59 @@ const ProgressTracker = () => {
             }
         };
     };
+
+    useEffect(() => {
+        const checkAdviserAssignment = async () => {
+            if (user?.faculty === "Adviser" && formDetails?.studentOrganization) {
+                try {
+                    const token = localStorage.getItem("token");
+                    const response = await fetch(
+                        `https://studevent-server.vercel.app/api/users/check-adviser-assignment`, 
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`,
+                            },
+                            body: JSON.stringify({
+                                adviserId: user._id,
+                                organizationName: formDetails.studentOrganization
+                            })
+                        }
+                    );
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        setIsAssignedAdviser(data.isAssigned);
+                    }
+                } catch (error) {
+                    console.error("Error checking adviser assignment:", error);
+                }
+            }
+        };
+
+        if (user && formDetails) {
+            checkAdviserAssignment();
+        }
+    }, [user, formDetails]);
+
+        // Modify the button rendering logic
+        const shouldShowEditButton = () => {
+            // Admins can always edit
+            if (user?.role === "Admin") return true;
+            
+            // For advisers, check if they're assigned to this organization
+            if (user?.faculty === "Adviser") {
+                return isAssignedAdviser && 
+                       (trackerData?.currentAuthority === user?.faculty || 
+                        trackerData?.currentAuthority === user?.role);
+            }
+            
+            // For other roles, use the existing logic
+            return trackerData?.currentAuthority === user?.faculty || 
+                   trackerData?.currentAuthority === user?.role;
+        };
+
 
     const fetchBudgetData = async (budgetId) => {
         try {
@@ -496,11 +550,11 @@ const ProgressTracker = () => {
                                     </Button>
                                 )}
                             </PDFDownloadLink>
-                            {(trackerData.currentAuthority === user?.faculty || trackerData.currentAuthority === user?.role) && (
-                                <Button variant="contained" onClick={() => setIsEditing(true)}>
-                                    EDIT TRACKER
-                                </Button>
-                            )}
+                            {shouldShowEditButton() && (
+                    <Button variant="contained" onClick={() => setIsEditing(true)}>
+                        EDIT TRACKER
+                    </Button>
+                )}
                         </div>
                     )}
                 </div>

@@ -433,6 +433,30 @@ const changePassword = async (req, res) => {
   }
 };
 
+const checkAdviserAssignment = async (req, res) => {
+  try {
+      const { adviserId, organizationName } = req.body;
+      
+      const adviser = await User.findOne({
+          _id: adviserId,
+          role: "Authority",
+          faculty: "Adviser",
+          organization: organizationName,
+          status: "Active"
+      });
+
+      res.status(200).json({
+          isAssigned: !!adviser
+      });
+  } catch (error) {
+      console.error("Error checking adviser assignment:", error);
+      res.status(500).json({
+          error: "Server error",
+          details: error.message
+      });
+  }
+};
+
 module.exports = { 
   getUserById, 
   updateUser, 
@@ -445,5 +469,6 @@ module.exports = {
   updateOrganization,
   getAllUsers,
   updateProfile,
+  checkAdviserAssignment,
   changePassword
 };

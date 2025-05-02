@@ -279,55 +279,61 @@ const updateTrackerStep = async (req, res) => {
       return res.status(404).json({ message: "Step not found" });
     }
 
-    // Additional validation for Advisers - must be assigned to this organization
-    if (faculty === "Adviser") {
-      const isAssignedAdviser = await User.findOne({
-        _id: userId,
-        role: "Authority",
-        faculty: "Adviser",
-        organization: form.studentOrganization?.organizationName || form.organizationName,
-        status: "Active"
-      });
-
-      if (!isAssignedAdviser && role !== "Admin") {
-        return res.status(403).json({ 
-          message: "Unauthorized: Only the assigned adviser for this organization can review this step." 
+       // Additional validation for Advisers - must be assigned to this organization
+       if (faculty === "Adviser") {
+        const isAssignedAdviser = await User.findOne({
+          _id: userId,
+          role: "Authority",
+          faculty: "Adviser",
+          organization: form.studentOrganization?.organizationName || form.organizationName,
+          status: "Active"
         });
+  
+        if (!isAssignedAdviser && role !== "Admin") {
+          // Return immediately without processing signature
+          return res.status(403).json({ 
+            message: "Unauthorized: Only the assigned adviser for this organization can review this step." 
+          });
+        }
       }
-    }
-
-    // Validate step order
-    const firstPendingOrDeclinedStepIndex = tracker.steps.findIndex(step => 
-      step.status === "pending" || step.status === "declined"
-    );
-
-    if (!tracker.steps[firstPendingOrDeclinedStepIndex] || 
-        tracker.steps[firstPendingOrDeclinedStepIndex]._id.toString() !== stepId) {
-      return res.status(403).json({ message: "You cannot skip steps. Approve them in order." });
-    }
-
-    if (tracker.steps[firstPendingOrDeclinedStepIndex].status !== "pending" && 
-        tracker.steps[firstPendingOrDeclinedStepIndex].status !== "declined") {
-      return res.status(400).json({ message: "This step has already been reviewed." });
-    }
-
-    if (step.stepName !== faculty && role !== "Admin") {
-      return res.status(403).json({ message: `Unauthorized: Only the ${step.stepName} can review this step.` });
-    }
-
-    // Update the step with reviewer details
-    step.status = status;
-    step.remarks = remarks || "";
-    step.timestamp = new Date();
-    step.reviewedBy = {
-      _id: userId,
-      firstName: firstName,
-      lastName: lastName,
-      role: role,
-      faculty: faculty
-    };
-    step.reviewedByRole = faculty || role;
-    step.signature = signature;
+  
+      // Validate step order
+      const firstPendingOrDeclinedStepIndex = tracker.steps.findIndex(step => 
+        step.status === "pending" || step.status === "declined"
+      );
+  
+      if (!tracker.steps[firstPendingOrDeclinedStepIndex] || 
+          tracker.steps[firstPendingOrDeclinedStepIndex]._id.toString() !== stepId) {
+        return res.status(403).json({ message: "You cannot skip steps. Approve them in order." });
+      }
+  
+      if (tracker.steps[firstPendingOrDeclinedStepIndex].status !== "pending" && 
+          tracker.steps[firstPendingOrDeclinedStepIndex].status !== "declined") {
+        return res.status(400).json({ message: "This step has already been reviewed." });
+      }
+  
+      if (step.stepName !== faculty && role !== "Admin") {
+        return res.status(403).json({ message: `Unauthorized: Only the ${step.stepName} can review this step.` });
+      }
+  
+      // Only process signature if all validations pass
+      if (!signature) {
+        return res.status(400).json({ message: "Signature is required for approval." });
+      }
+  
+      // Update the step with reviewer details
+      step.status = status;
+      step.remarks = remarks || "";
+      step.timestamp = new Date();
+      step.reviewedBy = {
+        _id: userId,
+        firstName: firstName,
+        lastName: lastName,
+        role: role,
+        faculty: faculty
+      };
+      step.reviewedByRole = faculty || role;
+      step.signature = signature; // Only stored if authorized
 
     // Update tracker progress
     if (status === "approved") {
