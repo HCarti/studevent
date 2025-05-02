@@ -86,6 +86,12 @@
   margin-top: 4px;
 }
 
+.reviewer-info{
+  font-weight: bold;
+  display: flex;
+  flex-direction: column;
+}
+
 /* Edit Tracker Section */
 .edit-tracker {
   background-color: #f8f9fa;

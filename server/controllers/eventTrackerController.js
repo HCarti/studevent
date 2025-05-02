@@ -595,19 +595,30 @@ if (status === "approved") {
 
 // Get event tracker by form ID
 // Update your getEventTrackerByFormId function
+// In your eventTrackerController.js
 const getEventTrackerByFormId = async (req, res) => {
   try {
     const { formId } = req.params;
     const tracker = await EventTracker.findOne({ formId })
       .populate({
         path: 'steps.reviewedBy',
-        select: 'firstName lastName email role faculty'
+        select: 'firstName lastName email role faculty',
+        model: 'User' // Explicitly specify the model
       })
       .lean();
 
     if (!tracker) {
       return res.status(404).json({ message: "Event tracker not found" });
     }
+
+    // Ensure all reviewedBy fields are properly populated
+    tracker.steps = tracker.steps.map(step => {
+      if (step.reviewedBy && typeof step.reviewedBy === 'string') {
+        // Handle case where population didn't work
+        step.reviewedBy = { _id: step.reviewedBy };
+      }
+      return step;
+    });
 
     res.status(200).json(tracker);
   } catch (error) {

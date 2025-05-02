@@ -207,60 +207,106 @@ const ProgressTracker = () => {
 
     const fetchAllData = async () => {
         try {
-            setLoading(true);
-            setFetchError(null);
-            const token = localStorage.getItem("token");
-            
-            const [formRes, signaturesRes, trackerRes] = await Promise.all([
-                fetch(`https://studevent-server.vercel.app/api/forms/${formId}`, {
-                    headers: { "Authorization": `Bearer ${token}` }
-                }),
-                fetch(`https://studevent-server.vercel.app/api/tracker/signatures/${formId}`, {
-                    headers: { "Authorization": `Bearer ${token}` }
-                }),
-                fetch(`https://studevent-server.vercel.app/api/tracker/${formId}?populate=reviewedBy}`, {
-                    headers: { "Authorization": `Bearer ${token}` }
-                })
-            ]);
-        
-            if (!formRes.ok || !signaturesRes.ok || !trackerRes.ok) {
-                throw new Error('Failed to fetch data');
-            }
-        
-            const [formData, signaturesData, trackerData] = await Promise.all([
-                formRes.json(),
-                signaturesRes.json(),
-                trackerRes.json()
-            ]);
-
-            const orgType = formData.studentOrganization?.organizationType || 
-                           formData.organizationType || 
-                           organizationType;
-
-            setOrganizationType(orgType);
-        
-            let budgetData = null;
-            if (formData.attachedBudget) {
-                const budgetId = typeof formData.attachedBudget === 'object' 
-                    ? formData.attachedBudget._id 
-                    : formData.attachedBudget;
-                budgetData = await fetchBudgetData(budgetId);
-            }
-        
-            setFormDetails(sanitizeFormData(formData));
-            setReviewSignatures(sanitizeSignatures(signaturesData, orgType));
-            setTrackerData(trackerData);
-            setCurrentStep(String(trackerData.currentStep));
-            setBudgetData(budgetData);
-            setAllDataLoaded(true);
+          setLoading(true);
+          setFetchError(null);
+          const token = localStorage.getItem("token");
+          
+          // Fetch all data in parallel
+          const [formRes, signaturesRes, trackerRes] = await Promise.all([
+            fetch(`https://studevent-server.vercel.app/api/forms/${formId}`, {
+              headers: { "Authorization": `Bearer ${token}` }
+            }),
+            fetch(`https://studevent-server.vercel.app/api/tracker/signatures/${formId}`, {
+              headers: { "Authorization": `Bearer ${token}` }
+            }),
+            fetch(`https://studevent-server.vercel.app/api/tracker/${formId}?deepPopulate=true`, {
+              headers: { "Authorization": `Bearer ${token}` }
+            })
+          ]);
+      
+          if (!formRes.ok || !signaturesRes.ok || !trackerRes.ok) {
+            throw new Error('Failed to fetch data');
+          }
+      
+          const [formData, signaturesData, trackerData] = await Promise.all([
+            formRes.json(),
+            signaturesRes.json(),
+            trackerRes.json()
+          ]);
+      
+          const orgType = formData.studentOrganization?.organizationType || 
+                         formData.organizationType || 
+                         organizationType;
+      
+          setOrganizationType(orgType);
+      
+          // Fetch budget data if exists
+          let budgetData = null;
+          if (formData.attachedBudget) {
+            const budgetId = typeof formData.attachedBudget === 'object' 
+              ? formData.attachedBudget._id 
+              : formData.attachedBudget;
+            budgetData = await fetchBudgetData(budgetId);
+          }
+      
+          // Enhanced step data processing with user lookup
+          const processedTrackerData = await processTrackerData(trackerData, token);
+      
+          setFormDetails(sanitizeFormData(formData));
+          setReviewSignatures(sanitizeSignatures(signaturesData, orgType));
+          setTrackerData(processedTrackerData);
+          setCurrentStep(String(processedTrackerData.currentStep));
+          setBudgetData(budgetData);
+          setAllDataLoaded(true);
         } catch (error) {
-            console.error("Error in fetchAllData:", error);
-            setFetchError(error.message);
-            setAllDataLoaded(false);
+          console.error("Error in fetchAllData:", error);
+          setFetchError(error.message);
+          setAllDataLoaded(false);
         } finally {
-            setLoading(false);
+          setLoading(false);
         }
-    };
+      };
+      
+      // Helper function to ensure all reviewer data is properly populated
+      const processTrackerData = async (trackerData, token) => {
+        if (!trackerData?.steps) return trackerData;
+      
+        // Process each step to ensure we have reviewer details
+        const processedSteps = await Promise.all(
+          trackerData.steps.map(async (step) => {
+            // If reviewedBy exists but doesn't have name fields, fetch user details
+            if (step.reviewedBy && (!step.reviewedBy.firstName || !step.reviewedBy.lastName)) {
+              try {
+                const userId = typeof step.reviewedBy === 'string' 
+                  ? step.reviewedBy 
+                  : step.reviewedBy._id;
+      
+                if (userId) {
+                  const userRes = await fetch(
+                    `https://studevent-server.vercel.app/api/users/${userId}`,
+                    { headers: { "Authorization": `Bearer ${token}` } }
+                  );
+      
+                  if (userRes.ok) {
+                    const userData = await userRes.json();
+                    step.reviewedBy = {
+                      ...step.reviewedBy,
+                      firstName: userData.firstName,
+                      lastName: userData.lastName,
+                      email: userData.email
+                    };
+                  }
+                }
+              } catch (error) {
+                console.error("Error fetching user details:", error);
+              }
+            }
+            return step;
+          })
+        );
+      
+        return { ...trackerData, steps: processedSteps };
+      };
 
     useEffect(() => {
         if (formId) fetchAllData();
@@ -387,9 +433,27 @@ const ProgressTracker = () => {
             return null;
           }
       
-          const reviewerName = step.reviewedBy && typeof step.reviewedBy === 'object'
-            ? `${step.reviewedBy.firstName || ''} ${step.reviewedBy.lastName || ''}`.trim()
-            : 'Unknown Reviewer';
+          // Get reviewer name - handle all possible cases
+          let reviewerName = 'Unknown Reviewer';
+          let reviewerRole = step.reviewedByRole || step.stepName;
+      
+          if (step.reviewedBy) {
+            if (typeof step.reviewedBy === 'object') {
+              // Case 1: Properly populated user object
+              if (step.reviewedBy.firstName || step.reviewedBy.lastName) {
+                reviewerName = `${step.reviewedBy.firstName || ''} ${step.reviewedBy.lastName || ''}`.trim();
+              } 
+              // Case 2: Object but no names - use email prefix
+              else if (step.reviewedBy.email) {
+                reviewerName = step.reviewedBy.email.split('@')[0];
+              }
+            }
+            // Case 3: Just an ID - we'll need to fetch this separately
+            else if (typeof step.reviewedBy === 'string') {
+              // You may want to implement a separate lookup here
+              reviewerName = `User ${step.reviewedBy.substring(0, 5)}...`;
+            }
+          }
       
           return (
             <div key={index} className="step-container">
@@ -407,8 +471,7 @@ const ProgressTracker = () => {
                 {step.status !== 'pending' && (
                   <div className="reviewer-info">
                     <small>
-                      Reviewed by: {reviewerName} 
-                      {step.reviewedByRole && ` (${step.reviewedByRole})`}
+                      Reviewed by: {reviewerName}
                     </small>
                     {step.timestamp && (
                       <small>{new Date(step.timestamp).toLocaleString()}</small>

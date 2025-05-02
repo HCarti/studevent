@@ -231,16 +231,27 @@ const updateUser = async (req, res) => {
 // Get user by ID
 const getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(req.params.id)
+      .select('firstName lastName email role faculty organization signature presidentSignature')
+      .lean();
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+
     res.status(200).json({
-      ...user.toObject(),
+      _id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+      faculty: user.faculty,
+      organization: user.organization,
       signature: user.role === 'Organization' ? user.presidentSignature : user.signature
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error fetching user:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
