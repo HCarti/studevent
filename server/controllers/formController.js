@@ -7,6 +7,7 @@ const CalendarEvent = require("../models/CalendarEvent");
 const moment = require('moment');
 const BudgetProposal = require("../models/BudgetProposal");
 const LocalOffCampus = require('../models/LocalOffCampus');
+const notificationController = require('./notificationController');
 
 // HELPERS
 
@@ -536,37 +537,46 @@ const dean = (organization?.organizationType === 'Recognized Student Organizatio
   }).session(session).select('_id') : null;
 
 // Create progress tracker
-const tracker = new EventTracker({
-  formId: form._id,
-  formType: form.formType,
-  steps: requiredReviewers.map(reviewer => ({
-    stepName: reviewer.stepName,
-    reviewerRole: reviewer.reviewerRole,
-    status: "pending",
-    // For Adviser step, use pre-fetched adviser
-    ...(reviewer.reviewerRole === 'Adviser' && adviser ? {
-      assignedReviewer: adviser._id
-    } : {}),
-    // For Dean step, use pre-fetched dean
-    ...(reviewer.reviewerRole === 'Dean' && dean ? {
-      assignedReviewer: dean._id
-    } : {})
-  })),
-  currentStep: 0,
-  currentAuthority: requiredReviewers[0].reviewerRole,
-  organizationId: organization?._id,
-  organizationType: organization?.organizationType
-});
+    if (adviser) {
+      try {
+        const formName = form.formType === 'Activity' 
+          ? form.eventTitle || `Activity Form ${form._id}`
+          : form.formType === 'Project' 
+            ? form.projectTitle || `Project Form ${form._id}`
+            : `Form ${form._id}`;
 
-await tracker.save({ session });
+        const submitterName = req.user.firstName 
+          ? `${req.user.firstName} ${req.user.lastName}` 
+          : req.user.email.split('@')[0] || 'a submitter';
 
-    // Send notification
+        await notificationController.createNotification(
+          adviser.email, // Send to adviser's email
+          `New ${form.formType} form "${formName}" has been submitted by ${submitterName} and requires your review.`,
+          'tracker', // Using 'tracker' type as per your schema
+          { 
+            formId: form._id, 
+            formType: form.formType,
+            organizationName: organization?.organizationName 
+          }
+        );
+
+        console.log(`Notification sent to adviser ${adviser.email}`);
+      } catch (notificationError) {
+        console.error('Failed to send adviser notification:', notificationError);
+        // Don't fail the whole operation if notification fails
+      }
+    }
+
+    // Send confirmation to submitter
     if (form.emailAddress) {
       await Notification.create([{
         userEmail: form.emailAddress,
-        message: `Your ${form.formType} form has been submitted!`,
+        message: `Your ${form.formType} form has been submitted successfully!`,
+        type: 'tracker',
+        formId: form._id,
+        formType: form.formType,
         read: false,
-        timestamp: new Date()
+        createdAt: new Date()
       }], { session });
     }
 
@@ -577,6 +587,7 @@ await tracker.save({ session });
       form: form.toObject(),
       tracker: tracker.toObject()
     });
+
 
   } catch (error) {
     await session.abortTransaction();
