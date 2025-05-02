@@ -217,14 +217,10 @@ const getReviewSignatures = async (req, res) => {
 // Update event tracker progress
 const updateTrackerStep = async (req, res) => {
   try {
-    console.log("🔍 Incoming PUT Request");
-    console.log("User Data:", req.user);
-    console.log("Request Body:", req.body);
-
     const { trackerId, stepId } = req.params;
     const { status, remarks, signature } = req.body;
     const userId = req.user._id;
-    const { role, faculty, email: currentUserEmail, firstName, lastName } = req.user; // Added firstName and lastName
+    const { role, faculty, email: currentUserEmail, firstName, lastName } = req.user;
 
     // Validate user and request
     if (!req.user) {
@@ -245,11 +241,19 @@ const updateTrackerStep = async (req, res) => {
       });
     }
 
-    // Fetch the tracker and form with populated reviewer data
-    const tracker = await EventTracker.findById(trackerId).populate({
-      path: 'steps.reviewedBy',
-      select: 'firstName lastName email role faculty' // Include firstName and lastName
-    });
+    // Fetch the tracker with populated form and organization data
+    const tracker = await EventTracker.findById(trackerId)
+      .populate({
+        path: 'formId',
+        populate: {
+          path: 'studentOrganization',
+          select: 'organizationName'
+        }
+      })
+      .populate({
+        path: 'steps.reviewedBy',
+        select: 'firstName lastName email role faculty organization'
+      });
     
     if (!tracker) {
       return res.status(404).json({ message: "Tracker not found" });
@@ -257,8 +261,8 @@ const updateTrackerStep = async (req, res) => {
 
     let form;
     try {
-      form = await LocalOffCampus.findById(tracker.formId) || 
-             await mongoose.model('Form').findById(tracker.formId)
+      form = await LocalOffCampus.findById(tracker.formId._id) || 
+             await mongoose.model('Form').findById(tracker.formId._id)
                .populate('studentOrganization', 'email organizationName');
     } catch (error) {
       console.error("Error finding form:", error);
@@ -273,6 +277,23 @@ const updateTrackerStep = async (req, res) => {
     const step = tracker.steps.find(step => step._id.toString() === stepId);
     if (!step) {
       return res.status(404).json({ message: "Step not found" });
+    }
+
+    // Additional validation for Advisers - must be assigned to this organization
+    if (faculty === "Adviser") {
+      const isAssignedAdviser = await User.findOne({
+        _id: userId,
+        role: "Authority",
+        faculty: "Adviser",
+        organization: form.studentOrganization?.organizationName || form.organizationName,
+        status: "Active"
+      });
+
+      if (!isAssignedAdviser && role !== "Admin") {
+        return res.status(403).json({ 
+          message: "Unauthorized: Only the assigned adviser for this organization can review this step." 
+        });
+      }
     }
 
     // Validate step order
@@ -413,20 +434,6 @@ const currentStepName = step.stepName;
             organizationId: form.organizationId, 
             role: 'Admin' 
           }).select('email').lean();
-          
-          // if (admins.length > 0) {
-          //   for (const admin of admins) {
-          //     try {
-          //       await notificationController.createNotification(
-          //         admin.email,
-          //         `Workflow Blocked: Missing reviewers for ${nextStep.stepName}`,
-          //         `Workflow blocked for ${formName}. No reviewers found for ${nextStep.stepName} role.`
-          //       );
-          //     } catch (error) {
-          //       console.error(`Failed to notify admin ${admin.email}:`, error);
-          //     }
-          //   }
-          // }
           
           await notificationController.createNotification(
             currentUserEmail,
