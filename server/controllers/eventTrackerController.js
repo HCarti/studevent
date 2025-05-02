@@ -118,7 +118,7 @@ const getNextReviewers = async (tracker, currentStepIndex) => {
       const deans = await User.find({
         role: "Authority",
         faculty: "Dean",
-        deanFororganization: orgName,
+        deanForOrganization: orgName,
         status: "Active"
       }).select(baseFields).lean();
 
