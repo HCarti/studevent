@@ -422,13 +422,12 @@ if (status === "approved") {
     if (nextReviewers.length > 0) {
       // Notify all next reviewers
       await Promise.all(nextReviewers.map(async (reviewer) => {
-        await notificationController.createNotification({
-          userEmail: reviewer.email,
-          type: 'REVIEW_REQUIRED', // Use proper enum value
-          message: `Form ${formName} has been approved by ${currentReviewerName} and now requires your ${nextStep.stepName} review.`,
-          formId: form._id,
-          formType: form.formType
-        });
+        await notificationController.createNotification(
+          reviewer.email, // userEmail
+          `Form ${formName} has been approved by ${currentReviewerName} and now requires your ${nextStep.stepName} review.`, // message
+          'REVIEW_REQUIRED', // type
+          { formId: form._id, formType: form.formType } // data
+        );
       }));
 
       // Notify current reviewer
