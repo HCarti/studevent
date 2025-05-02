@@ -51,7 +51,7 @@ const getNextReviewers = async (tracker, currentStepIndex) => {
     // 2. Handle pre-assigned reviewers (advisers/deans)
     if (nextStep.assignedReviewer) {
       const reviewer = await User.findById(nextStep.assignedReviewer)
-        .select('email firstName lastName faculty role')
+        .select('email firstName lastName faculty role organization')
         .lean();
       return reviewer ? [reviewer] : [];
     }
@@ -61,23 +61,21 @@ const getNextReviewers = async (tracker, currentStepIndex) => {
     
     // 4. Handle Admin role specifically
     if (nextStep.reviewerRole === 'Admin') {
-      // Find all active admins for the organization
       const admins = await User.find({
         $or: [
-          { role: "Admin", status: "Active" }, // System admins
+          { role: "Admin", status: "Active" },
           { 
             role: "Authority", 
             faculty: "Admin", 
             status: "Active",
             organization: tracker.organizationId 
-          } // Organization-specific admins
+          }
         ]
       }).select(baseFields).lean();
-      
       return admins;
     }
 
-    // 5. Handle other standard roles (Academic Services, etc.)
+    // 5. Handle other standard roles
     if (['Academic Services', 'Academic Director', 'Executive Director'].includes(nextStep.reviewerRole)) {
       return await User.find({
         role: "Authority",
@@ -87,7 +85,7 @@ const getNextReviewers = async (tracker, currentStepIndex) => {
       }).select(baseFields).lean();
     }
 
-    // 6. Get organization info once (for both Adviser and Dean cases)
+    // 6. Get organization info
     const form = await Form.findById(tracker.formId)
       .populate('studentOrganization', 'organizationName organizationType')
       .lean();
@@ -109,14 +107,25 @@ const getNextReviewers = async (tracker, currentStepIndex) => {
       }).select(baseFields).lean();
     }
 
-    // 8. Handle Dean case (only for academic orgs)
-    if (nextStep.reviewerRole === 'Dean' && isAcademicOrg) {
-      return await User.find({
+    // 8. Enhanced Dean case handling for academic orgs
+    if (nextStep.reviewerRole === 'Dean') {
+      if (!isAcademicOrg) {
+        console.log(`Skipping Dean notification for non-academic org: ${orgName}`);
+        return [];
+      }
+      
+      // Find dean specifically for this academic organization
+      const deans = await User.find({
         role: "Authority",
         faculty: "Dean",
-        organization: orgName,
+        deanFororganization: orgName,
         status: "Active"
       }).select(baseFields).lean();
+
+      if (deans.length === 0) {
+        console.warn(`No active dean found for academic org: ${orgName}`);
+      }
+      return deans;
     }
 
     return [];
@@ -447,8 +456,37 @@ if (status === "approved") {
                               req.user.email.split('@')[0] || 
                               'a reviewer';
 
-    if (nextReviewers.length > 0) {
-      // Notify all next reviewers
+    // Special handling for Adviser to Dean transition
+    if (step.stepName === 'Adviser' && nextStep.reviewerRole === 'Dean') {
+      const form = await Form.findById(tracker.formId)
+        .populate('studentOrganization', 'organizationType')
+        .lean();
+      
+      const isAcademicOrg = form?.studentOrganization?.organizationType === 
+                          'Recognized Student Organization - Academic';
+
+      if (isAcademicOrg && nextReviewers.length > 0) {
+        const deanMessage = `Form ${formName} from ${form.studentOrganization.organizationName} ` +
+                           `has been approved by adviser ${currentReviewerName} ` +
+                           `and requires your review as Dean.`;
+        
+        await Promise.all(nextReviewers.map(async (dean) => {
+          await notificationController.createNotification(
+            dean.email,
+            deanMessage,
+            NOTIFICATION_TYPE_MAPPING.REVIEW_REQUIRED,
+            { 
+              formId: form._id, 
+              formType: form.formType,
+              organizationName: form.studentOrganization.organizationName 
+            }
+          );
+          console.log(`Dean notification sent to ${dean.email}`);
+        }));
+      }
+    }
+    // Regular notification handling for other cases
+    else if (nextReviewers.length > 0) {
       await Promise.all(nextReviewers.map(async (reviewer) => {
         await notificationController.createNotification(
           reviewer.email,
