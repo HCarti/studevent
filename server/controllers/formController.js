@@ -537,47 +537,55 @@ const dean = (organization?.organizationType === 'Recognized Student Organizatio
   }).session(session).select('_id') : null;
 
 // Create progress tracker
-    if (adviser) {
-      try {
-        const formName = form.formType === 'Activity' 
-          ? form.eventTitle || `Activity Form ${form._id}`
-          : form.formType === 'Project' 
-            ? form.projectTitle || `Project Form ${form._id}`
-            : `Form ${form._id}`;
+if (adviser && adviser.email) {  // Added check for adviser.email
+  try {
+    const formName = form.formType === 'Activity' 
+      ? form.eventTitle || `Activity Form ${form._id}`
+      : form.formType === 'Project' 
+        ? form.projectTitle || `Project Form ${form._id}`
+        : `Form ${form._id}`;
 
-        const submitterName = req.user.firstName 
-          ? `${req.user.firstName} ${req.user.lastName}` 
-          : req.user.email.split('@')[0] || 'a submitter';
+    const submitterName = req.user.firstName 
+      ? `${req.user.firstName} ${req.user.lastName}` 
+      : req.user.email.split('@')[0] || 'a submitter';
 
-        await notificationController.createNotification(
-          adviser.email, // Send to adviser's email
-          `New ${form.formType} form "${formName}" has been submitted by ${submitterName} and requires your review.`,
-          'tracker', // Using 'tracker' type as per your schema
-          { 
-            formId: form._id, 
-            formType: form.formType,
-            organizationName: organization?.organizationName 
-          }
-        );
-
-        console.log(`Notification sent to adviser ${adviser.email}`);
-      } catch (notificationError) {
-        console.error('Failed to send adviser notification:', notificationError);
+    // Ensure we have all required fields
+    if (!adviser.email) {
+      console.warn('Cannot notify adviser - missing email');
+    } else {
+      await notificationController.createNotification(
+        adviser.email, // Verified to exist
+        `New ${form.formType} form "${formName}" has been submitted by ${submitterName} and requires your review.`,
+        'tracker',
+        { 
+          formId: form._id, 
+          formType: form.formType,
+          organizationName: organization?.organizationName 
+        }
+      );
+      console.log(`Notification sent to adviser ${adviser.email}`);
+    }
+  } catch (notificationError) {
+    console.error('Failed to send adviser notification:', notificationError);
         // Don't fail the whole operation if notification fails
       }
     }
 
     // Send confirmation to submitter
     if (form.emailAddress) {
-      await Notification.create([{
-        userEmail: form.emailAddress,
-        message: `Your ${form.formType} form has been submitted successfully!`,
-        type: 'tracker',
-        formId: form._id,
-        formType: form.formType,
-        read: false,
-        createdAt: new Date()
-      }], { session });
+      try {
+        await Notification.create([{
+          userEmail: form.emailAddress, // Required field
+          message: `Your ${form.formType} form has been submitted successfully!`,
+          type: 'tracker',
+          formId: form._id,
+          formType: form.formType,
+          read: false,
+          createdAt: new Date()
+        }], { session });
+      } catch (submitterNotificationError) {
+        console.error('Failed to send submitter notification:', submitterNotificationError);
+      }
     }
 
     await session.commitTransaction();
