@@ -304,117 +304,103 @@ exports.getFormById = async (req, res) => {
 
 exports.createForm = async (req, res) => {
   const session = await mongoose.startSession();
-  session.startTransaction();
+  let transactionCompleted = false;
 
   try {
-    // === 1. Set createdBy (MIRRORS BUDGET PROPOSAL) ===
+    await session.startTransaction();
+
+    // === 1. Set createdBy ===
     req.body.createdBy = req.user._id;
 
-    // === 2. Set default application date if not provided ===
+    // === 2. Set default application date ===
     if (!req.body.applicationDate) {
       req.body.applicationDate = new Date();
     }
 
-    // === 3. Auto-populate email if user is logged in ===
+    // === 3. Auto-populate email ===
     if (!req.body.emailAddress && req.user?.email) {
       req.body.emailAddress = req.user.email;
     }
 
-    // === 4. Handle organization lookup (FOR ACTIVITY FORMS) ===
-    let organization = null; // <-- Moved here for global access
+    // === 4. Handle organization lookup ===
+    let organization = null;
+    if (req.body.studentOrganization) {
+      if (mongoose.Types.ObjectId.isValid(req.body.studentOrganization)) {
+        organization = await User.findOne({
+          _id: req.body.studentOrganization,
+          role: "Organization"
+        }).session(session);
+      } else {
+        organization = await User.findOne({
+          organizationName: req.body.studentOrganization,
+          role: "Organization"
+        }).session(session);
+      }
 
-if (req.body.studentOrganization) {
-  if (mongoose.Types.ObjectId.isValid(req.body.studentOrganization)) {
-    organization = await User.findOne({
-      _id: req.body.studentOrganization,
-      role: "Organization"
-    }).session(session);
-  } else {
-    organization = await User.findOne({
-      organizationName: req.body.studentOrganization,
-      role: "Organization"
-    }).session(session);
-  }
+      if (!organization) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: "Organization not found" });
+      }
 
-  if (!organization) {
-    await session.abortTransaction();
-    session.endSession();
-    return res.status(400).json({ error: "Organization not found" });
-  }
-
-  req.body.studentOrganization = organization._id;
-  req.body.presidentName = organization.presidentName;
-  req.body.presidentSignature = organization.presidentSignature;
-  
-  if (!organization.presidentSignature) {
-    await session.abortTransaction();
-    session.endSession();
-    return res.status(400).json({ 
-      error: "Organization president signature is required" 
-    });
-  }
-}
-
-    // === 5. Budget Attachment Logic (UPDATED TO MIRROR BUDGET PROPOSAL) ===
-   // In your formController's createForm function:
-
-if (req.body.attachedBudget) {
-  // Resolve organization context
-  let organizationId;
-  
-  // Case 1: Activity form with studentOrganization
-  if (req.body.studentOrganization) {
-    organizationId = req.body.studentOrganization;
-  } 
-  // Case 2: Project form - get org from user
-  else {
-    if (req.user.role === 'Organization') {
-      organizationId = req.user._id;
-    } else {
-      organizationId = req.user.organizationId;
+      req.body.studentOrganization = organization._id;
+      req.body.presidentName = organization.presidentName;
+      req.body.presidentSignature = organization.presidentSignature;
+      
+      if (!organization.presidentSignature) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ 
+          error: "Organization president signature is required" 
+        });
+      }
     }
-  }
 
-  // Validate budget belongs to org
-  const validBudget = await BudgetProposal.findOne({
-    _id: req.body.attachedBudget,
-    organization: organizationId,
-    isActive: true
-  }).session(session);
+    // === 5. Budget Attachment Logic ===
+    if (req.body.attachedBudget) {
+      let organizationId;
+      if (req.body.studentOrganization) {
+        organizationId = req.body.studentOrganization;
+      } else {
+        if (req.user.role === 'Organization') {
+          organizationId = req.user._id;
+        } else {
+          organizationId = req.user.organizationId;
+        }
+      }
 
-  if (!validBudget) {
-    await session.abortTransaction();
-    session.endSession();
-    return res.status(403).json({ 
-      error: "Budget not found or not owned by your organization" 
-    });
-  }
+      const validBudget = await BudgetProposal.findOne({
+        _id: req.body.attachedBudget,
+        organization: organizationId,
+        isActive: true
+      }).session(session);
 
-  // Attach budget data
-  req.body.budgetAmount = validBudget.grandTotal;
-  req.body.budgetFrom = validBudget.nameOfRso;
-}
-    // === 6. New Budget Creation (FOR PROJECTS/ACTIVITIES) ===
+      if (!validBudget) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(403).json({ 
+          error: "Budget not found or not owned by your organization" 
+        });
+      }
+
+      req.body.budgetAmount = validBudget.grandTotal;
+      req.body.budgetFrom = validBudget.nameOfRso;
+    }
+    // === 6. New Budget Creation ===
     else if (req.body.budgetData) {
       let organizationId, organizationName;
 
-      // Priority 1: Explicit studentOrganization (Activity forms)
       if (req.body.studentOrganization) {
         organizationId = req.body.studentOrganization;
         const org = await User.findById(organizationId).session(session);
         organizationName = org?.organizationName || 'Organization';
-      } 
-      // Priority 2: User's organization (Project forms)
-      else if (req.user.organizationId) {
+      } else if (req.user.organizationId) {
         organizationId = req.user.organizationId;
         organizationName = req.user.organizationName || 'Organization';
-      }
-      // Priority 3: User is an organization
-      else if (req.user.role === 'Organization') {
+      } else if (req.user.role === 'Organization') {
         organizationId = req.user._id;
         organizationName = req.user.organizationName || 'Organization';
-      } 
-      else {
+      } else {
         await session.abortTransaction();
         session.endSession();
         return res.status(400).json({ 
@@ -479,7 +465,7 @@ if (req.body.attachedBudget) {
     // === 8. Create Form ===
     const form = new Form({
       ...req.body,
-      createdBy: req.user._id // Ensured to be set
+      createdBy: req.user._id
     });
     await form.save({ session });
 
@@ -493,81 +479,78 @@ if (req.body.attachedBudget) {
       );
     }
 
-// In your createForm function, before calendar event creation:
-if (['Activity', 'Project'].includes(form.formType)) {
-  try {
-    const startDate = form.formType === 'Project' 
-      ? form.startDate 
-      : form.eventStartDate;
-    const endDate = form.formType === 'Project'
-      ? form.endDate || form.startDate
-      : form.eventEndDate || form.eventStartDate;
+    // Create calendar event if applicable
+    if (['Activity', 'Project'].includes(form.formType)) {
+      try {
+        const startDate = form.formType === 'Project' 
+          ? form.startDate 
+          : form.eventStartDate;
+        const endDate = form.formType === 'Project'
+          ? form.endDate || form.startDate
+          : form.eventEndDate || form.eventStartDate;
 
-    await checkEventCapacity(startDate, endDate);
-    
-    // Proceed with calendar event creation
-    console.log(`Attempting to create calendar event for form ${form._id}`);
-    await createCalendarEventFromForm(form, session);
-  } catch (capacityError) {
-    console.log('Event capacity check failed:', capacityError.message);
-    // Continue form submission but skip calendar event
-  }
-}
-    // Create progress tracker
-// Create progress tracker
-const requiredReviewers = await getRequiredReviewers(
-  form.formType, 
-  organization?._id
-);
-
-// Find advisers and deans first if needed
-const adviser = organization ? await User.findOne({
-  role: "Authority",
-  faculty: "Adviser",
-  organization: organization.organizationName,
-  status: "Active"
-}).session(session).select('_id') : null;
-
-const dean = (organization?.organizationType === 'Recognized Student Organization - Academic') ? 
-  await User.findOne({  
-    role: "Authority",
-    faculty: "Dean",
-    organization: organization.organizationName,
-    status: "Active"
-  }).session(session).select('_id') : null;
-
-// Create progress tracker
-if (adviser && adviser.email) {  // Added check for adviser.email
-  try {
-    const formName = form.formType === 'Activity' 
-      ? form.eventTitle || `Activity Form ${form._id}`
-      : form.formType === 'Project' 
-        ? form.projectTitle || `Project Form ${form._id}`
-        : `Form ${form._id}`;
-
-    const submitterName = req.user.firstName 
-      ? `${req.user.firstName} ${req.user.lastName}` 
-      : req.user.email.split('@')[0] || 'a submitter';
-
-    // Ensure we have all required fields
-    if (!adviser.email) {
-      console.warn('Cannot notify adviser - missing email');
-    } else {
-      await notificationController.createNotification(
-        adviser.email, // Verified to exist
-        `New ${form.formType} form "${formName}" has been submitted by ${submitterName} and requires your review.`,
-        'tracker',
-        { 
-          formId: form._id, 
-          formType: form.formType,
-          organizationName: organization?.organizationName 
-        }
-      );
-      console.log(`Notification sent to adviser ${adviser.email}`);
+        await checkEventCapacity(startDate, endDate);
+        await createCalendarEventFromForm(form, session);
+      } catch (capacityError) {
+        console.log('Event capacity check failed:', capacityError.message);
+      }
     }
-  } catch (notificationError) {
-    console.error('Failed to send adviser notification:', notificationError);
-        // Don't fail the whole operation if notification fails
+
+    // Create progress tracker
+    const requiredReviewers = await getRequiredReviewers(
+      form.formType, 
+      organization?._id
+    );
+
+    // Find adviser with email
+    const adviser = organization ? await User.findOne({
+      role: "Authority",
+      faculty: "Adviser",
+      organization: organization.organizationName,
+      status: "Active"
+    }).session(session).select('_id email firstName lastName') : null;
+
+    // Create tracker
+    const tracker = new EventTracker({
+      formId: form._id,
+      formType: form.formType,
+      steps: requiredReviewers.map(reviewer => ({
+        stepName: reviewer.stepName,
+        reviewerRole: reviewer.reviewerRole,
+        status: "pending"
+      })),
+      currentStep: requiredReviewers[0].stepName,
+      currentAuthority: requiredReviewers[0].reviewerRole,
+      organizationId: organization?._id,
+      organizationType: organization?.organizationType
+    });
+    await tracker.save({ session });
+
+    // Send notifications after all database operations are complete
+    if (adviser?.email) {
+      try {
+        const formName = form.formType === 'Activity' 
+          ? form.eventTitle || `Activity Form ${form._id}`
+          : form.formType === 'Project' 
+            ? form.projectTitle || `Project Form ${form._id}`
+            : `Form ${form._id}`;
+
+        const submitterName = req.user.firstName 
+          ? `${req.user.firstName} ${req.user.lastName}` 
+          : req.user.email.split('@')[0] || 'a submitter';
+
+        await notificationController.createNotification(
+          adviser.email,
+          `New ${form.formType} form "${formName}" has been submitted by ${submitterName} and requires your review.`,
+          'tracker',
+          { 
+            formId: form._id, 
+            formType: form.formType,
+            organizationName: organization?.organizationName 
+          }
+        );
+      } catch (notificationError) {
+        console.error('Failed to send adviser notification:', notificationError);
       }
     }
 
@@ -575,7 +558,7 @@ if (adviser && adviser.email) {  // Added check for adviser.email
     if (form.emailAddress) {
       try {
         await Notification.create([{
-          userEmail: form.emailAddress, // Required field
+          userEmail: form.emailAddress,
           message: `Your ${form.formType} form has been submitted successfully!`,
           type: 'tracker',
           formId: form._id,
@@ -588,7 +571,9 @@ if (adviser && adviser.email) {  // Added check for adviser.email
       }
     }
 
+    // Commit transaction
     await session.commitTransaction();
+    transactionCompleted = true;
     session.endSession();
 
     res.status(201).json({
@@ -596,10 +581,14 @@ if (adviser && adviser.email) {  // Added check for adviser.email
       tracker: tracker.toObject()
     });
 
-
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
+    // Only abort transaction if it wasn't completed
+    if (!transactionCompleted && session.inTransaction()) {
+      await session.abortTransaction();
+    }
+    if (session) {
+      session.endSession();
+    }
     
     console.error("Form creation error:", error);
     
@@ -613,122 +602,6 @@ if (adviser && adviser.email) {  // Added check for adviser.email
     res.status(500).json({ 
       error: "Server Error",
       details: error.message 
-    });
-  }
-};
-
-exports.deleteForm = async (req, res) => {
-  try {
-    const { formId } = req.params;
-    const userEmail = req.user?.email;
-    const isAdmin = req.user?.role === 'Admin';
-
-    // Find the form - check both Form and LocalOffCampus collections
-    let form = await Form.findById(formId);
-    if (!form) {
-      form = await LocalOffCampus.findById(formId);
-      if (!form) {
-        return res.status(404).json({ message: 'Form not found' });
-      }
-    }
-
-    const isSubmitter = form.emailAddress === userEmail || 
-                      (form.createdBy && form.createdBy.equals(req.user._id));
-    if (!isAdmin && !isSubmitter) {
-      return res.status(403).json({ 
-        message: 'Only the form submitter or admin can delete this form' 
-      });
-    }
-
-    // Get tracker if it's not a Budget form
-    const tracker = form.formType === 'Budget' ? null : await EventTracker.findOne({ formId });
-    
-    // Define restricted stages based on form type
-    let restrictedStages = [];
-    if (form.formType === 'Project') {
-      restrictedStages = ['Admin', 'Academic Services', 'Executive Director'];
-    } else if (form.formType === 'Activity') {
-      restrictedStages = ['Dean', 'Admin', 'Academic Services', 'Academic Director', 'Executive Director'];
-    }
-    // LocalOffCampus forms might have different restrictions
-
-    if (tracker && restrictedStages.length > 0) {
-      const hasPassedRestrictedStage = tracker.steps.some(step => {
-        return restrictedStages.includes(step.reviewerRole) && 
-               (step.status === 'approved' || step.status === 'declined');
-      });
-
-      if (hasPassedRestrictedStage && !isAdmin) {
-        return res.status(403).json({
-          message: 'Form cannot be deleted as it has progressed beyond allowed review stages'
-        });
-      }
-    }
-
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    try {
-      // Delete from appropriate collection
-      if (form instanceof LocalOffCampus) {
-        await LocalOffCampus.findByIdAndDelete(formId).session(session);
-      } else {
-        await Form.findByIdAndDelete(formId).session(session);
-      }
-
-      // Delete tracker if exists
-      if (tracker) {
-        await EventTracker.deleteOne({ formId }).session(session);
-      }
-
-      // Delete calendar event if exists
-      await CalendarEvent.deleteOne({ formId }).session(session);
-
-      // Delete notifications
-      const emailToCheck = form.emailAddress || req.user.email;
-      if (emailToCheck) {
-        await Notification.deleteMany({
-          userEmail: emailToCheck,
-          message: { $regex: form.formType, $options: 'i' }
-        }).session(session);
-      }
-
-      // If it's a Project form with attached budget, handle budget
-      if (form.formType === 'Project' && form.attachedBudget) {
-        await BudgetProposal.findByIdAndUpdate(
-          form.attachedBudget,
-          { isActive: false },
-          { session }
-        );
-      }
-
-      await session.commitTransaction();
-      session.endSession();
-
-      res.status(200).json({ 
-        message: 'Form and all associated data deleted successfully',
-        deletedFormId: formId
-      });
-
-    } catch (transactionError) {
-      await session.abortTransaction();
-      session.endSession();
-      console.error("Transaction Error:", transactionError);
-      throw transactionError;
-    }
-
-  } catch (error) {
-    console.error("Form Deletion Error:", error);
-    
-    if (error.name === 'CastError') {
-      return res.status(400).json({ 
-        error: "Invalid form ID format" 
-      });
-    }
-    
-    res.status(500).json({ 
-      error: "Server error during form deletion", 
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
