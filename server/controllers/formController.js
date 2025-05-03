@@ -731,7 +731,7 @@ exports.updateForm = async (req, res) => {
     const updates = req.body;
     const user = req.user;
 
-    // Find the form - check both Form and LocalOffCampus collections
+    // Find the form
     let form = await Form.findById(formId).session(session);
     if (!form) {
       form = await LocalOffCampus.findById(formId).session(session);
@@ -742,7 +742,7 @@ exports.updateForm = async (req, res) => {
       }
     }
 
-    // Check if user is authorized to edit (submitter or admin)
+    // Authorization check
     const isSubmitter = form.emailAddress === user.email || 
                        (form.createdBy && form.createdBy.equals(user._id));
     const isAdmin = user.role === 'Admin';
@@ -755,12 +755,12 @@ exports.updateForm = async (req, res) => {
       });
     }
 
-    // Find the tracker if it exists
+    // Find the tracker
     const tracker = await EventTracker.findOne({ formId }).session(session);
     
-    // If form has a tracker and was declined, we need special handling
+    // Handle declined forms first
     if (tracker && tracker.currentStatus === 'declined') {
-      // Check if the current user is from the organization that submitted the form
+      // Check organization user
       const isOrganizationUser = user.role === 'Organization' && 
                                (form.studentOrganization.equals(user._id) || 
                                 user.organizationId.equals(form.studentOrganization));
@@ -769,20 +769,17 @@ exports.updateForm = async (req, res) => {
         await session.abortTransaction();
         session.endSession();
         return res.status(403).json({ 
-          message: 'Only the organization that submitted this form can update it after decline' 
+          message: 'Only the organization can update a declined form' 
         });
       }
 
-      // Find the declined step in the tracker
+      // Reset tracker for declined form
       const declinedStep = tracker.steps.find(step => step.status === 'declined');
-      
       if (declinedStep) {
-        // Reset the tracker to the declined step
         tracker.currentStep = declinedStep.stepName;
         tracker.currentAuthority = declinedStep.reviewerRole;
         tracker.currentStatus = 'pending';
         
-        // Reset all steps from the declined one onward
         const declinedStepIndex = tracker.steps.findIndex(step => step.stepName === declinedStep.stepName);
         for (let i = declinedStepIndex; i < tracker.steps.length; i++) {
           tracker.steps[i].status = 'pending';
@@ -792,18 +789,14 @@ exports.updateForm = async (req, res) => {
         
         await tracker.save({ session });
       }
+      
+      // Skip all other checks for declined forms
+      shouldSkipChecks = true;
     }
 
-    // For regular updates (not after decline)
-    if (tracker && tracker.currentStatus !== 'declined') {
-      // Skip budget-specific validation since budget forms will be handled separately
-      if (form.formType === 'Activity' || form.formType === 'Project') {
-        if (updates.eventStartDate) {
-          const endDate = updates.eventEndDate || form.eventEndDate || updates.eventStartDate;
-          await checkEventCapacity(updates.eventStartDate, endDate, formId);
-        }
-      }
-
+    // For non-declined forms, perform regular checks
+    if (tracker && !shouldSkipChecks) {
+      // Project form specific check
       if (form.formType === 'Project') {
         const isUnderReview = tracker.steps.some(
           step => step.status === 'approved' || step.status === 'declined'
@@ -816,21 +809,20 @@ exports.updateForm = async (req, res) => {
             message: 'Project form cannot be edited once review has started' 
           });
         }
-      } else {
-        // Updated Dean check with declined form condition
-        if (tracker.currentStatus !== 'declined') {
-          const isDeanReviewing = tracker.currentAuthority === 'Dean';
-          const isDeanApproved = tracker.steps.some(
-            step => step.stepName === 'Dean' && step.status === 'approved'
-          );
+      }
+      // Activity form specific check
+      else {
+        const isDeanReviewing = tracker.currentAuthority === 'Dean';
+        const isDeanApproved = tracker.steps.some(
+          step => step.stepName === 'Dean' && step.status === 'approved'
+        );
 
-          if (isDeanReviewing || isDeanApproved) {
-            await session.abortTransaction();
-            session.endSession();
-            return res.status(403).json({ 
-              message: 'Form cannot be edited once it reaches the Dean for review/approval' 
-            });
-          }
+        if (isDeanReviewing || isDeanApproved) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(403).json({ 
+            message: 'Form cannot be edited once it reaches the Dean for review/approval' 
+          });
         }
       }
     }
