@@ -15,6 +15,7 @@ const OrganizationEvents = () => {
   const [selectedEvents, setSelectedEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [view, setView] = useState('month');
   const navigate = useNavigate();
 
   // Get auth token and user info
@@ -58,8 +59,8 @@ const OrganizationEvents = () => {
       const formattedEvents = response.data.map(event => ({
         id: event._id,
         title: event.formType === 'Project' ? event.projectTitle : event.eventTitle || event.title,
-        start: moment.utc(event.startDate).local().startOf('day').toDate(),
-        end: moment.utc(event.endDate).local().endOf('day').toDate(),
+        start: moment.utc(event.startDate).local().toDate(),
+        end: moment.utc(event.endDate).local().toDate(),
         description: event.formType === 'Project' ? event.projectDescription : event.description,
         location: event.location || 'TBA',
         organization: event.organization?.organizationName || 'N/A',
@@ -190,6 +191,11 @@ const OrganizationEvents = () => {
     setSelectedEvents(filteredEvents);
   };
 
+  // Handle view change
+  const handleViewChange = newView => {
+    setView(newView);
+  };
+
   // Custom event style based on type
   const eventStyleGetter = event => {
     let backgroundColor = '#3174ad';
@@ -212,18 +218,41 @@ const OrganizationEvents = () => {
         color: 'white',
         border: '0px',
         display: 'block',
-        width: 'calc(100% - 4px)',
-        margin: '2px',
+        width: '100%',
         boxSizing: 'border-box',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        textOverflow: 'ellipsis',
+        fontSize: '0.85rem',
+        padding: '2px 4px'
       }
     };
   };
 
-  // Custom event component
+  // Custom day cell wrapper to improve touch areas
+  const DayCellWrapper = props => {
+    const { children, value } = props;
+    return (
+      <div
+        className="custom-day-cell"
+        style={{
+          height: '100%',
+          minHeight: '80px',
+          position: 'relative'
+        }}
+      >
+        {children}
+      </div>
+    );
+  };
+
+  // Custom event component with better sizing
   const EventComponent = ({ event }) => (
-    <div className="rbc-event-content">
-      <strong>{event.title}</strong>
+    <div className="rbc-event-content" style={{ padding: '2px', overflow: 'hidden' }}>
+      <strong style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {event.title}
+      </strong>
       <div className="event-meta">
         <span className="event-type-badge">{event.type}</span>
         {event.duration !== '1 day' && <span>{event.duration}</span>}
@@ -231,22 +260,23 @@ const OrganizationEvents = () => {
     </div>
   );
 
-  const CustomToolbar = ({ label, onNavigate }) => {
+  // Custom toolbar with better responsive design
+  const CustomToolbar = toolbar => {
     return (
       <div className="rbc-toolbar">
-      <span className="rbc-toolbar-label">{label}</span>
-      <div className="rbc-btn-group">
-        <button type="button" onClick={() => onNavigate('PREV')}>
-          Prev
-        </button>
-        <button type="button" onClick={() => onNavigate('TODAY')}>
-          Today
-        </button>
-        <button type="button" onClick={() => onNavigate('NEXT')}>
-          Next
-        </button>
+        <span className="rbc-toolbar-label">{toolbar.label}</span>
+        <div className="rbc-btn-group">
+          <button type="button" onClick={() => toolbar.onNavigate('PREV')}>
+            Prev
+          </button>
+          <button type="button" onClick={() => toolbar.onNavigate('TODAY')}>
+            Today
+          </button>
+          <button type="button" onClick={() => toolbar.onNavigate('NEXT')}>
+            Next
+          </button>
+        </div>
       </div>
-    </div>
     );
   };
 
@@ -273,29 +303,35 @@ const OrganizationEvents = () => {
               startAccessor="start"
               endAccessor="end"
               views={['month']}
-              style={{ 
-                height: '100%', 
-                minHeight: '500px',
+              style={{
+                height: '600px',
                 width: '100%'
               }}
               selectable={true}
               onSelectSlot={handleSelectSlot}
               onSelectEvent={handleSelectEvent}
               onNavigate={handleNavigate}
+              onView={handleViewChange}
               eventPropGetter={eventStyleGetter}
               components={{
                 event: EventComponent,
-                toolbar: CustomToolbar
+                toolbar: CustomToolbar,
+                dateCellWrapper: DayCellWrapper
               }}
+              view={view}
               defaultView="month"
-              showMultiDayTimes
-              step={60}
-              timeslots={1}
-              toolbar={true}
-              getDrilldownView={() => null}
+              showMultiDayTimes={false}
               popup={true}
-              longPressThreshold={20}
-              dateFormat="DD"
+              popupOffset={10}
+              dayLayoutAlgorithm="no-overlap"
+              formats={{
+                dateFormat: 'D',
+                monthHeaderFormat: 'MMMM YYYY'
+              }}
+              longPressThreshold={250}
+              messages={{
+                showMore: total => `+${total} more`
+              }}
             />
           </div>
         </div>
