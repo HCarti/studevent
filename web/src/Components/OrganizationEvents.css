@@ -429,3 +429,19 @@
     font-size: 0.85rem;
   }
 }
+
+/* Add CSS to hide scrollbar in the calendar component */
+.calendar-component-container .fc-scroller {
+  overflow-y: auto !important;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.calendar-component-container .fc-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.calendar-component-container .fc-scroller {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}

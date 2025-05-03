@@ -146,17 +146,34 @@ const OrganizationEvents = () => {
   // Fetch events for specific date range (when view changes)
   const handleDatesSet = calendarInfo => {
     const { start, end } = calendarInfo.view;
+    console.log('Date range changed:', {
+      start: start ? start.toISOString() : 'undefined',
+      end: end ? end.toISOString() : 'undefined'
+    });
+
+    if (!start || !end) {
+      console.error('Invalid date range received from calendar view');
+      return;
+    }
+
     fetchCalendarEventsForRange(start, end);
   };
 
   // Fetch events for specific date range
   const fetchCalendarEventsForRange = async (start, end) => {
     try {
+      // Don't show loading if just switching months - can be disruptive to user experience
+      // setLoading(true);
       const authHeaders = getAuthHeaders();
-      if (!authHeaders) return;
+      if (!authHeaders) {
+        return;
+      }
 
-      const startDate = moment(start).toISOString();
-      const endDate = moment(end).toISOString();
+      // Ensure we have a full month range
+      const startDate = moment(start).startOf('month').toISOString();
+      const endDate = moment(end).endOf('month').toISOString();
+
+      console.log('Fetching events for range:', { startDate, endDate });
 
       const response = await axios.get(
         'https://studevent-server.vercel.app/api/calendar/events/range',
@@ -251,33 +268,6 @@ const OrganizationEvents = () => {
     );
   };
 
-  // Add a test event for debugging
-  const addTestEvent = () => {
-    const today = new Date();
-    const tomorrow = new Date();
-    tomorrow.setDate(today.getDate() + 1);
-
-    const todayStr = moment(today).format('YYYY-MM-DD');
-    const tomorrowStr = moment(tomorrow).format('YYYY-MM-DD');
-
-    const testEvent = {
-      id: 'test-event',
-      title: 'Test Event (2 days)',
-      start: todayStr,
-      end: tomorrowStr,
-      backgroundColor: '#5cb85c',
-      borderColor: '#4cae4c',
-      textColor: 'white',
-      extendedProps: {
-        duration: '2 days',
-        formType: 'Activity'
-      }
-    };
-
-    setEvents(prev => [...prev, testEvent]);
-    console.log('Added test event', testEvent);
-  };
-
   return (
     <div className="calendar-page-container">
       <h1 className="calendar-title">EVENT CALENDAR</h1>
@@ -295,9 +285,6 @@ const OrganizationEvents = () => {
       <div className="calendar-content-container">
         <div className="calendar-main-wrapper">
           <div className="calendar-component-container">
-            <button onClick={addTestEvent} className="test-button">
-              Add Test Event
-            </button>
             <FullCalendar
               ref={calendarRef}
               plugins={[dayGridPlugin, interactionPlugin]}
