@@ -39,67 +39,77 @@
   border-radius: 2px;
 }
 
-/* Steps Styling */
+/* Steps Container */
 .steps {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
   width: 100%;
   max-width: 1200px;
-  padding: 0 20px;
-  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Step Card */
+.step {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 25px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 250px;
+}
+
+.step::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #2563eb, #1d4ed8);
 }
 
 .step:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 15px 35px rgba(0, 51, 102, 0.2);
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-
-.step {
-  background-color: #fff;
-  border-radius: 12px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-  padding: 30px 20px;
-  text-align: center;
-  transition: transform 0.3s;
-  position: relative;
-  min-height: 250px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.1);
+  border-color: #2563eb;
 }
 
 .step-icon {
-  font-size: 100px !important;
-  color: #b0b0b0;
-  position: absolute;
-  height: 200px;
-  width: 200px;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 0;
-  opacity: 0.3;
+  font-size: 48px !important;
+  color: #2563eb;
+  margin-bottom: 20px;
+  background: #eff6ff;
+  padding: 15px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
 }
 
-.step h2, .step p {
-  position: relative;
-  z-index: 1;
+.step:hover .step-icon {
+  transform: scale(1.1);
+  background: #dbeafe;
 }
 
 .step h2 {
-  font-size: 1.3em;
-  color: #003366;
+  color: #1e40af;
+  font-size: 1.5rem;
   margin-bottom: 15px;
+  font-weight: 600;
 }
 
 .step p {
-  font-size: 0.9em;
+  color: #4b5563;
   line-height: 1.6;
-  color: #555;
-  margin: 0;
+  font-size: 1rem;
 }
 
 /* Bottom Links */
@@ -148,10 +158,12 @@
   left: 0;
   right: 0;
   bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  backdrop-filter: blur(4px);
 }
 
 .modal-content {
@@ -212,7 +224,6 @@
   border-right: 6px solid transparent;
   border-top: 6px solid #2563eb;
 }
-
 
 .help-icon:hover .help-tooltip {
   opacity: 1;
@@ -280,13 +291,84 @@
   justify-content: space-between;
 }
 
-
 .modal-content h3 {
   margin-bottom: 0.6rem;
 }
 
 .modal-content ul {
   padding-left: 1.2rem;
+}
+
+.modal-content.step-modal {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  max-width: 90%;
+  width: 500px;
+  position: relative;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.close-button {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.close-button:hover {
+  background: #f3f4f6;
+  color: #1f2937;
+}
+
+.step-modal-content {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.step-modal-content .step-icon {
+  font-size: 64px !important;
+  margin-bottom: 25px;
+}
+
+.step-modal-content h2 {
+  color: #1e40af;
+  font-size: 1.8rem;
+  margin-bottom: 15px;
+}
+
+.step-description {
+  font-size: 1.1rem;
+  color: #374151;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.step-details {
+  color: #6b7280;
+  line-height: 1.7;
+  font-size: 1rem;
 }
 
 /* Responsive Design */
@@ -297,18 +379,16 @@
   
   .steps {
     grid-template-columns: 1fr;
-    gap: 15px;
+    padding: 15px;
   }
   
   .step {
     min-height: 200px;
-    padding: 20px 15px;
+    padding: 20px;
   }
   
   .step-icon {
-    font-size: 80px !important;
-    height: 160px;
-    width: 160px;
+    font-size: 48px !important;
   }
   
   .bottom-links {
@@ -322,6 +402,27 @@
     min-width: 100%;
     margin: 0 auto;
   }
+  
+  .modal-content.step-modal {
+    width: 95%;
+    padding: 20px;
+  }
+  
+  .step-modal-content .step-icon {
+    font-size: 48px !important;
+  }
+  
+  .step-modal-content h2 {
+    font-size: 1.5rem;
+  }
+  
+  .step-description {
+    font-size: 1rem;
+  }
+  
+  .step-details {
+    font-size: 0.9rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -330,12 +431,22 @@
     margin: 15px 0 30px;
   }
   
+  .step {
+    min-height: 180px;
+    padding: 15px;
+  }
+  
+  .step-icon {
+    font-size: 36px !important;
+    padding: 12px;
+  }
+  
   .step h2 {
-    font-size: 1.1rem;
+    font-size: 1.3rem;
   }
   
   .step p {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
   }
   
   .bottom-links {
@@ -346,5 +457,17 @@
   .link {
     padding: 12px 15px;
     font-size: 0.9rem;
+  }
+  
+  .modal-content.step-modal {
+    padding: 15px;
+  }
+  
+  .step-modal-content .step-icon {
+    font-size: 32px;
+  }
+  
+  .step-modal-content h2 {
+    font-size: 1.3rem;
   }
 }
