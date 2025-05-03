@@ -83,67 +83,37 @@ const OrgSubmittedForms = () => {
     const isFormEditable = (form) => {
         const status = form.finalStatus?.toLowerCase() || form.status?.toLowerCase();
         
-        // For Local Off-Campus forms (keep existing logic)
+        // 1. First check - always allow editing if form was declined
+        if (status === 'declined') {
+            return true;
+        }
+        
+        // 2. Local Off-Campus forms keep their existing logic
         if (form.formType === 'LocalOffCampus' || form.isLocalOffCampus) {
-            // Allow editing AFTER forms that aren't approved
-            if (form.formPhase === 'AFTER') {
-                return status !== 'approved';
-            }
-            // Allow editing BEFORE forms that are approved (to start AFTER report)
+            if (form.formPhase === 'AFTER') return status !== 'approved';
             if (form.formPhase === 'BEFORE') {
-                return status === 'approved' || 
-                       status === 'submitted' || 
-                       status === 'pending' || 
-                       status === 'draft';
+                return status === 'approved' || status === 'submitted' || 
+                       status === 'pending' || status === 'draft';
             }
             return false;
         }
         
-        // New logic for regular forms
-        // If form has been declined, it should be editable regardless of step
-        if (status === 'declined') {
-            return true;
+        // 3. For regular forms, only allow editing if still at adviser step
+        if (form.tracker?.steps?.length > 0) {
+            const firstStep = form.tracker.steps[0];
+            return form.tracker.currentStep === firstStep.stepName && 
+                   firstStep.status === 'pending';
         }
-    
-        // Check if form has tracker information
-        if (form.tracker) {
-            // If no steps or current step is undefined, not editable
-            if (!form.tracker.steps || form.tracker.currentStep === undefined) {
-                return false;
-            }
-    
-            // Find the adviser step (first step)
-            const adviserStep = form.tracker.steps[0];
-            
-            // If form is still at the first step (adviser) and not yet reviewed
-            if (form.tracker.currentStep === adviserStep.stepName && 
-                adviserStep.status === 'pending') {
-                return true;
-            }
-            
-            // If form hasn't moved past the first step
-            return false;
-        }
-    
-        // Fallback for forms without tracker info
-        // Check review stages if they exist
+        
+        // 4. Fallback for older forms without tracker
         if (form.reviewStages) {
-            const adviserStepIndex = form.reviewStages.findIndex(step => step.role === 'Adviser');
-            const deanStepIndex = form.reviewStages.findIndex(step => step.role === 'Dean');
-            
-            // If still at or before adviser step
-            if (adviserStepIndex >= 0 && form.currentStep <= adviserStepIndex) {
-                return true;
-            }
-            
-            // Original dean check as fallback
-            return deanStepIndex === -1 || form.currentStep < deanStepIndex;
+            const firstStepIndex = 0; // Adviser is always first step
+            return form.currentStep <= firstStepIndex;
         }
-    
-        // Default case for forms with no tracking information
+        
+        // 5. Final fallback
         return status === 'draft' || status === 'pending' || status === 'submitted';
     };
-
     const isFormDeletable = (form) => {
         if (form.formType === 'LocalOffCampus') {
             return form.formPhase === 'BEFORE' && 

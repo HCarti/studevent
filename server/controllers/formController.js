@@ -817,17 +817,20 @@ exports.updateForm = async (req, res) => {
           });
         }
       } else {
-        const isDeanReviewing = tracker.currentAuthority === 'Dean';
-        const isDeanApproved = tracker.steps.some(
-          step => step.stepName === 'Dean' && step.status === 'approved'
-        );
+        // Updated Dean check with declined form condition
+        if (tracker.currentStatus !== 'declined') {
+          const isDeanReviewing = tracker.currentAuthority === 'Dean';
+          const isDeanApproved = tracker.steps.some(
+            step => step.stepName === 'Dean' && step.status === 'approved'
+          );
 
-        if (isDeanReviewing || isDeanApproved) {
-          await session.abortTransaction();
-          session.endSession();
-          return res.status(403).json({ 
-            message: 'Form cannot be edited once it reaches the Dean for review/approval' 
-          });
+          if (isDeanReviewing || isDeanApproved) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(403).json({ 
+              message: 'Form cannot be edited once it reaches the Dean for review/approval' 
+            });
+          }
         }
       }
     }
