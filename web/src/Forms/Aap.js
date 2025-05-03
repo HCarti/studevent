@@ -732,7 +732,7 @@ const Aap = () => {
       setTimeout(() => {
         setSubmitSuccessVisible(false);
         navigate('/');
-      }, 3000);
+      }, 1000);
 
       // Reset form if new submission (preserve organization info)
       if (!isEditMode) {

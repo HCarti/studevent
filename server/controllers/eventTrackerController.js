@@ -378,6 +378,7 @@ const updateTrackerStep = async (req, res) => {
     } else if (status === "declined") {
       tracker.currentStep = step.stepName;
       tracker.currentAuthority = step.reviewerRole;
+      tracker.currentStatus = "declined"; // THIS WAS MISSING
       
       // Reset subsequent steps
       for (let i = firstPendingOrDeclinedStepIndex + 1; i < tracker.steps.length; i++) {
