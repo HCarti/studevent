@@ -731,8 +731,11 @@ exports.updateForm = async (req, res) => {
     const updates = req.body;
     const user = req.user;
 
-    // Find the form
-    let form = await Form.findById(formId).session(session);
+    // Find the form with budget populated
+    let form = await Form.findById(formId)
+      .populate('attachedBudget')
+      .session(session);
+      
     if (!form) {
       form = await LocalOffCampus.findById(formId).session(session);
       if (!form) {
@@ -763,7 +766,6 @@ exports.updateForm = async (req, res) => {
 
     // For non-declined forms, perform regular checks
     if (tracker && !isDeclinedResubmission) {
-      // Project form specific check
       if (form.formType === 'Project') {
         const isUnderReview = tracker.steps.some(
           step => step.status === 'approved' || step.status === 'declined'
@@ -776,9 +778,7 @@ exports.updateForm = async (req, res) => {
             message: 'Project form cannot be edited once review has started' 
           });
         }
-      }
-      // Activity form specific check
-      else {
+      } else {
         const isDeanReviewing = tracker.currentAuthority === 'Dean';
         const isDeanApproved = tracker.steps.some(
           step => step.stepName === 'Dean' && step.status === 'approved'
@@ -794,9 +794,42 @@ exports.updateForm = async (req, res) => {
       }
     }
 
+    // Enhanced budget validation
+    if (updates.attachedBudget) {
+      // Skip validation if budget hasn't changed
+      if (String(form.attachedBudget?._id) !== String(updates.attachedBudget)) {
+        const organizationId = form.studentOrganization || user.organizationId;
+        
+        const validBudget = await BudgetProposal.findOne({
+          _id: updates.attachedBudget,
+          $or: [
+            { organization: organizationId },
+            { createdBy: user._id }
+          ],
+          isActive: true
+        }).session(session);
+
+        if (!validBudget) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(403).json({ 
+            error: "Budget not found or not available for your organization",
+            details: {
+              budgetId: updates.attachedBudget,
+              organization: organizationId,
+              isActiveRequired: true
+            }
+          });
+        }
+
+        // Update related fields if budget changed
+        updates.budgetAmount = validBudget.grandTotal;
+        updates.budgetFrom = validBudget.nameOfRso;
+      }
+    }
+
     // Handle declined form resubmission
     if (isDeclinedResubmission) {
-      // Check organization user
       const isOrganizationUser = user.role === 'Organization' && 
                                (form.studentOrganization.equals(user._id) || 
                                 user.organizationId.equals(form.studentOrganization));
@@ -809,7 +842,6 @@ exports.updateForm = async (req, res) => {
         });
       }
 
-      // Reset tracker for declined form
       const declinedStep = tracker.steps.find(step => step.status === 'declined');
       if (declinedStep) {
         tracker.currentStep = declinedStep.stepName;
@@ -864,18 +896,15 @@ exports.updateForm = async (req, res) => {
       }
     }
 
-    // If this was a declined form being resubmitted, notify the reviewer
+    // Notification handling
     if (isDeclinedResubmission) {
       const currentStep = tracker.steps.find(step => step.stepName === tracker.currentStep);
-      
       if (currentStep) {
-        // Find users with the reviewer role
         const reviewers = await User.find({ 
           role: currentStep.reviewerRole,
           status: 'Active'
         }).session(session);
 
-        // Send notifications to each reviewer
         await Promise.all(reviewers.map(async reviewer => {
           try {
             await notificationController.createNotification(
@@ -889,14 +918,14 @@ exports.updateForm = async (req, res) => {
               },
               session
             );
-          } catch (notificationError) {
-            console.error('Failed to send reviewer notification:', notificationError);
+          } catch (error) {
+            console.error('Notification error:', error);
           }
         }));
       }
     }
 
-    // Send confirmation to submitter
+    // Send confirmation
     if (form.emailAddress) {
       await Notification.create([{
         userEmail: form.emailAddress,
@@ -922,19 +951,30 @@ exports.updateForm = async (req, res) => {
     await session.abortTransaction();
     session.endSession();
     
-    console.error("Form Update Error:", error);
+    console.error("Form Update Error:", {
+      message: error.message,
+      stack: error.stack,
+      formId: req.params.formId,
+      userId: req.user?._id,
+      updates: req.body
+    });
     
     if (error.name === 'ValidationError') {
-      const errors = Object.values(error.errors).map(err => err.message);
       return res.status(400).json({ 
         error: "Validation Error",
-        details: errors 
+        details: Object.values(error.errors).map(err => ({
+          field: err.path,
+          message: err.message
+        }))
       });
     }
     
     res.status(500).json({ 
-      error: "Server error", 
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: "Server error",
+      details: process.env.NODE_ENV === 'development' ? {
+        message: error.message,
+        stack: error.stack
+      } : undefined
     });
   }
 };

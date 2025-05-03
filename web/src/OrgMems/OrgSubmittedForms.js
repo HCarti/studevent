@@ -243,7 +243,7 @@ const OrgSubmittedForms = () => {
 
     const getStatusBadgeClass = (form) => {
         const status = form.finalStatus?.toLowerCase() || form.status?.toLowerCase();
-  
+      
         if (form.formType === 'LocalOffCampus') {
           switch(status) {
             case 'approved': return 'approved';
@@ -256,7 +256,6 @@ const OrgSubmittedForms = () => {
           }
         }
         if (!status) return 'pending';
-        status = status.toLowerCase();
         if (status === 'approved') return 'approved';
         if (status === 'declined' || status === 'rejected') return 'rejected';
         if (status === 'draft') return 'draft';
