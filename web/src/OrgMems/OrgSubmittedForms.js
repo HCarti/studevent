@@ -395,25 +395,25 @@ const OrgSubmittedForms = () => {
                                             }}
                                             className="clickable-row"
                                         >
-                                            <td>
+                                            <td data-label="Form Type">
                                                 {formatFormType(form)}
                                             </td>
-                                            <td>
+                                            <td data-label="Title">
                                                 {form.eventTitle || 
                                                  form.projectTitle || 
                                                  (form.formType === 'LocalOffCampus' 
                                                   ? form.nameOfHei 
                                                   : 'Untitled Event')}
                                             </td>
-                                            <td>
+                                            <td data-label="Status">
                                                 <span className={`status-badge ${getStatusBadgeClass(form.finalStatus || form.status)}`}>
                                                     {form.finalStatus || form.status || 'Pending'}
                                                 </span>
                                             </td>
-                                            <td>
+                                            <td data-label="Submitted Date">
                                                 {formatDate(form.applicationDate || form.submittedAt)}
                                             </td>
-                                            <td>
+                                            <td data-label="Actions">
                                             <div className="action-buttons">
                                                 {isFormEditable(form) && (
                                                     <button 

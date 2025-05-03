@@ -252,8 +252,10 @@ const Home = ({ handleLogin }) => {
 
               <div className="home-footer-text">
                 <h3>NU MOA - SDAO SYSTEM</h3>
-                <p>SDAO manages the student activities and development programs of the institution</p> 
-                <p>with the help of the student councils and student organizations.</p>
+                <p>
+                  SDAO manages the student activities and development programs of the institution<br />
+                  with the help of the student councils and student organizations.
+                </p>
               </div>
             </div>
           </div>

@@ -3,15 +3,34 @@ import {
   Box, Typography, Grid, Paper, Avatar, List, ListItem, 
   ListItemAvatar, ListItemText, Divider, CircularProgress,
   Table, TableBody, TableCell, TableContainer, TableHead, 
-  TableRow, IconButton, Tooltip, Snackbar, Alert
+  TableRow, IconButton, Tooltip, Snackbar, Alert, Card, CardContent,
+  useTheme, useMediaQuery, alpha, LinearProgress, Badge, Chip,
+  Modal, Dialog, DialogTitle, DialogContent, DialogActions, Button, keyframes
 } from '@mui/material';
 import { Icon } from '@iconify/react';
 import fileDocumentIcon from '@iconify/icons-mdi/file-document';
 import messageText from '@iconify/icons-mdi/message-text';
 import downloadIcon from '@iconify/icons-mdi/download';
+import trendingUpIcon from '@iconify/icons-mdi/trending-up';
+import closeIcon from '@iconify/icons-mdi/close';
 import './Dashboard.css';
 
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
 const Dashboard = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  const [mounted, setMounted] = useState(false);
   const [feedbacks, setFeedbacks] = useState([]);
   const [liquidations, setLiquidations] = useState([]);
   const [loading, setLoading] = useState({
@@ -28,6 +47,12 @@ const Dashboard = () => {
     message: '',
     severity: 'success'
   });
+  const [selectedLiquidation, setSelectedLiquidation] = useState(null);
+  const [selectedFeedback, setSelectedFeedback] = useState(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Fetch data from backend
   useEffect(() => {
@@ -119,190 +144,787 @@ const Dashboard = () => {
     return colors[charSum % colors.length];
   };
 
+  const handleLiquidationClick = (liquidation) => {
+    setSelectedLiquidation(liquidation);
+  };
+
+  const handleFeedbackClick = (feedback) => {
+    setSelectedFeedback(feedback);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedLiquidation(null);
+    setSelectedFeedback(null);
+  };
+
   return (
-    <Box className="dashboard-wrapper">
-      <Grid container spacing={3}>
-        {/* Header Section */}
-        <Grid item xs={12}>
-          <Box className="dashboard-header">
-            <Typography variant="h4" className="dashboard-heading">
-              Admin Dashboard
-            </Typography>
-            <Typography variant="subtitle1" className="dashboard-subheading">
-              System Overview & Submissions
-            </Typography>
-          </Box>
-        </Grid>
+    <Box 
+      className="dashboard-wrapper" 
+      sx={{ 
+        p: { xs: 2, md: 3 },
+        background: `linear-gradient(180deg, ${alpha(theme.palette.background.default, 0.8)} 0%, ${alpha(theme.palette.background.paper, 0.8)} 100%)`,
+        minHeight: '100vh',
+        position: 'relative',
+        opacity: mounted ? 1 : 0,
+        transform: mounted ? 'translateY(0)' : 'translateY(20px)',
+        transition: 'all 0.6s ease-out',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '300px',
+          background: `linear-gradient(45deg, ${alpha(theme.palette.primary.main, 0.05)}, transparent)`,
+          zIndex: 0
+        }
+      }}
+    >
+      {/* Header Section */}
+      <Box 
+        sx={{ 
+          mb: 4,
+          position: 'relative',
+          zIndex: 1,
+          animation: mounted ? `${fadeIn} 0.8s ease-out` : 'none',
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            bottom: -8,
+            left: 0,
+            width: '100%',
+            height: '2px',
+            background: `linear-gradient(90deg, ${theme.palette.primary.main}, transparent)`,
+            borderRadius: 1
+          }
+        }}
+      >
+        <Typography 
+          variant="h4" 
+          sx={{ 
+            fontWeight: 800,
+            background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
+            backgroundSize: '200% auto',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            animation: 'gradient 8s linear infinite',
+            mb: 1,
+            letterSpacing: '-0.5px',
+            '@keyframes gradient': {
+              '0%': {
+                backgroundPosition: '0% 50%'
+              },
+              '50%': {
+                backgroundPosition: '100% 50%'
+              },
+              '100%': {
+                backgroundPosition: '0% 50%'
+              }
+            }
+          }}
+        >
+          Admin Dashboard
+        </Typography>
+        <Typography 
+          variant="subtitle1" 
+          sx={{ 
+            color: 'text.secondary',
+            fontSize: '1.1rem',
+            fontWeight: 500,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1
+          }}
+        >
+          <Icon icon={trendingUpIcon} style={{ color: theme.palette.success.main }} />
+          System Overview & Submissions
+        </Typography>
+      </Box>
 
-        {/* Top Stats Section */}
-        <Grid container spacing={3} className="top-stats" style={{ justifyContent: 'center' }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Paper className="stat-box" elevation={0}>
-              <Icon icon={fileDocumentIcon} className="stat-icon" />
-              <Typography className="stat-number">{stats.proposals}</Typography>
-              <Typography className="stat-text">Proposals</Typography>
-            </Paper>
+      {/* Stats Cards Section */}
+      <Grid 
+        container 
+        spacing={3} 
+        sx={{ 
+          mb: 4,
+          '& > *': {
+            animation: mounted ? `${fadeIn} 0.8s ease-out` : 'none',
+            animationDelay: '0.2s',
+            animationFillMode: 'both'
+          }
+        }}
+      >
+        {[
+          { icon: fileDocumentIcon, value: stats.proposals, label: 'Total Proposals', color: 'primary' },
+          { icon: fileDocumentIcon, value: stats.liquidations, label: 'Total Liquidations', color: 'success' },
+          { icon: messageText, value: stats.feedbacks, label: 'Total Feedbacks', color: 'info' }
+        ].map((stat, index) => (
+          <Grid item xs={12} sm={6} md={4} key={index}>
+            <Card 
+              elevation={0}
+              sx={{ 
+                bgcolor: 'background.paper',
+                borderRadius: 3,
+                height: '100%',
+                transition: 'all 0.3s ease',
+                position: 'relative',
+                overflow: 'hidden',
+                border: `1px solid ${alpha(theme.palette[stat.color].main, 0.1)}`,
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  background: `linear-gradient(45deg, ${alpha(theme.palette[stat.color].main, 0.1)}, transparent)`,
+                  opacity: 0,
+                  transition: 'opacity 0.3s ease'
+                },
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: theme.shadows[4],
+                  '&::before': {
+                    opacity: 1
+                  }
+                }
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Box 
+                    sx={{ 
+                      bgcolor: alpha(theme.palette[stat.color].main, 0.1),
+                      p: 2,
+                      borderRadius: 2,
+                      mr: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <Icon 
+                      icon={stat.icon} 
+                      style={{ 
+                        fontSize: 28, 
+                        color: theme.palette[stat.color].main 
+                      }} 
+                    />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography 
+                      variant="h4" 
+                      sx={{ 
+                        fontWeight: 700,
+                        color: theme.palette[stat.color].main
+                      }}
+                    >
+                      {stat.value}
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        color: 'text.secondary',
+                        fontWeight: 500
+                      }}
+                    >
+                      {stat.label}
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Paper className="stat-box" elevation={0}>
-              <Icon icon={fileDocumentIcon} className="stat-icon" />
-              <Typography className="stat-number">{stats.liquidations}</Typography>
-              <Typography className="stat-text">Liquidations</Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Paper className="stat-box" elevation={0}>
-              <Icon icon={messageText} className="stat-icon" />
-              <Typography className="stat-number">{stats.feedbacks}</Typography>
-              <Typography className="stat-text">Feedbacks</Typography>
-            </Paper>
-          </Grid>
-        </Grid>
+        ))}
+      </Grid>
 
+      {/* Main Content Section */}
+      <Grid 
+        container 
+        spacing={3}
+        sx={{
+          '& > *': {
+            animation: mounted ? `${fadeIn} 0.8s ease-out` : 'none',
+            animationDelay: '0.4s',
+            animationFillMode: 'both'
+          }
+        }}
+      >
         {/* Recent Liquidations Section */}
-        <Grid item xs={12} md={6}>
-          <Paper className="main-content-box">
-            <Box className="section-header">
-              <Icon icon={fileDocumentIcon} className="section-icon" />
-              <Typography variant="h6" className="section-heading">
-                Recent Liquidations
-              </Typography>
-            </Box>
-            {loading.liquidations ? (
-              <Box display="flex" justifyContent="center" p={4}>
-                <CircularProgress />
+        <Grid item xs={12} lg={6}>
+          <Card 
+            elevation={0}
+            sx={{ 
+              bgcolor: 'background.paper',
+              borderRadius: 3,
+              height: '100%',
+              transition: 'all 0.3s ease',
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+              '&:hover': {
+                boxShadow: theme.shadows[4]
+              }
+            }}
+          >
+            <CardContent sx={{ p: 3 }}>
+              <Box 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  mb: 3,
+                  position: 'relative',
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    bottom: -8,
+                    left: 0,
+                    width: '100%',
+                    height: '1px',
+                    background: `linear-gradient(90deg, ${theme.palette.primary.main}, transparent)`,
+                    opacity: 0.2
+                  }
+                }}
+              >
+                <Box 
+                  sx={{ 
+                    bgcolor: alpha(theme.palette.primary.main, 0.1),
+                    p: 1.5,
+                    borderRadius: 2,
+                    mr: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <Icon 
+                    icon={fileDocumentIcon} 
+                    style={{ 
+                      fontSize: 24, 
+                      color: theme.palette.primary.main 
+                    }} 
+                  />
+                </Box>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    fontWeight: 600,
+                    color: 'text.primary'
+                  }}
+                >
+                  Recent Liquidations
+                </Typography>
               </Box>
-            ) : liquidations.length > 0 ? (
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Organization</TableCell>
-                      <TableCell>File</TableCell>
-                      <TableCell>Date</TableCell>
-                      <TableCell align="right">Action</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {liquidations.slice(0, 5).map((liquidation) => (
-                      <TableRow key={liquidation._id}>
-                        <TableCell>
-                          <Box display="flex" alignItems="center">
-                            <Avatar 
+              
+              {loading.liquidations ? (
+                <Box display="flex" justifyContent="center" p={4}>
+                  <CircularProgress />
+                </Box>
+              ) : liquidations.length > 0 ? (
+                <TableContainer>
+                  <Table size={isMobile ? "small" : "medium"}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Organization</TableCell>
+                        <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>File</TableCell>
+                        <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Date</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600, color: 'text.secondary' }}>Action</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {liquidations.slice(0, 5).map((liquidation) => (
+                        <TableRow 
+                          key={liquidation._id}
+                          onClick={() => handleLiquidationClick(liquidation)}
+                          sx={{ 
+                            transition: 'all 0.2s ease',
+                            cursor: 'pointer',
+                            '&:hover': { 
+                              bgcolor: alpha(theme.palette.primary.main, 0.05),
+                              transform: 'scale(1.01)'
+                            }
+                          }}
+                        >
+                          <TableCell>
+                            <Box display="flex" alignItems="center">
+                              <Avatar 
+                                sx={{ 
+                                  bgcolor: getAvatarColor(liquidation.organization),
+                                  width: 32, 
+                                  height: 32,
+                                  mr: 1.5,
+                                  fontSize: '0.875rem',
+                                  fontWeight: 600,
+                                  border: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`
+                                }}
+                              >
+                                {liquidation.organization?.charAt(0) || '?'}
+                              </Avatar>
+                              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                {liquidation.organization || 'Unknown'}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Tooltip title={liquidation.fileName}>
+                              <Typography 
+                                variant="body2" 
+                                noWrap 
+                                sx={{ 
+                                  maxWidth: isMobile ? 100 : 150,
+                                  fontWeight: 500
+                                }}
+                              >
+                                {liquidation.fileName}
+                              </Typography>
+                            </Tooltip>
+                          </TableCell>
+                          <TableCell>
+                            <Typography 
+                              variant="body2" 
                               sx={{ 
-                                bgcolor: getAvatarColor(liquidation.organization),
-                                width: 24, 
-                                height: 24,
-                                mr: 1,
-                                fontSize: '0.75rem'
+                                color: 'text.secondary',
+                                fontWeight: 500
                               }}
                             >
-                              {liquidation.organization?.charAt(0) || '?'}
-                            </Avatar>
-                            {liquidation.organization || 'Unknown'}
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Tooltip title={liquidation.fileName}>
-                            <Typography noWrap style={{ maxWidth: 150 }}>
-                              {liquidation.fileName}
+                              {liquidation.createdAt ? 
+                                new Date(liquidation.createdAt).toLocaleDateString() : 
+                                'N/A'}
                             </Typography>
-                          </Tooltip>
-                        </TableCell>
-                        <TableCell>
-                        {liquidation.createdAt ? 
-                          new Date(liquidation.createdAt).toLocaleDateString() : 
-                          'N/A'}
-                      </TableCell>
-                        <TableCell align="right">
-                          <Tooltip title="Download">
-                            <IconButton 
-                              onClick={() => handleDownload(liquidation.fileUrl, liquidation.fileName)}
-                              size="small"
-                            >
-                              <Icon icon={downloadIcon} />
-                            </IconButton>
-                          </Tooltip>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            ) : (
-              <Typography p={3} color="textSecondary">
-                No liquidation files submitted yet
-              </Typography>
-            )}
-          </Paper>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Tooltip title="Download">
+                              <IconButton 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDownload(liquidation.fileUrl, liquidation.fileName);
+                                }}
+                                size="small"
+                                sx={{ 
+                                  transition: 'all 0.2s ease',
+                                  '&:hover': { 
+                                    bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                    transform: 'scale(1.1)'
+                                  }
+                                }}
+                              >
+                                <Icon icon={downloadIcon} />
+                              </IconButton>
+                            </Tooltip>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              ) : (
+                <Box 
+                  sx={{ 
+                    p: 3, 
+                    textAlign: 'center',
+                    color: 'text.secondary'
+                  }}
+                >
+                  <Typography variant="body1">
+                    No liquidation files submitted yet
+                  </Typography>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
         </Grid>
 
         {/* Recent Feedback Section */}
-        <Grid item xs={12} md={6}>
-          <Paper className="main-content-box">
-            <Box className="section-header">
-              <Icon icon={messageText} className="section-icon" />
-              <Typography variant="h6" className="section-heading">
-                Recent User Feedback
-              </Typography>
-            </Box>
-            {loading.feedbacks ? (
-              <Box display="flex" justifyContent="center" p={4}>
-                <CircularProgress />
+        <Grid item xs={12} lg={6}>
+          <Card 
+            elevation={0}
+            sx={{ 
+              bgcolor: 'background.paper',
+              borderRadius: 3,
+              height: '100%',
+              transition: 'all 0.3s ease',
+              border: `1px solid ${alpha(theme.palette.info.main, 0.1)}`,
+              '&:hover': {
+                boxShadow: theme.shadows[4]
+              }
+            }}
+          >
+            <CardContent sx={{ p: 3 }}>
+              <Box 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  mb: 3,
+                  position: 'relative',
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    bottom: -8,
+                    left: 0,
+                    width: '100%',
+                    height: '1px',
+                    background: `linear-gradient(90deg, ${theme.palette.info.main}, transparent)`,
+                    opacity: 0.2
+                  }
+                }}
+              >
+                <Box 
+                  sx={{ 
+                    bgcolor: alpha(theme.palette.info.main, 0.1),
+                    p: 1.5,
+                    borderRadius: 2,
+                    mr: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <Icon 
+                    icon={messageText} 
+                    style={{ 
+                      fontSize: 24, 
+                      color: theme.palette.info.main 
+                    }} 
+                  />
+                </Box>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    fontWeight: 600,
+                    color: 'text.primary'
+                  }}
+                >
+                  Recent User Feedback
+                </Typography>
               </Box>
-            ) : feedbacks.length > 0 ? (
-              <List className="feedback-list">
-                {feedbacks.map((feedback, index) => (
-                  <React.Fragment key={feedback._id || index}>
-                    <ListItem className="feedback-item">
-                      <ListItemAvatar>
-                        <Avatar sx={{ 
-                          bgcolor: getAvatarColor(feedback.userName || feedback.organizationName) 
-                        }}>
-                          {(feedback.userName || feedback.organizationName)?.charAt(0) || '?'}
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={
-                          <Box className="feedback-header">
-                            <Typography component="span" className="feedback-name">
-                              {feedback.userName || feedback.organizationName || 'Anonymous'}
-                            </Typography>
-                            {feedback.rating && (
-                              <Typography component="span" className="feedback-rating">
-                                {'★'.repeat(feedback.rating)}{'☆'.repeat(5 - feedback.rating)}
+
+              {loading.feedbacks ? (
+                <Box display="flex" justifyContent="center" p={4}>
+                  <CircularProgress />
+                </Box>
+              ) : feedbacks.length > 0 ? (
+                <List sx={{ p: 0 }}>
+                  {feedbacks.map((feedback, index) => (
+                    <React.Fragment key={feedback._id || index}>
+                      <ListItem 
+                        onClick={() => handleFeedbackClick(feedback)}
+                        sx={{ 
+                          p: 2,
+                          transition: 'all 0.2s ease',
+                          cursor: 'pointer',
+                          '&:hover': { 
+                            bgcolor: alpha(theme.palette.info.main, 0.05),
+                            transform: 'scale(1.01)',
+                            borderRadius: 2
+                          }
+                        }}
+                      >
+                        <ListItemAvatar>
+                          <Avatar 
+                            sx={{ 
+                              bgcolor: getAvatarColor(feedback.userName || feedback.organizationName),
+                              width: 40,
+                              height: 40,
+                              fontWeight: 600,
+                              border: `2px solid ${alpha(theme.palette.info.main, 0.1)}`
+                            }}
+                          >
+                            {(feedback.userName || feedback.organizationName)?.charAt(0) || '?'}
+                          </Avatar>
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                              <Typography 
+                                variant="subtitle1" 
+                                sx={{ 
+                                  fontWeight: 600,
+                                  mr: 1
+                                }}
+                              >
+                                {feedback.userName || feedback.organizationName || 'Anonymous'}
                               </Typography>
-                            )}
-                          </Box>
-                        }
-                        secondary={
-                          <React.Fragment>
-                            <Typography component="p" className="feedback-comment">
-                              {feedback.feedback}
-                            </Typography>
-                            <Typography component="p" className="feedback-date">
-                              {feedback.createdAt ? 
-                                new Date(feedback.createdAt).toLocaleDateString() : 
-                                'N/A'}
-                            </Typography>
-                          </React.Fragment>
-                        }
-                      />
-                    </ListItem>
-                    {index < feedbacks.length - 1 && <Divider light />}
-                  </React.Fragment>
-                ))}
-              </List>
-            ) : (
-              <Typography p={3} color="textSecondary">
-                No feedback available
-              </Typography>
-            )}
-          </Paper>
+                              {feedback.rating && (
+                                <Typography 
+                                  variant="body2" 
+                                  sx={{ 
+                                    color: 'warning.main',
+                                    ml: 'auto',
+                                    fontWeight: 600
+                                  }}
+                                >
+                                  {'★'.repeat(feedback.rating)}{'☆'.repeat(5 - feedback.rating)}
+                                </Typography>
+                              )}
+                            </Box>
+                          }
+                          secondary={
+                            <React.Fragment>
+                              <Typography 
+                                variant="body2" 
+                                sx={{ 
+                                  color: 'text.secondary',
+                                  mb: 1,
+                                  fontWeight: 500
+                                }}
+                              >
+                                {feedback.feedback}
+                              </Typography>
+                              <Typography 
+                                variant="caption" 
+                                sx={{ 
+                                  color: 'text.disabled',
+                                  display: 'block',
+                                  fontWeight: 500
+                                }}
+                              >
+                                {feedback.createdAt ? 
+                                  new Date(feedback.createdAt).toLocaleDateString() : 
+                                  'N/A'}
+                              </Typography>
+                            </React.Fragment>
+                          }
+                        />
+                      </ListItem>
+                      {index < feedbacks.length - 1 && (
+                        <Divider 
+                          sx={{ 
+                            mx: 2,
+                            opacity: 0.1,
+                            borderColor: theme.palette.divider
+                          }} 
+                        />
+                      )}
+                    </React.Fragment>
+                  ))}
+                </List>
+              ) : (
+                <Box 
+                  sx={{ 
+                    p: 3, 
+                    textAlign: 'center',
+                    color: 'text.secondary'
+                  }}
+                >
+                  <Typography variant="body1">
+                    No feedback available
+                  </Typography>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
         </Grid>
-
-
       </Grid>
+
+      {/* Liquidation Modal */}
+      <Dialog
+        open={!!selectedLiquidation}
+        onClose={handleCloseModal}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            bgcolor: 'background.paper',
+            p: 2
+          }
+        }}
+      >
+        {selectedLiquidation && (
+          <>
+            <DialogTitle sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              pb: 1
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Avatar 
+                  sx={{ 
+                    bgcolor: getAvatarColor(selectedLiquidation.organization),
+                    width: 40,
+                    height: 40,
+                    border: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`
+                  }}
+                >
+                  {selectedLiquidation.organization?.charAt(0) || '?'}
+                </Avatar>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    {selectedLiquidation.organization || 'Unknown Organization'}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Liquidation Details
+                  </Typography>
+                </Box>
+              </Box>
+              <IconButton onClick={handleCloseModal} size="small">
+                <Icon icon={closeIcon} />
+              </IconButton>
+            </DialogTitle>
+            <DialogContent>
+              <Box sx={{ mt: 2 }}>
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    File Name
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                    {selectedLiquidation.fileName}
+                  </Typography>
+                </Box>
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    Submission Date
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                    {selectedLiquidation.createdAt ? 
+                      new Date(selectedLiquidation.createdAt).toLocaleDateString() : 
+                      'N/A'}
+                  </Typography>
+                </Box>
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    File URL
+                  </Typography>
+                  <Typography 
+                    variant="body1" 
+                    sx={{ 
+                      fontWeight: 500,
+                      wordBreak: 'break-all'
+                    }}
+                  >
+                    {selectedLiquidation.fileUrl}
+                  </Typography>
+                </Box>
+              </Box>
+            </DialogContent>
+            <DialogActions sx={{ p: 2, pt: 0 }}>
+              <Button 
+                variant="outlined" 
+                onClick={handleCloseModal}
+                sx={{ 
+                  borderRadius: 2,
+                  textTransform: 'none'
+                }}
+              >
+                Close
+              </Button>
+              <Button 
+                variant="contained" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDownload(selectedLiquidation.fileUrl, selectedLiquidation.fileName);
+                }}
+                startIcon={<Icon icon={downloadIcon} />}
+                sx={{ 
+                  borderRadius: 2,
+                  textTransform: 'none'
+                }}
+              >
+                Download File
+              </Button>
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
+
+      {/* Feedback Modal */}
+      <Dialog
+        open={!!selectedFeedback}
+        onClose={handleCloseModal}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            bgcolor: 'background.paper',
+            p: 2
+          }
+        }}
+      >
+        {selectedFeedback && (
+          <>
+            <DialogTitle sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              pb: 1
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Avatar 
+                  sx={{ 
+                    bgcolor: getAvatarColor(selectedFeedback.userName || selectedFeedback.organizationName),
+                    width: 40,
+                    height: 40,
+                    border: `2px solid ${alpha(theme.palette.info.main, 0.1)}`
+                  }}
+                >
+                  {(selectedFeedback.userName || selectedFeedback.organizationName)?.charAt(0) || '?'}
+                </Avatar>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    {selectedFeedback.userName || selectedFeedback.organizationName || 'Anonymous'}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Feedback Details
+                  </Typography>
+                </Box>
+              </Box>
+              <IconButton onClick={handleCloseModal} size="small">
+                <Icon icon={closeIcon} />
+              </IconButton>
+            </DialogTitle>
+            <DialogContent>
+              <Box sx={{ mt: 2 }}>
+                {selectedFeedback.rating && (
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                      Rating
+                    </Typography>
+                    <Typography 
+                      variant="body1" 
+                      sx={{ 
+                        color: 'warning.main',
+                        fontWeight: 600
+                      }}
+                    >
+                      {'★'.repeat(selectedFeedback.rating)}{'☆'.repeat(5 - selectedFeedback.rating)}
+                    </Typography>
+                  </Box>
+                )}
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    Feedback
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                    {selectedFeedback.feedback}
+                  </Typography>
+                </Box>
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    Submission Date
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                    {selectedFeedback.createdAt ? 
+                      new Date(selectedFeedback.createdAt).toLocaleDateString() : 
+                      'N/A'}
+                  </Typography>
+                </Box>
+              </Box>
+            </DialogContent>
+            <DialogActions sx={{ p: 2, pt: 0 }}>
+              <Button 
+                variant="outlined" 
+                onClick={handleCloseModal}
+                sx={{ 
+                  borderRadius: 2,
+                  textTransform: 'none'
+                }}
+              >
+                Close
+              </Button>
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
 
       {/* Notification Snackbar */}
       <Snackbar
@@ -314,7 +936,14 @@ const Dashboard = () => {
         <Alert 
           onClose={handleCloseNotification} 
           severity={notification.severity}
-          sx={{ width: '100%' }}
+          sx={{ 
+            width: '100%',
+            borderRadius: 2,
+            boxShadow: theme.shadows[4],
+            '& .MuiAlert-icon': {
+              fontSize: 24
+            }
+          }}
         >
           {notification.message}
         </Alert>
