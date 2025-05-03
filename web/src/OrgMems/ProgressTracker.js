@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import './ProgressTracker.css';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import { PDFDownloadLink } from '@react-pdf/renderer';
@@ -461,7 +462,7 @@ const ProgressTracker = () => {
                 {step.status === 'approved' ? (
                   <CheckCircleIcon style={{ color: '#4caf50', fontSize: 24 }} />
                 ) : step.status === 'declined' ? (
-                  <CheckCircleIcon style={{ color: 'red', fontSize: 24 }} />
+                  <HighlightOffIcon style={{ color: 'red', fontSize: 24 }} />
                 ) : (
                   <RadioButtonUncheckedIcon style={{ color: '#ffeb3b', fontSize: 24 }} />
                 )}

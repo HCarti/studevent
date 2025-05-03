@@ -83,7 +83,7 @@ const OrgSubmittedForms = () => {
     const isFormEditable = (form) => {
         const status = form.finalStatus?.toLowerCase() || form.status?.toLowerCase();
         
-        // For Local Off-Campus forms
+        // For Local Off-Campus forms (keep existing logic)
         if (form.formType === 'LocalOffCampus' || form.isLocalOffCampus) {
             // Allow editing AFTER forms that aren't approved
             if (form.formPhase === 'AFTER') {
@@ -99,10 +99,49 @@ const OrgSubmittedForms = () => {
             return false;
         }
         
-        // Original logic for other forms
-        if (!form.reviewStages || form.currentStep === undefined) return false;
-        const deanStepIndex = form.reviewStages.findIndex(step => step.role === 'Dean');
-        return deanStepIndex === -1 || form.currentStep < deanStepIndex;
+        // New logic for regular forms
+        // If form has been declined, it should be editable regardless of step
+        if (status === 'declined') {
+            return true;
+        }
+    
+        // Check if form has tracker information
+        if (form.tracker) {
+            // If no steps or current step is undefined, not editable
+            if (!form.tracker.steps || form.tracker.currentStep === undefined) {
+                return false;
+            }
+    
+            // Find the adviser step (first step)
+            const adviserStep = form.tracker.steps[0];
+            
+            // If form is still at the first step (adviser) and not yet reviewed
+            if (form.tracker.currentStep === adviserStep.stepName && 
+                adviserStep.status === 'pending') {
+                return true;
+            }
+            
+            // If form hasn't moved past the first step
+            return false;
+        }
+    
+        // Fallback for forms without tracker info
+        // Check review stages if they exist
+        if (form.reviewStages) {
+            const adviserStepIndex = form.reviewStages.findIndex(step => step.role === 'Adviser');
+            const deanStepIndex = form.reviewStages.findIndex(step => step.role === 'Dean');
+            
+            // If still at or before adviser step
+            if (adviserStepIndex >= 0 && form.currentStep <= adviserStepIndex) {
+                return true;
+            }
+            
+            // Original dean check as fallback
+            return deanStepIndex === -1 || form.currentStep < deanStepIndex;
+        }
+    
+        // Default case for forms with no tracking information
+        return status === 'draft' || status === 'pending' || status === 'submitted';
     };
 
     const isFormDeletable = (form) => {

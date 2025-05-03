@@ -39,6 +39,7 @@ import EventTrackerList from './Components/EventTrackerList';
 import OrgSubmittedForms from './OrgMems/OrgSubmittedForms';
 import SuperAdminProfile from './SuperAdmin/SuperAdminProfile';
 import NotificationsPage from './Components/NotificationsPage';
+import SuperAdminLogs from './SuperAdmin/SuperAdminLogs';
 
 // Global styles to hide scrollbar
 const globalStyles = `
@@ -216,6 +217,7 @@ const App = () => {
               </ProtectedRoute>
             }
           >
+            <Route path="s-adminlogs" element={<SuperAdminLogs />} />
             <Route path="controlpanel" element={<AdminControlPanel />} />
             <Route path="authorities" element={<SuperAdminAuthorities />} />
             <Route path="adminuser" element={<SuperAdminUsers />} />

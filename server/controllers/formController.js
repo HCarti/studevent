@@ -723,114 +723,210 @@ exports.deleteForm = async (req, res) => {
 };
 
 exports.updateForm = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  
   try {
     const { formId } = req.params;
     const updates = req.body;
+    const user = req.user;
 
-    const form = await Form.findById(formId);
+    // Find the form - check both Form and LocalOffCampus collections
+    let form = await Form.findById(formId).session(session);
     if (!form) {
-      return res.status(404).json({ message: 'Form not found' });
+      form = await LocalOffCampus.findById(formId).session(session);
+      if (!form) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(404).json({ message: 'Form not found' });
+      }
     }
 
-    if (form.emailAddress !== req.user.email) {
+    // Check if user is authorized to edit (submitter or admin)
+    const isSubmitter = form.emailAddress === user.email || 
+                       (form.createdBy && form.createdBy.equals(user._id));
+    const isAdmin = user.role === 'Admin';
+    
+    if (!isSubmitter && !isAdmin) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(403).json({ 
-        message: 'Only the original submitter can edit this form' 
+        message: 'Only the original submitter or admin can edit this form' 
       });
     }
 
-    // Skip budget-specific validation since budget forms will be handled separately
-    if (form.formType === 'Activity' || form.formType === 'Project') {
-      if (updates.eventStartDate) {
-        const endDate = updates.eventEndDate || form.eventEndDate || updates.eventStartDate;
-        await checkEventCapacity(updates.eventStartDate, endDate, formId);
-      }
-    }
-
-    const tracker = await EventTracker.findOne({ formId });
-    if (form.formType !== 'Budget' && !tracker) {
-      return res.status(404).json({ message: 'Progress tracker not found' });
-    }
-
-    if (form.formType === 'Project' && tracker) {
-      const isUnderReview = tracker.steps.some(
-        step => step.status === 'approved' || step.status === 'declined'
-      );
+    // Find the tracker if it exists
+    const tracker = await EventTracker.findOne({ formId }).session(session);
+    
+    // If form has a tracker and was declined, we need special handling
+    if (tracker && tracker.currentStatus === 'declined') {
+      // Check if the current user is from the organization that submitted the form
+      const isOrganizationUser = user.role === 'Organization' && 
+                               (form.studentOrganization.equals(user._id) || 
+                                user.organizationId.equals(form.studentOrganization));
       
-      if (isUnderReview) {
+      if (!isOrganizationUser && !isAdmin) {
+        await session.abortTransaction();
+        session.endSession();
         return res.status(403).json({ 
-          message: 'Project form cannot be edited once review has started' 
+          message: 'Only the organization that submitted this form can update it after decline' 
         });
       }
-    } else if (tracker) {
-      const isDeanReviewing = tracker.currentAuthority === 'Dean';
-      const isDeanApproved = tracker.steps.some(
-        step => step.stepName === 'Dean' && step.status === 'approved'
-      );
 
-      if (isDeanReviewing || isDeanApproved) {
-        return res.status(403).json({ 
-          message: 'Form cannot be edited once it reaches the Dean for review/approval' 
-        });
+      // Find the declined step in the tracker
+      const declinedStep = tracker.steps.find(step => step.status === 'declined');
+      
+      if (declinedStep) {
+        // Reset the tracker to the declined step
+        tracker.currentStep = declinedStep.stepName;
+        tracker.currentAuthority = declinedStep.reviewerRole;
+        tracker.currentStatus = 'pending';
+        
+        // Reset all steps from the declined one onward
+        const declinedStepIndex = tracker.steps.findIndex(step => step.stepName === declinedStep.stepName);
+        for (let i = declinedStepIndex; i < tracker.steps.length; i++) {
+          tracker.steps[i].status = 'pending';
+          tracker.steps[i].remarks = '';
+          tracker.steps[i].timestamp = null;
+        }
+        
+        await tracker.save({ session });
       }
     }
 
+    // For regular updates (not after decline)
+    if (tracker && tracker.currentStatus !== 'declined') {
+      // Skip budget-specific validation since budget forms will be handled separately
+      if (form.formType === 'Activity' || form.formType === 'Project') {
+        if (updates.eventStartDate) {
+          const endDate = updates.eventEndDate || form.eventEndDate || updates.eventStartDate;
+          await checkEventCapacity(updates.eventStartDate, endDate, formId);
+        }
+      }
+
+      if (form.formType === 'Project') {
+        const isUnderReview = tracker.steps.some(
+          step => step.status === 'approved' || step.status === 'declined'
+        );
+        
+        if (isUnderReview) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(403).json({ 
+            message: 'Project form cannot be edited once review has started' 
+          });
+        }
+      } else {
+        const isDeanReviewing = tracker.currentAuthority === 'Dean';
+        const isDeanApproved = tracker.steps.some(
+          step => step.stepName === 'Dean' && step.status === 'approved'
+        );
+
+        if (isDeanReviewing || isDeanApproved) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(403).json({ 
+            message: 'Form cannot be edited once it reaches the Dean for review/approval' 
+          });
+        }
+      }
+    }
+
+    // Perform the form update
     const updateOptions = {
       new: true,
-      runValidators: true
+      runValidators: true,
+      session
     };
 
-    const updatedForm = await Form.findByIdAndUpdate(
-      formId,
-      { 
-        ...updates,
-        lastEdited: new Date()
-      },
-      updateOptions
-    );
+    let updatedForm;
+    if (form instanceof LocalOffCampus) {
+      updatedForm = await LocalOffCampus.findByIdAndUpdate(
+        formId,
+        { 
+          ...updates,
+          lastEdited: new Date(),
+          status: tracker && tracker.currentStatus === 'declined' ? 'resubmitted' : form.status
+        },
+        updateOptions
+      );
+    } else {
+      updatedForm = await Form.findByIdAndUpdate(
+        formId,
+        { 
+          ...updates,
+          lastEdited: new Date(),
+          finalStatus: tracker && tracker.currentStatus === 'declined' ? 'resubmitted' : form.finalStatus
+        },
+        updateOptions
+      );
+    }
 
-    // Reset tracker if exists
-    if (tracker) {
-      const firstStep = tracker.steps[0];
-      if (tracker.currentStep !== firstStep.stepName) {
-        await EventTracker.updateOne(
-          { formId },
-          { 
-            $set: { 
-              currentStep: firstStep.stepName,
-              currentAuthority: firstStep.reviewerRole,
-              "steps.$[].status": "pending",
-              "steps.$[].remarks": "",
-              "steps.$[].timestamp": null
-            } 
-          }
-        );
-        await EventTracker.updateOne(
-          { formId, "steps.stepName": firstStep.stepName },
-          { $set: { "steps.$.status": "pending" } }
-        );
+    // Update calendar event if needed
+    if (['Activity', 'Project'].includes(form.formType)) {
+      if (updates.eventStartDate || updates.eventEndDate || updates.venue || updates.eventTitle) {
+        await updateCalendarEventFromForm(updatedForm);
       }
     }
 
-    if (['Activity', 'Project'].includes(form.formType) && updates.eventStartDate) {
-      await updateCalendarEventFromForm(updatedForm);
+    // If this was a declined form being resubmitted, notify the reviewer
+    if (tracker && tracker.currentStatus === 'declined') {
+      const currentStep = tracker.steps.find(step => step.stepName === tracker.currentStep);
+      
+      if (currentStep) {
+        // Find users with the reviewer role
+        const reviewers = await User.find({ 
+          role: currentStep.reviewerRole,
+          status: 'Active'
+        }).session(session);
+
+        // Send notifications to each reviewer
+        await Promise.all(reviewers.map(async reviewer => {
+          try {
+            await notificationController.createNotification(
+              reviewer.email,
+              `A ${form.formType} form you previously declined has been updated and resubmitted for your review.`,
+              'tracker',
+              { 
+                formId: form._id, 
+                formType: form.formType,
+                organizationName: form.studentOrganization?.organizationName || form.organizationName 
+              },
+              session
+            );
+          } catch (notificationError) {
+            console.error('Failed to send reviewer notification:', notificationError);
+          }
+        }));
+      }
     }
 
+    // Send confirmation to submitter
     if (form.emailAddress) {
-      await Notification.create({
+      await Notification.create([{
         userEmail: form.emailAddress,
-        message: `Your ${form.formType} form has been updated!`,
+        message: `Your ${form.formType} form has been ${tracker?.currentStatus === 'declined' ? 'updated and resubmitted' : 'updated'} successfully!`,
+        type: 'tracker',
+        formId: form._id,
+        formType: form.formType,
         read: false,
-        timestamp: new Date(),
-      });
+        createdAt: new Date()
+      }], { session });
     }
+
+    await session.commitTransaction();
+    session.endSession();
 
     res.status(200).json({
-      message: 'Form updated successfully',
+      message: tracker?.currentStatus === 'declined' ? 'Form updated and resubmitted successfully' : 'Form updated successfully',
       form: updatedForm,
-      tracker: form.formType !== 'Budget' ? await EventTracker.findOne({ formId }) : null
+      tracker: tracker ? await EventTracker.findOne({ formId }) : null
     });
 
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    
     console.error("Form Update Error:", error);
     
     if (error.name === 'ValidationError') {
