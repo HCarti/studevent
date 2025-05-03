@@ -11,6 +11,7 @@ const OrgSubmittedForms = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [formToDelete, setFormToDelete] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
         const fetchForms = async () => {
@@ -137,6 +138,9 @@ const OrgSubmittedForms = () => {
                 default:
                     return true;
             }
+        }).filter(form => {
+            const title = form.eventTitle || form.projectTitle || (form.formType === 'LocalOffCampus' ? form.nameOfHei : 'Untitled Event');
+            return title.toLowerCase().includes(searchQuery.toLowerCase());
         });
     };
 
@@ -311,103 +315,81 @@ const OrgSubmittedForms = () => {
                 </div>
             ) : (
                 <>
-                    <div className="filter-buttons">
-                        <button
-                            className={`filter-button ${filter === "all" ? "active" : ""}`}
-                            onClick={() => handleFilterClick("all")}
-                        >
-                            All Forms
-                        </button>
-                        <button
-                            className={`filter-button ${filter === "pending" ? "active" : ""}`}
-                            onClick={() => handleFilterClick("pending")}
-                        >
-                            Pending
-                        </button>
-                        <button
-                            className={`filter-button ${filter === "approved" ? "active" : ""}`}
-                            onClick={() => handleFilterClick("approved")}
-                        >
-                            Approved
-                        </button>
+                    <div className="search-and-filter">
+                        <div className="search-container">
+                            <input
+                                type="text"
+                                placeholder="Search forms..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="search-input"
+                            />
+                        </div>
+                        <div className="filter-buttons">
+                            <button
+                                className={`filter-button ${filter === "all" ? "active" : ""}`}
+                                onClick={() => handleFilterClick("all")}
+                            >
+                                All Forms
+                            </button>
+                            <button
+                                className={`filter-button ${filter === "pending" ? "active" : ""}`}
+                                onClick={() => handleFilterClick("pending")}
+                            >
+                                Pending
+                            </button>
+                            <button
+                                className={`filter-button ${filter === "approved" ? "active" : ""}`}
+                                onClick={() => handleFilterClick("approved")}
+                            >
+                                Approved
+                            </button>
+                        </div>
                     </div>
-    
-                    <div className="table-wrapper">
-                        {allForms.length === 0 ? (
+
+                    <div className="card-grid-wrapper">
+                        {getFilteredForms().length === 0 ? (
                             <p className="no-forms-message">No submitted forms found.</p>
                         ) : (
-                            <table className="forms-table">
-                                <thead>
-                                    <tr>
-                                        <th>Form Type</th>
-                                        <th>Title</th>
-                                        <th>Status</th>
-                                        <th>Submitted Date</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {getFilteredForms().map((form) => (
-                                        <tr 
-                                            key={form._id}
-                                            onClick={() => {
-                                                if (form.isLocalOffCampus || form.formType === 'LocalOffCampus') {
-                                                    navigate(`/orgTrackerViewer/${form._id}`, { 
-                                                        state: { 
-                                                            form,
-                                                            formType: 'LocalOffCampus',
-                                                            formPhase: form.formPhase
-                                                        } 
-                                                    });
-                                                } else {
-                                                    navigate(`/orgTrackerViewer/${form._id}`, { state: { form } });
-                                                }
-                                            }}
-                                            className="clickable-row"
-                                        >
-                                            <td data-label="Form Type">
-                                                {formatFormType(form)}
-                                            </td>
-                                            <td data-label="Title">
-                                                {form.eventTitle || 
-                                                 form.projectTitle || 
-                                                 (form.formType === 'LocalOffCampus' 
-                                                  ? form.nameOfHei 
-                                                  : 'Untitled Event')}
-                                            </td>
-                                            <td data-label="Status">
-                                                <span className={`status-badge ${getStatusBadgeClass(form.finalStatus || form.status)}`}>
-                                                    {form.finalStatus || form.status || 'Pending'}
-                                                </span>
-                                            </td>
-                                            <td data-label="Submitted Date">
-                                                {formatDate(form.applicationDate || form.submittedAt)}
-                                            </td>
-                                            <td data-label="Actions">
-                                            <div className="action-buttons">
-                                                {isFormEditable(form) && (
-                                                    <button 
-                                                        className="edit-button"
-                                                        onClick={(e) => handleEditClick(e, form)}
-                                                    >
-                                                        {form.formType === 'LocalOffCampus' && 
-                                                        form.formPhase === 'BEFORE' && 
-                                                        (form.status === 'approved' || form.finalStatus === 'approved')
-                                                            ? 'Complete AFTER'
-                                                            : 'Edit'}
-                                                    </button>
-                                                )}
-                                                {isFormDeletable(form) && (
-                                                    <button className="delete-button" onClick={(e) => handleDeleteClick(e, form._id, form.formType)}>
-                                                        Delete
-                                                    </button>
-                                                )}
+                            <div className="card-grid">
+                                {getFilteredForms().map((form) => (
+                                    <div className="form-card" key={form._id}>
+                                        <div className="form-card-header">
+                                            <span className="form-type">{formatFormType(form)}</span>
+                                            <span className={`status-badge ${getStatusBadgeClass(form)}`}>{form.finalStatus || form.status || 'Pending'}</span>
+                                        </div>
+                                        <div className="form-card-title">{form.eventTitle || form.projectTitle || (form.formType === 'LocalOffCampus' ? form.nameOfHei : 'Untitled Event')}</div>
+                                        <div className="form-card-info">
+                                            <div>
+                                                <span className="form-card-label">Submitted:</span>
+                                                <span>{formatDate(form.applicationDate || form.submittedAt)}</span>
                                             </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                        </div>
+                                        <div className="form-card-actions">
+                                            {isFormEditable(form) && (
+                                                <button 
+                                                    className="edit-button"
+                                                    onClick={(e) => handleEditClick(e, form)}
+                                                >
+                                                    {form.formType === 'LocalOffCampus' && 
+                                                    form.formPhase === 'BEFORE' && 
+                                                    (form.status === 'approved' || form.finalStatus === 'approved')
+                                                        ? 'Complete AFTER'
+                                                        : 'Edit'}
+                                                </button>
+                                            )}
+                                            {isFormDeletable(form) && (
+                                                <button 
+                                                    className="delete-button" 
+                                                    onClick={(e) => handleDeleteClick(e, form._id, form.formType)}
+                                                >
+                                                    Delete
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         )}
                     </div>
     

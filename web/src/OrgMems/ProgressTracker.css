@@ -1,134 +1,196 @@
 /* Main Container */
 .prog-box {
-  border: 1px solid #e0e0e0;
-  background-color: #fafafa;
-  border-radius: 8px;
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-  width: 90%;
   max-width: 1200px;
-  margin: 20px auto;
-  padding: 20px;
-  font-family: 'Roboto', sans-serif;
-  overflow: hidden; /* Prevent content from overflowing */
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* Content Layout */
 .progress-content {
   display: flex;
-  flex-direction: row;
-  gap: 20px;
-  width: 100%;
-  max-height: calc(100vh - 200px); /* Adjust based on your needs */
-  overflow: auto; /* Add scroll if content overflows */
+  flex-direction: column;
+  gap: 2rem;
 }
 
+/* Header Styles */
+.prog-box h3 {
+  color: #1a237e;
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* Progress Tracker Container */
 .progress-tracker {
-  flex: 2;
-  display: flex;
-  flex-direction: column;
-  min-width: 0; /* Prevent flex item overflow */
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
 }
 
-/* Progress Bar */
+/* Progress Steps */
 .progress-bar-container {
-  flex: 1;
+  position: relative;
   display: flex;
   flex-direction: column;
-  position: relative;
-  padding: 10px 0;
-  overflow-y: auto; /* Add scroll if steps overflow */
-  max-height: 500px; /* Limit height */
+  gap: 2.5rem;
+  margin: 2.5rem 0;
+  padding-left: 48px; /* more space for timeline */
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
 }
 
 .progress-bar-container::before {
   content: '';
   position: absolute;
-  top: 12px;
-  bottom: 12px;
-  left: 12px;
-  width: 2px;
-  background-color: #ddd;
+  left: 24px;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background: linear-gradient(180deg, #4f8cff 0%, #38e8ff 100%);
+  border-radius: 3px;
   z-index: 0;
+  opacity: 0.7;
 }
 
-
-
 .step-container {
+  position: relative;
   display: flex;
   align-items: flex-start;
-  margin-bottom: 15px;
-  min-height: 60px;
+  gap: 1.5rem;
+  background: rgba(255,255,255,0.7);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px 0 rgba(31,38,135,0.10);
+  padding: 2rem 2.5rem 2rem 2rem;
+  min-height: 100px;
+  margin-bottom: 0;
+  transition: box-shadow 0.2s, background 0.2s;
+  backdrop-filter: blur(8px);
+  animation: fadeInStep 0.7s cubic-bezier(.39,.575,.565,1) both;
+}
+
+@keyframes fadeInStep {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.step-container:hover {
+  box-shadow: 0 12px 32px 0 rgba(31,38,135,0.18);
+  background: rgba(255,255,255,0.85);
 }
 
 .progress-step {
-  margin-right: 20px;
-  width: 24px;
-  height: 24px;
+  position: absolute;
+  left: -44px;
+  top: 32px;
+  z-index: 2;
+  background: rgba(255,255,255,0.95);
   border-radius: 50%;
-  background-color: #e0e0e0;
-  position: relative;
-  z-index: 1;
-  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px 0 rgba(79,140,255,0.18);
+  border: 3px solid #4caf50;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.progress-step svg {
+  font-size: 28px !important;
+  color: #4caf50;
+  filter: drop-shadow(0 0 6px #4caf5033);
+}
+
+/* Pending/declined icons */
+.progress-step.declined {
+  border-color: #f44336;
+  box-shadow: 0 4px 16px 0 #f4433622;
+}
+.progress-step.declined svg {
+  color: #f44336;
+  filter: drop-shadow(0 0 6px #f4433633);
+}
+.progress-step.pending {
+  border-color: #ffb300;
+  box-shadow: 0 4px 16px 0 #ffb30022;
+}
+.progress-step.pending svg {
+  color: #ffb300;
+  filter: drop-shadow(0 0 6px #ffb30033);
 }
 
 .step-label {
-  font-size: 16px;
-  color: #555;
-  position: relative;
-  margin: 5px 0;
-  word-break: break-word; /* Prevent text overflow */
+  flex: 1;
+  margin-left: 2.5rem;
+  font-size: 1.08rem;
+  color: #222b45;
+  letter-spacing: 0.01em;
 }
 
-.reviewer-info, .timestamp {
-  font-size: 12px;
-  color: #999;
-  margin-left: 0;
-  margin-top: 4px;
+.step-label strong {
+  color: #1a237e;
+  font-size: 1.18rem;
+  display: block;
+  margin-bottom: 0.3rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
-.reviewer-info{
-  font-weight: bold;
-  display: flex;
-  flex-direction: column;
+.step-date {
+  color: #4f8cff;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  display: block;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.reviewer-info {
+  margin-top: 0.7rem;
+  color: #666;
+  font-size: 1rem;
+  background: rgba(79,140,255,0.07);
+  border-radius: 6px;
+  padding: 0.5rem 0.8rem;
+  display: inline-block;
+}
+
+.reviewer-info small {
+  display: block;
+  margin: 0.2rem 0;
+}
+
+.remarks {
+  color: #e65100;
+  font-style: italic;
 }
 
 /* Edit Tracker Section */
 .edit-tracker {
-  background-color: #f8f9fa;
-  padding: 15px;
+  background: white;
+  padding: 1.5rem;
   border-radius: 8px;
-  margin-top: 20px;
-  border: 1px solid #e0e0e0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 2rem;
 }
 
 .edit-tracker h3 {
-  margin: 0 0 15px 0;
-  color: #333;
-  font-size: 18px;
-  text-align: center;
-}
-
-.edit-tracker-title {
-  text-align: center;
-  color: yellow;
-  font-size: 20px;
-  margin-bottom: 20px;
+  color: #1a237e;
+  margin-bottom: 1rem;
 }
 
 .edit-tracker-options {
   display: flex;
-  gap: 15px;
-  margin-bottom: 15px;
-  flex-wrap: wrap;
+  gap: 2rem;
+  margin-bottom: 1rem;
 }
 
 .edit-tracker-options label {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: #555;
+  gap: 0.5rem;
   cursor: pointer;
 }
 
@@ -177,29 +239,55 @@
 /* Action Buttons */
 .action-buttons {
   display: flex;
-  gap: 15px;
-  margin-top: 20px;
-  justify-content: flex-end;
-  align-items: flex-end;
-  flex-wrap: wrap; /* Allow buttons to wrap on small screens */
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 2.5rem;
 }
 
-.action-button {
+.action-buttons button,
+.action-buttons a[role="button"] {
+  min-width: 190px;
+  height: 52px;
+  padding: 0 1.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px 0 rgba(79,140,255,0.10);
+  letter-spacing: 0.02em;
+  text-transform: none;
   display: flex;
-  height: 37px;
-  width: 150px;
-  border-radius: 50px;
-  padding: 10px 20px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background-color 0.3s ease;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s, box-shadow 0.18s, color 0.18s;
 }
 
-.action-button:hover {
-  background-color: #0056b3;
+.action-buttons button:not(:disabled),
+.action-buttons a[role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+
+.action-buttons button {
+  border: none;
+}
+
+.action-buttons .MuiButton-contained,
+.action-buttons button,
+.action-buttons a[role="button"] {
+  background: #182b7a;
+  color: #fff;
+}
+
+.action-buttons .pdf-download-container button,
+.action-buttons .pdf-download-container a[role="button"] {
+  background: #2196f3;
+  color: #fff;
+}
+
+.action-buttons button:active,
+.action-buttons a[role="button"]:active {
+  box-shadow: 0 4px 16px 0 rgba(79,140,255,0.18);
 }
 
 /* PDF Download */
@@ -209,22 +297,15 @@
 
 /* Feedback Container */
 .feedback-container {
-  flex: 1;
-  min-width: 300px;
-  max-width: 400px;
-  padding: 20px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  height: fit-content;
+  background: #f8f9fa;
+  padding: 2rem;
+  border-radius: 12px;
+  margin-top: 2rem;
 }
 
 .feedback-container h4 {
-  margin-top: 0;
-  color: #333;
-  font-size: 18px;
+  color: #1a237e;
+  margin-bottom: 1rem;
 }
 
 .feedback-container p {
@@ -235,23 +316,20 @@
 
 .feedback-textarea {
   width: 100%;
-  padding: 10px;
+  min-height: 100px;
+  padding: 1rem;
   border: 1px solid #ddd;
-  border-radius: 4px;
-  margin-bottom: 15px;
-  font-family: inherit;
+  border-radius: 8px;
+  margin: 1rem 0;
   resize: vertical;
-  min-height: 80px;
-  font-size: 14px;
-  box-sizing: border-box;
 }
 
 .feedback-submit-button {
   background-color: #4CAF50;
-    color: white;
-    padding: 8px 16px;
-    text-transform: none;
-    font-weight: 500;
+  color: white;
+  padding: 8px 16px;
+  text-transform: none;
+  font-weight: 500;
 }
 
 .feedback-submit-button:hover {
@@ -266,12 +344,9 @@
 .feedback-thank-you {
   display: flex;
   align-items: center;
-  color: #4CAF50;
-  font-weight: bold;
-  padding: 10px;
-  background-color: #f0fff0;
-  border-radius: 4px;
-  justify-content: center;
+  gap: 0.5rem;
+  color: #4caf50;
+  font-weight: 600;
 }
 
 .feedback-error {
@@ -280,34 +355,107 @@
   font-size: 14px;
 }
 
-/* Loading Spinner */
+/* Loading and Error States */
 .loading-spinner-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh;
-  gap: 20px;
+  min-height: 300px;
+  gap: 1rem;
 }
 
-.loading-spinner-container p {
-  font-size: 18px;
-  color: #333;
+.error-container {
+  text-align: center;
+  padding: 2rem;
+  color: #d32f2f;
 }
 
-/* Responsive Adjustments */
+/* Responsive Design */
 @media (max-width: 768px) {
-  .progress-content {
-    flex-direction: column;
+  .prog-box {
+    padding: 1rem;
+    margin: 1rem;
   }
-  
-  .feedback-container {
-    margin-left: 0;
-    margin-top: 20px;
-    max-width: 100%;
+
+  .progress-tracker {
+    padding: 1rem;
   }
-  
+
   .progress-bar-container {
-    max-height: none;
+    padding-left: 24px;
   }
+  .progress-bar-container::before {
+    left: 10px;
+    width: 4px;
+  }
+  .progress-step {
+    left: -24px;
+    width: 32px;
+    height: 32px;
+  }
+  .progress-step svg {
+    font-size: 20px !important;
+  }
+  .step-label {
+    margin-left: 1.2rem;
+    font-size: 0.98rem;
+  }
+  .step-label strong {
+    font-size: 1.05rem;
+  }
+  .step-date {
+    font-size: 0.92rem;
+  }
+  .reviewer-info {
+    font-size: 0.92rem;
+    padding: 0.4rem 0.6rem;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .action-buttons button,
+  .action-buttons a[role="button"] {
+    min-width: 100%;
+    width: 100%;
+    height: 48px;
+    font-size: 0.98rem;
+  }
+
+  .edit-tracker-options {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+/* Animation for status icons */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.progress-step svg {
+  animation: pulse 2s infinite;
+}
+
+/* Modern Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }

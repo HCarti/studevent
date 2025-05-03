@@ -7,6 +7,7 @@ const EventTrackerList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [organizations, setOrganizations] = useState({});
   const navigate = useNavigate();
 
@@ -80,9 +81,17 @@ const EventTrackerList = () => {
 
   const getFilteredForms = () => {
     const status = (form) => (form.finalStatus || "").trim().toLowerCase();
-    return forms.filter(form => 
-      filter === "all" || status(form) === filter
-    );
+    const searchLower = searchQuery.toLowerCase();
+    
+    return forms.filter(form => {
+      const matchesFilter = filter === "all" || status(form) === filter;
+      const matchesSearch = searchQuery === "" || 
+        getEventTitle(form).toLowerCase().includes(searchLower) ||
+        getOrganizationName(form).toLowerCase().includes(searchLower) ||
+        form.formType.toLowerCase().includes(searchLower);
+      
+      return matchesFilter && matchesSearch;
+    });
   };
 
   const getOrganizationName = (form) => {
@@ -136,6 +145,17 @@ const EventTrackerList = () => {
         ) : (
           <div className="tracker-body">
             <div className="controls-section">
+              <div className="controls-row">
+                <div className="search-container">
+                  <input
+                    type="text"
+                    placeholder="Search events..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="search-input"
+                  />
+                </div>
+              </div>
               <div className="filter-buttons-container">
                 <div className="filter-buttons-scroll">
                   {["all", "pending", "approved", "declined"].map((filterType) => (
