@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Calendar, momentLocalizer } from 'react-big-calendar';
-import moment from 'moment';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
-import './OrganizationEvents.css';
 import { useNavigate } from 'react-router-dom';
+import moment from 'moment';
 import { ClipLoader } from 'react-spinners';
-
-const localizer = momentLocalizer(moment);
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import './OrganizationEvents.css';
 
 const OrganizationEvents = () => {
   const [events, setEvents] = useState([]);
@@ -15,8 +14,8 @@ const OrganizationEvents = () => {
   const [selectedEvents, setSelectedEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [view, setView] = useState('month');
   const navigate = useNavigate();
+  const calendarRef = React.useRef(null);
 
   // Get auth token and user info
   const getAuthHeaders = () => {
@@ -34,6 +33,65 @@ const OrganizationEvents = () => {
         'Content-Type': 'application/json'
       }
     };
+  };
+
+  // Format event data for FullCalendar - using simpler format that works better
+  const formatEventsForFullCalendar = event => {
+    // Determine event color based on type
+    const backgroundColor = event.formType === 'Activity' ? '#5cb85c' : '#f0ad4e';
+    const borderColor = event.formType === 'Activity' ? '#4cae4c' : '#eea236';
+    const title =
+      event.formType === 'Project' ? event.projectTitle : event.eventTitle || event.title;
+
+    // Calculate duration for display
+    const duration = calculateDuration(event.startDate, event.endDate);
+    const displayTitle = `${title} (${duration})`;
+
+    // For multi-day events
+    if (duration !== '1 day') {
+      return {
+        id: event._id,
+        title: displayTitle,
+        start: event.startDate,
+        end: moment(event.endDate).add(1, 'days').format('YYYY-MM-DD'), // Add 1 day to end date for proper display
+        backgroundColor,
+        borderColor,
+        textColor: 'white',
+        extendedProps: {
+          description: event.formType === 'Project' ? event.projectDescription : event.description,
+          location: event.location || 'TBA',
+          organization: event.organization?.organizationName || 'N/A',
+          formType: event.formType,
+          duration: duration
+        }
+      };
+    }
+    // For single-day events
+    else {
+      return {
+        id: event._id,
+        title: displayTitle,
+        date: event.startDate, // Use date property for single-day events
+        backgroundColor,
+        borderColor,
+        textColor: 'white',
+        extendedProps: {
+          description: event.formType === 'Project' ? event.projectDescription : event.description,
+          location: event.location || 'TBA',
+          organization: event.organization?.organizationName || 'N/A',
+          formType: event.formType,
+          duration: duration
+        }
+      };
+    }
+  };
+
+  // Calculate event duration
+  const calculateDuration = (start, end) => {
+    const startDate = moment(start).startOf('day');
+    const endDate = moment(end).startOf('day');
+    const duration = endDate.diff(startDate, 'days') + 1;
+    return duration === 1 ? '1 day' : `${duration} days`;
   };
 
   // Fetch calendar events from backend
@@ -56,24 +114,18 @@ const OrganizationEvents = () => {
         }
       );
 
-      const formattedEvents = response.data.map(event => ({
-        id: event._id,
-        title: event.formType === 'Project' ? event.projectTitle : event.eventTitle || event.title,
-        start: moment.utc(event.startDate).local().toDate(),
-        end: moment.utc(event.endDate).local().toDate(),
-        description: event.formType === 'Project' ? event.projectDescription : event.description,
-        location: event.location || 'TBA',
-        organization: event.organization?.organizationName || 'N/A',
-        type: event.formType,
-        duration: calculateDuration(event.startDate, event.endDate),
-        allDay: true,
-        rawStart: event.startDate,
-        rawEnd: event.endDate,
-        projectTitle: event.projectTitle,
-        eventTitle: event.eventTitle,
-        formType: event.formType
-      }));
+      console.log('Raw events from API:', response.data);
 
+      if (!response.data || response.data.length === 0) {
+        console.log('No events returned from API');
+        setEvents([]);
+        setLoading(false);
+        return;
+      }
+
+      // Format dates properly for FullCalendar
+      const formattedEvents = response.data.map(formatEventsForFullCalendar);
+      console.log('Formatted events for calendar:', formattedEvents);
       setEvents(formattedEvents);
     } catch (err) {
       console.error('Error fetching calendar events:', err);
@@ -91,41 +143,40 @@ const OrganizationEvents = () => {
     }
   };
 
-  // Fetch events for specific month
-  const fetchCalendarEventsForMonth = async date => {
+  // Fetch events for specific date range (when view changes)
+  const handleDatesSet = calendarInfo => {
+    const { start, end } = calendarInfo.view;
+    fetchCalendarEventsForRange(start, end);
+  };
+
+  // Fetch events for specific date range
+  const fetchCalendarEventsForRange = async (start, end) => {
     try {
       const authHeaders = getAuthHeaders();
       if (!authHeaders) return;
 
-      const startOfMonth = moment(date).startOf('month').toISOString();
-      const endOfMonth = moment(date).endOf('month').toISOString();
+      const startDate = moment(start).toISOString();
+      const endDate = moment(end).toISOString();
 
       const response = await axios.get(
         'https://studevent-server.vercel.app/api/calendar/events/range',
         {
-          params: { start: startOfMonth, end: endOfMonth },
+          params: { start: startDate, end: endDate },
           ...authHeaders
         }
       );
 
-      const formattedEvents = response.data.map(event => ({
-        id: event._id,
-        title: event.formType === 'Project' ? event.projectTitle : event.eventTitle || event.title,
-        start: moment.utc(event.startDate).local().toDate(),
-        end: moment.utc(event.endDate).local().toDate(),
-        description: event.formType === 'Project' ? event.projectDescription : event.description,
-        location: event.location || 'TBA',
-        organization: event.organization?.organizationName || 'N/A',
-        type: event.formType,
-        duration: calculateDuration(event.startDate, event.endDate),
-        allDay: true,
-        rawStart: event.startDate,
-        rawEnd: event.endDate,
-        projectTitle: event.projectTitle,
-        eventTitle: event.eventTitle,
-        formType: event.formType
-      }));
+      console.log('Raw events from range API:', response.data);
 
+      if (!response.data || response.data.length === 0) {
+        console.log('No events returned from range API');
+        setEvents([]);
+        return;
+      }
+
+      // Format dates properly for FullCalendar
+      const formattedEvents = response.data.map(formatEventsForFullCalendar);
+      console.log('Formatted events for calendar range:', formattedEvents);
       setEvents(formattedEvents);
     } catch (err) {
       console.error('Error fetching calendar events:', err);
@@ -141,143 +192,90 @@ const OrganizationEvents = () => {
     }
   };
 
-  // Calculate event duration
-  const calculateDuration = (start, end) => {
-    const startDate = moment.utc(start).local().startOf('day');
-    const endDate = moment.utc(end).local().startOf('day');
-    const duration = endDate.diff(startDate, 'days') + 1;
-    return duration === 1 ? '1 day' : `${duration} days`;
-  };
-
-  // Handle month change to fetch new events
-  const handleNavigate = newDate => {
-    setSelectedDate(newDate);
-    fetchCalendarEventsForMonth(newDate);
-  };
-
   useEffect(() => {
     fetchCalendarEvents();
   }, []);
 
-  // Handle date selection
-  const handleSelectSlot = slotInfo => {
-    const clickedDate = new Date(slotInfo.start);
+  // Handle date click
+  const handleDateClick = arg => {
+    const clickedDate = new Date(arg.date);
     setSelectedDate(clickedDate);
 
     const clickedDateClean = moment(clickedDate).startOf('day');
     const filteredEvents = events.filter(event => {
-      const eventStart = moment(event.start).startOf('day');
-      const eventEnd = moment(event.end).startOf('day');
+      // Handle both date and start/end formats
+      const eventStart = event.date
+        ? moment(event.date).startOf('day')
+        : moment(event.start).startOf('day');
+      const eventEnd = event.end ? moment(event.end).startOf('day') : eventStart;
+
       return clickedDateClean.isBetween(eventStart, eventEnd, 'day', '[]');
     });
 
     setSelectedEvents(filteredEvents);
   };
 
-  // Handle event selection
-  const handleSelectEvent = event => {
+  // Handle event click
+  const handleEventClick = arg => {
+    const event = arg.event;
     const eventDate = new Date(event.start);
     setSelectedDate(eventDate);
 
     const eventDateClean = moment(eventDate).startOf('day');
     const sameDay = events.filter(e => {
-      const eStart = moment(e.start).startOf('day');
-      const eEnd = moment(e.end).startOf('day');
+      // Handle both date and start/end formats
+      const eStart = e.date ? moment(e.date).startOf('day') : moment(e.start).startOf('day');
+      const eEnd = e.end ? moment(e.end).startOf('day') : eStart;
+
       return eventDateClean.isBetween(eStart, eEnd, 'day', '[]');
     });
 
-    const uniqueEvents = new Set([event, ...sameDay]);
-    const filteredEvents = [...uniqueEvents];
-    setSelectedEvents(filteredEvents);
+    // Get unique events for the day
+    const uniqueEvents = Array.from(new Set([event.toPlainObject(), ...sameDay].map(e => e.id)))
+      .map(id => events.find(e => e.id === id))
+      .filter(e => e !== undefined); // Filter out any undefined events
+
+    setSelectedEvents(uniqueEvents);
   };
 
-  // Handle view change
-  const handleViewChange = newView => {
-    setView(newView);
+  // Custom rendering for events to ensure they display properly
+  const renderEventContent = eventInfo => {
+    return (
+      <>
+        <div className="fc-event-main-frame">
+          <div className="fc-event-title-container">
+            <div className="fc-event-title">{eventInfo.event.title}</div>
+          </div>
+        </div>
+      </>
+    );
   };
 
-  // Custom event style based on type
-  const eventStyleGetter = event => {
-    let backgroundColor = '#3174ad';
-    let borderColor = '#1a3ab5';
+  // Add a test event for debugging
+  const addTestEvent = () => {
+    const today = new Date();
+    const tomorrow = new Date();
+    tomorrow.setDate(today.getDate() + 1);
 
-    if (event.type === 'Activity') {
-      backgroundColor = '#5cb85c';
-      borderColor = '#4cae4c';
-    } else if (event.type === 'Project') {
-      backgroundColor = '#f0ad4e';
-      borderColor = '#eea236';
-    }
+    const todayStr = moment(today).format('YYYY-MM-DD');
+    const tomorrowStr = moment(tomorrow).format('YYYY-MM-DD');
 
-    return {
-      style: {
-        backgroundColor,
-        borderLeft: `4px solid ${borderColor}`,
-        borderRadius: '4px',
-        opacity: 0.9,
-        color: 'white',
-        border: '0px',
-        display: 'block',
-        width: '100%',
-        boxSizing: 'border-box',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        overflow: 'hidden',
-        whiteSpace: 'nowrap',
-        textOverflow: 'ellipsis',
-        fontSize: '0.85rem',
-        padding: '2px 4px'
+    const testEvent = {
+      id: 'test-event',
+      title: 'Test Event (2 days)',
+      start: todayStr,
+      end: tomorrowStr,
+      backgroundColor: '#5cb85c',
+      borderColor: '#4cae4c',
+      textColor: 'white',
+      extendedProps: {
+        duration: '2 days',
+        formType: 'Activity'
       }
     };
-  };
 
-  // Custom day cell wrapper to improve touch areas
-  const DayCellWrapper = props => {
-    const { children, value } = props;
-    return (
-      <div
-        className="custom-day-cell"
-        style={{
-          height: '100%',
-          minHeight: '80px',
-          position: 'relative'
-        }}
-      >
-        {children}
-      </div>
-    );
-  };
-
-  // Custom event component with better sizing
-  const EventComponent = ({ event }) => (
-    <div className="rbc-event-content" style={{ padding: '2px', overflow: 'hidden' }}>
-      <strong style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-        {event.title}
-      </strong>
-      <div className="event-meta">
-        <span className="event-type-badge">{event.type}</span>
-        {event.duration !== '1 day' && <span>{event.duration}</span>}
-      </div>
-    </div>
-  );
-
-  // Custom toolbar with better responsive design
-  const CustomToolbar = toolbar => {
-    return (
-      <div className="rbc-toolbar">
-        <span className="rbc-toolbar-label">{toolbar.label}</span>
-        <div className="rbc-btn-group">
-          <button type="button" onClick={() => toolbar.onNavigate('PREV')}>
-            Prev
-          </button>
-          <button type="button" onClick={() => toolbar.onNavigate('TODAY')}>
-            Today
-          </button>
-          <button type="button" onClick={() => toolbar.onNavigate('NEXT')}>
-            Next
-          </button>
-        </div>
-      </div>
-    );
+    setEvents(prev => [...prev, testEvent]);
+    console.log('Added test event', testEvent);
   };
 
   return (
@@ -297,41 +295,29 @@ const OrganizationEvents = () => {
       <div className="calendar-content-container">
         <div className="calendar-main-wrapper">
           <div className="calendar-component-container">
-            <Calendar
-              localizer={localizer}
+            <button onClick={addTestEvent} className="test-button">
+              Add Test Event
+            </button>
+            <FullCalendar
+              ref={calendarRef}
+              plugins={[dayGridPlugin, interactionPlugin]}
+              initialView="dayGridMonth"
+              headerToolbar={{
+                left: 'prev,today,next',
+                center: 'title',
+                right: ''
+              }}
               events={events}
-              startAccessor="start"
-              endAccessor="end"
-              views={['month']}
-              style={{
-                height: '600px',
-                width: '100%'
-              }}
+              eventContent={renderEventContent}
+              displayEventTime={false}
+              eventDisplay="block"
+              dayMaxEventRows={3}
+              dayMaxEvents={false}
               selectable={true}
-              onSelectSlot={handleSelectSlot}
-              onSelectEvent={handleSelectEvent}
-              onNavigate={handleNavigate}
-              onView={handleViewChange}
-              eventPropGetter={eventStyleGetter}
-              components={{
-                event: EventComponent,
-                toolbar: CustomToolbar,
-                dateCellWrapper: DayCellWrapper
-              }}
-              view={view}
-              defaultView="month"
-              showMultiDayTimes={false}
-              popup={true}
-              popupOffset={10}
-              dayLayoutAlgorithm="no-overlap"
-              formats={{
-                dateFormat: 'D',
-                monthHeaderFormat: 'MMMM YYYY'
-              }}
-              longPressThreshold={250}
-              messages={{
-                showMore: total => `+${total} more`
-              }}
+              dateClick={handleDateClick}
+              eventClick={handleEventClick}
+              datesSet={handleDatesSet}
+              height="600px"
             />
           </div>
         </div>
@@ -342,32 +328,35 @@ const OrganizationEvents = () => {
             {selectedEvents.length > 0 ? (
               <ul className="event-list">
                 {selectedEvents.map((event, index) => (
-                  <li key={index} className={`event-item ${event.type.toLowerCase()}`}>
+                  <li
+                    key={index}
+                    className={`event-item ${event.extendedProps?.formType?.toLowerCase() || ''}`}
+                  >
                     <h3>
-                      {event.type === 'Project' ? (
+                      {event.extendedProps?.formType === 'Project' ? (
                         <>
-                          Project: <span className="event-title">{event.projectTitle}</span>
+                          Project: <span className="event-title">{event.title}</span>
                         </>
                       ) : (
                         <>
-                          Activity: <span className="event-title">{event.eventTitle}</span>
+                          Activity: <span className="event-title">{event.title}</span>
                         </>
                       )}
                     </h3>
                     <p>
-                      <strong>Type:</strong> {event.type}
+                      <strong>Type:</strong> {event.extendedProps?.formType}
                     </p>
                     <p>
-                      <strong>Organization:</strong> {event.organization}
+                      <strong>Organization:</strong> {event.extendedProps?.organization}
                     </p>
                     <p>
-                      <strong>Duration:</strong> {event.duration}
+                      <strong>Duration:</strong> {event.extendedProps?.duration}
                     </p>
                     <p>
-                      <strong>Location:</strong> {event.location}
+                      <strong>Location:</strong> {event.extendedProps?.location}
                     </p>
                     <p>
-                      <strong>Description:</strong> {event.description}
+                      <strong>Description:</strong> {event.extendedProps?.description}
                     </p>
                   </li>
                 ))}

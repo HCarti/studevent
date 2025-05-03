@@ -1,5 +1,9 @@
 {
   "dependencies": {
+    "@fullcalendar/core": "^6.1.17",
+    "@fullcalendar/daygrid": "^6.1.17",
+    "@fullcalendar/interaction": "^6.1.17",
+    "@fullcalendar/react": "^6.1.17",
     "@iconify/icons-mdi": "^1.2.48",
     "@iconify/react": "^5.0.2",
     "helmet": "^8.1.0",
