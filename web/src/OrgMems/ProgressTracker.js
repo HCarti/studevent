@@ -428,65 +428,67 @@ const ProgressTracker = () => {
 
     const renderProgressSteps = () => {
         if (!trackerData || !trackerData.steps) return null;
-      
+    
         return trackerData.steps.map((step, index) => {
-          if (step.stepName === 'Dean' && organizationType !== 'Recognized Student Organization - Academic') {
-            return null;
-          }
-      
-          // Get reviewer name - handle all possible cases
-          let reviewerName = 'Unknown Reviewer';
-          let reviewerRole = step.reviewedByRole || step.stepName;
-      
-          if (step.reviewedBy) {
-            if (typeof step.reviewedBy === 'object') {
-              // Case 1: Properly populated user object
-              if (step.reviewedBy.firstName || step.reviewedBy.lastName) {
-                reviewerName = `${step.reviewedBy.firstName || ''} ${step.reviewedBy.lastName || ''}`.trim();
-              } 
-              // Case 2: Object but no names - use email prefix
-              else if (step.reviewedBy.email) {
-                reviewerName = step.reviewedBy.email.split('@')[0];
-              }
+            if (step.stepName === 'Dean' && organizationType !== 'Recognized Student Organization - Academic') {
+                return null;
             }
-            // Case 3: Just an ID - we'll need to fetch this separately
-            else if (typeof step.reviewedBy === 'string') {
-              // You may want to implement a separate lookup here
-              reviewerName = `User ${step.reviewedBy.substring(0, 5)}...`;
+    
+            let reviewerName = 'Unknown Reviewer';
+            if (step.reviewedBy) {
+                if (typeof step.reviewedBy === 'object') {
+                    if (step.reviewedBy.firstName || step.reviewedBy.lastName) {
+                        reviewerName = `${step.reviewedBy.firstName || ''} ${step.reviewedBy.lastName || ''}`.trim();
+                    } else if (step.reviewedBy.email) {
+                        reviewerName = step.reviewedBy.email.split('@')[0];
+                    }
+                } else if (typeof step.reviewedBy === 'string') {
+                    reviewerName = `User ${step.reviewedBy.substring(0, 5)}...`;
+                }
             }
-          }
-      
-          return (
-            <div key={index} className="step-container">
-              <div className="progress-step">
-                {step.status === 'approved' ? (
-                  <CheckCircleIcon style={{ color: '#4caf50', fontSize: 24 }} />
-                ) : step.status === 'declined' ? (
-                  <HighlightOffIcon style={{ color: 'red', fontSize: 24 }} />
-                ) : (
-                  <RadioButtonUncheckedIcon style={{ color: '#ffeb3b', fontSize: 24 }} />
-                )}
-              </div>
-              <div className="step-label">
-                <strong>{step.stepName}</strong>
-                {step.status !== 'pending' && (
-                  <div className="reviewer-info">
-                    <small>
-                      Reviewed by: {reviewerName}
-                    </small>
-                    {step.timestamp && (
-                      <small>{new Date(step.timestamp).toLocaleString()}</small>
-                    )}
-                    {step.remarks && (
-                      <small className="remarks">Remarks: {step.remarks}</small>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
+
+            // Determine icon and status class
+            let icon, statusClass;
+            if (step.status === 'approved') {
+                icon = <CheckCircleIcon />;
+                statusClass = '';
+            } else if (step.status === 'declined') {
+                icon = <HighlightOffIcon />;
+                statusClass = 'declined';
+            } else {
+                icon = <RadioButtonUncheckedIcon />;
+                statusClass = 'pending';
+            }
+
+            return (
+                <div key={index} className="step-container">
+                    <div className={`progress-step ${statusClass}`}>{icon}</div>
+                    <div className="step-label">
+                        <span className="step-date">
+                            {step.timestamp ? new Date(step.timestamp).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : ''}
+                        </span>
+                        <strong>{step.stepName}</strong>
+                        <div style={{ color: '#444', marginBottom: 4 }}>
+                            {step.status === 'approved' && 'Step approved.'}
+                            {step.status === 'declined' && 'Step declined.'}
+                            {step.status === 'pending' && 'Awaiting review.'}
+                        </div>
+                        {step.status !== 'pending' && (
+                            <div className="reviewer-info">
+                                <small><span style={{ fontWeight: 'bold' }}>Reviewed by:</span> {reviewerName}</small>
+                                {step.timestamp && (
+                                    <small><span style={{ fontWeight: 'bold' }}>Time:</span> {new Date(step.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>
+                                )}
+                                {step.remarks && (
+                                    <small className="remarks"><span style={{ fontWeight: 'bold' }}>Remarks:</span> {step.remarks}</small>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
         });
-      };
+    };
 
     const isTrackerCompleted = () => {
         if (!trackerData || !trackerData.steps) return false;
@@ -503,7 +505,7 @@ const ProgressTracker = () => {
         return (
             <div className="loading-spinner-container">
                 <CircularProgress color="primary" size={60} />
-                <p>Loading form data...</p>
+                <p style={{ color: '#1a237e', marginTop: '1rem' }}>Loading form data...</p>
             </div>
         );
     }
@@ -511,21 +513,37 @@ const ProgressTracker = () => {
     if (fetchError) {
         return (
             <div className="error-container">
+                <HighlightOffIcon style={{ fontSize: 48, color: '#d32f2f' }} />
                 <p>Error loading data: {fetchError}</p>
-                <Button onClick={fetchAllData}>Retry</Button>
+                <Button 
+                    variant="contained" 
+                    onClick={fetchAllData}
+                    style={{ marginTop: '1rem' }}
+                >
+                    Retry
+                </Button>
             </div>
         );
     }
 
     if (!trackerData) {
-        return <p>No tracker data found.</p>;
+        return (
+            <div className="error-container">
+                <HighlightOffIcon style={{ fontSize: 48, color: '#d32f2f' }} />
+                <p>No tracker data found.</p>
+            </div>
+        );
     }
 
     return (
         <div className='prog-box'>
-            <h3 style={{ textAlign: 'center' }}>Event Proposal Tracker</h3>
+            <h3>Event Proposal Tracker</h3>
             {organizationType && (
-                <p style={{ textAlign: 'center', fontStyle: 'italic' }}>
+                <p style={{ 
+                    textAlign: 'center', 
+                    color: '#666',
+                    marginBottom: '2rem'
+                }}>
                     Organization Type: {organizationType}
                 </p>
             )}
@@ -548,7 +566,7 @@ const ProgressTracker = () => {
                                             if (isDeclinedChecked) setIsDeclinedChecked(false);
                                         }}
                                     />
-                                    Approve
+                                    <span style={{ color: '#4caf50' }}>Approve</span>
                                 </label>
                                 <label>
                                     <input
@@ -559,7 +577,7 @@ const ProgressTracker = () => {
                                             if (isApprovedChecked) setIsApprovedChecked(false);
                                         }}
                                     />
-                                    Decline
+                                    <span style={{ color: '#f44336' }}>Decline</span>
                                 </label>
                             </div>
                             <textarea
@@ -568,7 +586,7 @@ const ProgressTracker = () => {
                                 value={remarks}
                                 onChange={(e) => setRemarks(e.target.value)}
                             />
-                            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
                                 <Button 
                                     variant="outlined" 
                                     onClick={() => {
@@ -577,6 +595,7 @@ const ProgressTracker = () => {
                                         setIsDeclinedChecked(false);
                                         setRemarks('');
                                     }}
+                                    style={{ color: '#666' }}
                                 >
                                     Cancel
                                 </Button>
@@ -584,6 +603,12 @@ const ProgressTracker = () => {
                                     variant="contained" 
                                     onClick={handleSaveClick}
                                     disabled={!isApprovedChecked && !isDeclinedChecked}
+                                    style={{ 
+                                        backgroundColor: isApprovedChecked ? '#4caf50' : '#f44336',
+                                        '&:hover': {
+                                            backgroundColor: isApprovedChecked ? '#388e3c' : '#d32f2f'
+                                        }
+                                    }}
                                 >
                                     Submit Review
                                 </Button>
@@ -595,7 +620,7 @@ const ProgressTracker = () => {
                                 <div className="pdf-download-container">
                                     {pdfStatus.error && (
                                         <div className="pdf-error-message">
-                                            <small style={{ color: 'red' }}>{pdfStatus.error}</small>
+                                            <small style={{ color: '#f44336' }}>{pdfStatus.error}</small>
                                         </div>
                                     )}
                                     <SafePDFDownload />
@@ -616,16 +641,21 @@ const ProgressTracker = () => {
                                     <Button 
                                         variant="contained" 
                                         disabled={loading}
+                                        style={{ backgroundColor: '#1a237e' }}
                                     >
                                         {loading ? 'Preparing PDF...' : 'VIEW FORMS'}
                                     </Button>
                                 )}
                             </PDFDownloadLink>
                             {shouldShowEditButton() && (
-                    <Button variant="contained" onClick={() => setIsEditing(true)}>
-                        EDIT TRACKER
-                    </Button>
-                )}
+                                <Button 
+                                    variant="contained" 
+                                    onClick={() => setIsEditing(true)}
+                                    style={{ backgroundColor: '#1a237e' }}
+                                >
+                                    EDIT TRACKER
+                                </Button>
+                            )}
                         </div>
                     )}
                 </div>
@@ -636,7 +666,7 @@ const ProgressTracker = () => {
                         {feedbackSubmitted ? (
                             <div className="feedback-thank-you">
                                 <CheckCircleIcon style={{ color: '#4caf50' }} />
-                                Thank you for your feedback!
+                                <span>Thank you for your feedback!</span>
                             </div>
                         ) : (
                             <>
@@ -647,11 +677,15 @@ const ProgressTracker = () => {
                                     onChange={(e) => setFeedbackText(e.target.value)}
                                     disabled={isSubmittingFeedback}
                                 />
-                                {feedbackError && <small style={{ color: 'red' }}>{feedbackError}</small>}
+                                {feedbackError && <small style={{ color: '#f44336' }}>{feedbackError}</small>}
                                 <Button 
                                     variant="contained" 
                                     onClick={handleFeedbackSubmit}
                                     disabled={!feedbackText.trim() || isSubmittingFeedback}
+                                    style={{ 
+                                        backgroundColor: '#1a237e',
+                                        marginTop: '1rem'
+                                    }}
                                 >
                                     {isSubmittingFeedback ? 'Submitting...' : 'Submit Feedback'}
                                 </Button>
