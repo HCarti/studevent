@@ -758,44 +758,11 @@ exports.updateForm = async (req, res) => {
     // Find the tracker
     const tracker = await EventTracker.findOne({ formId }).session(session);
     
-    // Handle declined forms first
-    if (tracker && tracker.currentStatus === 'declined') {
-      // Check organization user
-      const isOrganizationUser = user.role === 'Organization' && 
-                               (form.studentOrganization.equals(user._id) || 
-                                user.organizationId.equals(form.studentOrganization));
-      
-      if (!isOrganizationUser && !isAdmin) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(403).json({ 
-          message: 'Only the organization can update a declined form' 
-        });
-      }
-
-      // Reset tracker for declined form
-      const declinedStep = tracker.steps.find(step => step.status === 'declined');
-      if (declinedStep) {
-        tracker.currentStep = declinedStep.stepName;
-        tracker.currentAuthority = declinedStep.reviewerRole;
-        tracker.currentStatus = 'pending';
-        
-        const declinedStepIndex = tracker.steps.findIndex(step => step.stepName === declinedStep.stepName);
-        for (let i = declinedStepIndex; i < tracker.steps.length; i++) {
-          tracker.steps[i].status = 'pending';
-          tracker.steps[i].remarks = '';
-          tracker.steps[i].timestamp = null;
-        }
-        
-        await tracker.save({ session });
-      }
-      
-      // Skip all other checks for declined forms
-      shouldSkipChecks = true;
-    }
+    // Check if this is a declined form that's being resubmitted
+    const isDeclinedResubmission = tracker && tracker.currentStatus === 'declined';
 
     // For non-declined forms, perform regular checks
-    if (tracker && !shouldSkipChecks) {
+    if (tracker && !isDeclinedResubmission) {
       // Project form specific check
       if (form.formType === 'Project') {
         const isUnderReview = tracker.steps.some(
@@ -827,6 +794,39 @@ exports.updateForm = async (req, res) => {
       }
     }
 
+    // Handle declined form resubmission
+    if (isDeclinedResubmission) {
+      // Check organization user
+      const isOrganizationUser = user.role === 'Organization' && 
+                               (form.studentOrganization.equals(user._id) || 
+                                user.organizationId.equals(form.studentOrganization));
+      
+      if (!isOrganizationUser && !isAdmin) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(403).json({ 
+          message: 'Only the organization can update a declined form' 
+        });
+      }
+
+      // Reset tracker for declined form
+      const declinedStep = tracker.steps.find(step => step.status === 'declined');
+      if (declinedStep) {
+        tracker.currentStep = declinedStep.stepName;
+        tracker.currentAuthority = declinedStep.reviewerRole;
+        tracker.currentStatus = 'pending';
+        
+        const declinedStepIndex = tracker.steps.findIndex(step => step.stepName === declinedStep.stepName);
+        for (let i = declinedStepIndex; i < tracker.steps.length; i++) {
+          tracker.steps[i].status = 'pending';
+          tracker.steps[i].remarks = '';
+          tracker.steps[i].timestamp = null;
+        }
+        
+        await tracker.save({ session });
+      }
+    }
+
     // Perform the form update
     const updateOptions = {
       new: true,
@@ -841,7 +841,7 @@ exports.updateForm = async (req, res) => {
         { 
           ...updates,
           lastEdited: new Date(),
-          status: tracker && tracker.currentStatus === 'declined' ? 'resubmitted' : form.status
+          status: isDeclinedResubmission ? 'resubmitted' : form.status
         },
         updateOptions
       );
@@ -851,7 +851,7 @@ exports.updateForm = async (req, res) => {
         { 
           ...updates,
           lastEdited: new Date(),
-          finalStatus: tracker && tracker.currentStatus === 'declined' ? 'resubmitted' : form.finalStatus
+          finalStatus: isDeclinedResubmission ? 'resubmitted' : form.finalStatus
         },
         updateOptions
       );
@@ -865,7 +865,7 @@ exports.updateForm = async (req, res) => {
     }
 
     // If this was a declined form being resubmitted, notify the reviewer
-    if (tracker && tracker.currentStatus === 'declined') {
+    if (isDeclinedResubmission) {
       const currentStep = tracker.steps.find(step => step.stepName === tracker.currentStep);
       
       if (currentStep) {
@@ -900,7 +900,7 @@ exports.updateForm = async (req, res) => {
     if (form.emailAddress) {
       await Notification.create([{
         userEmail: form.emailAddress,
-        message: `Your ${form.formType} form has been ${tracker?.currentStatus === 'declined' ? 'updated and resubmitted' : 'updated'} successfully!`,
+        message: `Your ${form.formType} form has been ${isDeclinedResubmission ? 'updated and resubmitted' : 'updated'} successfully!`,
         type: 'tracker',
         formId: form._id,
         formType: form.formType,
@@ -913,7 +913,7 @@ exports.updateForm = async (req, res) => {
     session.endSession();
 
     res.status(200).json({
-      message: tracker?.currentStatus === 'declined' ? 'Form updated and resubmitted successfully' : 'Form updated successfully',
+      message: isDeclinedResubmission ? 'Form updated and resubmitted successfully' : 'Form updated successfully',
       form: updatedForm,
       tracker: tracker ? await EventTracker.findOne({ formId }) : null
     });
