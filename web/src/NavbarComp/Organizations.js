@@ -68,6 +68,7 @@ const organizations = [
 
 const Organizations = () => {
   const [selectedOrganization, setSelectedOrganization] = useState(null);
+  const [showAll, setShowAll] = useState(false);
 
   const openModal = (org) => {
     setSelectedOrganization(org);
@@ -75,6 +76,10 @@ const Organizations = () => {
 
   const closeModal = () => {
     setSelectedOrganization(null);
+  };
+
+  const toggleViewAll = () => {
+    setShowAll(!showAll);
   };
 
   const settings = {
@@ -101,19 +106,37 @@ const Organizations = () => {
     <React.Fragment>
       <div className="organizations-page">
         <h1>ORGANIZATIONS</h1>
-        <Slider {...settings}>
-          {organizations.map((org) => (
-            <div key={org.id} className="cards-slider">
-              <div className="cards" onClick={() => openModal(org)}>
+        {!showAll ? (
+          <Slider {...settings}>
+            {organizations.map((org) => (
+              <div key={org.id} className="cards-slider">
+                <div className="cards" onClick={() => openModal(org)}>
+                  <img src={org.image} alt={org.name} className="cards-image" />
+                  <div className="cards-info">
+                    <h2>{org.name}</h2>
+                    <p>{org.description}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </Slider>
+        ) : (
+          <div className="organizations-grid">
+            {organizations.map((org) => (
+              <div key={org.id} className="cards" onClick={() => openModal(org)}>
                 <img src={org.image} alt={org.name} className="cards-image" />
                 <div className="cards-info">
                   <h2>{org.name}</h2>
                   <p>{org.description}</p>
                 </div>
               </div>
-            </div>
-          ))}
-        </Slider>
+            ))}
+          </div>
+        )}
+
+        <button className="view-all-button" onClick={toggleViewAll}>
+          {showAll ? 'View Carousel' : 'View All Organizations'}
+        </button>
 
         <div className="mission-vision">
           <p>School organizations bring students together to pursue shared interests, build community, and develop leadership skills.
