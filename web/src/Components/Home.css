@@ -1,6 +1,8 @@
 /* Home Page General Styles */
-body{
-  align-items: center;
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
   background-image: url('../Images/Nu_building2.png');
   background-size: cover;
   background-position: center;
@@ -8,19 +10,28 @@ body{
   width: 100%;
   overflow-x: hidden;
   position: relative;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
 .home-parallax-container {
   width: 100%;
-  overflow-x: hidden;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 /* Login Section Styles */
 .home-login-section {
-  min-height: 100vh;
+  width: 100%;
+  max-width: 1200px;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 40px 20px;
 }
 
 .home-login-container {
@@ -28,59 +39,76 @@ body{
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding-top: 80px;
   width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
 }
 
 .home-login-box {
-  background-color: rgba(249, 249, 249, 0.9); /* Slightly transparent */
-  border-radius: 20px;
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-  padding: 30px;
-  width: 360px;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  width: 100%;
   text-align: center;
-  transition: width 0.3s ease;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
 }
 
 .home-login-title {
   color: #1a3ab5;
-  margin-bottom: 30px;
-  font-size: 25px;
-  font-weight: bold;
+  margin-bottom: 32px;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 /* Input Field Styles */
 .home-input-container {
   display: flex;
   align-items: center;
-  margin-bottom: 15px;
-  padding: 10px;
-  border-radius: 15px;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  background-color: white;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.home-input-container:hover {
+  box-shadow: 0 6px 18px rgba(26, 58, 181, 0.12), 0 1.5px 4px rgba(0,0,0,0.08);
+  transform: scale(1.03) translateY(-2px);
+  border-color: #1a3ab5;
+  background-color: #f5f8ff;
 }
 
 .home-input-focused {
-  transform: scale(1.05);
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(26, 58, 181, 0.1);
+  border-color: #1a3ab5;
+}
+
+.home-input-error {
+  border-color: #ff4d4f;
+  background-color: rgba(255, 77, 79, 0.05);
 }
 
 .home-input-icon {
-  margin-right: 10px;
-  color: #555;
+  margin-right: 12px;
+  color: #1a3ab5;
+  font-size: 20px;
 }
 
 .home-email-input, 
 .home-password-input {
-  border: 1px solid #000;
-  height: 30px;
-  border-radius: 10px;
-  padding-left: 10px;
-  padding-right: 40px;
+  border: none;
+  height: 40px;
+  padding: 0 12px;
   font-size: 16px;
   width: 100%;
-  box-sizing: border-box;
+  background: transparent;
+  color: #333;
   font-family: inherit;
   outline: none;
 }
@@ -91,151 +119,227 @@ body{
 
 .home-toggle-password-btn {
   position: absolute;
-  right: 10px;
+  right: 16px;
   background: none;
   border: none;
   cursor: pointer;
-  color: #555;
+  color: #666;
   padding: 0;
+  transition: color 0.3s ease;
 }
 
 .home-toggle-password-btn:hover {
   color: #1a3ab5;
 }
 
-/* Snackbar positioning */
-.MuiAlert-root {
-  margin-top: 60px; /* Adjust based on your navbar height */
-  width: 100%;
-  max-width: 400px;
-}
-
 /* Button Styles */
 .home-login-btn {
   width: 100%;
-  padding: 12px 0;
-  background-color: #1a3ab5;
+  padding: 14px 0;
+  background: linear-gradient(135deg, #1a3ab5 0%, #145ab7 100%);
   color: white;
-  border-radius: 17px;
+  border-radius: 16px;
   border: none;
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
-  margin-top: 8px;
-  transition: transform 0.3s ease, background-color 0.3s ease;
+  margin-top: 24px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .home-login-btn:hover {
-  transform: scale(1.05);
-  background-color: #145ab7;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(26, 58, 181, 0.2);
+}
+
+.home-login-btn:active {
+  transform: translateY(0);
 }
 
 /* Logo Styles */
 .home-logo-container {
-  margin-top: 20px;
+  margin: 32px 0;
+  transition: transform 0.3s ease;
+}
+
+.home-logo-container:hover {
+  transform: scale(1.05);
 }
 
 .home-nu-logo {
-  width: 100px;
+  width: 120px;
   height: auto;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 /* Footer Text Styles */
 .home-footer-text {
   text-align: center;
-  color: #333;
-  margin-top: 20px;
-  animation: home-slide-in 1.0s ease forwards;
-  padding: 10px;
-  border-radius: 10px;
+  color: #000;
+  margin-top: 25px;
+  margin-bottom: 40px;
+  padding: 0;
+  background: none;
+  border-radius: 0;
+  animation: fadeInUp 0.8s ease-out 0.1s both;
 }
 
 .home-footer-text h3 {
   color: #1a3ab5;
   font-weight: bold;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
+  font-size: 22px;
+  letter-spacing: 0.5px;
+  text-shadow: none;
+  animation: fadeInUp 0.8s ease-out 0.2s both;
 }
 
 .home-footer-text p {
-  margin: 5px 0;
-  font-size: 14px;
+  margin: 8px 0;
+  font-size: 15px;
+  color: #000;
+  font-weight: 400;
+  line-height: 1.6;
+  animation: fadeInUp 0.8s ease-out 0.3s both;
 }
 
 /* About Section Styles */
 .home-about-section {
-  padding: 80px 20px 100px;
+  padding: 0;
+  margin: 32px 0 0 0;
+  background: none;
+  border-radius: 0;
   text-align: center;
-}
-
-.home-about-content {
-  max-width: 800px;
-  margin: 0 auto;
 }
 
 .home-about-title {
   color: #1a3ab5;
   font-weight: bold;
-  font-size: 24px;
-  margin-bottom: 20px;
+  font-size: 22px;
+  margin-bottom: 14px;
+  letter-spacing: 0.5px;
+  text-shadow: none;
+  animation: fadeInUp 0.8s ease-out 0.4s both;
+}
+
+.home-about-content {
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 .home-about-content p {
-  margin: 10px 0;
-  font-size: 16px;
-  line-height: 1.5;
+  margin: 8px 0;
+  font-size: 15px;
+  color: #000;
+  font-weight: 400;
+  line-height: 1.6;
+  animation: fadeInUp 0.8s ease-out 0.5s both;
 }
 
-/* Message Styles */
-.home-success-message {
-  color: #28a745;
-  font-size: 16px;
-  margin-top: 10px;
-  text-align: center;
+/* Parallax Effect */
+.home-parallax-bg {
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: transform 0.1s ease-out;
 }
 
-.home-error-message {
-  color: #dc3545;
-  font-size: 16px;
-  margin-top: 10px;
-  text-align: center;
+.home-parallax-bg:hover {
+  transform: translateZ(0);
 }
 
-/* Validation Error Styles */
-.home-input-error {
-  border: 1px solid #dc3545 !important;
-  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-}
-
+/* Error and Success Messages */
 .home-error-text {
-  color: #dc3545;
+  color: #ff4d4f;
   font-size: 14px;
-  margin-top: -10px;
-  margin-bottom: 10px;
+  margin: -16px 0 16px 16px;
   text-align: left;
-  padding-left: 15px;
 }
 
-.home-error-message {
-  color: #dc3545;
-  font-size: 16px;
-  margin-top: 10px;
-  text-align: center;
-  padding: 10px;
-  background-color: rgba(220, 53, 69, 0.1);
-  border-radius: 5px;
+/* Snackbar Styles */
+.MuiAlert-root {
+  margin-top: 20px;
+  width: 100%;
+  max-width: 400px;
+  border-radius: 12px;
 }
 
-.home-success-message {
-  color: #28a745;
-  font-size: 16px;
-  margin-top: 10px;
-  text-align: center;
-  padding: 10px;
-  background-color: rgba(40, 167, 69, 0.1);
-  border-radius: 5px;
+/* Responsive Design */
+@media (max-width: 768px) {
+  .home-login-section {
+    padding: 20px;
+  }
+
+  .home-login-box {
+    padding: 32px 24px;
+    margin: 0 16px;
+  }
+
+  .home-login-title {
+    font-size: 24px;
+    margin-bottom: 24px;
+  }
+
+  .home-input-container {
+    padding: 10px 14px;
+  }
+
+  .home-email-input,
+  .home-password-input {
+    height: 36px;
+    font-size: 15px;
+  }
+
+  .home-login-btn {
+    padding: 12px 0;
+    font-size: 15px;
+  }
+
+  .home-nu-logo {
+    width: 100px;
+  }
+
+  .home-footer-text {
+    margin-top: 24px;
+    padding: 16px;
+  }
+
+  .home-footer-text h3 {
+    font-size: 18px;
+  }
+
+  .home-footer-text p {
+    font-size: 13px;
+  }
 }
 
-/* Animation Keyframes */
+@media (max-width: 480px) {
+  .home-login-box {
+    padding: 24px 20px;
+  }
+
+  .home-login-title {
+    font-size: 22px;
+  }
+
+  .home-input-container {
+    padding: 8px 12px;
+  }
+
+  .home-email-input,
+  .home-password-input {
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .home-login-btn {
+    padding: 10px 0;
+    font-size: 14px;
+  }
+}
+
+/* Animations */
 @keyframes home-slide-in {
   from {
     transform: translateY(100%);
@@ -258,63 +362,27 @@ body{
   }
 }
 
-/* Mobile Responsive Styles */
-@media (max-width: 768px) {
-  .home-login-container {
-    padding-top: 60px;
-    padding-left: 20px;
-    padding-right: 20px;
+.home-login-box {
+  animation: home-auto-show-animation 0.6s ease-out forwards;
+}
+
+.home-logo-container {
+  animation: home-slide-in 0.6s ease-out 0.2s forwards;
+  opacity: 0;
+}
+
+.home-footer-text {
+  animation: home-slide-in 0.6s ease-out 0.4s forwards;
+  opacity: 0;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
   }
- 
-  .home-login-box {
-    width: 100%;
-    padding: 20px;
-  }
- 
-  .home-nu-logo {
-    width: 80px;
-  }
- 
-  .home-footer-text h3 {
-    font-size: 18px;
-  }
- 
-  .home-login-btn {
-    padding: 10px;
-  }
- 
-  .home-about-section {
-    padding: 50px 20px;
-  }
- 
-  .home-about-content p {
-    font-size: 14px;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
-  .home-about-title {
-    font-size: 20px;
-  }
- 
-  .home-input-container {
-    padding: 8px;
-  }
- 
-  .home-input-icon {
-    margin-right: 5px;
-  }
- 
-  .home-email-input, 
-  .home-password-input {
-    padding-left: 8px;
-    padding-right: 30px;
-    font-size: 14px;
-  }
-
-  .home-email-input{
-    width: 100%;
-  }
- 
-  .home-login-btn {
-    font-size: 14px;
-    padding: 10px;
-  }
