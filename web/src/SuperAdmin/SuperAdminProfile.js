@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { PuffLoader } from 'react-spinners';
 import { css } from '@emotion/react';
-import { FiEdit, FiLock } from 'react-icons/fi';
+import { FiEdit, FiLock, FiUpload, FiCheck, FiX } from 'react-icons/fi';
+import { toast } from 'react-toastify';
 
 const SuperAdminProfile = () => {
   const navigate = useNavigate();
@@ -20,12 +21,14 @@ const SuperAdminProfile = () => {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState({});
+  const [profileImage, setProfileImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
 
   // Custom CSS for the loader
   const override = css`
     display: block;
     margin: 0 auto;
-    border-color: red;
+    border-color: #0046ad;
   `;
 
   const fetchUserData = useCallback(async () => {
@@ -47,8 +50,10 @@ const SuperAdminProfile = () => {
         lastName: response.data.lastName || '',
         email: response.data.email || ''
       });
+      setImagePreview(response.data.logo || response.data.image || '/default-profile.png');
     } catch (error) {
       if (error.response?.status === 401) navigate('/');
+      toast.error('Failed to load profile data');
     } finally {
       setLoading(false);
     }
@@ -57,6 +62,18 @@ const SuperAdminProfile = () => {
   useEffect(() => {
     fetchUserData();
   }, [fetchUserData]);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfileImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleEditClick = () => {
     setIsEditing(true);
@@ -115,10 +132,24 @@ const SuperAdminProfile = () => {
     try {
       setIsSaving(true);
       const token = localStorage.getItem('token');
+      
+      const formData = new FormData();
+      formData.append('firstName', editedUser.firstName);
+      formData.append('lastName', editedUser.lastName);
+      formData.append('email', editedUser.email);
+      if (profileImage) {
+        formData.append('image', profileImage);
+      }
+
       await axios.put(
         'https://studevent-server.vercel.app/api/users/update/profile',
-        editedUser,
-        { headers: { Authorization: `Bearer ${token}` } }
+        formData,
+        { 
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          } 
+        }
       );
       
       setUser(prev => ({
@@ -127,9 +158,10 @@ const SuperAdminProfile = () => {
       }));
       
       setIsEditing(false);
+      toast.success('Profile updated successfully!');
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Failed to update profile. Please try again.');
+      toast.error('Failed to update profile. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -150,7 +182,7 @@ const SuperAdminProfile = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
-      alert('Password changed successfully!');
+      toast.success('Password changed successfully!');
       setIsChangingPassword(false);
       setPasswordData({
         currentPassword: '',
@@ -160,9 +192,9 @@ const SuperAdminProfile = () => {
     } catch (error) {
       console.error('Error changing password:', error);
       if (error.response?.data?.message) {
-        alert(error.response.data.message);
+        toast.error(error.response.data.message);
       } else {
-        alert('Failed to change password. Please try again.');
+        toast.error('Failed to change password. Please try again.');
       }
     } finally {
       setIsSaving(false);
@@ -178,6 +210,7 @@ const SuperAdminProfile = () => {
       email: user.email || ''
     });
     setErrors({});
+    setImagePreview(user?.logo || user?.image || '/default-profile.png');
   };
 
   if (loading) {
@@ -202,16 +235,29 @@ const SuperAdminProfile = () => {
     <div className="sap-container">
       <div className="sap-profile-container">
         <div className="sap-profile-left">
-          <div
-            className="sap-profile-pic"
-            style={{
-              backgroundImage: `url(${user?.logo || user?.image || '/default-profile.png'})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center'
-            }}
-          />
+          <div className="sap-profile-pic-container">
+            <div
+              className="sap-profile-pic"
+              style={{
+                backgroundImage: `url(${imagePreview})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}
+            />
+            {isEditing && (
+              <label className="sap-upload-button">
+                <FiUpload className="upload-icon" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="sap-file-input"
+                />
+              </label>
+            )}
+          </div>
           <h2>{`${user?.firstName} ${user?.lastName}`}</h2>
-          <p>{`Joined ${user?.joinedDate || "June 6, 2023"}`}</p>
+          <p className="sap-join-date">{`Joined ${user?.joinedDate || "June 6, 2023"}`}</p>
           <div className="sap-profile-actions">
             <button className="sap-action-button" onClick={handleEditClick}>
               <FiEdit className="action-icon" /> Edit Profile
@@ -224,27 +270,33 @@ const SuperAdminProfile = () => {
         <div className="sap-profile-right">
           <h2>Account Information</h2>
           <form>
-            <label>First Name:</label>
-            <input 
-              className="sap-proflie-input" 
-              type="text" 
-              value={user?.firstName || "Admin"} 
-              readOnly 
-            />
-            <label>Last Name:</label>
-            <input 
-              className="sap-proflie-input" 
-              type="text" 
-              value={user?.lastName || "Unknown"} 
-              readOnly 
-            />
-            <label>Email:</label>
-            <input 
-              className="sap-proflie-input" 
-              type="email" 
-              value={user?.email || "unknown@email.com"} 
-              readOnly 
-            />
+            <div className="sap-form-group">
+              <label>First Name:</label>
+              <input 
+                className="sap-proflie-input" 
+                type="text" 
+                value={user?.firstName || "Admin"} 
+                readOnly 
+              />
+            </div>
+            <div className="sap-form-group">
+              <label>Last Name:</label>
+              <input 
+                className="sap-proflie-input" 
+                type="text" 
+                value={user?.lastName || "Unknown"} 
+                readOnly 
+              />
+            </div>
+            <div className="sap-form-group">
+              <label>Email:</label>
+              <input 
+                className="sap-proflie-input" 
+                type="email" 
+                value={user?.email || "unknown@email.com"} 
+                readOnly 
+              />
+            </div>
           </form>
         </div>
       </div>
@@ -292,14 +344,24 @@ const SuperAdminProfile = () => {
                 onClick={handleCancel}
                 disabled={isSaving}
               >
-                Cancel
+                <FiX className="action-icon" /> Cancel
               </button>
               <button 
                 className="sap-modal-save" 
                 onClick={handleSaveChanges}
                 disabled={isSaving}
               >
-                {isSaving ? 'Saving...' : 'Save Changes'}
+                {isSaving ? (
+                  <>
+                    <PuffLoader color="#fff" size={20} />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <FiCheck className="action-icon" />
+                    <span>Save Changes</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -352,14 +414,24 @@ const SuperAdminProfile = () => {
                 onClick={handleCancel}
                 disabled={isSaving}
               >
-                Cancel
+                <FiX className="action-icon" /> Cancel
               </button>
               <button 
                 className="sap-modal-save" 
                 onClick={handleSavePassword}
                 disabled={isSaving}
               >
-                {isSaving ? 'Saving...' : 'Change Password'}
+                {isSaving ? (
+                  <>
+                    <PuffLoader color="#fff" size={20} />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <FiCheck className="action-icon" />
+                    <span>Change Password</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
