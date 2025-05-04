@@ -54,6 +54,8 @@ router.post('/check-adviser-assignment', authenticateToken, usersController.chec
 
 // User registration route with dual signature support
 router.post('/', 
+  authenticateToken, // Add authentication middleware
+  restrictTo('SuperAdmin'), // Restrict to SuperAdmin only
   upload.fields([
     { name: 'logo', maxCount: 1 },
     { name: 'signature', maxCount: 1 },
@@ -80,7 +82,6 @@ router.post('/',
       } else if (role === 'SuperAdmin') {
         return res.status(400).json({ message: 'Use /superadmin route for creating SuperAdmin users' });
       }
-      // No signature validation for SuperAdmin
 
       // Upload logo
       const logoBlob = await put(
@@ -110,9 +111,18 @@ router.post('/',
         signatureUrl = sigBlob.url;
       }
 
-      // Create user
+      // Create user with requesting user info
+      const userData = {
+        ...req.body,
+        requestingUser: { // Pass the authenticated SuperAdmin info
+          _id: req.user._id,
+          email: req.user.email,
+          role: req.user.role
+        }
+      };
+
       const newUser = await usersController.addUser(
-        req.body,
+        userData, // Now includes requestingUser
         logoBlob.url,
         signatureUrl,
         presidentSignatureUrl

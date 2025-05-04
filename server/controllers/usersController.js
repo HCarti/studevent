@@ -129,6 +129,7 @@ const addUser = async (userData, logoUrl, signatureUrl, presidentSignatureUrl) =
     const existingUser = await User.findOne({ email: userData.email });
     if (existingUser) throw new Error('Email already exists');
 
+    // Create the new user
     const newUser = new User({
       email: userData.email,
       password: userData.password,
@@ -166,16 +167,29 @@ const addUser = async (userData, logoUrl, signatureUrl, presidentSignatureUrl) =
       newUser.presidentSignature = presidentSignatureUrl;
     }
 
-        // Log the action if created by SuperAdmin
-        if (userData.requestingUser && userData.requestingUser.role === 'SuperAdmin') {
-          await logSuperAdminAction(
-            userData.requestingUser,
-            'USER_CREATED',
-            newUser
-          );
-        }
-
+    // Save the user first to get the _id
     await newUser.save();
+
+    // Log the action if created by SuperAdmin
+    if (userData.requestingUser && userData.requestingUser.role === 'SuperAdmin') {
+      await logSuperAdminAction(
+        {
+          _id: userData.requestingUser._id,
+          email: userData.requestingUser.email,
+          role: userData.requestingUser.role
+        },
+        'USER_CREATED',
+        {
+          _id: newUser._id,
+          email: newUser.email,
+          role: newUser.role
+        },
+        {
+          status: newUser.status
+        }
+      );
+    }
+
     return newUser;
   } catch (error) {
     console.error('Error in addUser:', error);
