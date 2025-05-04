@@ -281,10 +281,15 @@ const getUserById = async (req, res) => {
 // Delete user by ID
 const deleteUserById = async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
-    if (!user) {
+    const userToDelete = await User.findById(req.params.id);
+    
+    if (!userToDelete) {
       return res.status(404).json({ message: 'User not found' });
     }
+
+    await User.findByIdAndDelete(req.params.id);
+
+    // Log the action if performed by SuperAdmin
     if (req.user.role === 'SuperAdmin') {
       await logSuperAdminAction(
         req.user,
@@ -296,6 +301,7 @@ const deleteUserById = async (req, res) => {
         }
       );
     }
+
     res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error deleting user' });
