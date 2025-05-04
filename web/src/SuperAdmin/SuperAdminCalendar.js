@@ -289,64 +289,61 @@ const SuperAdminCalendar = () => {
   // Submit blocked dates to backend
 // Submit blocked dates to backend
 const handleBlockSubmit = async () => {
-  try {
-    // Get user info
-    const storedUser = localStorage.getItem('user');
-    const parsedUser = storedUser ? JSON.parse(storedUser) : null;
-    
-    if (!parsedUser || !parsedUser._id) {
-      setError('User information not found. Please log in again.');
-      return;
+    try {
+      // Get user info
+      const storedUser = localStorage.getItem('user');
+      const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+      
+      if (!parsedUser || !parsedUser._id) {
+        setError('User information not found. Please log in again.');
+        return;
+      }
+  
+      // Normalize dates to start of day
+      const normalizeDate = (date) => {
+        const d = new Date(date);
+        d.setUTCHours(0, 0, 0, 0);
+        return d;
+      };
+  
+      const start = normalizeDate(selectedRange.start);
+      const end = selectedRange.end ? normalizeDate(selectedRange.end) : null;
+  
+      // Validate dates
+      if (end && end < start) {
+        setError('End date cannot be before start date');
+        return;
+      }
+  
+      const authHeaders = getAuthHeaders();
+      if (!authHeaders) return;
+  
+      const blockData = {
+        title: blockTitle,
+        description: blockDescription,
+        startDate: start.toISOString(),
+        endDate: end ? end.toISOString() : undefined,
+        createdBy: parsedUser._id
+      };
+  
+      const response = await axios.post(
+        'https://studevent-server.vercel.app/api/calendar/block-dates',
+        blockData,
+        authHeaders
+      );
+  
+      if (response.data) {
+        await fetchBlockedDates();
+        setShowBlockModal(false);
+        setBlockTitle('');
+        setBlockDescription('');
+        setError(null);
+      }
+    } catch (err) {
+      console.error('Error blocking dates:', err);
+      setError(err.response?.data?.error || 'Failed to block dates');
     }
-
-    // Validate dates
-    const start = new Date(selectedRange.start);
-    const end = selectedRange.end ? new Date(selectedRange.end) : start;
-    
-    if (isNaN(start.getTime())) {
-      setError('Invalid start date');
-      return;
-    }
-
-    if (end && isNaN(end.getTime())) {
-      setError('Invalid end date');
-      return;
-    }
-
-    if (end < start) {
-      setError('End date cannot be before start date');
-      return;
-    }
-
-    const authHeaders = getAuthHeaders();
-    if (!authHeaders) return;
-
-    const blockData = {
-      title: blockTitle,
-      description: blockDescription,
-      startDate: start.toISOString(),
-      endDate: end.getTime() === start.getTime() ? undefined : end.toISOString(),
-      createdBy: parsedUser._id
-    };
-
-    const response = await axios.post(
-      'https://studevent-server.vercel.app/api/calendar/block-dates',
-      blockData,
-      authHeaders
-    );
-
-    if (response.data) {
-      await fetchBlockedDates();
-      setShowBlockModal(false);
-      setBlockTitle('');
-      setBlockDescription('');
-      setError(null);
-    }
-  } catch (err) {
-    console.error('Error blocking dates:', err);
-    setError(err.response?.data?.error || 'Failed to block dates');
-  }
-};
+  };
 
   useEffect(() => {
     fetchCalendarEvents();

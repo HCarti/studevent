@@ -208,60 +208,70 @@ router.get('/blocked-dates', async (req, res) => {
 
 // Create new blocked date range
 // Block dates route
-// Block dates route
 router.post('/block-dates', verifySuperAdmin, async (req, res) => {
   try {
     const { title, description, startDate, endDate } = req.body;
-    
+
     // Validate required fields
     if (!title || !startDate) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Validation failed',
-        details: 'Title and start date are required' 
+        details: 'Title and start date are required'
       });
     }
 
-    // Date validation and formatting
+    // Parse and validate dates
     const start = new Date(startDate);
     const end = endDate ? new Date(endDate) : null;
-    
+
     if (isNaN(start.getTime())) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Validation failed',
-        details: 'Invalid start date format' 
+        details: 'Invalid start date format'
       });
     }
 
     if (end && isNaN(end.getTime())) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Validation failed',
-        details: 'Invalid end date format' 
+        details: 'Invalid end date format'
       });
     }
 
-    if (end && end < start) {
-      return res.status(400).json({ 
+    // Normalize dates to start of day for comparison
+    const startOfDay = new Date(start);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+
+    let endOfDay = null;
+    if (end) {
+      endOfDay = new Date(end);
+      endOfDay.setUTCHours(0, 0, 0, 0);
+    }
+
+    // Validate date range
+    if (endOfDay && endOfDay < startOfDay) {
+      return res.status(400).json({
         error: 'Validation failed',
-        details: 'End date must be after or equal to start date' 
+        details: 'End date must be after or equal to start date'
       });
     }
 
-    // Create new blocked date with createdBy
+    // Create blocked date entry
     const newBlock = new BlockedDate({
       title,
       description,
-      startDate: start,
-      endDate: end || undefined, // Store undefined if no end date
-      createdBy: req.user._id // Add the creator from verified user
+      startDate: startOfDay,
+      endDate: endOfDay || undefined, // Store undefined if no end date
+      createdBy: req.user._id
     });
 
     await newBlock.save();
-    
+
     res.status(201).json({
       message: 'Dates blocked successfully',
       blockedDate: newBlock
     });
-    
+
   } catch (error) {
     console.error('Error in block-dates:', error);
     
@@ -272,10 +282,9 @@ router.post('/block-dates', verifySuperAdmin, async (req, res) => {
       });
     }
     
-    // Handle other types of errors
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Server error',
-      details: 'Failed to process blocked dates request' 
+      details: 'Failed to process blocked dates request'
     });
   }
 });
