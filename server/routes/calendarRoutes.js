@@ -208,38 +208,75 @@ router.get('/blocked-dates', async (req, res) => {
 
 // Create new blocked date range
 // Block dates route
+// Block dates route
 router.post('/block-dates', verifySuperAdmin, async (req, res) => {
   try {
     const { title, description, startDate, endDate } = req.body;
     
-    // Additional validation
+    // Validate required fields
+    if (!title || !startDate) {
+      return res.status(400).json({ 
+        error: 'Validation failed',
+        details: 'Title and start date are required' 
+      });
+    }
+
+    // Date validation and formatting
     const start = new Date(startDate);
-    const end = endDate ? new Date(endDate) : start;
+    const end = endDate ? new Date(endDate) : null;
     
-    if (end < start) {
+    if (isNaN(start.getTime())) {
+      return res.status(400).json({ 
+        error: 'Validation failed',
+        details: 'Invalid start date format' 
+      });
+    }
+
+    if (end && isNaN(end.getTime())) {
+      return res.status(400).json({ 
+        error: 'Validation failed',
+        details: 'Invalid end date format' 
+      });
+    }
+
+    if (end && end < start) {
       return res.status(400).json({ 
         error: 'Validation failed',
         details: 'End date must be after or equal to start date' 
       });
     }
 
+    // Create new blocked date with createdBy
     const newBlock = new BlockedDate({
       title,
       description,
       startDate: start,
-      endDate: end.getTime() === start.getTime() ? undefined : end
+      endDate: end || undefined, // Store undefined if no end date
+      createdBy: req.user._id // Add the creator from verified user
     });
 
     await newBlock.save();
-    res.status(201).json(newBlock);
+    
+    res.status(201).json({
+      message: 'Dates blocked successfully',
+      blockedDate: newBlock
+    });
     
   } catch (error) {
+    console.error('Error in block-dates:', error);
+    
     if (error.name === 'ValidationError') {
       return res.status(400).json({
         error: 'Validation failed',
         details: error.message
       });
     }
+    
+    // Handle other types of errors
+    res.status(500).json({ 
+      error: 'Server error',
+      details: 'Failed to process blocked dates request' 
+    });
   }
 });
 
