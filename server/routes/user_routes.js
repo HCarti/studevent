@@ -55,7 +55,7 @@ router.post('/check-adviser-assignment', authenticateToken, usersController.chec
 // User registration route with dual signature support
 router.post('/', 
   authenticateToken, // Add authentication middleware
-  restrictTo('SuperAdmin'), // Restrict to SuperAdmin only
+  authenticateToken.restrictTo('SuperAdmin'), // Restrict to SuperAdmin only
   upload.fields([
     { name: 'logo', maxCount: 1 },
     { name: 'signature', maxCount: 1 },
