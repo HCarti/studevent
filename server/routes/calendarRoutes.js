@@ -220,48 +220,12 @@ router.post('/block-dates', verifySuperAdmin, async (req, res) => {
       });
     }
 
-    // Parse and validate dates
-    const start = new Date(startDate);
-    const end = endDate ? new Date(endDate) : null;
-
-    if (isNaN(start.getTime())) {
-      return res.status(400).json({
-        error: 'Validation failed',
-        details: 'Invalid start date format'
-      });
-    }
-
-    if (end && isNaN(end.getTime())) {
-      return res.status(400).json({
-        error: 'Validation failed',
-        details: 'Invalid end date format'
-      });
-    }
-
-    // Normalize dates to start of day for comparison
-    const startOfDay = new Date(start);
-    startOfDay.setUTCHours(0, 0, 0, 0);
-
-    let endOfDay = null;
-    if (end) {
-      endOfDay = new Date(end);
-      endOfDay.setUTCHours(0, 0, 0, 0);
-    }
-
-    // Validate date range
-    if (endOfDay && endOfDay < startOfDay) {
-      return res.status(400).json({
-        error: 'Validation failed',
-        details: 'End date must be after or equal to start date'
-      });
-    }
-
-    // Create blocked date entry
+    // Create blocked date entry - let schema handle date normalization
     const newBlock = new BlockedDate({
       title,
       description,
-      startDate: startOfDay,
-      endDate: endOfDay || undefined, // Store undefined if no end date
+      startDate: new Date(startDate),
+      endDate: endDate ? new Date(endDate) : undefined,
       createdBy: req.user._id
     });
 
@@ -269,7 +233,11 @@ router.post('/block-dates', verifySuperAdmin, async (req, res) => {
 
     res.status(201).json({
       message: 'Dates blocked successfully',
-      blockedDate: newBlock
+      blockedDate: {
+        ...newBlock.toObject(),
+        startDate: moment.utc(newBlock.startDate).format('YYYY-MM-DD'),
+        endDate: newBlock.endDate ? moment.utc(newBlock.endDate).format('YYYY-MM-DD') : null
+      }
     });
 
   } catch (error) {

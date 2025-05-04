@@ -290,24 +290,22 @@ const SuperAdminCalendar = () => {
 // Submit blocked dates to backend
 const handleBlockSubmit = async () => {
     try {
-      // Get user info
+      // Get user info from localStorage
       const storedUser = localStorage.getItem('user');
-      const parsedUser = storedUser ? JSON.parse(storedUser) : null;
-      
-      if (!parsedUser || !parsedUser._id) {
+      if (!storedUser) {
         setError('User information not found. Please log in again.');
         return;
       }
   
-      // Normalize dates to start of day
-      const normalizeDate = (date) => {
-        const d = new Date(date);
-        d.setUTCHours(0, 0, 0, 0);
-        return d;
-      };
+      const parsedUser = JSON.parse(storedUser);
+      if (!parsedUser?._id) {
+        setError('Invalid user data. Please log in again.');
+        return;
+      }
   
-      const start = normalizeDate(selectedRange.start);
-      const end = selectedRange.end ? normalizeDate(selectedRange.end) : null;
+      // Normalize dates to ISO strings
+      const start = new Date(selectedRange.start);
+      const end = selectedRange.end ? new Date(selectedRange.end) : undefined;
   
       // Validate dates
       if (end && end < start) {
@@ -315,16 +313,19 @@ const handleBlockSubmit = async () => {
         return;
       }
   
-      const authHeaders = getAuthHeaders();
-      if (!authHeaders) return;
-  
       const blockData = {
         title: blockTitle,
         description: blockDescription,
         startDate: start.toISOString(),
         endDate: end ? end.toISOString() : undefined,
-        createdBy: parsedUser._id
+        createdBy: parsedUser._id // Use the parsed user ID
       };
+  
+      const authHeaders = getAuthHeaders();
+      if (!authHeaders) {
+        setError('Authentication failed. Please log in again.');
+        return;
+      }
   
       const response = await axios.post(
         'https://studevent-server.vercel.app/api/calendar/block-dates',
@@ -344,7 +345,6 @@ const handleBlockSubmit = async () => {
       setError(err.response?.data?.error || 'Failed to block dates');
     }
   };
-
   useEffect(() => {
     fetchCalendarEvents();
     fetchBlockedDates();

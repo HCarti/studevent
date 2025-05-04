@@ -16,14 +16,17 @@ const BlockedDateSchema = new mongoose.Schema({
     required: true,
     get: date => moment.utc(date).format('YYYY-MM-DD')
   },
-// In models/BlockedDate.js
-endDate: {
+  endDate: {
     type: Date,
+    set: function(endDate) {
+      // Convert to start of day in UTC before saving
+      return endDate ? moment.utc(endDate).startOf('day').toDate() : undefined;
+    },
     validate: {
       validator: function(endDate) {
-        // Allow undefined/null (single day)
         if (!endDate) return true;
-        return endDate >= this.startDate;
+        // Compare dates as timestamps to avoid timezone issues
+        return endDate.getTime() >= this.startDate.getTime();
       },
       message: 'End date must be after or equal to start date'
     }
@@ -43,8 +46,13 @@ endDate: {
   }
 });
 
-// Update timestamp before saving
+// Add pre-save hook to normalize dates
 BlockedDateSchema.pre('save', function(next) {
+  // Normalize startDate to start of day in UTC
+  if (this.startDate) {
+    this.startDate = moment.utc(this.startDate).startOf('day').toDate();
+  }
+  
   this.updatedAt = Date.now();
   next();
 });
