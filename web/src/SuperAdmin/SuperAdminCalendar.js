@@ -316,11 +316,10 @@ const handleBlockSubmit = async () => {
       const blockData = {
         title: blockTitle,
         description: blockDescription,
-        startDate: start.toISOString(),
-        endDate: end ? end.toISOString() : undefined,
-        createdBy: parsedUser._id // Use the parsed user ID
+        startDate: new Date(selectedRange.start).toISOString(),
+        endDate: selectedRange.end ? new Date(selectedRange.end).toISOString() : undefined,
+        createdBy: parsedUser._id // From your auth context/localStorage
       };
-  
       const authHeaders = getAuthHeaders();
       if (!authHeaders) {
         setError('Authentication failed. Please log in again.');

@@ -220,7 +220,7 @@ router.post('/block-dates', verifySuperAdmin, async (req, res) => {
       });
     }
 
-    // Create blocked date entry - let schema handle date normalization
+    // Create with raw dates - let schema handle normalization
     const newBlock = new BlockedDate({
       title,
       description,
@@ -231,6 +231,7 @@ router.post('/block-dates', verifySuperAdmin, async (req, res) => {
 
     await newBlock.save();
 
+    // Return formatted dates in response
     res.status(201).json({
       message: 'Dates blocked successfully',
       blockedDate: {
