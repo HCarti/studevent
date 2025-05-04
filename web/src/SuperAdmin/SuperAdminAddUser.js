@@ -383,10 +383,35 @@ const SuperAdminAddUser = () => {
 
     return (
         <div className="saau-container">
-            <h2 className="saau-title">Add New User</h2>
+            <h2 className="saau-title">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="8.5" cy="7" r="4"></circle>
+                    <line x1="20" y1="8" x2="20" y2="14"></line>
+                    <line x1="23" y1="11" x2="17" y2="11"></line>
+                </svg>
+                Add New User
+            </h2>
 
-            {error && <div className="saau-alert saau-alert-error">{error}</div>}
-            {success && <div className="saau-alert saau-alert-success">{success}</div>}
+            {error && (
+                <div className="saau-alert saau-alert-error">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    {error}
+                </div>
+            )}
+            {success && (
+                <div className="saau-alert saau-alert-success">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    {success}
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} encType="multipart/form-data" className="saau-form">
                 <div className="saau-form-section">
@@ -395,11 +420,23 @@ const SuperAdminAddUser = () => {
                             {logo ? (
                                 <img src={URL.createObjectURL(logo)} alt="Logo Preview" />
                             ) : (
-                                <span className="saau-image-placeholder">Upload Logo</span>
+                                <span className="saau-image-placeholder">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                        <polyline points="21 15 16 10 5 21"></polyline>
+                                    </svg>
+                                    Upload Organization Logo
+                                </span>
                             )}
                         </div>
                         <label className="saau-upload-btn">
-                            Upload Image
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            Upload Logo
                             <input 
                                 type="file" 
                                 name="logo" 
@@ -410,7 +447,12 @@ const SuperAdminAddUser = () => {
                         </label>
                         {validationErrors.logo && (
                             <div className="saau-error-message">
-                                <i className="fas fa-exclamation-circle"></i> {validationErrors.logo}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                </svg>
+                                {validationErrors.logo}
                             </div>
                         )}
                     </div>
@@ -458,7 +500,15 @@ const SuperAdminAddUser = () => {
 
                     <div className="saau-form-fields">
                         <div className="saau-field-group">
-                            <label htmlFor="role" className="saau-field-label">Role</label>
+                            <label htmlFor="role" className="saau-field-label">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                                Role <span className="saau-field-required">*</span>
+                            </label>
                             <select 
                                 name="role" 
                                 value={formData.role} 
@@ -476,6 +526,10 @@ const SuperAdminAddUser = () => {
                             <>
                                 <div className="saau-field-group">
                                     <label htmlFor="firstName" className="saau-field-label">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                        </svg>
                                         First Name <span className="saau-field-required">*</span>
                                     </label>
                                     <input
@@ -483,17 +537,27 @@ const SuperAdminAddUser = () => {
                                         name="firstName"
                                         value={formData.firstName}
                                         onChange={handleChange}
+                                        placeholder="Enter first name"
                                         className={`saau-field-input ${validationErrors.firstName ? 'saau-field-error' : ''}`}
                                     />
                                     {validationErrors.firstName && (
                                         <div className="saau-error-message">
-                                            <i className="fas fa-exclamation-circle"></i> {validationErrors.firstName}
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                            </svg>
+                                            {validationErrors.firstName}
                                         </div>
                                     )}
                                 </div>
 
                                 <div className="saau-field-group">
                                     <label htmlFor="lastName" className="saau-field-label">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                        </svg>
                                         Last Name <span className="saau-field-required">*</span>
                                     </label>
                                     <input
@@ -501,11 +565,17 @@ const SuperAdminAddUser = () => {
                                         name="lastName"
                                         value={formData.lastName}
                                         onChange={handleChange}
+                                        placeholder="Enter last name"
                                         className={`saau-field-input ${validationErrors.lastName ? 'saau-field-error' : ''}`}
                                     />
                                     {validationErrors.lastName && (
                                         <div className="saau-error-message">
-                                            <i className="fas fa-exclamation-circle"></i> {validationErrors.lastName}
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                            </svg>
+                                            {validationErrors.lastName}
                                         </div>
                                     )}
                                 </div>
@@ -515,6 +585,10 @@ const SuperAdminAddUser = () => {
                         {formData.role === 'Organization' && (
                             <div className="saau-field-group">
                                 <label htmlFor="presidentName" className="saau-field-label">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
                                     President Name <span className="saau-field-required">*</span>
                                 </label>
                                 <input
@@ -522,11 +596,17 @@ const SuperAdminAddUser = () => {
                                     name="presidentName"
                                     value={formData.presidentName}
                                     onChange={handleChange}
+                                    placeholder="Enter president's name"
                                     className={`saau-field-input ${validationErrors.presidentName ? 'saau-field-error' : ''}`}
                                 />
                                 {validationErrors.presidentName && (
                                     <div className="saau-error-message">
-                                        <i className="fas fa-exclamation-circle"></i> {validationErrors.presidentName}
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                        </svg>
+                                        {validationErrors.presidentName}
                                     </div>
                                 )}
                             </div>
@@ -534,6 +614,10 @@ const SuperAdminAddUser = () => {
 
                         <div className="saau-field-group">
                             <label htmlFor="email" className="saau-field-label">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                    <polyline points="22,6 12,13 2,6"></polyline>
+                                </svg>
                                 Email <span className="saau-field-required">*</span>
                             </label>
                             <input
@@ -541,11 +625,17 @@ const SuperAdminAddUser = () => {
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
+                                placeholder="Enter email address"
                                 className={`saau-field-input ${validationErrors.email ? 'saau-field-error' : ''}`}
                             />
                             {validationErrors.email && (
                                 <div className="saau-error-message">
-                                    <i className="fas fa-exclamation-circle"></i> {validationErrors.email}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                    </svg>
+                                    {validationErrors.email}
                                 </div>
                             )}
                         </div>
@@ -553,7 +643,15 @@ const SuperAdminAddUser = () => {
                         {formData.role === 'Authority' && (
                             <>
                                 <div className="saau-field-group">
-                                    <label htmlFor="faculty" className="saau-field-label">Faculty and School Admin</label>
+                                    <label htmlFor="faculty" className="saau-field-label">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="9" cy="7" r="4"></circle>
+                                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                        </svg>
+                                        Faculty and School Admin <span className="saau-field-required">*</span>
+                                    </label>
                                     <select 
                                         name="faculty" 
                                         value={formData.faculty} 
@@ -567,14 +665,26 @@ const SuperAdminAddUser = () => {
                                     </select>
                                     {validationErrors.faculty && (
                                         <div className="saau-error-message">
-                                            <i className="fas fa-exclamation-circle"></i> {validationErrors.faculty}
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                            </svg>
+                                            {validationErrors.faculty}
                                         </div>
                                     )}
                                 </div>
 
                                 {formData.faculty === 'Adviser' && (
                                     <div className="saau-field-group">
-                                        <label htmlFor="organization" className="saau-field-label">Organization</label>
+                                        <label htmlFor="organization" className="saau-field-label">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                                <line x1="3" y1="9" x2="21" y2="9"></line>
+                                                <line x1="9" y1="21" x2="9" y2="9"></line>
+                                            </svg>
+                                            Organization <span className="saau-field-required">*</span>
+                                        </label>
                                         <select
                                             name="organization"
                                             value={formData.organization}
@@ -590,7 +700,12 @@ const SuperAdminAddUser = () => {
                                         </select>
                                         {validationErrors.organization && (
                                             <div className="saau-error-message">
-                                                <i className="fas fa-exclamation-circle"></i> {validationErrors.organization}
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <circle cx="12" cy="12" r="10"></circle>
+                                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                                </svg>
+                                                {validationErrors.organization}
                                             </div>
                                         )}
                                     </div>
@@ -598,7 +713,14 @@ const SuperAdminAddUser = () => {
 
                                 {formData.faculty === 'Dean' && (
                                     <div className="saau-field-group">
-                                        <label htmlFor="deanForOrganization" className="saau-field-label">Academic Organization</label>
+                                        <label htmlFor="deanForOrganization" className="saau-field-label">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                                <line x1="3" y1="9" x2="21" y2="9"></line>
+                                                <line x1="9" y1="21" x2="9" y2="9"></line>
+                                            </svg>
+                                            Academic Organization <span className="saau-field-required">*</span>
+                                        </label>
                                         <select
                                             name="deanForOrganization"
                                             value={formData.deanForOrganization}
@@ -614,7 +736,12 @@ const SuperAdminAddUser = () => {
                                         </select>
                                         {validationErrors.deanForOrganization && (
                                             <div className="saau-error-message">
-                                                <i className="fas fa-exclamation-circle"></i> {validationErrors.deanForOrganization}
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <circle cx="12" cy="12" r="10"></circle>
+                                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                                </svg>
+                                                {validationErrors.deanForOrganization}
                                             </div>
                                         )}
                                     </div>
@@ -626,6 +753,11 @@ const SuperAdminAddUser = () => {
                             <>
                                 <div className="saau-field-group">
                                     <label htmlFor="organizationName" className="saau-field-label">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                            <line x1="3" y1="9" x2="21" y2="9"></line>
+                                            <line x1="9" y1="21" x2="9" y2="9"></line>
+                                        </svg>
                                         Organization Name <span className="saau-field-required">*</span>
                                     </label>
                                     <input
@@ -633,17 +765,30 @@ const SuperAdminAddUser = () => {
                                         name="organizationName"
                                         value={formData.organizationName}
                                         onChange={handleChange}
+                                        placeholder="Enter organization name"
                                         className={`saau-field-input ${validationErrors.organizationName ? 'saau-field-error' : ''}`}
                                     />
                                     {validationErrors.organizationName && (
                                         <div className="saau-error-message">
-                                            <i className="fas fa-exclamation-circle"></i> {validationErrors.organizationName}
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                            </svg>
+                                            {validationErrors.organizationName}
                                         </div>
                                     )}
                                 </div>
 
                                 <div className="saau-field-group">
-                                    <label htmlFor="organizationType" className="saau-field-label">Organization Type</label>
+                                    <label htmlFor="organizationType" className="saau-field-label">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                            <line x1="3" y1="9" x2="21" y2="9"></line>
+                                            <line x1="9" y1="21" x2="9" y2="9"></line>
+                                        </svg>
+                                        Organization Type <span className="saau-field-required">*</span>
+                                    </label>
                                     <select
                                         name="organizationType"
                                         value={formData.organizationType}
@@ -657,90 +802,157 @@ const SuperAdminAddUser = () => {
                                     </select>
                                     {validationErrors.organizationType && (
                                         <div className="saau-error-message">
-                                            <i className="fas fa-exclamation-circle"></i> {validationErrors.organizationType}
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                            </svg>
+                                            {validationErrors.organizationType}
                                         </div>
                                     )}
                                 </div>
-
-                                
                             </>
                         )}
 
-                            <div className="saau-field-group">
+                        <div className="saau-field-group">
                             <label htmlFor="password" className="saau-field-label">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
                                 Password <span className="saau-field-required">*</span>
                             </label>
                             <div className="saau-password-input-container">
                                 <input
-                                type={showPassword.password ? "text" : "password"}
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                className={`saau-field-input ${validationErrors.password ? 'saau-field-error' : ''}`}
+                                    type={showPassword.password ? "text" : "password"}
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    placeholder="Enter password"
+                                    className={`saau-field-input ${validationErrors.password ? 'saau-field-error' : ''}`}
                                 />
                                 <button
-                                type="button"
-                                className="saau-password-toggle"
-                                onClick={() => toggleShowPassword('password')}
-                                aria-label={showPassword.password ? "Hide password" : "Show password"}
+                                    type="button"
+                                    className="saau-password-toggle"
+                                    onClick={() => toggleShowPassword('password')}
+                                    aria-label={showPassword.password ? "Hide password" : "Show password"}
                                 >
-                                {showPassword.password ? <FaEyeSlash /> : <FaEye />}
+                                    {showPassword.password ? <FaEyeSlash /> : <FaEye />}
                                 </button>
                             </div>
                             {validationErrors.password && (
                                 <div className="saau-error-message">
-                                <i className="fas fa-exclamation-circle"></i> {validationErrors.password}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                    </svg>
+                                    {validationErrors.password}
                                 </div>
                             )}
                             <div className="saau-password-requirements">
                                 Password must contain:
                                 <ul className="saau-password-list">
-                                <li className={formData.password.length >= 8 ? 'valid' : ''}>At least 8 characters</li>
-                                <li className={/[A-Z]/.test(formData.password) ? 'valid' : ''}>One uppercase letter</li>
-                                <li className={/[a-z]/.test(formData.password) ? 'valid' : ''}>One lowercase letter</li>
-                                <li className={/[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? 'valid' : ''}>One special character</li>
+                                    <li className={formData.password.length >= 8 ? 'valid' : ''}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            {formData.password.length >= 8 ? (
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            ) : (
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                            )}
+                                        </svg>
+                                        At least 8 characters
+                                    </li>
+                                    <li className={/[A-Z]/.test(formData.password) ? 'valid' : ''}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            {/[A-Z]/.test(formData.password) ? (
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            ) : (
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                            )}
+                                        </svg>
+                                        One uppercase letter
+                                    </li>
+                                    <li className={/[a-z]/.test(formData.password) ? 'valid' : ''}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            {/[a-z]/.test(formData.password) ? (
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            ) : (
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                            )}
+                                        </svg>
+                                        One lowercase letter
+                                    </li>
+                                    <li className={/[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? 'valid' : ''}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            {/[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? (
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            ) : (
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                            )}
+                                        </svg>
+                                        One special character
+                                    </li>
                                 </ul>
                             </div>
-                            </div>
+                        </div>
 
-                            <div className="saau-field-group">
+                        <div className="saau-field-group">
                             <label htmlFor="confirmPassword" className="saau-field-label">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
                                 Confirm Password <span className="saau-field-required">*</span>
                             </label>
                             <div className="saau-password-input-container">
                                 <input
-                                type={showPassword.confirmPassword ? "text" : "password"}
-                                name="confirmPassword"
-                                value={formData.confirmPassword}
-                                onChange={handleChange}
-                                className={`saau-field-input ${validationErrors.confirmPassword ? 'saau-field-error' : ''}`}
+                                    type={showPassword.confirmPassword ? "text" : "password"}
+                                    name="confirmPassword"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    placeholder="Confirm password"
+                                    className={`saau-field-input ${validationErrors.confirmPassword ? 'saau-field-error' : ''}`}
                                 />
                                 <button
-                                type="button"
-                                className="saau-password-toggle"
-                                onClick={() => toggleShowPassword('confirmPassword')}
-                                aria-label={showPassword.confirmPassword ? "Hide password" : "Show password"}
+                                    type="button"
+                                    className="saau-password-toggle"
+                                    onClick={() => toggleShowPassword('confirmPassword')}
+                                    aria-label={showPassword.confirmPassword ? "Hide password" : "Show password"}
                                 >
-                                {showPassword.confirmPassword ? <FaEyeSlash /> : <FaEye />}
+                                    {showPassword.confirmPassword ? <FaEyeSlash /> : <FaEye />}
                                 </button>
                             </div>
                             {validationErrors.confirmPassword && (
                                 <div className="saau-error-message">
-                                <i className="fas fa-exclamation-circle"></i> {validationErrors.confirmPassword}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                    </svg>
+                                    {validationErrors.confirmPassword}
                                 </div>
                             )}
-                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <button type="submit" className="saau-submit-btn" disabled={loading}>
                     {loading ? (
                         <>
-                            <span className="saau-spinner spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span className="saau-spinner"></span>
                             Adding User...
                         </>
                     ) : (
-                        'Add User'
+                        <>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="8.5" cy="7" r="4"></circle>
+                                <line x1="20" y1="8" x2="20" y2="14"></line>
+                                <line x1="23" y1="11" x2="17" y2="11"></line>
+                            </svg>
+                            Add User
+                        </>
                     )}
                 </button>
             </form>

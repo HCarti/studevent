@@ -1,75 +1,135 @@
 /* Base Styles */
 .saau-container {
-    max-width: 900px;
+    max-width: 1200px;
     margin: 2rem auto;
     padding: 2rem;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(145deg, #ffffff, #f8f9ff);
+    border-radius: 32px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .saau-title {
-    font-size: 1.8rem;
-    color: #2c3e50;
-    margin-bottom: 2rem;
+    font-size: 2.5rem;
+    color: #1a1a1a;
+    margin-bottom: 3rem;
     text-align: center;
-    font-weight: 600;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    position: relative;
+    padding-bottom: 1.5rem;
+    background: linear-gradient(135deg, #1a1a1a, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.saau-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    border-radius: 4px;
 }
 
 /* Alert Messages */
 .saau-alert {
-    padding: 0.75rem 1.25rem;
-    margin-bottom: 1.5rem;
-    border-radius: 4px;
+    padding: 1.25rem 1.75rem;
+    margin-bottom: 2.5rem;
+    border-radius: 16px;
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .saau-alert-error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
+    background: linear-gradient(135deg, rgba(255, 245, 245, 0.9), rgba(254, 202, 202, 0.9));
+    color: #dc2626;
 }
 
 .saau-alert-success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+    background: linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(187, 247, 208, 0.9));
+    color: #16a34a;
 }
 
 /* Form Layout */
 .saau-form {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 3rem;
 }
 
 .saau-form-section {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2rem;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 4rem;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 2.5rem;
+    border-radius: 24px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 /* Image Upload Section */
 .saau-image-upload {
-    flex: 1;
-    min-width: 250px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
+    gap: 2rem;
+    padding: 2.5rem;
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border-radius: 24px;
+    border: 2px dashed #e2e8f0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.saau-image-upload::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+}
+
+.saau-image-upload:hover {
+    border-color: #3b82f6;
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
 }
 
 .saau-image-preview {
-    width: 180px;
-    height: 180px;
+    width: 240px;
+    height: 240px;
     border-radius: 50%;
-    background-color: #f8f9fa;
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    border: 2px dashed #dee2e6;
+    border: 2px dashed #e2e8f0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.saau-image-preview::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
 .saau-image-preview img {
@@ -79,24 +139,33 @@
 }
 
 .saau-image-placeholder {
-    color: #6c757d;
-    font-size: 0.9rem;
+    color: #64748b;
+    font-size: 1rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
 }
 
 .saau-upload-btn {
-    display: inline-block;
-    padding: 0.5rem 1rem;
-    background-color: #3498db;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #3b82f6, #60a5fa);
     color: white;
-    border-radius: 4px;
+    border-radius: 16px;
     cursor: pointer;
-    transition: background-color 0.2s;
-    text-align: center;
-    font-weight: 500;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    border: none;
 }
 
 .saau-upload-btn:hover {
-    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
 }
 
 .saau-upload-btn input {
@@ -105,64 +174,70 @@
 
 /* Form Fields */
 .saau-form-fields {
-    flex: 2;
-    min-width: 300px;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 2.5rem;
 }
 
 .saau-field-group {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 1rem;
+    position: relative;
 }
 
 .saau-field-label {
-    font-weight: 500;
-    color: #495057;
-    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 }
 
 .saau-field-required {
-    color: #e74c3c;
-    margin-left: 0.25rem;
+    color: #ef4444;
+    font-size: 1.2rem;
 }
 
 .saau-field-input,
 .saau-field-select {
-    padding: 0.75rem;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
+    padding: 1.25rem 1.5rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
     font-size: 1rem;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: rgba(255, 255, 255, 0.8);
+    width: 100%;
+    backdrop-filter: blur(8px);
 }
 
 .saau-field-input:focus,
 .saau-field-select:focus {
     outline: none;
-    border-color: #3498db;
-    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    background-color: white;
 }
 
 .saau-field-select {
-    background-color: white;
     cursor: pointer;
     appearance: none;
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
     background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    background-size: 1em;
+    background-position: right 1.5rem center;
+    background-size: 1.25em;
+    padding-right: 3rem;
 }
 
 .saau-field-error {
-    border-color: #e74c3c !important;
+    border-color: #ef4444 !important;
 }
 
 .saau-error-message {
-    color: #e74c3c;
-    font-size: 0.85rem;
-    margin-top: 0.25rem;
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -170,129 +245,188 @@
 
 /* Password Requirements */
 .saau-password-requirements {
-    margin-top: 0.5rem;
-    font-size: 0.85rem;
-    color: #6c757d;
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: #64748b;
+    background: rgba(248, 250, 252, 0.8);
+    padding: 1.5rem;
+    border-radius: 16px;
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    backdrop-filter: blur(8px);
 }
 
 .saau-password-list {
-    margin: 0.5rem 0 0 1rem;
+    margin: 1rem 0 0 0;
     padding: 0;
     list-style-type: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
 }
 
 .saau-password-item {
-    margin-bottom: 0.25rem;
-    position: relative;
-    padding-left: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #64748b;
+    font-size: 0.875rem;
 }
 
-.saau-password-item:before {
-    content: "•";
-    position: absolute;
-    left: 0;
-    color: #6c757d;
-}
-
-.saau-password-item.valid:before {
-    content: "✓";
-    color: #27ae60;
+.saau-password-item.valid {
+    color: #16a34a;
 }
 
 .saau-password-input-container {
     position: relative;
     display: flex;
     align-items: center;
-  }
-  
-  .saau-password-input-container .saau-field-input {
-    padding-right: 2.5rem;
-    width: 100%;
-  }
+}
 
-  .saau-password-toggle {
+.saau-password-input-container .saau-field-input {
+    padding-right: 3.5rem;
+}
+
+.saau-password-toggle {
     position: absolute;
-    right: 0.75rem;
+    right: 1.25rem;
     background: none;
     border: none;
     cursor: pointer;
-    color: #6c757d;
+    color: #64748b;
     padding: 0.25rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: color 0.2s;
-  }
+    transition: all 0.2s ease;
+}
 
-  .saau-password-toggle:hover {
-    color: #3498db;
-  }
-  
-  .saau-password-toggle:focus {
+.saau-password-toggle:hover {
+    color: #3b82f6;
+}
+
+.saau-password-toggle:focus {
     outline: none;
-    color: #3498db;
-  }
-  
-  .saau-password-toggle svg {
-    width: 1rem;
-    height: 1rem;
-  }
+    color: #3b82f6;
+}
+
+.saau-password-toggle svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
 
 /* Submit Button */
 .saau-submit-btn {
-    padding: 0.75rem 1.5rem;
-    background-color: #2ecc71;
+    padding: 1.25rem 2.5rem;
+    background: linear-gradient(135deg, #3b82f6, #60a5fa);
     color: white;
     border: none;
-    border-radius: 4px;
-    font-size: 1rem;
-    font-weight: 500;
+    border-radius: 16px;
+    font-size: 1.125rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.2s;
-    align-self: center;
-    margin-top: 1rem;
-    width: 200px;
-    display: flex;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    width: 100%;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .saau-submit-btn:hover {
-    background-color: #27ae60;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
 }
 
 .saau-submit-btn:disabled {
-    background-color: #95a5a6;
+    background: #94a3b8;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
 .saau-spinner {
-    margin-right: 0.5rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s linear infinite;
 }
 
-/* Signature Upload */
-.saau-signature-upload {
-    margin-top: 1rem;
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
-
-
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .saau-container {
+        margin: 1.5rem;
         padding: 1.5rem;
     }
-    
+
     .saau-form-section {
-        flex-direction: column;
+        grid-template-columns: 1fr;
+        gap: 3rem;
     }
-    
+
     .saau-image-upload {
-        align-items: center;
+        padding: 2rem;
     }
-    
-    .saau-form-fields {
+
+    .saau-image-preview {
+        width: 200px;
+        height: 200px;
+    }
+}
+
+@media (max-width: 640px) {
+    .saau-container {
+        margin: 1rem;
+        padding: 1.25rem;
+        border-radius: 24px;
+    }
+
+    .saau-title {
+        font-size: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .saau-form {
+        gap: 2rem;
+    }
+
+    .saau-form-section {
+        padding: 1.5rem;
+    }
+
+    .saau-field-input,
+    .saau-field-select {
+        padding: 1rem 1.25rem;
+    }
+
+    .saau-password-list {
+        grid-template-columns: 1fr;
+    }
+
+    .saau-submit-btn {
         width: 100%;
+        padding: 1rem 2rem;
+    }
+
+    .saau-image-upload {
+        padding: 1.5rem;
+    }
+
+    .saau-image-preview {
+        width: 180px;
+        height: 180px;
     }
 }
 
