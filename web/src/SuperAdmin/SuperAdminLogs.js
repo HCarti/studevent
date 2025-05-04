@@ -96,14 +96,6 @@ const SuperAdminLogs = () => {
     return true;
   });
 
-  const getActionColor = (action) => {
-    if (action.includes('deleted')) return '#ffebee';
-    if (action.includes('created')) return '#e8f5e9';
-    if (action.includes('updated')) return '#e3f2fd';
-    if (action.includes('change')) return '#fff8e1';
-    return '#f5f5f5';
-  };
-
   return (
     <div className="activity-logs-container">
       <div className="activity-header">
@@ -128,60 +120,48 @@ const SuperAdminLogs = () => {
         </div>
       </div>
       
-      <div className="activity-table-container">
-        <table className="activity-table">
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Role</th>
-              <th>Date</th>
-              <th>Action</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredActivities.map((activity) => (
-              <tr 
-                key={activity.id}
-                style={{ backgroundColor: getActionColor(activity.action) }}
-              >
-                <td>
-                  <div className="user-cell">
-                    <span className="user-avatar">{activity.user.charAt(0).toUpperCase()}</span>
-                    {activity.user}
-                  </div>
-                </td>
-                <td>
-                  <span className={`role-badge ${activity.role}`}>
-                    {activity.role}
-                  </span>
-                </td>
-                <td>
-                  <div className="datetime-cell">
-                    <span className="date">{activity.date}</span>
-                    <span className="time">{activity.time}</span>
-                  </div>
-                </td>
-                <td>
-                  <span className="action-cell">
-                    {activity.action}
-                  </span>
-                </td>
-                <td className="description-cell">
-                  {activity.description}
-                  <div className="action-links">
-                    {activity.action.includes('Post') && (
-                      <>
-                        <a href="#">View</a>
-                        <a href="#">Edit</a>
-                      </>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="activity-list">
+        {filteredActivities.map((activity) => (
+          <div key={activity.id} className="activity-card">
+            <div className="activity-card-header">
+              <div className="user-avatar">
+                {activity.user.charAt(0).toUpperCase()}
+              </div>
+              <div className="user-info">
+                <div className="user-name">{activity.user}</div>
+                <span className={`role-badge ${activity.role}`}>
+                  {activity.role}
+                </span>
+              </div>
+            </div>
+            
+            <div className="activity-details">
+              <div className="activity-detail">
+                <span className="detail-label">Date</span>
+                <span className="detail-value">{activity.date}</span>
+              </div>
+              <div className="activity-detail">
+                <span className="detail-label">Time</span>
+                <span className="detail-value">{activity.time}</span>
+              </div>
+              <div className="activity-detail">
+                <span className="detail-label">Action</span>
+                <span className="detail-value">{activity.action}</span>
+              </div>
+            </div>
+            
+            <div className="activity-description">
+              {activity.description}
+            </div>
+            
+            {activity.action.includes('Post') && (
+              <div className="action-links">
+                <a href="#">View</a>
+                <a href="#">Edit</a>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
       
       {filteredActivities.length === 0 && (
