@@ -212,30 +212,34 @@ router.post('/block-dates', verifySuperAdmin, async (req, res) => {
   try {
     const { title, description, startDate, endDate } = req.body;
     
-    if (!title || !startDate) {
-      return res.status(400).json({ error: 'Title and start date are required' });
+    // Additional validation
+    const start = new Date(startDate);
+    const end = endDate ? new Date(endDate) : start;
+    
+    if (end < start) {
+      return res.status(400).json({ 
+        error: 'Validation failed',
+        details: 'End date must be after or equal to start date' 
+      });
     }
 
     const newBlock = new BlockedDate({
       title,
       description,
-      startDate,
-      endDate: endDate || startDate,
-      createdBy: req.user._id // Using the verified user ID
+      startDate: start,
+      endDate: end.getTime() === start.getTime() ? undefined : end
     });
 
     await newBlock.save();
+    res.status(201).json(newBlock);
     
-    res.status(201).json({
-      message: 'Dates blocked successfully',
-      blockedDate: newBlock
-    });
   } catch (error) {
-    console.error('Error creating blocked dates:', error);
-    res.status(500).json({ 
-      error: 'Failed to block dates',
-      details: error.message 
-    });
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: error.message
+      });
+    }
   }
 });
 

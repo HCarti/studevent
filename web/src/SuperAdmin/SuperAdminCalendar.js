@@ -179,13 +179,19 @@ const SuperAdminCalendar = () => {
 
   // Handle date selection for blocking
   const handleDateSelect = (selectInfo) => {
+    // Ensure end date is after start date
+    let endDate = selectInfo.end || selectInfo.start;
+    if (endDate < selectInfo.start) {
+      endDate = selectInfo.start;
+    }
+  
     setSelectedRange({
       start: selectInfo.start,
-      end: selectInfo.end || selectInfo.start
+      end: endDate
     });
     setShowBlockModal(true);
   };
-
+  
   // Handle date click
   const handleDateClick = (arg) => {
     const clickedDate = new Date(arg.date);
@@ -283,14 +289,24 @@ const SuperAdminCalendar = () => {
   // Submit blocked dates to backend
   const handleBlockSubmit = async () => {
     try {
+            // Validate dates first
+    const start = new Date(selectedRange.start);
+    const end = selectedRange.end ? new Date(selectedRange.end) : start;
+    
+    if (end < start) {
+      setError('End date cannot be before start date');
+      return;
+    }
+
+
       const authHeaders = getAuthHeaders();
       if (!authHeaders) return;
 
       const blockData = {
         title: blockTitle,
         description: blockDescription,
-        startDate: selectedRange.start,
-        endDate: selectedRange.end
+        startDate: start,
+        endDate: end.getTime() === start.getTime() ? undefined : end // Only send end date if different
       };
 
       await axios.post(

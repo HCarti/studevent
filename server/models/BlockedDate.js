@@ -16,14 +16,16 @@ const BlockedDateSchema = new mongoose.Schema({
     required: true,
     get: date => moment.utc(date).format('YYYY-MM-DD')
   },
-  endDate: {
+// In models/BlockedDate.js
+endDate: {
     type: Date,
-    get: date => date ? moment.utc(date).format('YYYY-MM-DD') : null,
     validate: {
       validator: function(endDate) {
-        return !endDate || endDate >= this.startDate;
+        // Allow undefined/null (single day)
+        if (!endDate) return true;
+        return endDate >= this.startDate;
       },
-      message: 'End date must be after start date'
+      message: 'End date must be after or equal to start date'
     }
   },
   createdBy: {
