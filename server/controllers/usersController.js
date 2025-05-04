@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const logSuperAdminAction = require('../utils/activityLogger');
 
 
 // Helper function to create JWT token
@@ -165,6 +166,15 @@ const addUser = async (userData, logoUrl, signatureUrl, presidentSignatureUrl) =
       newUser.presidentSignature = presidentSignatureUrl;
     }
 
+        // Log the action if created by SuperAdmin
+        if (userData.requestingUser && userData.requestingUser.role === 'SuperAdmin') {
+          await logSuperAdminAction(
+            userData.requestingUser,
+            'USER_CREATED',
+            newUser
+          );
+        }
+
     await newUser.save();
     return newUser;
   } catch (error) {
@@ -209,6 +219,8 @@ const updateUser = async (req, res) => {
       }
     }
 
+
+
     const user = await User.findByIdAndUpdate(userId, updatedData, { 
       new: true,
       runValidators: true 
@@ -217,6 +229,17 @@ const updateUser = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+
+
+       // Log the action if performed by SuperAdmin
+       if (req.user.role === 'SuperAdmin') {
+        await logSuperAdminAction(
+          req.user,
+          'USER_UPDATED',
+           user,
+          { changedFields }
+        );
+      }
     
     res.status(200).json({
       ...user.toObject(),
@@ -261,6 +284,17 @@ const deleteUserById = async (req, res) => {
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+    if (req.user.role === 'SuperAdmin') {
+      await logSuperAdminAction(
+        req.user,
+        'USER_DELETED',
+        null,
+        {
+          email: userToDelete.email,
+          role: userToDelete.role
+        }
+      );
     }
     res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
