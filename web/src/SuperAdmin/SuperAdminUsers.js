@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "./SuperAdminUsers.css";
+import { FaSearch } from "react-icons/fa";
 
 // Icons
 const EditIcon = () => (
@@ -15,6 +16,17 @@ const DeleteIcon = () => (
   </svg>
 );
 
+// Helper to get status badge class
+const getStatusBadgeClass = (status) => {
+  if (!status) return "status-badge";
+  const s = status.toLowerCase();
+  if (s === "active") return "status-badge status-active";
+  if (s === "inactive") return "status-badge status-inactive";
+  if (s === "pending") return "status-badge status-pending";
+  if (s === "declined") return "status-badge status-declined";
+  return "status-badge";
+};
+
 const SuperAdminUsers = () => {
   const [organizations, setOrganizations] = useState([]);
   const [editingOrg, setEditingOrg] = useState(null);
@@ -23,6 +35,7 @@ const SuperAdminUsers = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchOrganizations = async () => {
@@ -120,131 +133,76 @@ const SuperAdminUsers = () => {
     }
   };
 
+  const filteredOrganizations = organizations.filter((org) => {
+    return (
+      org.organizationName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      org.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      org.organizationType?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+
   return (
     <div className="table-container">
-      <h2>Organizations Management</h2>
-      
+      <h1 className="dashboard-title">ORGANIZATION MANAGEMENT</h1>
+      <p className="dashboard-subtitle">Track and manage all your organizations</p>
+      <div className="dashboard-controls">
+        <div className="search-bar-container">
+          <FaSearch className="search-icon" />
+          <input
+            type="text"
+            className="search-bar"
+            placeholder="Search organizations..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
+      <div className="results-count">
+        <span>{filteredOrganizations.length}</span> organizations found
+      </div>
       {loading ? (
         <p className="loading-message">Loading organizations...</p>
       ) : (
-        <>
-          {/* Desktop Table */}
-          <table>
-            <thead>
-              <tr>
-                <th>Logo</th>
-                <th>Organization</th>
-                <th>Email</th>
-                <th>Type</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {organizations.map((organization) => (
-                <tr key={organization._id}>
-                  <td>
-                    {organization.logo ? (
-                      <img
-                        src={organization.logo}
-                        alt="Organization Logo"
-                        className="org-logo"
-                      />
-                    ) : (
-                      <div className="no-logo">No Logo</div>
-                    )}
-                  </td>
-                  <td>{organization.organizationName}</td>
-                  <td>{organization.email}</td>
-                  <td>
-                    {organization.organizationType || "Not Provided"}
-                  </td>
-                  <td>
-                    <span className={`status-badge status-${organization.status.toLowerCase()}`}>
-                      {organization.status}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="action-buttons">
-                      <button 
-                        className="btn btn-sm delete-btn"
-                        onClick={() => handleDeleteClick(organization._id)}
-                      >
-                        <DeleteIcon /> 
-                        <span>Delete</span>
-                      </button>
-                      <button 
-                        className="btn btn-sm edit-btn"
-                        onClick={() => handleEditClick(organization)}
-                      >
-                        <EditIcon /> 
-                        <span>Edit</span>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {/* Mobile Cards */}
-          <div className="mobile-cards-container">
-            {organizations.map((organization) => (
-              <div key={`mobile-${organization._id}`} className="mobile-card">
-                <div className="mobile-card-header">
-                  {organization.logo ? (
-                    <img 
-                      src={organization.logo} 
-                      alt="Organization Logo" 
-                      className="mobile-card-logo" 
-                    />
-                  ) : (
-                    <div className="mobile-card-no-logo">No Logo</div>
-                  )}
-                  <div>
-                    <div className="mobile-card-title">{organization.organizationName}</div>
-                    <div className="mobile-card-email">{organization.email}</div>
-                  </div>
-                </div>
-                
-                <div className="mobile-card-details">
-                  <div className="mobile-card-row">
-                    <span className="mobile-card-label">Organization Type</span>
-                    <span className="mobile-card-value">
-                      {organization.organizationType || "Not Provided"}
-                    </span>
-                  </div>
-                  
-                  <div className="mobile-card-row">
-                    <span className="mobile-card-label">Status</span>
-                    <span className={`mobile-card-value status-badge status-${organization.status.toLowerCase()}`}>
-                      {organization.status}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="mobile-card-actions">
-                  <button 
-                    className="btn btn-sm delete-btn"
-                    onClick={() => handleDeleteClick(organization._id)}
-                  >
-                    <DeleteIcon /> 
-                    <span>Delete</span>
-                  </button>
-                  <button 
-                    className="btn btn-sm edit-btn"
-                    onClick={() => handleEditClick(organization)}
-                  >
-                    <EditIcon /> 
-                    <span>Edit</span>
-                  </button>
+        <div className="card-grid-container">
+          {filteredOrganizations.map((organization) => (
+            <div key={organization._id} className="org-card">
+              <div className="org-card-header">
+                {organization.logo ? (
+                  <img
+                    src={organization.logo}
+                    alt="Organization Logo"
+                    className="org-card-logo"
+                  />
+                ) : (
+                  <div className="org-card-no-logo">No Logo</div>
+                )}
+                <div>
+                  <div className="org-card-title">{organization.organizationName}</div>
+                  <div className="org-card-email">{organization.email}</div>
                 </div>
               </div>
-            ))}
-          </div>
-        </>
+              <div className="org-card-details">
+                <div className="org-card-row">
+                  <span className="org-card-label">Type</span>
+                  <span className="org-card-value">{organization.organizationType || "Not Provided"}</span>
+                </div>
+                <div className="org-card-row">
+                  <span className="org-card-label">Status</span>
+                  <span className={getStatusBadgeClass(organization.status)}>{organization.status}</span>
+                </div>
+              </div>
+              <div className="org-card-actions">
+                <button className="btn btn-sm delete-btn" onClick={() => handleDeleteClick(organization._id)}>
+                  <DeleteIcon /> <span>Delete</span>
+                </button>
+                <button className="btn btn-sm edit-btn" onClick={() => handleEditClick(organization)}>
+                  <EditIcon /> <span>Edit</span>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
-
       {/* Edit Form Modal */}
       {editingOrg && (
         <div className="modal-overlay">
@@ -282,10 +240,7 @@ const SuperAdminUsers = () => {
                 </select>
               </div>
               <div className="form-actions">
-                <button type="button" 
-                  className="btn cancel-btn"
-                  onClick={() => setEditingOrg(null)}
-                >
+                <button type="button" className="btn cancel-btn" onClick={() => setEditingOrg(null)}>
                   Cancel
                 </button>
                 <button type="submit" className="btn update-btn">
@@ -296,7 +251,6 @@ const SuperAdminUsers = () => {
           </div>
         </div>
       )}
-
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="modal-overlay">
@@ -304,22 +258,12 @@ const SuperAdminUsers = () => {
             <h3>Confirm Deletion</h3>
             <p>Are you sure you want to delete this organization permanently?</p>
             <p className="warning-text">This action cannot be undone.</p>
-            
-            {deleteError && (
-              <p className="error-message">{deleteError}</p>
-            )}
-            
+            {deleteError && <p className="error-message">{deleteError}</p>}
             <div className="modal-actions">
-              <button 
-                className="btn cancel-delete-btn"
-                onClick={cancelDelete}
-              >
+              <button className="btn cancel-delete-btn" onClick={cancelDelete}>
                 Cancel
               </button>
-              <button 
-                className="btn confirm-delete-btn"
-                onClick={confirmDelete}
-              >
+              <button className="btn confirm-delete-btn" onClick={confirmDelete}>
                 Delete Organization
               </button>
             </div>
