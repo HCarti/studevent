@@ -3,6 +3,7 @@ import './Sidebar.css';
 import { FaUserPlus, FaUsers } from "react-icons/fa";
 import { MdDashboard } from "react-icons/md";
 import { TbLogs } from "react-icons/tb";
+import { IoCalendarSharp } from "react-icons/io5";
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const Sidebar = () => {
@@ -26,7 +27,8 @@ const Sidebar = () => {
     { name: 'Dashboard', icon: <MdDashboard />, path: '/superadmin/controlpanel' },
     { name: 'Users', icon: <FaUsers />, path: '/superadmin/adminuser' },
     { name: 'Add User', icon: <FaUserPlus />, path: '/superadmin/adduser' },
-    { name: 'Activity Logs', icon:<TbLogs />, path: '/superadmin/s-adminlogs' }
+    { name: 'Activity Logs', icon:<TbLogs />, path: '/superadmin/s-adminlogs' },
+    { name: 'Calendar', icon:<IoCalendarSharp />, path: '/superadmin/s-admincalendar' }
   ];
 
   const handleItemClick = (path) => {

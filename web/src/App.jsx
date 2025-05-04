@@ -15,8 +15,6 @@ import Forms from './Components/Forms';
 import Aap from './Forms/Aap';
 import Unauthorized from './Unauthorized';
 import PageNotFound from './PageNotFound';
-import { signedIn } from './hooks/isSignedIn';
-import { getUserRole } from './hooks/useUser';
 import Budget from './Forms/Budget';
 import Project from './Forms/Project';
 import Liquidation from './Forms/Liquidation';
@@ -30,7 +28,6 @@ import SuperAdminAuthorities from './SuperAdmin/SuperAdminAuthorities';
 import SuperAdminUsers from './SuperAdmin/SuperAdminUsers';
 import SuperAdminAddUser from './SuperAdmin/SuperAdminAddUser';
 import AdminFormView from './Adm/AdminFormView';
-import OTPVerification from './Components/OTPVerification';
 import FormDetails from './Adm/FormDetails';
 import LocalOffCampus from './Forms/LocalOffCampus';
 import OrgTrackerViewer from './OrgMems/OrgTrackerViewer';
@@ -40,6 +37,7 @@ import OrgSubmittedForms from './OrgMems/OrgSubmittedForms';
 import SuperAdminProfile from './SuperAdmin/SuperAdminProfile';
 import NotificationsPage from './Components/NotificationsPage';
 import SuperAdminLogs from './SuperAdmin/SuperAdminLogs';
+import SuperAdminCalendar from './SuperAdmin/SuperAdminCalendar';
 
 // Global styles to hide scrollbar
 const globalStyles = `
@@ -217,6 +215,7 @@ const App = () => {
               </ProtectedRoute>
             }
           >
+            <Route path="s-admincalendar" element={<SuperAdminCalendar />} />
             <Route path="s-adminlogs" element={<SuperAdminLogs />} />
             <Route path="controlpanel" element={<AdminControlPanel />} />
             <Route path="authorities" element={<SuperAdminAuthorities />} />

@@ -2,6 +2,37 @@ const express = require('express');
 const router = express.Router();
 const CalendarEvent = require('../models/CalendarEvent');
 const moment = require('moment');
+const BlockedDate = require('../models/BlockedDate');
+const User = require('../models/User'); // Make sure to import your User model
+
+const verifySuperAdmin = async (req, res, next) => {
+  try {
+    // Get user ID from the authenticated request
+    const userId = req.user?._id;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized - No user ID found' });
+    }
+
+    // Directly check if user is SuperAdmin
+    const superAdmin = await User.findOne({
+      _id: userId,
+      role: "SuperAdmin", // Assuming your schema has a "role" field
+      status: "Active"    // Assuming you have an active status field
+    }).select('_id email firstName lastName');
+
+    if (!superAdmin) {
+      return res.status(403).json({ error: 'Access denied - SuperAdmin privileges required' });
+    }
+
+    // Attach the superAdmin info to the request if needed
+    req.superAdmin = superAdmin;
+    next();
+  } catch (error) {
+    console.error('SuperAdmin verification error:', error);
+    res.status(500).json({ error: 'Server error during authorization' });
+  }
+};
 
 // Get all calendar events
 router.get('/events', async (req, res) => {
@@ -92,48 +123,172 @@ router.get('/occupied-slots', async (req, res) => {
 
 
 // Get event counts per date
-router.get('/event-counts', async (req, res) => {
+// In your existing /events/range route, add this at the beginning:
+router.get('/events/range', async (req, res) => {
   try {
-    console.log('Fetching event counts...'); // Debug log
+    const { start, end } = req.query;
     
-    // Add date range filtering if needed
+    if (!start || !end) {
+      return res.status(400).json({ error: 'Start and end dates are required' });
+    }
+
+    // First check if any dates in the range are blocked
+    const blockedInRange = await BlockedDate.findOne({
+      $or: [
+        { 
+          startDate: { $lte: new Date(end) },
+          $or: [
+            { endDate: { $gte: new Date(start) } },
+            { endDate: null }
+          ]
+        },
+        { 
+          startDate: { $gte: new Date(start), $lte: new Date(end) }
+        }
+      ]
+    }).lean();
+
+    if (blockedInRange) {
+      // Return both events and blocked dates info
+      const events = await CalendarEvent.find({
+        $or: [
+          { startDate: { $lte: new Date(end) }, endDate: { $gte: new Date(start) } },
+          { startDate: { $gte: new Date(start), $lte: new Date(end) } }
+        ]
+      })
+      .populate('organization', 'organizationName')
+      .sort({ startDate: 1 })
+      .lean();
+
+      return res.status(200).json({
+        events,
+        blockedDatesInfo: {
+          hasBlockedDates: true,
+          firstBlocked: blockedInRange
+        }
+      });
+    }
+
+    // Original event query if no blocked dates
     const events = await CalendarEvent.find({
       $or: [
-        { formType: 'Activity' },
-        { formType: 'Project' }
+        { startDate: { $lte: new Date(end) }, endDate: { $gte: new Date(start) } },
+        { startDate: { $gte: new Date(start), $lte: new Date(end) } }
       ]
-    }, 'startDate endDate').lean();
-    
-    console.log(`Found ${events.length} events`); // Debug log
-    
-    const eventCounts = {};
-    
-    // In /event-counts route, make counting more robust
-        events.forEach(event => {
-          const start = moment.utc(event.startDate).startOf('day');
-          const end = moment.utc(event.endDate).startOf('day');
-          
-          // Handle cases where end date is before start date
-          if (end.isBefore(start)) {
-            const dateStr = start.format('YYYY-MM-DD');
-            eventCounts[dateStr] = (eventCounts[dateStr] || 0) + 1;
-            return;
-          }
+    })
+    .populate('organization', 'organizationName')
+    .sort({ startDate: 1 })
+    .lean();
 
-          for (let date = start.clone(); date <= end; date.add(1, 'days')) {
-            const dateStr = date.format('YYYY-MM-DD');
-            eventCounts[dateStr] = (eventCounts[dateStr] || 0) + 1;
-          }
-        });
-    
-    console.log('Final event counts:', eventCounts); // Debug log
-    res.json({ eventCounts });
+    res.status(200).json({
+      events,
+      blockedDatesInfo: {
+        hasBlockedDates: false
+      }
+    });
   } catch (error) {
-    console.error('Error in /event-counts:', error);
+    console.error('Error fetching calendar events by range:', error);
+    res.status(500).json({ error: 'Failed to fetch calendar events' });
+  }
+});
+
+// Get all blocked dates
+router.get('/blocked-dates', async (req, res) => {
+  try {
+    const blockedDates = await BlockedDate.find()
+      .sort({ startDate: 1 })
+      .lean();
+    
+    res.status(200).json(blockedDates);
+  } catch (error) {
+    console.error('Error fetching blocked dates:', error);
+    res.status(500).json({ error: 'Failed to fetch blocked dates' });
+  }
+});
+
+// Create new blocked date range
+// Block dates route
+router.post('/block-dates', verifySuperAdmin, async (req, res) => {
+  try {
+    const { title, description, startDate, endDate } = req.body;
+    
+    if (!title || !startDate) {
+      return res.status(400).json({ error: 'Title and start date are required' });
+    }
+
+    const newBlock = new BlockedDate({
+      title,
+      description,
+      startDate,
+      endDate: endDate || startDate,
+      createdBy: req.user._id // Using the verified user ID
+    });
+
+    await newBlock.save();
+    
+    res.status(201).json({
+      message: 'Dates blocked successfully',
+      blockedDate: newBlock
+    });
+  } catch (error) {
+    console.error('Error creating blocked dates:', error);
     res.status(500).json({ 
-      error: 'Failed to fetch event counts',
+      error: 'Failed to block dates',
       details: error.message 
     });
+  }
+});
+
+// Delete blocked dates route
+router.delete('/blocked-dates/:id', verifySuperAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid ID format' });
+    }
+
+    const deletedBlock = await BlockedDate.findByIdAndDelete(id);
+    
+    if (!deletedBlock) {
+      return res.status(404).json({ error: 'Blocked date range not found' });
+    }
+    
+    res.status(200).json({ 
+      message: 'Blocked date range removed successfully',
+      deletedBlock 
+    });
+  } catch (error) {
+    console.error('Error deleting blocked dates:', error);
+    res.status(500).json({ error: 'Failed to remove blocked dates' });
+  }
+});
+
+// Check if specific date is blocked
+router.get('/is-date-blocked', async (req, res) => {
+  try {
+    const { date } = req.query;
+    
+    if (!date) {
+      return res.status(400).json({ error: 'Date is required' });
+    }
+
+    const queryDate = new Date(date);
+    const blocked = await BlockedDate.findOne({
+      startDate: { $lte: queryDate },
+      $or: [
+        { endDate: { $gte: queryDate } },
+        { endDate: null }
+      ]
+    }).lean();
+
+    res.status(200).json({ 
+      isBlocked: !!blocked,
+      blockInfo: blocked || null
+    });
+  } catch (error) {
+    console.error('Error checking blocked date:', error);
+    res.status(500).json({ error: 'Failed to check date availability' });
   }
 });
 
