@@ -123,7 +123,7 @@ const Organizations = () => {
         ) : (
           <div className="organizations-grid">
             {organizations.map((org) => (
-              <div key={org.id} className="cards" onClick={() => openModal(org)}>
+              <div key={org.id} className="cards grid-view">
                 <img src={org.image} alt={org.name} className="cards-image" />
                 <div className="cards-info">
                   <h2>{org.name}</h2>
