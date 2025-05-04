@@ -12,7 +12,7 @@ const SuperAdminLogs = () => {
   useEffect(() => {
     const fetchActivities = async () => {
       try {
-        const response = await fetch('/api/activity-logs', {
+        const response = await fetch('https://studevent-server.vercel.app/api/activity-logs', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }

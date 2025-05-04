@@ -13,6 +13,7 @@ const feedbackRoutes = require('./routes/feedbackRoutes');
 const liquidationRoutes = require('./routes/liquidationRoutes');
 const budgetRoutes = require('./routes/budgetRoutes');
 const localOffRoutes = require('./routes/localOffRoutes'); // Import the local off-campus routes
+const activityLogRoutes = require('./routes/activityLogRoutes'); // Import the activity log routes
 
 const app = express();
 
@@ -66,6 +67,7 @@ app.use('/api/liquidation', authenticateToken, liquidationRoutes);
 app.use('/api/forms', authenticateToken, formRoutes);
 app.use('/api/budgets',authenticateToken, budgetRoutes);
 app.use('/api/local-off-campus',authenticateToken, localOffRoutes);
+app.use('/api/activity-logs', authenticateToken, activityLogRoutes); // Protect specific routes
 app.use('/api', authenticateToken, emailRoutes); // Protect specific routes
 
 const PORT = process.env.PORT || 8000;
