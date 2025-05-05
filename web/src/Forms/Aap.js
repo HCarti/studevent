@@ -209,56 +209,46 @@ const Aap = () => {
     try {
       const token = localStorage.getItem('token');
       const user = JSON.parse(localStorage.getItem('user'));
-
+  
       if (!token || !user) {
         throw new Error('User not authenticated');
       }
-
-      // Build the URL based on user role
+  
       let url = 'https://studevent-server.vercel.app/api/budgets';
       let queryParams = [];
-
-      // Organization users see their own budgets
+  
       if (user.role === 'Organization') {
         queryParams.push(`organization=${user._id}`);
-      }
-      // Regular users see budgets they created
-      else if (user.role !== 'Admin') {
+      } else if (user.role !== 'Admin') {
         queryParams.push(`createdBy=${user._id}`);
       }
-
-      // Only show active budgets by default
+  
       queryParams.push('isActive=true');
-
-      // Add status filter if needed (optional)
-      // queryParams.push('status=submitted');
-
+  
       if (queryParams.length > 0) {
         url += `?${queryParams.join('&')}`;
       }
-
+  
       const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
-
+  
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
+  
       const data = await response.json();
       setFormData(prev => ({
         ...prev,
-        budgetProposals: data
+        budgetProposals: data || [] // Ensure we always have an array
       }));
-
-      // If in edit mode and we have an attached budget, ensure it's in the list
+  
       if (isEditMode && formData.attachedBudget) {
         const hasAttachedBudget = data.some(b => b._id === formData.attachedBudget);
         if (!hasAttachedBudget) {
-          // Fetch the specific budget if it's not in the list
           fetchSingleBudget(formData.attachedBudget);
         }
       }
@@ -267,6 +257,11 @@ const Aap = () => {
       setBudgetLoadError(
         error.message || 'Failed to load budget proposals. Please try again later.'
       );
+      // Set empty array on error
+      setFormData(prev => ({
+        ...prev,
+        budgetProposals: []
+      }));
     }
   };
 
@@ -1163,7 +1158,7 @@ const Aap = () => {
                 className={fieldErrors.attachedBudget ? 'invalid-field' : ''}
               >
                 <option value="">Select a budget proposal...</option>
-                {formData.budgetProposals.map(budget => (
+                {formData.budgetProposals && formData.budgetProposals.map(budget => (
                   <option key={budget._id} value={budget._id}>
                     {budget.eventTitle} - ₱{budget.grandTotal?.toLocaleString()}
                     {budget.status ? ` (${budget.status})` : ''}

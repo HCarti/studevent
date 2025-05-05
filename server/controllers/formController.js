@@ -794,37 +794,80 @@ exports.updateForm = async (req, res) => {
       }
     }
 
-    // Enhanced budget validation
-    if (updates.attachedBudget) {
-      // Skip validation if budget hasn't changed
-      if (String(form.attachedBudget?._id) !== String(updates.attachedBudget)) {
-        const organizationId = form.studentOrganization || user.organizationId;
-        
-        const validBudget = await BudgetProposal.findOne({
-          _id: updates.attachedBudget,
-          $or: [
-            { organization: organizationId },
-            { createdBy: user._id }
-          ],
-          isActive: true
-        }).session(session);
+    // Enhanced budget validation with debug logging
+    if (updates.attachedBudget !== undefined) {
+      console.log('Budget validation context:', {
+        currentBudget: form.attachedBudget?._id,
+        newBudget: updates.attachedBudget,
+        formType: form.formType,
+        userRole: user.role,
+        userId: user._id
+      });
 
-        if (!validBudget) {
-          await session.abortTransaction();
-          session.endSession();
-          return res.status(403).json({ 
-            error: "Budget not found or not available for your organization",
-            details: {
+      // Determine organization context
+      let organizationId;
+      
+      // If form has a studentOrganization, use that
+      if (form.studentOrganization) {
+        organizationId = form.studentOrganization;
+      } 
+      // For project forms or users with organization context
+      else if (user.organizationId) {
+        organizationId = user.organizationId;
+      }
+      // For organization users submitting on their own behalf
+      else if (user.role === 'Organization') {
+        organizationId = user._id;
+      }
+
+      console.log('Determined organizationId:', organizationId);
+
+      // If removing budget attachment
+      if (!updates.attachedBudget) {
+        updates.budgetAmount = undefined;
+        updates.budgetFrom = undefined;
+      } 
+      // If adding/changing budget attachment
+      else {
+        // Skip validation if budget hasn't changed
+        if (form.attachedBudget && String(form.attachedBudget._id) === String(updates.attachedBudget)) {
+          console.log('Budget unchanged - skipping validation');
+        } else {
+          console.log('Validating new budget attachment');
+          
+          // Validate the new budget
+          const validBudget = await BudgetProposal.findOne({
+            _id: updates.attachedBudget,
+            organization: organizationId,
+            isActive: true
+          }).session(session);
+
+          if (!validBudget) {
+            console.log('Budget validation failed', {
               budgetId: updates.attachedBudget,
-              organization: organizationId,
-              isActiveRequired: true
-            }
-          });
-        }
+              organizationId,
+              isActive: true
+            });
+            
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(403).json({ 
+              error: "Budget validation failed",
+              details: {
+                message: "Budget must belong to your organization and be active",
+                field: "attachedBudget",
+                organizationId,
+                budgetId: updates.attachedBudget
+              }
+            });
+          }
 
-        // Update related fields if budget changed
-        updates.budgetAmount = validBudget.grandTotal;
-        updates.budgetFrom = validBudget.nameOfRso;
+          console.log('Budget validation passed - updating related fields');
+          
+          // Update related fields
+          updates.budgetAmount = validBudget.grandTotal;
+          updates.budgetFrom = validBudget.nameOfRso;
+        }
       }
     }
 
