@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './Navbar.css';
 import StudeventLogo from '../Images/Studevent.png';
-import { FiLogOut, FiHome, FiUsers, FiBell, FiCheckCircle, FiCircle } from 'react-icons/fi';
+import { FiLogOut, FiHome, FiUsers, FiBell, FiTrash2} from 'react-icons/fi';
 import { CgProfile } from 'react-icons/cg';
 
 const Navbar = ({ isLoggedIn, user, handleLogout }) => {
@@ -15,6 +15,7 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [organizationId, setOrganizationId] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   // Refs for dropdown containers
@@ -76,6 +77,14 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
     };
   }, [drawerOpen, notificationMenuOpen, showProfileModal]);
 
+    useEffect(() => {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        setOrganizationId(parsedUser?._id);
+      }
+    }, []);
+
   // Notifications
   useEffect(() => {
     if (isLoggedIn && user) {
@@ -104,6 +113,39 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
       setUnreadCount(data.filter(n => !n.read).length);
     } catch (error) {
       console.error('Error fetching notifications:', error);
+    }
+  };
+
+  const deleteNotification = async (notificationId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://studevent-server.vercel.app/api/notifications/${notificationId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete notification: ${response.status}`);
+      }
+
+      // Remove the notification from the local state
+      setNotifications(prevNotifications => 
+        prevNotifications.filter(notification => notification._id !== notificationId)
+      );
+
+      // Update unread count if the deleted notification was unread
+      const deletedNotification = notifications.find(n => n._id === notificationId);
+      if (deletedNotification && !deletedNotification.read) {
+        setUnreadCount(prevCount => Math.max(prevCount - 1, 0));
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      return false;
     }
   };
 
@@ -307,7 +349,7 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
         }
         break;
       case 'approval':
-        navigate(`/approvals`);
+        navigate(`/organization/${organizationId}/forms`);
         break;
       case 'liquidation':
         navigate(`/liquidations`);
@@ -340,68 +382,78 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
                 {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
               </div>
               {notificationMenuOpen && (
-                <div className="notification-dropdown">
-                  {notifications.length > 0 ? (
-                    notifications.map(notification => (
-                      <div
-                        key={notification._id}
-                        className={`notification-item ${notification.read ? 'read' : 'unread'}`}
-                        onClick={e => {
-                          // Don't trigger navigation if clicking on buttons
-                          if (
-                            e.target.tagName === 'BUTTON' ||
-                            e.target.closest('button') ||
-                            e.target.className === 'notification-actions'
-                          ) {
-                            return;
-                          }
-                          handleNotificationClick(notification);
-                        }}
-                      >
-                        <div className="notification-message">{notification.message}</div>
-                        <div className="notification-time">
-                          {new Date(notification.createdAt).toLocaleString()}
-                        </div>
-                        <div className="notification-actions">
-                          {notification.type === 'tracker' && (
-                            <button
-                              className="view-tracker-btn"
-                              onClick={e => {
-                                e.stopPropagation();
-                                navigate(`/tracker/${notification.trackerId}`);
-                                setNotificationMenuOpen(false);
-                              }}
-                            >
-                              View Tracker
-                            </button>
-                          )}
-                          {notification.read ? (
-                            <button
-                              className="mark-unread-btn"
-                              onClick={e => {
-                                e.stopPropagation();
-                                markNotificationAsUnread(notification._id);
-                              }}
-                            >
-                              Mark as Unread
-                            </button>
-                          ) : (
-                            <button
-                              className="mark-read-btn"
-                              onClick={e => {
-                                e.stopPropagation();
-                                markNotificationAsRead(notification._id);
-                              }}
-                            >
-                              Mark as Read
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="notification-item no-notifications">No new notifications</div>
+        <div className="notification-dropdown">
+          {notifications.length > 0 ? (
+            notifications.map(notification => (
+              <div
+                key={notification._id}
+                className={`notification-item ${notification.read ? 'read' : 'unread'}`}
+                onClick={e => {
+                  // Don't trigger navigation if clicking on buttons
+                  if (
+                    e.target.tagName === 'BUTTON' ||
+                    e.target.closest('button') ||
+                    e.target.className === 'notification-actions'
+                  ) {
+                    return;
+                  }
+                  handleNotificationClick(notification);
+                }}
+              >
+                <div className="notification-message">{notification.message}</div>
+                <div className="notification-time">
+                  {new Date(notification.createdAt).toLocaleString()}
+                </div>
+                <div className="notification-actions">
+                  {notification.type === 'tracker' && (
+                    <button
+                      className="view-tracker-btn"
+                      onClick={e => {
+                        e.stopPropagation();
+                        navigate(`/tracker/${notification.trackerId}`);
+                        setNotificationMenuOpen(false);
+                      }}
+                    >
+                      View Tracker
+                    </button>
                   )}
+                  <button
+                    className="delete-notification-btn"
+                    onClick={e => {
+                      e.stopPropagation();
+                      deleteNotification(notification._id);
+                    }}
+                    title="Delete notification"
+                  >
+                    <FiTrash2 size={14} />
+                  </button>
+                  {notification.read ? (
+                    <button
+                      className="mark-unread-btn"
+                      onClick={e => {
+                        e.stopPropagation();
+                        markNotificationAsUnread(notification._id);
+                      }}
+                    >
+                      Mark as Unread
+                    </button>
+                  ) : (
+                    <button
+                      className="mark-read-btn"
+                      onClick={e => {
+                        e.stopPropagation();
+                        markNotificationAsRead(notification._id);
+                      }}
+                    >
+                      Mark as Read
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="notification-item no-notifications">No new notifications</div>
+          )}
                   <div className="notification-footer">
                     <button
                       className="view-all-notifications"

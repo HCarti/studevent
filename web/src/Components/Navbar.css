@@ -254,6 +254,28 @@
   margin-top: 6px;
 }
 
+.delete-notification-btn {
+  background: none;
+  border: none;
+  color: #ff4444;
+  cursor: pointer;
+  padding: 2px 5px;
+  margin: 0 3px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+}
+
+.delete-notification-btn:hover {
+  background-color: rgba(255, 68, 68, 0.1);
+}
+
+.notification-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .view-tracker-btn {
   margin-top: 8px;
   padding: 6px 12px;

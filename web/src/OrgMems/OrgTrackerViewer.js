@@ -38,7 +38,7 @@ const OrgTrackerViewer = () => {
                 if (isLocalOffCampus) {
                     trackerEndpoint = `https://studevent-server.vercel.app/api/local-off-campus/${formId}/tracker`;
                 } else {
-                    trackerEndpoint = `https://studevent-server.vercel.app/api/tracker/${formId}`;
+                    trackerEndpoint = `https://studevent-server.vercel.app/api/tracker/${formId}?deepPopulate=true`;
                 }
     
                 // Fetch tracker data

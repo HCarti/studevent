@@ -538,7 +538,7 @@ const ProgressTracker = () => {
     return (
         <div className='prog-box'>
             <h3>Event Proposal Tracker</h3>
-            {organizationType && (
+            {/* {organizationType && (
                 <p style={{ 
                     textAlign: 'center', 
                     color: '#666',
@@ -546,7 +546,7 @@ const ProgressTracker = () => {
                 }}>
                     Organization Type: {organizationType}
                 </p>
-            )}
+            )} */}
             <div className="progress-content">
                 <div className="progress-tracker">
                     <div className="progress-bar-container">

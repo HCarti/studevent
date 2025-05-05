@@ -41,7 +41,7 @@
   position: relative;
   padding: 10px 0; /* Removed side padding */
   overflow-y: auto;
-  max-height: 500px;
+  max-height: 600px;
   min-height: 300px;
   gap: 5px; /* Reduced gap since we have bottom padding */
   margin: 20px 0;

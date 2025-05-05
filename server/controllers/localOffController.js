@@ -105,10 +105,12 @@ exports.submitLocalOffCampusBefore = async (req, res) => {
         userEmail: req.user.email,
         message: `Your Local Off-Campus BEFORE form has been submitted!`,
         read: false,
+        type: "event", // Changed from "form-submission"
         timestamp: new Date(),
-        type: "form-submission"
+        trackerId: savedTracker._id
       }], { session });
     }
+    
 
     // Send notifications to first reviewers (Academic Services)
     const academicServicesUsers = await User.find({ 
@@ -120,7 +122,7 @@ exports.submitLocalOffCampusBefore = async (req, res) => {
       message: `New Local Off-Campus BEFORE form submitted by ${req.user.name || 'an organization'}`,
       read: false,
       timestamp: new Date(),
-      type: "review-request",
+      type: "organization", // Changed from "review-request"
       link: `/review/local-off-campus/${savedForm._id}`,
       formId: savedForm._id,
       trackerId: savedTracker._id
@@ -223,7 +225,8 @@ exports.submitLocalOffCampusAfter = async (req, res) => {
       message: `Your Local Off-Campus AFTER form has been submitted successfully!`,
       read: false,
       timestamp: new Date(),
-      type: "form-submission"
+      type: "event", // Changed from "form-submission"
+      trackerId: afterTracker._id
     }], { session });
 
     const academicServicesUsers = await User.find({ 
@@ -236,8 +239,9 @@ exports.submitLocalOffCampusAfter = async (req, res) => {
         message: `New Local Off-Campus AFTER form submitted by ${req.user.name || 'an organization'}`,
         read: false,
         timestamp: new Date(),
-        type: "review-request",
-        link: `/review/local-off-campus/${savedAfterForm._id}`
+        type: "organization", // Changed from "review-request"
+        link: `/review/local-off-campus/${savedAfterForm._id}`,
+        trackerId: afterTracker._id
       })),
       { session }
     );
