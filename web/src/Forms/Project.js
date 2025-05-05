@@ -144,6 +144,7 @@ const Project = () => {
   const [loadingDates, setLoadingDates] = useState(false);
   const [budgetLoadError, setBudgetLoadError] = useState(null);
   const navigate = useNavigate();
+  const [blockedDates, setBlockedDates] = useState([]);
   const [notification, setNotification] = useState({
     visible: false,
     message: '',
@@ -431,6 +432,47 @@ const Project = () => {
     return moment(date).utc().startOf('day').format('YYYY-MM-DD');
   };
 
+  // Add this function to fetch blocked dates
+const fetchBlockedDates = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const response = await fetch(
+      'https://studevent-server.vercel.app/api/calendar/blocked-dates',
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      setBlockedDates(data);
+    }
+  } catch (error) {
+    console.error('Error fetching blocked dates:', error);
+  }
+};
+
+// Call this in useEffect when component mounts
+useEffect(() => {
+  fetchBlockedDates();
+}, []);
+
+const isDateBlocked = (date) => {
+  const dateToCheck = moment(date).startOf('day');
+  
+  return blockedDates.some(block => {
+    const startDate = moment(block.startDate).startOf('day');
+    const endDate = block.endDate ? moment(block.endDate).startOf('day') : startDate;
+    
+    return dateToCheck.isBetween(startDate, endDate, 'day', '[]');
+  });
+};
+
   const isDateOccupied = date => {
     if (!date) return false;
     const dateStr = moment(date).format('YYYY-MM-DD');
@@ -647,6 +689,27 @@ const Project = () => {
       return;
     }
 
+      // Check for blocked dates
+  if (formData.startDate && isDateBlocked(formData.startDate)) {
+    setNotification({
+      visible: true,
+      message: 'The selected start date has been blocked by administrators',
+      type: 'error'
+    });
+    setTimeout(() => setNotification({ visible: false }), 3000);
+    return;
+  }
+
+  if (formData.endDate && isDateBlocked(formData.endDate)) {
+    setNotification({
+      visible: true,
+      message: 'The selected end date has been blocked by administrators',
+      type: 'error'
+    });
+    setTimeout(() => setNotification({ visible: false }), 3000);
+    return;
+  }
+
     if (!formData.budgetFrom) {
       setFieldErrors(prev => ({
         ...prev,
@@ -819,92 +882,118 @@ const Project = () => {
             </div>
 
             <div className="form-row">
-              <div className="form-group">
-                <label className="required-field">Start Date:</label>
-                <DatePicker
-                  selected={formData.startDate ? new Date(formData.startDate) : null}
-                  onChange={date =>
-                    handleChange({
-                      target: {
-                        name: 'startDate',
-                        value: date ? date.toISOString() : ''
-                      }
-                    })
-                  }
-                  minDate={new Date()}
-                  filterDate={date => {
-                    const dateStr = normalizeDateToUTC(date);
-                    return (eventsPerDate[dateStr] || 0) < 3;
-                  }}
-                  dayClassName={date => {
-                    const dateStr = normalizeDateToUTC(date);
-                    const count = eventsPerDate[dateStr] || 0;
+                <div className="form-group">
+                  <label className="required-field">Start Date:</label>
+                  <DatePicker
+                    selected={formData.startDate ? new Date(formData.startDate) : null}
+                    onChange={date =>
+                      handleChange({
+                        target: {
+                          name: 'startDate',
+                          value: date ? date.toISOString() : ''
+                        }
+                      })
+                    }
+                    minDate={new Date()}
+                    filterDate={date => {
+                      const dateStr = normalizeDateToUTC(date);
+                      const isBlocked = isDateBlocked(date);
+                      const isOccupied = (eventsPerDate[dateStr] || 0) >= 3;
+                      
+                      return !isBlocked && !isOccupied;
+                    }}
+                    dayClassName={date => {
+                      const dateStr = normalizeDateToUTC(date);
+                      const count = eventsPerDate[dateStr] || 0;
+                      const isBlocked = isDateBlocked(date);
 
-                    if (count >= 3) return 'fully-booked-day';
-                    if (count >= 2) return 'approaching-limit-day';
-                    return '';
-                  }}
-                  selectsStart
-                  startDate={formData.startDate ? new Date(formData.startDate) : null}
-                  endDate={formData.endDate ? new Date(formData.endDate) : null}
-                  dateFormat="MMMM d, yyyy h:mm aa"
-                  showTimeSelect
-                  timeFormat="h:mm aa"
-                  timeIntervals={15}
-                  timeCaption="Time"
-                  className={`date-picker-input ${fieldErrors.startDate ? 'invalid-field' : ''}`}
-                  placeholderText="Select start date and time"
-                  popperPlacement="bottom-start"
-                  disabled={loadingDates}
-                  required
-                />
-                {fieldErrors.startDate && (
-                  <div className="validation-error">Start Date is required</div>
-                )}
+                      if (isBlocked) return 'blocked-day';
+                      if (count >= 3) return 'fully-booked-day';
+                      if (count >= 2) return 'approaching-limit-day';
+                      return '';
+                    }}
+                    selectsStart
+                    startDate={formData.startDate ? new Date(formData.startDate) : null}
+                    endDate={formData.endDate ? new Date(formData.endDate) : null}
+                    dateFormat="MMMM d, yyyy h:mm aa"
+                    showTimeSelect
+                    timeFormat="h:mm aa"
+                    timeIntervals={15}
+                    timeCaption="Time"
+                    className={`date-picker-input ${fieldErrors.startDate ? 'invalid-field' : ''}`}
+                    placeholderText="Select start date and time"
+                    popperPlacement="bottom-start"
+                    disabled={loadingDates}
+                    required
+                  />
+                  {fieldErrors.startDate && (
+                    <div className="validation-error">
+                      {formData.startDate && isDateBlocked(formData.startDate)
+                        ? 'This date has been blocked by administrators'
+                        : formData.startDate && 
+                          eventsPerDate[moment(formData.startDate).format('YYYY-MM-DD')] >= 3
+                        ? 'This date has reached the maximum number of events (3)'
+                        : 'Start Date is required'}
+                    </div>
+                  )}
+                </div>
 
-                <label className="required-field">End Date:</label>
-                <DatePicker
-                  selected={formData.endDate ? new Date(formData.endDate) : null}
-                  onChange={date =>
-                    handleChange({
-                      target: {
-                        name: 'endDate',
-                        value: date ? date.toISOString() : ''
-                      }
-                    })
-                  }
-                  minDate={formData.startDate ? new Date(formData.startDate) : new Date()}
-                  filterDate={date => {
-                    const dateStr = normalizeDateToUTC(date);
-                    return (eventsPerDate[dateStr] || 0) < 3;
-                  }}
-                  dayClassName={date => {
-                    const dateStr = normalizeDateToUTC(date);
-                    const count = eventsPerDate[dateStr] || 0;
+                <div className="form-group">
+                  <label className="required-field">End Date:</label>
+                  <DatePicker
+                    selected={formData.endDate ? new Date(formData.endDate) : null}
+                    onChange={date =>
+                      handleChange({
+                        target: {
+                          name: 'endDate',
+                          value: date ? date.toISOString() : ''
+                        }
+                      })
+                    }
+                    minDate={formData.startDate ? new Date(formData.startDate) : new Date()}
+                    filterDate={date => {
+                      const dateStr = normalizeDateToUTC(date);
+                      const isBlocked = isDateBlocked(date);
+                      const isOccupied = (eventsPerDate[dateStr] || 0) >= 3;
+                      
+                      return !isBlocked && !isOccupied;
+                    }}
+                    dayClassName={date => {
+                      const dateStr = normalizeDateToUTC(date);
+                      const count = eventsPerDate[dateStr] || 0;
+                      const isBlocked = isDateBlocked(date);
 
-                    if (count >= 3) return 'fully-booked-day';
-                    if (count >= 2) return 'approaching-limit-day';
-                    return '';
-                  }}
-                  selectsEnd
-                  startDate={formData.startDate ? new Date(formData.startDate) : null}
-                  endDate={formData.endDate ? new Date(formData.endDate) : null}
-                  dateFormat="MMMM d, yyyy h:mm aa"
-                  showTimeSelect
-                  timeFormat="h:mm aa"
-                  timeIntervals={15}
-                  timeCaption="Time"
-                  className={`date-picker-input ${fieldErrors.endDate ? 'invalid-field' : ''}`}
-                  placeholderText="Select end date and time"
-                  popperPlacement="bottom-start"
-                  disabled={loadingDates || !formData.startDate}
-                  required
-                />
-                {fieldErrors.endDate && (
-                  <div className="validation-error">End Date is required</div>
-                )}
+                      if (isBlocked) return 'blocked-day';
+                      if (count >= 3) return 'fully-booked-day';
+                      if (count >= 2) return 'approaching-limit-day';
+                      return '';
+                    }}
+                    selectsEnd
+                    startDate={formData.startDate ? new Date(formData.startDate) : null}
+                    endDate={formData.endDate ? new Date(formData.endDate) : null}
+                    dateFormat="MMMM d, yyyy h:mm aa"
+                    showTimeSelect
+                    timeFormat="h:mm aa"
+                    timeIntervals={15}
+                    timeCaption="Time"
+                    className={`date-picker-input ${fieldErrors.endDate ? 'invalid-field' : ''}`}
+                    placeholderText="Select end date and time"
+                    popperPlacement="bottom-start"
+                    disabled={loadingDates || !formData.startDate}
+                    required
+                  />
+                  {fieldErrors.endDate && (
+                    <div className="validation-error">
+                      {formData.endDate && isDateBlocked(formData.endDate)
+                        ? 'This date has been blocked by administrators'
+                        : formData.endDate && 
+                          eventsPerDate[moment(formData.endDate).format('YYYY-MM-DD')] >= 3
+                        ? 'This date has reached the maximum number of events (3)'
+                        : 'End Date is required'}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
 
             <div className="form-group">
               <label className="required-field">Venue:</label>

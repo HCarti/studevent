@@ -445,6 +445,47 @@ const Aap = () => {
     return moment(date).utc().startOf('day').format('YYYY-MM-DD');
   };
 
+  const fetchBlockedDates = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+  
+      const response = await fetch(
+        'https://studevent-server.vercel.app/api/calendar/blocked-dates',
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+  
+      if (response.ok) {
+        const data = await response.json();
+        setBlockedDates(data);
+      }
+    } catch (error) {
+      console.error('Error fetching blocked dates:', error);
+    }
+  };
+  
+  // Call this in useEffect when component mounts
+  useEffect(() => {
+    fetchBlockedDates();
+  }, []);
+
+  const isDateBlocked = (date) => {
+    const dateToCheck = moment(date).startOf('day');
+    
+    return blockedDates.some(block => {
+      const startDate = moment(block.startDate).startOf('day');
+      const endDate = block.endDate ? moment(block.endDate).startOf('day') : startDate;
+      
+      return dateToCheck.isBetween(startDate, endDate, 'day', '[]');
+    });
+  };
+  
+
   // Update the dayClassName function for visual feedback
   const dayClassName = date => {
     const dateStr = moment(date).format('YYYY-MM-DD');
@@ -659,6 +700,16 @@ const Aap = () => {
     const eventEnd = moment(formData.eventEndDate);
     if (!eventStart.isValid() || !eventEnd.isValid() || eventEnd.isBefore(eventStart)) {
       alert('Invalid event dates');
+      return;
+    }
+
+    if (isDateBlocked(formData.eventStartDate)) {
+      alert('The selected start date has been blocked by administrators');
+      return;
+    }
+  
+    if (isDateBlocked(formData.eventEndDate)) {
+      alert('The selected end date has been blocked by administrators');
       return;
     }
 
@@ -992,78 +1043,94 @@ const Aap = () => {
             </p>
 
             <label className="required-field">Event Start Date:</label>
-            <DatePicker
-              selected={formData.eventStartDate ? new Date(formData.eventStartDate) : null}
-              onChange={date => handleDateChange(date, 'eventStartDate')}
-              minDate={new Date()}
-              filterDate={date => {
-                const dateStr = normalizeDateToUTC(date);
-                return (eventsPerDate[dateStr] || 0) < 3;
-              }}
-              dayClassName={date => {
-                const dateStr = normalizeDateToUTC(date);
-                const count = eventsPerDate[dateStr] || 0;
+<DatePicker
+  selected={formData.eventStartDate ? new Date(formData.eventStartDate) : null}
+  onChange={date => handleDateChange(date, 'eventStartDate')}
+  minDate={new Date()}
+  filterDate={date => {
+    // Check both event limits and blocked dates
+    const dateStr = normalizeDateToUTC(date);
+    const isBlocked = isDateBlocked(date);
+    const isOccupied = (eventsPerDate[dateStr] || 0) >= 3;
+    
+    return !isBlocked && !isOccupied;
+  }}
+  dayClassName={date => {
+    const dateStr = normalizeDateToUTC(date);
+    const count = eventsPerDate[dateStr] || 0;
+    const isBlocked = isDateBlocked(date);
 
-                if (count >= 3) return 'fully-booked-day';
-                if (count >= 2) return 'approaching-limit-day';
-                return '';
-              }}
-              dateFormat="MMMM d, yyyy h:mm aa"
-              showTimeSelect
-              timeFormat="h:mm aa"
-              timeIntervals={15}
-              timeCaption="Time"
-              locale="en"
-              placeholderText="Select start date and time"
-              className={`date-picker-input ${fieldErrors.eventStartDate ? 'invalid-field' : ''}`}
-              popperPlacement="bottom-start"
-              disabledKeyboardNavigation
-            />
-            {fieldErrors.eventStartDate && (
-              <div className="validation-error">
-                {formData.eventStartDate &&
-                eventsPerDate[moment(formData.eventStartDate).format('YYYY-MM-DD')] >= 3
-                  ? 'This date has reached the maximum number of events (3)'
-                  : 'Please select a valid start date'}
-              </div>
-            )}
+    if (isBlocked) return 'blocked-day';
+    if (count >= 3) return 'fully-booked-day';
+    if (count >= 2) return 'approaching-limit-day';
+    return '';
+  }}
+  dateFormat="MMMM d, yyyy h:mm aa"
+  showTimeSelect
+  timeFormat="h:mm aa"
+  timeIntervals={15}
+  timeCaption="Time"
+  locale="en"
+  placeholderText="Select start date and time"
+  className={`date-picker-input ${fieldErrors.eventStartDate ? 'invalid-field' : ''}`}
+  popperPlacement="bottom-start"
+  disabledKeyboardNavigation
+/>
+{fieldErrors.eventStartDate && (
+  <div className="validation-error">
+    {formData.eventStartDate && isDateBlocked(formData.eventStartDate)
+      ? 'This date has been blocked by administrators'
+      : formData.eventStartDate && 
+        eventsPerDate[moment(formData.eventStartDate).format('YYYY-MM-DD')] >= 3
+      ? 'This date has reached the maximum number of events (3)'
+      : 'Please select a valid start date'}
+  </div>
+)}
 
-            <label className="required-field">Event End Date:</label>
-            <DatePicker
-              selected={formData.eventEndDate ? new Date(formData.eventEndDate) : null}
-              onChange={date => handleDateChange(date, 'eventEndDate')}
-              minDate={formData.eventStartDate ? new Date(formData.eventStartDate) : new Date()}
-              filterDate={date => {
-                const dateStr = normalizeDateToUTC(date);
-                return (eventsPerDate[dateStr] || 0) < 3;
-              }}
-              dayClassName={date => {
-                const dateStr = normalizeDateToUTC(date);
-                const count = eventsPerDate[dateStr] || 0;
+<label className="required-field">Event End Date:</label>
+<DatePicker
+  selected={formData.eventEndDate ? new Date(formData.eventEndDate) : null}
+  onChange={date => handleDateChange(date, 'eventEndDate')}
+  minDate={formData.eventStartDate ? new Date(formData.eventStartDate) : new Date()}
+  filterDate={date => {
+    // Check both event limits and blocked dates
+    const dateStr = normalizeDateToUTC(date);
+    const isBlocked = isDateBlocked(date);
+    const isOccupied = (eventsPerDate[dateStr] || 0) >= 3;
+    
+    return !isBlocked && !isOccupied;
+  }}
+  dayClassName={date => {
+    const dateStr = normalizeDateToUTC(date);
+    const count = eventsPerDate[dateStr] || 0;
+    const isBlocked = isDateBlocked(date);
 
-                if (count >= 3) return 'fully-booked-day';
-                if (count >= 2) return 'approaching-limit-day';
-                return '';
-              }}
-              dateFormat="MMMM d, yyyy h:mm aa"
-              showTimeSelect
-              timeFormat="h:mm aa"
-              timeIntervals={15}
-              timeCaption="Time"
-              locale="en"
-              placeholderText="Select end date and time"
-              className={`date-picker-input ${fieldErrors.eventEndDate ? 'invalid-field' : ''}`}
-              popperPlacement="bottom-start"
-              disabledKeyboardNavigation
-            />
-            {fieldErrors.eventEndDate && (
-              <div className="validation-error">
-                {formData.eventEndDate &&
-                eventsPerDate[moment(formData.eventEndDate).format('YYYY-MM-DD')] >= 3
-                  ? 'This date has reached the maximum number of events (3)'
-                  : 'End date must be after start date'}
-              </div>
-            )}
+    if (isBlocked) return 'blocked-day';
+    if (count >= 3) return 'fully-booked-day';
+    if (count >= 2) return 'approaching-limit-day';
+    return '';
+  }}
+  dateFormat="MMMM d, yyyy h:mm aa"
+  showTimeSelect
+  timeFormat="h:mm aa"
+  timeIntervals={15}
+  timeCaption="Time"
+  locale="en"
+  placeholderText="Select end date and time"
+  className={`date-picker-input ${fieldErrors.eventEndDate ? 'invalid-field' : ''}`}
+  popperPlacement="bottom-start"
+  disabledKeyboardNavigation
+/>
+{fieldErrors.eventEndDate && (
+  <div className="validation-error">
+    {formData.eventEndDate && isDateBlocked(formData.eventEndDate)
+      ? 'This date has been blocked by administrators'
+      : formData.eventEndDate && 
+        eventsPerDate[moment(formData.eventEndDate).format('YYYY-MM-DD')] >= 3
+      ? 'This date has reached the maximum number of events (3)'
+      : 'End date must be after start date'}
+  </div>
+)}
             <label className="required-field">Organizer:</label>
             <input
               type="text"
