@@ -4,12 +4,13 @@
   background-color: #fafafa;
   border-radius: 8px;
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-  width: 90%;
+  width: 100%;
   max-width: 1200px;
-  margin: 20px auto;
+  margin: 0 auto;
   padding: 20px;
   font-family: 'Roboto', sans-serif;
   overflow: hidden; /* Added to prevent content overflow */
+  box-sizing: border-box;
 }
 
 .proposal-ttl {
@@ -43,6 +44,7 @@
   max-height: 500px;
   min-height: 300px;
   gap: 5px; /* Reduced gap since we have bottom padding */
+  margin: 20px 0;
 }
 
 .org-progress-bar-container::before {
@@ -59,10 +61,11 @@
 .org-step-container {
   display: flex;
   align-items: flex-start;
-  margin-bottom: 20px; /* Increased from 15px */
-  min-height: auto; /* Changed from fixed height */
-  position: relative;
-  padding-right: 15px;
+  gap: 15px;
+  margin-bottom: 15px;
+  padding: 15px;
+  border-radius: 8px;
+  background-color: #f5f5f5;
 }
 
 .org-progress-step {
@@ -82,7 +85,7 @@
   color: #555;
   position: relative;
   margin: 0 0 0 10px; /* Adjusted margins */
-  word-break: break-word;
+  word-wrap: break-word;
   flex: 1;
   min-width: 0;
   padding-bottom: 15px; /* Added padding at bottom */
@@ -100,7 +103,7 @@
 .org-reviewer-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
   margin-top: 8px; /* Increased from 6px */
   font-size: 12px;
   color: #666;
@@ -110,7 +113,6 @@
   border-left: 3px solid #ddd;
   width: 100%; /* Ensure full width */
 }
-
 
 .org-reviewer-info small {
   display: block; /* Make each item take its own line */
@@ -210,14 +212,15 @@
 
 .org-tracker-content-wrapper {
   display: flex;
-  gap: 30px;
+  gap: 20px;
+  flex-direction: row;
   width: 100%;
   min-height: 400px; /* Ensure minimum height */
 }
 
 /* Left Column - Tracker Steps */
 .org-tracker-steps-column {
-  flex: 2;
+  flex: 1;
   min-width: 0; /* Prevent flex overflow */
   display: flex;
   flex-direction: column;
@@ -230,6 +233,10 @@
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
 }
 
 .org-spinner {
@@ -245,7 +252,7 @@
 .org-feedback-container {
   position: sticky;
   top: 20px;
-  background: #f8f9fa;
+  background: #f5f5f5;
   border-radius: 8px;
   padding: 20px;
   border: 1px solid #e0e0e0;
@@ -274,18 +281,18 @@
 /* Rating Stars */
 .org-rating-stars {
   display: flex;
-  gap: 8px;
-  margin: 15px 0;
+  gap: 5px;
+  margin: 10px 0;
 }
 
 .org-star-filled {
-  color: #FFD700;
+  color: #ffc107;
   cursor: pointer;
   font-size: 28px;
 }
 
 .org-star-empty {
-  color: #ccc;
+  color: #e0e0e0;
   cursor: pointer;
   font-size: 28px;
   transition: color 0.2s;
@@ -297,11 +304,12 @@
 
 /* Textarea */
 .org-feedback-textarea {
-  width: 93%;
-  padding: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 10px 0;
+  padding: 10px;
   border: 1px solid #ddd;
   border-radius: 4px;
-  margin-bottom: 15px;
   font-family: inherit;
   resize: vertical;
   min-height: 120px;
@@ -362,19 +370,86 @@
     margin-left: 0;
     margin-top: 20px;
   }
-}
 
-/* Responsive Adjustments - Matched to ProgressTracker */
-@media (max-width: 768px) {
-  .org-progress-tracker {
+  .org-tracker-content-wrapper {
     flex-direction: column;
   }
-  
-  .org-progress-bar-container {
-    max-height: none;
+
+  .org-feedback-column {
+    min-width: 100%;
   }
-  
+
+  .org-prog-box {
+    padding: 10px;
+  }
+
+  .org-step-container {
+    padding: 10px;
+  }
+
+  .proposal-ttl {
+    font-size: 1.5rem;
+    margin: 10px 0;
+  }
+
+  .org-reviewer-info {
+    font-size: 0.9rem;
+  }
+
   .org-action-buttons {
+    display: flex;
+    justify-content: center;
+    margin: 15px 0;
+  }
+
+  .org-action-button {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+/* Small mobile devices */
+@media screen and (max-width: 480px) {
+  .org-step-container {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .org-step-label {
+    width: 100%;
+  }
+
+  .org-reviewer-info {
+    align-items: center;
+  }
+
+  .org-rating-stars {
     justify-content: center;
   }
+
+  .org-feedback-container h4 {
+    font-size: 1.2rem;
+    text-align: center;
+  }
+
+  .org-feedback-container p {
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
+  .org-feedback-button-container {
+    display: flex;
+    justify-content: center;
+  }
+
+  .org-feedback-submit-button {
+    width: 100%;
+  }
+}
+
+/* Additional utility classes */
+.org-error-container {
+  text-align: center;
+  padding: 20px;
 }
