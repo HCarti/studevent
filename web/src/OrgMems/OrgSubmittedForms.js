@@ -12,6 +12,7 @@ const OrgSubmittedForms = () => {
     const [formToDelete, setFormToDelete] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [isNavigating, setIsNavigating] = useState(false); // Add a new state for navigation loading
 
     useEffect(() => {
         const fetchForms = async () => {
@@ -214,40 +215,40 @@ const OrgSubmittedForms = () => {
         setError(null);
     };
 
-    // In OrgSubmittedForms.js
-    const handleEditClick = (e, form) => {
+    const handleEditClick = async (e, form) => {
         e.stopPropagation();
+        setIsNavigating(true); // Show loading before navigation
         
-        if (form.formType === 'LocalOffCampus' || form.isLocalOffCampus) {
-            if (form.formPhase === 'AFTER') {
-                // Edit existing AFTER report
-                navigate('/localoffcampus', { 
-                    state: { 
-                        editAfterForm: true,
-                        formData: form,
-                        beforeFormId: form.eventId
-                    } 
-                });
-            } else if (form.status === 'approved') {
-                // Start new AFTER report for approved BEFORE form
-                navigate('/localoffcampus', { 
-                    state: { 
-                        startAfterForm: true,  // Changed from editAfterForm
-                        beforeFormId: form._id
-                    } 
-                });
+        try {
+            if (form.formType === 'LocalOffCampus' || form.isLocalOffCampus) {
+                if (form.formPhase === 'AFTER') {
+                    navigate('/localoffcampus', { 
+                        state: { 
+                            editAfterForm: true,
+                            formData: form,
+                            beforeFormId: form.eventId
+                        } 
+                    });
+                } else if (form.status === 'approved') {
+                    navigate('/localoffcampus', { 
+                        state: { 
+                            startAfterForm: true,
+                            beforeFormId: form._id
+                        } 
+                    });
+                } else {
+                    navigate('/localoffcampus', { 
+                        state: { 
+                            editBeforeForm: true,
+                            formData: form 
+                        } 
+                    });
+                }
             } else {
-                // Edit BEFORE form
-                navigate('/localoffcampus', { 
-                    state: { 
-                        editBeforeForm: true,
-                        formData: form 
-                    } 
-                });
+                navigate(`/edit-form/${form._id}`, { state: { formData: form } });
             }
-        } else {
-            // Original edit logic for other forms
-            navigate(`/edit-form/${form._id}`, { state: { formData: form } });
+        } finally {
+            setIsNavigating(false); // Hide loading after navigation
         }
     };
 
@@ -310,6 +311,11 @@ const OrgSubmittedForms = () => {
 
     return (
         <div className="org-submitted-forms-container">
+            {isNavigating && (
+                <div className="navigation-loader-overlay">
+                    <div className="navigation-loader"></div>
+                </div>
+            )}
             <h2>My Submitted Forms</h2>
             {error && (
                 <p className={`status-message ${error.includes("success") ? "success" : "error"}`}>
@@ -317,12 +323,13 @@ const OrgSubmittedForms = () => {
                 </p>
             )}
     
-            {loading ? (
-                <div className="loading-spinner">
-                    <div className="spinner"></div>
-                    <p>Loading your forms...</p>
-                </div>
-            ) : (
+            {/* Responsive Loader */}
+            <div className={`loader-container ${!loading ? 'hidden' : ''}`}>
+                <div className="loader"></div>
+                <p className="loading-text">Loading...</p>
+            </div>
+
+            {!loading && (
                 <>
                     <div className="search-and-filter">
                         <div className="search-container">

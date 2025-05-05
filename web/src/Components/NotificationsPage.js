@@ -161,68 +161,74 @@ const NotificationsPage = () => {
       </div>
 
       <div className="notifications-container">
-        {loading ? (
-          <div className="loading-spinner">Loading notifications...</div>
-        ) : notifications.length > 0 ? (
-          notifications.map(notification => (
-            <div
-              key={notification._id}
-              className={`notification-item ${notification.read ? 'read' : 'unread'}`}
-              onClick={e => {
-                // Don't trigger navigation if clicking on buttons
-                if (
-                  e.target.tagName === 'BUTTON' ||
-                  e.target.closest('button') ||
-                  e.target.className === 'notification-actions'
-                ) {
-                  return;
-                }
-                handleNotificationClick(notification);
-              }}
-            >
-              <div className="notification-message">{notification.message}</div>
-              <div className="notification-time">
-                {new Date(notification.createdAt).toLocaleString()}
-              </div>
-              <div className="notification-actions">
-                {notification.type === 'tracker' && (
-                  <button
-                    className="view-tracker-btn"
-                    onClick={() => handleTrackerClick(notification.trackerId)}
-                  >
-                    View Tracker
-                  </button>
-                )}
-                {notification.read ? (
-                  <button
-                    className="mark-unread-btn"
-                    onClick={e => {
-                      e.stopPropagation();
-                      markNotificationAsUnread(notification._id);
-                    }}
-                  >
-                    Mark as Unread
-                  </button>
-                ) : (
-                  <button
-                    className="mark-read-btn"
-                    onClick={e => {
-                      e.stopPropagation();
-                      markNotificationAsRead(notification._id);
-                    }}
-                  >
-                    Mark as Read
-                  </button>
-                )}
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="no-notifications">
-            <p>No notifications yet</p>
-            <p className="subtext">When you get notifications, they'll appear here</p>
+        <>
+          {/* Responsive Loader */}
+          <div className={`loader-container ${!loading ? 'hidden' : ''}`}>
+            <div className="loader"></div>
+            <p className="loading-text">Loading...</p>
           </div>
-        )}
+          
+          {!loading && (notifications.length > 0 ? (
+            notifications.map(notification => (
+              <div
+                key={notification._id}
+                className={`notification-item ${notification.read ? 'read' : 'unread'}`}
+                onClick={e => {
+                  // Don't trigger navigation if clicking on buttons
+                  if (
+                    e.target.tagName === 'BUTTON' ||
+                    e.target.closest('button') ||
+                    e.target.className === 'notification-actions'
+                  ) {
+                    return;
+                  }
+                  handleNotificationClick(notification);
+                }}
+              >
+                <div className="notification-message">{notification.message}</div>
+                <div className="notification-time">
+                  {new Date(notification.createdAt).toLocaleString()}
+                </div>
+                <div className="notification-actions">
+                  {notification.type === 'tracker' && (
+                    <button
+                      className="view-tracker-btn"
+                      onClick={() => handleTrackerClick(notification.trackerId)}
+                    >
+                      View Tracker
+                    </button>
+                  )}
+                  {notification.read ? (
+                    <button
+                      className="mark-unread-btn"
+                      onClick={e => {
+                        e.stopPropagation();
+                        markNotificationAsUnread(notification._id);
+                      }}
+                    >
+                      Mark as Unread
+                    </button>
+                  ) : (
+                    <button
+                      className="mark-read-btn"
+                      onClick={e => {
+                        e.stopPropagation();
+                        markNotificationAsRead(notification._id);
+                      }}
+                    >
+                      Mark as Read
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="no-notifications">
+              <p>No notifications yet</p>
+              <p className="subtext">When you get notifications, they'll appear here</p>
+            </div>
+          ))}
+        </>
       </div>
     </div>
   );
