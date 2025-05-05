@@ -101,3 +101,50 @@
   .secondary-button:hover {
     background-color: #5a6268;
   }
+
+  /* Blocked dates styling */
+/* Blocked dates styling */
+.fc-daygrid-day-blocked {
+    background-color: rgba(255, 68, 68, 0.1);
+  }
+  
+  .fc-daygrid-day-blocked .fc-daygrid-day-frame {
+    position: relative;
+  }
+  
+  .fc-daygrid-day-blocked .fc-daygrid-day-frame::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 2px solid rgba(255, 68, 68, 0.3);
+    pointer-events: none;
+  }
+  
+  /* Single blocked day */
+  .fc-daygrid-day-blocked:not(.fc-daygrid-day-range) .fc-daygrid-day-frame::before {
+    border-radius: 4px;
+  }
+  
+  /* First day of range */
+  .fc-daygrid-day-blocked.fc-daygrid-day-range-start .fc-daygrid-day-frame::before {
+    border-right: none;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  
+  /* Last day of range */
+  .fc-daygrid-day-blocked.fc-daygrid-day-range-end .fc-daygrid-day-frame::before {
+    border-left: none;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+  
+  /* Middle days of range */
+  .fc-daygrid-day-blocked.fc-daygrid-day-range-mid .fc-daygrid-day-frame::before {
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+  }

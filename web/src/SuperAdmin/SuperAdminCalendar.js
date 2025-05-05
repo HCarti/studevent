@@ -47,19 +47,33 @@ const SuperAdminCalendar = () => {
 
   // Format blocked dates for FullCalendar
   const formatBlockedDates = (block) => {
+    // Convert to UTC and start of day
+    const start = moment.utc(block.startDate).startOf('day');
+    const end = block.endDate ? moment.utc(block.endDate).startOf('day') : null;
+    
+    // Calculate if this is a range (more than one day)
+    const isRange = end && !end.isSame(start, 'day');
+  
     return {
-      id: block._id,
-      title: block.title || 'Blocked Date',
-      start: block.startDate,
-      end: block.endDate ? moment(block.endDate).add(1, 'days').format('YYYY-MM-DD') : null,
-      backgroundColor: '#dc3545',
-      borderColor: '#bd2130',
-      textColor: 'white',
+      id: `blocked-${block._id}`,
+      title: block.title || 'Blocked',
+      start: start.toISOString(),
+      // For ranges, end is exclusive in FullCalendar - no need to add a day
+      end: isRange ? end.toISOString() : null,
+      color: '#ff4444',
+      display: isRange ? 'background' : 'auto',
       extendedProps: {
+        isBlocked: true,
         description: block.description,
-        isBlocked: true
+        type: 'blocked-date',
+        // Store actual dates for reference
+        actualStart: start.toISOString(),
+        actualEnd: end ? end.toISOString() : null
       },
-      display: 'background'
+      classNames: ['blocked-date-event'],
+      backgroundColor: 'rgba(255, 68, 68, 0.2)',
+      borderColor: '#ff4444',
+      textColor: '#ffffff'
     };
   };
 
@@ -70,13 +84,21 @@ const SuperAdminCalendar = () => {
     const title = event.formType === 'Project' ? event.projectTitle : event.eventTitle || event.title;
     const duration = calculateDuration(event.startDate, event.endDate);
     const displayTitle = `${title} (${duration})`;
-
-    if (duration !== '1 day') {
+  
+    // Parse dates consistently
+    const start = moment.utc(event.startDate).startOf('day');
+    const end = moment.utc(event.endDate).startOf('day');
+    
+    // Check if it's a multi-day event
+    const isMultiDay = end.diff(start, 'days') > 0;
+  
+    if (isMultiDay) {
       return {
         id: event._id,
         title: displayTitle,
-        start: event.startDate,
-        end: moment(event.endDate).add(1, 'days').format('YYYY-MM-DD'),
+        start: start.toISOString(),
+        // FullCalendar's end date is exclusive, so we use the day after our end date
+        end: end.add(1, 'day').toISOString(),
         backgroundColor,
         borderColor,
         textColor: 'white',
@@ -85,14 +107,16 @@ const SuperAdminCalendar = () => {
           location: event.location || 'TBA',
           organization: event.organization?.organizationName || 'N/A',
           formType: event.formType,
-          duration: duration
-        }
+          duration: duration,
+          actualEnd: end.toISOString() // Store the actual end date
+        },
+        allDay: true
       };
     } else {
       return {
         id: event._id,
         title: displayTitle,
-        date: event.startDate,
+        date: start.toISOString(), // Use 'date' for single-day events
         backgroundColor,
         borderColor,
         textColor: 'white',
@@ -102,16 +126,17 @@ const SuperAdminCalendar = () => {
           organization: event.organization?.organizationName || 'N/A',
           formType: event.formType,
           duration: duration
-        }
+        },
+        allDay: true
       };
     }
   };
 
   // Calculate event duration
   const calculateDuration = (start, end) => {
-    const startDate = moment(start).startOf('day');
-    const endDate = moment(end).startOf('day');
-    const duration = endDate.diff(startDate, 'days') + 1;
+    const startDate = moment.utc(start).startOf('day');
+    const endDate = moment.utc(end).startOf('day');
+    const duration = endDate.diff(startDate, 'days') + 1; // +1 to make it inclusive
     return duration === 1 ? '1 day' : `${duration} days`;
   };
 
@@ -179,15 +204,18 @@ const SuperAdminCalendar = () => {
 
   // Handle date selection for blocking
   const handleDateSelect = (selectInfo) => {
-    // Ensure end date is after start date
-    let endDate = selectInfo.end || selectInfo.start;
-    if (endDate < selectInfo.start) {
-      endDate = selectInfo.start;
+    // Convert to UTC dates at start of day
+    const start = moment.utc(selectInfo.start).startOf('day').toDate();
+    let end = selectInfo.end ? moment.utc(selectInfo.end).startOf('day').toDate() : null;
+    
+    // Adjust end date to be inclusive (subtract 1 day)
+    if (end) {
+      end = moment.utc(end).subtract(1, 'day').toDate();
     }
   
     setSelectedRange({
-      start: selectInfo.start,
-      end: endDate
+      start: start,
+      end: end && start.getTime() === end.getTime() ? null : end
     });
     setShowBlockModal(true);
   };
@@ -196,17 +224,22 @@ const SuperAdminCalendar = () => {
   const handleDateClick = (arg) => {
     const clickedDate = new Date(arg.date);
     setSelectedDate(clickedDate);
-
+  
     const clickedDateClean = moment(clickedDate).startOf('day');
-    const filteredEvents = events.filter(event => {
-      const eventStart = event.date
-        ? moment(event.date).startOf('day')
-        : moment(event.start).startOf('day');
+    
+    const filteredEvents = calendarEvents.filter(event => {
+      // For all-day events without end date
+      if (event.date) {
+        return moment(event.date).startOf('day').isSame(clickedDateClean);
+      }
+      
+      // For events with start/end dates
+      const eventStart = moment(event.start).startOf('day');
       const eventEnd = event.end ? moment(event.end).startOf('day') : eventStart;
-
+      
       return clickedDateClean.isBetween(eventStart, eventEnd, 'day', '[]');
     });
-
+  
     setSelectedEvents(filteredEvents);
   };
 
@@ -215,20 +248,31 @@ const SuperAdminCalendar = () => {
     const event = arg.event;
     const eventDate = new Date(event.start);
     setSelectedDate(eventDate);
-
+  
+    if (event.extendedProps.isBlocked) {
+      setSelectedEvents([{
+        title: event.title,
+        extendedProps: {
+          description: event.extendedProps.description,
+          type: 'blocked-date',
+          duration: event.end ? 
+            `${moment(event.end).diff(event.start, 'days')} days` : '1 day'
+        }
+      }]);
+      return;
+    }
+  
     const eventDateClean = moment(eventDate).startOf('day');
-    const sameDay = events.filter(e => {
-      const eStart = e.date ? moment(e.date).startOf('day') : moment(e.start).startOf('day');
+    const sameDayEvents = calendarEvents.filter(e => {
+      if (e.date) {
+        return moment(e.date).startOf('day').isSame(eventDateClean);
+      }
+      const eStart = moment(e.start).startOf('day');
       const eEnd = e.end ? moment(e.end).startOf('day') : eStart;
-
       return eventDateClean.isBetween(eStart, eEnd, 'day', '[]');
     });
-
-    const uniqueEvents = Array.from(new Set([event.toPlainObject(), ...sameDay].map(e => e.id)))
-      .map(id => events.find(e => e.id === id))
-      .filter(e => e !== undefined);
-
-    setSelectedEvents(uniqueEvents);
+  
+    setSelectedEvents(sameDayEvents);
   };
 
   // Handle view change
@@ -276,7 +320,17 @@ const SuperAdminCalendar = () => {
   };
 
   // Custom rendering for events
-  const renderEventContent = (eventInfo) => {
+// Update your renderEventContent function
+const renderEventContent = (eventInfo) => {
+    const duration = eventInfo.event.extendedProps.duration;
+    if (eventInfo.event.extendedProps.isBlocked) {
+      return (
+        <div className="fc-blocked-event">
+          <div className="fc-blocked-title">{eventInfo.event.title}</div>
+        </div>
+      );
+    }
+    
     return (
       <div className="fc-event-main-frame">
         <div className="fc-event-title-container">
@@ -290,22 +344,13 @@ const SuperAdminCalendar = () => {
 // Submit blocked dates to backend
 const handleBlockSubmit = async () => {
     try {
-      // Get user info from localStorage
+      // Get user info
       const storedUser = localStorage.getItem('user');
-      if (!storedUser) {
-        setError('User information not found. Please log in again.');
-        return;
-      }
+      const parsedUser = storedUser ? JSON.parse(storedUser) : null;
   
-      const parsedUser = JSON.parse(storedUser);
-      if (!parsedUser?._id) {
-        setError('Invalid user data. Please log in again.');
-        return;
-      }
-  
-      // Normalize dates to ISO strings
-      const start = new Date(selectedRange.start);
-      const end = selectedRange.end ? new Date(selectedRange.end) : undefined;
+      // Use the already adjusted dates from handleDateSelect
+      const start = selectedRange.start;
+      const end = selectedRange.end || null;
   
       // Validate dates
       if (end && end < start) {
@@ -316,15 +361,13 @@ const handleBlockSubmit = async () => {
       const blockData = {
         title: blockTitle,
         description: blockDescription,
-        startDate: new Date(selectedRange.start).toISOString(),
-        endDate: selectedRange.end ? new Date(selectedRange.end).toISOString() : undefined,
-        createdBy: parsedUser._id // From your auth context/localStorage
+        startDate: start.toISOString(),
+        endDate: end ? end.toISOString() : undefined, // undefined for single day
+        createdBy: parsedUser._id
       };
+  
       const authHeaders = getAuthHeaders();
-      if (!authHeaders) {
-        setError('Authentication failed. Please log in again.');
-        return;
-      }
+      if (!authHeaders) return;
   
       const response = await axios.post(
         'https://studevent-server.vercel.app/api/calendar/block-dates',
@@ -344,6 +387,7 @@ const handleBlockSubmit = async () => {
       setError(err.response?.data?.error || 'Failed to block dates');
     }
   };
+
   useEffect(() => {
     fetchCalendarEvents();
     fetchBlockedDates();
@@ -368,28 +412,82 @@ const handleBlockSubmit = async () => {
       <div className="calendar-content-container">
         <div className="calendar-main-wrapper">
           <div className="calendar-component-container">
-            <FullCalendar
-              ref={calendarRef}
-              plugins={[dayGridPlugin, interactionPlugin]}
-              initialView="dayGridMonth"
-              headerToolbar={{
-                left: 'prev,today,next',
-                center: 'title',
-                right: ''
-              }}
-              events={calendarEvents}
-              selectable={true}
-              select={handleDateSelect}
-              eventContent={renderEventContent}
-              displayEventTime={false}
-              eventDisplay="block"
-              dayMaxEventRows={3}
-              dayMaxEvents={false}
-              dateClick={handleDateClick}
-              eventClick={handleEventClick}
-              datesSet={handleDatesSet}
-              height="600px"
-            />
+          <FullCalendar
+  ref={calendarRef}
+  plugins={[dayGridPlugin, interactionPlugin]}
+  initialView="dayGridMonth"
+  headerToolbar={{
+    left: 'prev,today,next',
+    center: 'title',
+    right: ''
+  }}
+  events={calendarEvents}
+  selectable={true}
+  select={handleDateSelect}
+  eventContent={renderEventContent}
+  displayEventTime={false}
+  eventDisplay="block"
+  dayMaxEventRows={3}
+  dayMaxEvents={false}
+  dateClick={handleDateClick}
+  eventClick={handleEventClick}
+  datesSet={handleDatesSet}
+  height="600px"
+  nowIndicator={true}
+  timeZone="local"
+  selectAllow={(selectInfo) => {
+    // Prevent selection if any date in range is blocked
+    const start = moment(selectInfo.start).startOf('day');
+    const end = selectInfo.end ? moment(selectInfo.end).subtract(1, 'day').startOf('day') : null;
+    
+    if (end) {
+      // Check each day in the range
+      let current = start.clone();
+      while (current.isSameOrBefore(end)) {
+        const isBlocked = blockedDates.some(block => {
+          const blockStart = moment(block.start).startOf('day');
+          const blockEnd = block.end ? moment(block.end).startOf('day') : blockStart;
+          return current.isBetween(blockStart, blockEnd, 'day', '[]');
+        });
+        if (isBlocked) return false;
+        current.add(1, 'day');
+      }
+    } else {
+      // Check single day
+      const isBlocked = blockedDates.some(block => {
+        const blockStart = moment(block.start).startOf('day');
+        const blockEnd = block.end ? moment(block.end).startOf('day') : blockStart;
+        return start.isBetween(blockStart, blockEnd, 'day', '[]');
+      });
+      if (isBlocked) return false;
+    }
+    
+    return true;
+  }}
+  dayCellClassNames={({ date }) => {
+    const current = moment(date).startOf('day');
+    const isBlocked = blockedDates.some(block => {
+      const blockStart = moment(block.start).startOf('day');
+      const blockEnd = block.end ? moment(block.end).startOf('day') : blockStart;
+      return current.isBetween(blockStart, blockEnd, 'day', '[]');
+    });
+    return isBlocked ? 'fc-daygrid-day-blocked' : '';
+  }}
+  dayCellDidMount={({ el, date }) => {
+    const current = moment(date).startOf('day');
+    const isBlocked = blockedDates.some(block => {
+      const blockStart = moment(block.start).startOf('day');
+      const blockEnd = block.end ? moment(block.end).startOf('day') : blockStart;
+      return current.isBetween(blockStart, blockEnd, 'day', '[]');
+    });
+    
+    if (isBlocked) {
+      el.classList.add('fc-day-disabled');
+      el.style.pointerEvents = 'none';
+      el.style.opacity = '0.6';
+    }
+  }}
+/>
           </div>
         </div>
 
@@ -445,50 +543,60 @@ const handleBlockSubmit = async () => {
           </div>
         )}
 
-        <div className="calendar-details-panel">
-          <h2>{moment(selectedDate).format('dddd, MMMM D, YYYY')} - Event Details</h2>
-          <div className="event-details-content">
-            {selectedEvents.length > 0 ? (
-              <ul className="event-list">
-                {selectedEvents.map((event, index) => (
-                  <li
-                    key={index}
-                    className={`event-item ${event.extendedProps?.formType?.toLowerCase() || ''}`}
-                  >
-                    <h3>
-                      {event.extendedProps?.formType === 'Project' ? (
-                        <>
-                          Project: <span className="event-title">{event.title}</span>
-                        </>
-                      ) : (
-                        <>
-                          Activity: <span className="event-title">{event.title}</span>
-                        </>
-                      )}
-                    </h3>
-                    <p>
-                      <strong>Type:</strong> {event.extendedProps?.formType}
-                    </p>
-                    <p>
-                      <strong>Organization:</strong> {event.extendedProps?.organization}
-                    </p>
-                    <p>
-                      <strong>Duration:</strong> {event.extendedProps?.duration}
-                    </p>
-                    <p>
-                      <strong>Location:</strong> {event.extendedProps?.location}
-                    </p>
-                    <p>
-                      <strong>Description:</strong> {event.extendedProps?.description}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="no-events">No events scheduled for this day.</p>
-            )}
-          </div>
-        </div>
+                <div className="calendar-details-panel">
+                <h2>{moment(selectedDate).format('dddd, MMMM D, YYYY')} - Event Details</h2>
+                <div className="event-details-content">
+                    {selectedEvents.length > 0 ? (
+                    <ul className="event-list">
+                        {selectedEvents.map((event, index) => (
+                        <li
+                            key={index}
+                            className={`event-item ${
+                            event.extendedProps?.isBlocked 
+                                ? 'blocked-date' 
+                                : event.extendedProps?.formType?.toLowerCase() || ''
+                            }`}
+                        >
+                            <h3>
+                            {event.extendedProps?.isBlocked ? (
+                                <>
+                                Blocked: <span className="event-title">{event.title}</span>
+                                </>
+                            ) : event.extendedProps?.formType === 'Project' ? (
+                                <>
+                                Project: <span className="event-title">{event.title}</span>
+                                </>
+                            ) : (
+                                <>
+                                Activity: <span className="event-title">{event.title}</span>
+                                </>
+                            )}
+                            </h3>
+                            {event.extendedProps?.isBlocked ? (
+                            <>
+                                <p><strong>Reason:</strong> {event.extendedProps.title}</p>
+                                <p><strong>Description:</strong> {event.extendedProps.description}</p>
+                                <p><strong>Date Range:</strong> {moment(event.start).format('MMM D')} 
+                                {event.end && ` to ${moment(event.end).subtract(1, 'day').format('MMM D, YYYY')}`}
+                                </p>
+                            </>
+                            ) : (
+                            <>
+                                <p><strong>Type:</strong> {event.extendedProps?.formType}</p>
+                                <p><strong>Organization:</strong> {event.extendedProps?.organization}</p>
+                                <p><strong>Duration:</strong> {event.extendedProps?.duration}</p>
+                                <p><strong>Location:</strong> {event.extendedProps?.location}</p>
+                                <p><strong>Description:</strong> {event.extendedProps?.description}</p>
+                            </>
+                            )}
+                        </li>
+                        ))}
+                    </ul>
+                    ) : (
+                    <p className="no-events">No events scheduled for this day.</p>
+                    )}
+                </div>
+                </div>
       </div>
     </div>
   );

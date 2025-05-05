@@ -101,6 +101,7 @@ const Aap = () => {
   const [validationErrorVisible, setValidationErrorVisible] = useState(false);
   const [submitSuccessVisible, setSubmitSuccessVisible] = useState(false);
   const [budgetLoadError, setBudgetLoadError] = useState(null);
+  const [blockedDates, setBlockedDates] = useState([]);
 
   // Notification component
   const Notification = ({ message, type = 'success' }) => {
