@@ -214,6 +214,7 @@ const Aap = () => {
         throw new Error('User not authenticated');
       }
   
+      // 1. First fetch the user's available budgets
       let url = 'https://studevent-server.vercel.app/api/budgets';
       let queryParams = [];
   
@@ -240,61 +241,98 @@ const Aap = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
   
-      const data = await response.json();
-      setFormData(prev => ({
-        ...prev,
-        budgetProposals: data || [] // Ensure we always have an array
-      }));
+      let budgets = await response.json();
+      if (!Array.isArray(budgets)) budgets = [];
   
+      // 2. In edit mode, ensure attached budget is included even if not normally available
       if (isEditMode && formData.attachedBudget) {
-        const hasAttachedBudget = data.some(b => b._id === formData.attachedBudget);
+        const hasAttachedBudget = budgets.some(b => b._id === formData.attachedBudget);
+        
         if (!hasAttachedBudget) {
-          fetchSingleBudget(formData.attachedBudget);
+          try {
+            const attachedBudget = await fetchSingleBudget(formData.attachedBudget);
+            if (attachedBudget) {
+              budgets = [...budgets, attachedBudget];
+            }
+          } catch (error) {
+            console.error('Failed to fetch attached budget:', error);
+            // Continue with available budgets even if attached budget fails to load
+          }
         }
       }
+  
+      // 3. Update form state with all available budgets
+      setFormData(prev => ({
+        ...prev,
+        budgetProposals: budgets,
+        // Only update budget amount/from if we're not in edit mode
+        ...(!isEditMode && {
+          budgetAmount: '',
+          budgetFrom: ''
+        })
+      }));
+  
     } catch (error) {
       console.error('Error fetching budgets:', error);
       setBudgetLoadError(
         error.message || 'Failed to load budget proposals. Please try again later.'
       );
-      // Set empty array on error
       setFormData(prev => ({
         ...prev,
         budgetProposals: []
       }));
     }
   };
-
-  // Updated helper function to fetch a single budget
-  const fetchSingleBudget = async budgetId => {
+  
+  // Enhanced single budget fetcher
+  const fetchSingleBudget = async (budgetId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`https://studevent-server.vercel.app/api/budgets/${budgetId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      const response = await fetch(
+        `https://studevent-server.vercel.app/api/budgets/${budgetId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         }
-      });
-
-      if (response.ok) {
-        const budget = await response.json();
-        setFormData(prev => ({
-          ...prev,
-          budgetProposals: [...prev.budgetProposals, budget]
-        }));
-      } else {
-        throw new Error(`Failed to fetch budget: ${response.status}`);
+      );
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+  
+      const budget = await response.json();
+      
+      // Verify budget is active and belongs to the right organization
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!budget.isActive) {
+        throw new Error('Attached budget is not active');
+      }
+  
+      if (user.role === 'Organization' && budget.organization !== user._id) {
+        throw new Error('Budget does not belong to your organization');
+      }
+  
+      return budget;
     } catch (error) {
       console.error('Error fetching single budget:', error);
-      // Optionally set an error state here if needed
+      throw error; // Re-throw to handle in calling function
     }
   };
-
+  
   // Call this in useEffect when component mounts
   useEffect(() => {
-    fetchBudgetProposals();
-  }, []);
+    const loadData = async () => {
+      try {
+        await fetchBudgetProposals();
+      } catch (error) {
+        console.error('Failed to load budget proposals:', error);
+      }
+    };
+    
+    loadData();
+  }, [isEditMode]); // Add isEditMode as dependency
 
   // Fetch form data if in edit mode
   useEffect(() => {
@@ -304,9 +342,9 @@ const Aap = () => {
 
       try {
         const token = localStorage.getItem('token');
-        // 1. First fetch the form data
+    // Fetch form with budget populated
         const formResponse = await fetch(
-          `https://studevent-server.vercel.app/api/forms/${formId}`,
+          `https://studevent-server.vercel.app/api/forms/${formId}?populate=attachedBudget`,
           {
             headers: {
               Authorization: `Bearer ${token}`
@@ -344,6 +382,7 @@ const Aap = () => {
         // 3. Format all data for the form
         const formattedData = {
           ...formData,
+          attachedBudget: formData.attachedBudget?._id || formData.attachedBudget || null,
           organizationId: formData.studentOrganization?._id || formData.studentOrganization || '',
           studentOrganization: organizationName, // Use the resolved name
           eventStartDate: formData.eventStartDate
@@ -1140,31 +1179,32 @@ const Aap = () => {
 
             <div className="budget-selection">
               <label className="required-field">Attached Budget Proposal:</label>
-              <select
-                name="attachedBudget"
-                value={formData.attachedBudget || ''}
-                onChange={e => {
-                  const budgetId = e.target.value;
-                  const selectedBudget = formData.budgetProposals.find(b => b._id === budgetId);
-
-                  setFormData(prev => ({
-                    ...prev,
-                    attachedBudget: budgetId,
-                    budgetAmount: selectedBudget?.grandTotal || '',
-                    budgetFrom: selectedBudget?.nameOfRso || 'Org',
-                    eventTitle: selectedBudget?.eventTitle || prev.eventTitle
-                  }));
-                }}
-                className={fieldErrors.attachedBudget ? 'invalid-field' : ''}
-              >
-                <option value="">Select a budget proposal...</option>
-                {formData.budgetProposals && formData.budgetProposals.map(budget => (
-                  <option key={budget._id} value={budget._id}>
-                    {budget.eventTitle} - ₱{budget.grandTotal?.toLocaleString()}
-                    {budget.status ? ` (${budget.status})` : ''}
-                  </option>
-                ))}
-              </select>
+                  <select
+              name="attachedBudget"
+              value={formData.attachedBudget || ''}
+              onChange={e => {
+                const budgetId = e.target.value;
+                const selectedBudget = formData.budgetProposals.find(b => b._id === budgetId);
+                
+                setFormData(prev => ({
+                  ...prev,
+                  attachedBudget: budgetId,
+                  budgetAmount: selectedBudget?.grandTotal || '',
+                  budgetFrom: selectedBudget?.nameOfRso || 'Org'
+                }));
+              }}
+            >
+              <option value="">Select a budget proposal...</option>
+              {formData.budgetProposals?.map(budget => (
+                <option 
+                  key={budget._id} 
+                  value={budget._id}
+                  selected={formData.attachedBudget === budget._id}
+                >
+                  {budget.eventTitle} - ₱{budget.grandTotal?.toLocaleString()}
+                </option>
+              ))}
+            </select>
             </div>
 
             {budgetLoadError && <div className="error-message">{budgetLoadError}</div>}
