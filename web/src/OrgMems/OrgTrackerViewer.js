@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import './OrgTrackerViewer.css';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import StarIcon from '@mui/icons-material/Star';
@@ -24,64 +25,64 @@ const OrgTrackerViewer = () => {
     const isLocalOffCampus = state?.formType === 'LocalOffCampus' || 
                            state?.form?.formType === 'LocalOffCampus';
 
-                           useEffect(() => {
-                            if (!formId) return;
-                        
-                            const fetchData = async () => {
-                                try {
-                                    const token = localStorage.getItem("token");
-                                    if (!token) throw new Error("No token found. Please log in again.");
-                        
-                                    // Determine endpoint based on form type
-                                    let trackerEndpoint;
-                                    if (isLocalOffCampus) {
-                                        trackerEndpoint = `https://studevent-server.vercel.app/api/local-off-campus/${formId}/tracker`;
-                                    } else {
-                                        trackerEndpoint = `https://studevent-server.vercel.app/api/tracker/${formId}`;
-                                    }
-                        
-                                    // Fetch tracker data
-                                    const trackerRes = await fetch(trackerEndpoint, {
-                                        headers: {
-                                            "Authorization": `Bearer ${token}`,
-                                            "Content-Type": "application/json",
-                                        },
-                                    });
-                        
-                                    if (!trackerRes.ok) {
-                                        throw new Error(`Error fetching tracker data: ${trackerRes.statusText}`);
-                                    }
-                        
-                                    const trackerData = await trackerRes.json();
-                                    setTrackerData(trackerData);
-                        
-                                    // Fetch form details only for regular forms
-                                    if (!isLocalOffCampus) {
-                                        const formRes = await fetch(`https://studevent-server.vercel.app/api/forms/${formId}`, {
-                                            headers: {
-                                                "Authorization": `Bearer ${token}`,
-                                                "Content-Type": "application/json",
-                                            },
-                                        });
-                                        
-                                        if (!formRes.ok) throw new Error(`Error fetching form data: ${formRes.statusText}`);
-                                        setFormDetails(await formRes.json());
-                                    }
-                        
-                                    // Check for existing feedback
-                                    if (trackerData.feedback) {
-                                        setFeedbackSubmitted(true);
-                                    }
-                                } catch (error) {
-                                    console.error("Error fetching data:", error.message);
-                                    setError(`Failed to load tracker: ${error.message}`);
-                                } finally {
-                                    setLoading(false);
-                                }
-                            };
-                        
-                            fetchData();
-                        }, [formId, isLocalOffCampus]);
+    useEffect(() => {
+        if (!formId) return;
+    
+        const fetchData = async () => {
+            try {
+                const token = localStorage.getItem("token");
+                if (!token) throw new Error("No token found. Please log in again.");
+    
+                // Determine endpoint based on form type
+                let trackerEndpoint;
+                if (isLocalOffCampus) {
+                    trackerEndpoint = `https://studevent-server.vercel.app/api/local-off-campus/${formId}/tracker`;
+                } else {
+                    trackerEndpoint = `https://studevent-server.vercel.app/api/tracker/${formId}`;
+                }
+    
+                // Fetch tracker data
+                const trackerRes = await fetch(trackerEndpoint, {
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+    
+                if (!trackerRes.ok) {
+                    throw new Error(`Error fetching tracker data: ${trackerRes.statusText}`);
+                }
+    
+                const trackerData = await trackerRes.json();
+                setTrackerData(trackerData);
+    
+                // Fetch form details only for regular forms
+                if (!isLocalOffCampus) {
+                    const formRes = await fetch(`https://studevent-server.vercel.app/api/forms/${formId}`, {
+                        headers: {
+                            "Authorization": `Bearer ${token}`,
+                            "Content-Type": "application/json",
+                        },
+                    });
+                    
+                    if (!formRes.ok) throw new Error(`Error fetching form data: ${formRes.statusText}`);
+                    setFormDetails(await formRes.json());
+                }
+    
+                // Check for existing feedback
+                if (trackerData.feedback) {
+                    setFeedbackSubmitted(true);
+                }
+            } catch (error) {
+                console.error("Error fetching data:", error.message);
+                setError(`Failed to load tracker: ${error.message}`);
+            } finally {
+                setLoading(false);
+            }
+        };
+    
+        fetchData();
+    }, [formId, isLocalOffCampus]);
 
     const handleViewForms = () => {
         if (isLocalOffCampus) {
@@ -143,6 +144,40 @@ const OrgTrackerViewer = () => {
 
     const isTrackerCompleted = trackerData?.steps?.every(step => step.status === 'approved');
 
+    const renderReviewerInfo = (step) => {
+        let reviewerName = 'Unknown Reviewer';
+        
+        // First try to get from reviewedBy object
+        if (step.reviewedBy) {
+            if (typeof step.reviewedBy === 'object') {
+                if (step.reviewedBy.firstName || step.reviewedBy.lastName) {
+                    reviewerName = `${step.reviewedBy.firstName || ''} ${step.reviewedBy.lastName || ''}`.trim();
+                } else if (step.reviewedBy.email) {
+                    reviewerName = step.reviewedBy.email.split('@')[0];
+                }
+            } else if (typeof step.reviewedBy === 'string') {
+                // If it's just an ID string, try to get from reviewerName field
+                reviewerName = step.reviewerName || `User ${step.reviewedBy.substring(0, 5)}...`;
+            }
+        }
+        // Fallback to reviewerName if available
+        if (!reviewerName || reviewerName === 'Unknown Reviewer') {
+            reviewerName = step.reviewerName || reviewerName;
+        }
+    
+        return (
+            <div className="org-reviewer-info">
+                <small><span style={{ fontWeight: 'bold' }}>Reviewed by:</span> {reviewerName}</small>
+                {step.timestamp && (
+                    <small><span style={{ fontWeight: 'bold' }}>Time:</span> {new Date(step.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>
+                )}
+                {step.remarks && step.status === 'declined' && (
+                    <small className="org-remarks"><span style={{ fontWeight: 'bold' }}>Remarks:</span> {step.remarks}</small>
+                )}
+            </div>
+        );
+    };
+
     if (loading) {
         return (
             <div className="org-floating-loader">
@@ -169,39 +204,48 @@ const OrgTrackerViewer = () => {
     return (
         <div className='org-prog-box'>
             <h3 style={{ textAlign: 'center' }} className="proposal-ttl">
-                Event Proposal Tracker
+                {getTrackerTitle()}
             </h3>
             
             <div className="org-tracker-content-wrapper">
                 {/* Left Column - Tracker Steps */}
                 <div className="org-tracker-steps-column">
                     <div className="org-progress-bar-container">
-                        {trackerData?.steps?.map((step, index) => (
-                            <div key={index} className="org-step-container">
-                                <div className="org-progress-step">
-                                    {step.status === 'approved' ? (
-                                        <CheckCircleIcon style={{ color: '#4caf50', fontSize: 24 }} />
-                                    ) : step.status === 'rejected' ? (
-                                        <CheckCircleIcon style={{ color: 'red', fontSize: 24 }} />
-                                    ) : (
-                                        <RadioButtonUncheckedIcon style={{ color: '#ffeb3b', fontSize: 24 }} />
-                                    )}
-                                </div>
-                                <div className="org-step-label">
-                                    <strong>{step.stepName}</strong>
-                                    {step.reviewedBy && (
-                                        <div className="org-reviewer-info">
-                                            <small>Reviewed by: {step.reviewedByRole || step.reviewerRole}</small>
+                        {trackerData?.steps?.map((step, index) => {
+                            // Determine icon and status class
+                            let icon, statusClass;
+                            if (step.status === 'approved') {
+                                icon = <CheckCircleIcon style={{ color: '#4caf50', fontSize: 24 }} />;
+                                statusClass = 'approved';
+                            } else if (step.status === 'declined') {
+                                icon = <HighlightOffIcon style={{ color: '#f44336', fontSize: 24 }} />;
+                                statusClass = 'declined';
+                            } else {
+                                icon = <RadioButtonUncheckedIcon style={{ color: '#ffeb3b', fontSize: 24 }} />;
+                                statusClass = 'pending';
+                            }
+
+                            return (
+                                <div key={index} className={`org-step-container ${statusClass}`}>
+                                    <div className="org-progress-step">
+                                        {icon}
+                                    </div>
+                                    <div className="org-step-label">
+                                        <strong>{step.stepName}</strong>
+                                        <div style={{ color: '#444', marginBottom: 4 }}>
+                                            {step.status === 'approved' && 'Step approved.'}
+                                            {step.status === 'declined' && 'Step declined.'}
+                                            {step.status === 'pending' && 'Awaiting review.'}
                                         </div>
-                                    )}
-                                    {step.timestamp && (
-                                        <div className="org-timestamp">
-                                            <small>{new Date(step.timestamp).toLocaleString()}</small>
-                                        </div>
-                                    )}
+                                        {step.status !== 'pending' && (
+                                            <div style={{ marginTop: 8 }}>
+                                                {renderReviewerInfo(step)}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                     <div className="org-action-buttons">
                         <Button 

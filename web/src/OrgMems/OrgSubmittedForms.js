@@ -144,6 +144,16 @@ const OrgSubmittedForms = () => {
         });
     };
 
+    const handleCardClick = (form) => {
+        navigate(`/orgTrackerViewer/${form._id}`, { 
+            state: { 
+                formType: form.formType,
+                formPhase: form.formPhase,
+                form: form
+            } 
+        });
+    };
+
     const handleFilterClick = (filterType) => {
         setFilter(filterType);
     };
@@ -347,50 +357,59 @@ const OrgSubmittedForms = () => {
                     </div>
 
                     <div className="card-grid-wrapper">
-                        {getFilteredForms().length === 0 ? (
-                            <p className="no-forms-message">No submitted forms found.</p>
-                        ) : (
-                            <div className="card-grid">
-                                {getFilteredForms().map((form) => (
-                                    <div className="form-card" key={form._id}>
-                                        <div className="form-card-header">
-                                            <span className="form-type">{formatFormType(form)}</span>
-                                            <span className={`status-badge ${getStatusBadgeClass(form)}`}>{form.finalStatus || form.status || 'Pending'}</span>
-                                        </div>
-                                        <div className="form-card-title">{form.eventTitle || form.projectTitle || (form.formType === 'LocalOffCampus' ? form.nameOfHei : 'Untitled Event')}</div>
-                                        <div className="form-card-info">
-                                            <div>
-                                                <span className="form-card-label">Submitted:</span>
-                                                <span>{formatDate(form.applicationDate || form.submittedAt)}</span>
-                                            </div>
-                                        </div>
-                                        <div className="form-card-actions">
-                                            {isFormEditable(form) && (
-                                                <button 
-                                                    className="edit-button"
-                                                    onClick={(e) => handleEditClick(e, form)}
-                                                >
-                                                    {form.formType === 'LocalOffCampus' && 
-                                                    form.formPhase === 'BEFORE' && 
-                                                    (form.status === 'approved' || form.finalStatus === 'approved')
-                                                        ? 'Complete AFTER'
-                                                        : 'Edit'}
-                                                </button>
-                                            )}
-                                            {isFormDeletable(form) && (
-                                                <button 
-                                                    className="delete-button" 
-                                                    onClick={(e) => handleDeleteClick(e, form._id, form.formType)}
-                                                >
-                                                    Delete
-                                                </button>
-                                            )}
-                                        </div>
+                {getFilteredForms().length === 0 ? (
+                    <p className="no-forms-message">No submitted forms found.</p>
+                ) : (
+                    <div className="card-grid">
+                        {getFilteredForms().map((form) => (
+                            <div 
+                                className="form-card" 
+                                key={form._id}
+                                onClick={() => handleCardClick(form)}
+                                style={{ cursor: 'pointer' }} // Add pointer cursor to indicate clickability
+                            >
+                                <div className="form-card-header">
+                                    <span className="form-type">{formatFormType(form)}</span>
+                                    <span className={`status-badge ${getStatusBadgeClass(form)}`}>
+                                        {form.finalStatus || form.status || 'Pending'}
+                                    </span>
+                                </div>
+                                <div className="form-card-title">
+                                    {form.eventTitle || form.projectTitle || (form.formType === 'LocalOffCampus' ? form.nameOfHei : 'Untitled Event')}
+                                </div>
+                                <div className="form-card-info">
+                                    <div>
+                                        <span className="form-card-label">Submitted:</span>
+                                        <span>{formatDate(form.applicationDate || form.submittedAt)}</span>
                                     </div>
-                                ))}
+                                </div>
+                                <div className="form-card-actions" onClick={(e) => e.stopPropagation()}>
+                                    {isFormEditable(form) && (
+                                        <button 
+                                            className="edit-button"
+                                            onClick={(e) => handleEditClick(e, form)}
+                                        >
+                                            {form.formType === 'LocalOffCampus' && 
+                                            form.formPhase === 'BEFORE' && 
+                                            (form.status === 'approved' || form.finalStatus === 'approved')
+                                                ? 'Complete AFTER'
+                                                : 'Edit'}
+                                        </button>
+                                    )}
+                                    {isFormDeletable(form) && (
+                                        <button 
+                                            className="delete-button" 
+                                            onClick={(e) => handleDeleteClick(e, form._id, form.formType)}
+                                        >
+                                            Delete
+                                        </button>
+                                    )}
+                                </div>
                             </div>
-                        )}
+                        ))}
                     </div>
+                )}
+            </div>
     
                     {showDeleteModal && (
                         <div className="modal-overlay">

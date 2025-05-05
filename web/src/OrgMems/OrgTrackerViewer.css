@@ -38,10 +38,11 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  padding: 10px 0;
+  padding: 10px 0; /* Removed side padding */
   overflow-y: auto;
   max-height: 500px;
-  min-height: 300px; /* Ensure minimum height */
+  min-height: 300px;
+  gap: 5px; /* Reduced gap since we have bottom padding */
 }
 
 .org-progress-bar-container::before {
@@ -57,28 +58,35 @@
 
 .org-step-container {
   display: flex;
-  align-items: flex-start; /* Changed from center to flex-start */
-  margin-bottom: 15px;
-  min-height: 60px; /* Added minimum height */
+  align-items: flex-start;
+  margin-bottom: 20px; /* Increased from 15px */
+  min-height: auto; /* Changed from fixed height */
+  position: relative;
+  padding-right: 15px;
 }
 
 .org-progress-step {
-  margin-right: 20px;
+  margin-right: 15px;
   width: 24px;
   height: 24px;
   border-radius: 50%;
   background-color: #e0e0e0;
   position: relative;
   z-index: 1;
-  flex-shrink: 0; /* Prevent shrinking */
+  flex-shrink: 0;
+  margin-top: 3px; /* Align better with text */
 }
 
 .org-step-label {
   font-size: 16px;
   color: #555;
   position: relative;
-  margin: 5px 0; /* Adjusted margin */
-  word-break: break-word; /* Added to prevent text overflow */
+  margin: 0 0 0 10px; /* Adjusted margins */
+  word-break: break-word;
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 15px; /* Added padding at bottom */
+  border-bottom: 1px solid #eee; /* Visual separator */
 }
 
 .org-reviewer-info, 
@@ -89,13 +97,36 @@
   margin-top: 4px; /* Added for spacing */
 }
 
+.org-reviewer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px; /* Increased from 6px */
+  font-size: 12px;
+  color: #666;
+  background-color: #f8f8f8;
+  padding: 8px 10px; /* Slightly larger padding */
+  border-radius: 4px;
+  border-left: 3px solid #ddd;
+  width: 100%; /* Ensure full width */
+}
+
+
+.org-reviewer-info small {
+  display: block; /* Make each item take its own line */
+  line-height: 1.4;
+}
+
 .org-remarks {
-  margin-top: 5px;
-  padding: 5px;
+  margin-top: 8px; /* Increased from 6px */
+  padding: 8px 10px;
   background-color: #ffeeee;
   border-left: 3px solid #ff6b6b;
   font-size: 0.85em;
   color: #d32f2f;
+  border-radius: 4px;
+  word-break: break-word;
+  width: 100%; /* Ensure full width */
 }
 
 /* Remarks Section Styles */
