@@ -180,8 +180,9 @@ const OrgTrackerViewer = () => {
 
     if (loading) {
         return (
-            <div className="org-floating-loader">
-                <CircularProgress className="org-spinner" />
+            <div className={`loader-container ${!loading ? 'hidden' : ''}`}>
+                <div className="loader"></div>
+                <p className="loading-text">Loading...</p>
             </div>
         );
     }
