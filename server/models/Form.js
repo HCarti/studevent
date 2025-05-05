@@ -342,38 +342,33 @@ const formSchema = new mongoose.Schema({
     },
 
     // ====BUDGET PROPOSAL====
-    attachedBudget: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'BudgetProposal',
-        validate: {
-          validator: async function(v) {
-            if (!v) return true; // Optional attachment
-            
-            // Get the form's organization context
-            let orgId;
-            if (this.studentOrganization) {
-              // Activity form - use explicit studentOrganization
-              orgId = this.studentOrganization;
-            } else if (this.createdBy) {
-              // Project form - get org from creator
-              const user = await mongoose.model('User').findById(this.createdBy);
-              orgId = user?.organizationId || user?._id; // Handle org users
+// In your Form schema
+        attachedBudget: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'BudgetProposal',
+            validate: {
+            validator: async function(v) {
+                if (!v) return true; // Optional attachment
+                
+                // Get organization context from the form itself
+                const form = this;
+                const organizationId = form.studentOrganization || 
+                                    (form.createdBy && (await mongoose.model('User').findById(form.createdBy))?.organizationId);
+                
+                if (!organizationId) return false;
+        
+                // Check budget exists, is active, and belongs to organization
+                const budget = await mongoose.model('BudgetProposal').findOne({
+                _id: v,
+                organization: organizationId,
+                isActive: true
+                }).lean();
+                
+                return !!budget;
+            },
+            message: props => `Budget ${props.value} must belong to your organization and be active`
             }
-            
-            if (!orgId) return false; // No org context
-            
-            // Check budget belongs to the same org
-            const budget = await mongoose.model('BudgetProposal').findOne({
-              _id: v,
-              organization: orgId,
-              isActive: true
-            });
-            
-            return !!budget;
-          },
-          message: 'Budget must belong to your organization and be active'
-        }
-    },
+        },
       
     // ===== COMMON FIELDS =====
     currentStep: { type: Number, default: 0 },
