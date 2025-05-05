@@ -30,12 +30,16 @@ const getStatusBadgeClass = (status) => {
 const SuperAdminUsers = () => {
   const [organizations, setOrganizations] = useState([]);
   const [editingOrg, setEditingOrg] = useState(null);
-  const [editFormData, setEditFormData] = useState({});
+  const [editFormData, setEditFormData] = useState({
+    password: "",
+    confirmPassword: ""
+  });
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   useEffect(() => {
     const fetchOrganizations = async () => {
@@ -98,7 +102,10 @@ const SuperAdminUsers = () => {
       email: organization.email,
       organizationType: organization.organizationType || "",
       status: organization.status,
+      password: "",
+      confirmPassword: ""
     });
+    setPasswordError("");
   };
 
   const handleInputChange = (e) => {
@@ -107,15 +114,44 @@ const SuperAdminUsers = () => {
       ...editFormData,
       [name]: value,
     });
+
+    // Clear password error when user types
+    if (name === "password" || name === "confirmPassword") {
+      setPasswordError("");
+    }
   };
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate passwords if either field is filled
+    if (editFormData.password || editFormData.confirmPassword) {
+      if (editFormData.password !== editFormData.confirmPassword) {
+        setPasswordError("Passwords do not match");
+        return;
+      }
+      if (editFormData.password.length < 6) {
+        setPasswordError("Password must be at least 6 characters");
+        return;
+      }
+    }
+
     try {
       const token = localStorage.getItem('token');
+      const dataToSend = { ...editFormData };
+      
+      // Remove password fields if they're empty (no change desired)
+      if (!dataToSend.password) {
+        delete dataToSend.password;
+        delete dataToSend.confirmPassword;
+      } else {
+        // If password is provided, remove confirmPassword as we don't need to send it to the server
+        delete dataToSend.confirmPassword;
+      }
+
       await axios.put(
         `https://studevent-server.vercel.app/api/users/organizations/${editingOrg}`,
-        editFormData,
+        dataToSend,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -124,7 +160,7 @@ const SuperAdminUsers = () => {
       );
       setOrganizations(
         organizations.map((org) =>
-          org._id === editingOrg ? { ...org, ...editFormData } : org
+          org._id === editingOrg ? { ...org, ...dataToSend } : org
         )
       );
       setEditingOrg(null);
@@ -239,6 +275,37 @@ const SuperAdminUsers = () => {
                   <option value="Inactive">Inactive</option>
                 </select>
               </div>
+              
+              {/* Password Fields */}
+              <div className="form-group">
+                <label>New Password</label>
+                <input
+                  type="password"
+                  name="password"
+                  value={editFormData.password}
+                  onChange={handleInputChange}
+                  placeholder="Leave blank to keep current password"
+                />
+              </div>
+              <div className="form-group">
+                <label>Confirm New Password</label>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  value={editFormData.confirmPassword}
+                  onChange={handleInputChange}
+                  placeholder="Leave blank to keep current password"
+                />
+                {passwordError && (
+                  <p className="error-message" style={{ color: 'red', fontSize: '0.8rem', marginTop: '5px' }}>
+                    {passwordError}
+                  </p>
+                )}
+                <p className="password-note" style={{ fontSize: '0.8rem', color: '#666', marginTop: '5px' }}>
+                  Note: Leave password fields blank if you don't want to change the password.
+                </p>
+              </div>
+              
               <div className="form-actions">
                 <button type="button" className="btn cancel-btn" onClick={() => setEditingOrg(null)}>
                   Cancel

@@ -351,7 +351,7 @@ const getAcademicOrganizations = async (req, res) => {
 // Add this to usersController.js
 const updateOrganization = async (req, res) => {
   const { id } = req.params;
-  const { email, organizationType, status } = req.body;
+  const { email, organizationType, status, password } = req.body;
 
   try {
     // Validate input
@@ -373,8 +373,32 @@ const updateOrganization = async (req, res) => {
     organization.email = email;
     if (organizationType) organization.organizationType = organizationType;
     organization.status = status;
+    
+    // Update password if provided (and meets length requirement)
+    if (password && password.length >= 6) {
+      organization.password = password;
+    } else if (password && password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
 
     await organization.save();
+
+    // Log the action if performed by SuperAdmin
+    if (req.user.role === 'SuperAdmin') {
+      const changedFields = {
+        email: email,
+        status: status
+      };
+      if (organizationType) changedFields.organizationType = organizationType;
+      if (password) changedFields.password = 'updated'; // Don't log actual password
+
+      await logSuperAdminAction(
+        req.user,
+        'ORGANIZATION_UPDATED',
+        organization,
+        changedFields
+      );
+    }
 
     res.status(200).json({
       message: 'Organization updated successfully',
