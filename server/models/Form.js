@@ -351,32 +351,15 @@ attachedBudget: {
       validator: async function(v) {
         if (!v) return true; // Optional attachment
         
-        // Basic validation - check existence and active status
-        const budgetExists = await mongoose.model('BudgetProposal').exists({
+        // Just check existence and active status
+        const budget = await mongoose.model('BudgetProposal').findOne({
           _id: v,
           isActive: true
         });
         
-        if (!budgetExists) return false;
-        
-        // For Activity forms only - verify organization match
-        if (this.formType === 'Activity' && this.studentOrganization) {
-          const budget = await mongoose.model('BudgetProposal').findOne({
-            _id: v,
-            organization: this.studentOrganization
-          }, { _id: 1 }).lean();
-          
-          return !!budget;
-        }
-        
-        return true;
+        return !!budget;
       },
-      message: function(props) {
-        if (!mongoose.model('BudgetProposal').exists({ _id: props.value })) {
-          return 'Budget proposal does not exist';
-        }
-        return props.reason || 'Budget must be active and belong to your organization';
-      }
+      message: 'Budget must exist and be active'
     }
   },
       

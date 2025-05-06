@@ -339,6 +339,13 @@ const Aap = () => {
     }
   };
 
+  useEffect(() => {
+    // Only fetch budgets when creating new forms
+    if (!isEditMode) {
+      fetchBudgetProposals();
+    }
+  }, []); // Empty dependency array = run once on mount
+
   // Fetch form data if in edit mode
   useEffect(() => {
     // Update the fetchFormData function in your useEffect
