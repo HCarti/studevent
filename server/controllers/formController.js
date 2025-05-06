@@ -762,10 +762,13 @@ exports.updateForm = async (req, res) => {
     const tracker = await EventTracker.findOne({ formId }).session(session);
     
     // Check if this is a declined form that's being resubmitted
-    const isDeclinedResubmission = tracker && tracker.currentStatus === 'declined';
+    const hasDeclinedStep = tracker && tracker.steps.some(step => step.status === 'declined');
+    const isDeanApproved = tracker && tracker.steps.some(
+      step => step.stepName === 'Dean' && step.status === 'approved'
+    );
 
     // For non-declined forms, perform regular checks
-    if (tracker && !isDeclinedResubmission) {
+    if (tracker && !hasDeclinedStep) {
       if (form.formType === 'Project') {
         const isUnderReview = tracker.steps.some(
           step => step.status === 'approved' || step.status === 'declined'
@@ -780,9 +783,6 @@ exports.updateForm = async (req, res) => {
         }
       } else {
         const isDeanReviewing = tracker.currentAuthority === 'Dean';
-        const isDeanApproved = tracker.steps.some(
-          step => step.stepName === 'Dean' && step.status === 'approved'
-        );
 
         if (isDeanReviewing || isDeanApproved) {
           await session.abortTransaction();
@@ -793,7 +793,7 @@ exports.updateForm = async (req, res) => {
         }
       }
     }
-
+    
     // Enhanced budget validation with debug logging
     // In your updateForm controller
         // Enhanced budget validation in updateForm controller
@@ -848,7 +848,7 @@ exports.updateForm = async (req, res) => {
         }
 
     // Handle declined form resubmission
-    if (isDeclinedResubmission) {
+    if (hasDeclinedStep) {
       const isOrganizationUser = user.role === 'Organization' && 
                                (form.studentOrganization.equals(user._id) || 
                                 user.organizationId.equals(form.studentOrganization));
