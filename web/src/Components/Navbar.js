@@ -354,6 +354,13 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
       case 'liquidation':
         navigate(`/liquidations`);
         break;
+      case 'orgtracker':
+        if (notification.trackerId) {
+          navigate(`/orgtracker/${notification.trackerId}`);
+        } else {
+          console.log('OrgTracker notification missing trackerId');
+        }
+        break;
       default:
         // For notifications without specific navigation, just mark as read
         console.log('No navigation defined for this notification type:', notification.type);
@@ -388,6 +395,7 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
                       <div
                         key={notification._id}
                         className={`notification-item ${notification.read ? 'read' : 'unread'}`}
+                        onClick={() => handleNotificationClick(notification)}
                       >
                         <div className="notification-message">{notification.message}</div>
                         <div className="notification-time">
@@ -397,14 +405,20 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
                           {!notification.read ? (
                             <button
                               className="mark-read-btn"
-                              onClick={() => markNotificationAsRead(notification._id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markNotificationAsRead(notification._id);
+                              }}
                             >
                               Mark Read
                             </button>
                           ) : (
                             <button
                               className="mark-unread-btn"
-                              onClick={() => markNotificationAsUnread(notification._id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markNotificationAsUnread(notification._id);
+                              }}
                             >
                               Mark Unread
                             </button>

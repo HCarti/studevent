@@ -121,9 +121,7 @@ const NotificationsPage = () => {
     }
   };
 
-  const handleTrackerClick = trackerId => {
-    navigate(`/tracker/${trackerId}`);
-  };
+  // Removed handleTrackerClick function as it's no longer needed
 
   // Back button removed
 
@@ -133,13 +131,14 @@ const NotificationsPage = () => {
       await markNotificationAsRead(notification._id);
     }
 
-    // Navigate based on notification type
+    // Check if notification has type
     if (!notification.type) {
       // Navigate to trackerlist by default instead of just showing as read
       navigate('/trackerlist');
       return;
     }
 
+    // Navigate based on notification type
     switch (notification.type) {
       case 'tracker':
         if (notification.trackerId) {
@@ -163,7 +162,9 @@ const NotificationsPage = () => {
         }
         break;
       case 'approval':
-        navigate(`/approvals`);
+      case 'orgtracker':
+        // Hard-coded navigation to specific organization forms
+        navigate('/organization/67f6068be41ba93629cfd6d8/forms');
         break;
       case 'liquidation':
         navigate(`/liquidations`);
@@ -211,27 +212,26 @@ const NotificationsPage = () => {
                   {new Date(notification.createdAt).toLocaleString()}
                 </div>
                 <div className="notification-actions">
-                  {notification.type === 'tracker' && (
+                  {/* Removed View Tracker button */}
+                  {!notification.read ? (
                     <button
-                      className="view-tracker-btn"
-                      onClick={() => handleTrackerClick(notification.trackerId)}
+                      className="mark-read-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        markNotificationAsRead(notification._id);
+                      }}
                     >
-                      View Tracker
-                    </button>
-                  )}
-                  {notification.read ? (
-                    <button
-                      className="mark-unread-btn"
-                      onClick={() => markNotificationAsUnread(notification._id)}
-                    >
-                      Mark Unread
+                      Mark Read
                     </button>
                   ) : (
                     <button
-                      className="mark-read-btn"
-                      onClick={() => markNotificationAsRead(notification._id)}
+                      className="mark-unread-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        markNotificationAsUnread(notification._id);
+                      }}
                     >
-                      Mark Read
+                      Mark Unread
                     </button>
                   )}
                   <button
