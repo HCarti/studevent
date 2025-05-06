@@ -1090,39 +1090,38 @@ const Aap = () => {
             </p>
 
             <label className="required-field">Event Start Date:</label>
-              <DatePicker
-                selected={formData.eventStartDate ? new Date(formData.eventStartDate) : null}
-                onChange={date => handleDateChange(date, 'eventStartDate')}
-                minDate={new Date()}
-                filterDate={date => {
-                  // Check both event limits and blocked dates
-                  const dateStr = normalizeDateToUTC(date);
-                  const isBlocked = isDateBlocked(date);
-                  const isOccupied = (eventsPerDate[dateStr] || 0) >= 3;
-                  
-                  return !isBlocked && !isOccupied;
-                }}
-                dayClassName={date => {
-                  const dateStr = normalizeDateToUTC(date);
-                  const count = eventsPerDate[dateStr] || 0;
-                  const isBlocked = isDateBlocked(date);
+            <DatePicker
+            selected={formData.eventStartDate ? new Date(formData.eventStartDate) : null}
+            onChange={date => handleDateChange(date, 'eventStartDate')}
+            minDate={new Date()}
+            filterDate={date => {
+              const dateStr = normalizeDateToUTC(date);
+              const isBlocked = isDateBlocked(date);
+              const isOccupied = (eventsPerDate[dateStr] || 0) >= 3;
+              
+              return !isBlocked && !isOccupied;
+            }}
+            dayClassName={date => {
+              const dateStr = normalizeDateToUTC(date);
+              const count = eventsPerDate[dateStr] || 0;
+              const isBlocked = isDateBlocked(date);
 
-                  if (isBlocked) return 'blocked-day';
-                  if (count >= 3) return 'fully-booked-day';
-                  if (count >= 2) return 'approaching-limit-day';
-                  return '';
-                }}
-                dateFormat="MMMM d, yyyy h:mm aa"
-                showTimeSelect
-                timeFormat="h:mm aa"
-                timeIntervals={15}
-                timeCaption="Time"
-                locale="en"
-                placeholderText="Select start date and time"
-                className={`date-picker-input ${fieldErrors.eventStartDate ? 'invalid-field' : ''}`}
-                popperPlacement="bottom-start"
-                disabledKeyboardNavigation
-              />
+              if (isBlocked) return 'blocked-day';
+              if (count >= 3) return 'fully-booked-day';
+              if (count >= 1) return 'approaching-limit-day';
+              return '';
+            }}
+            dateFormat="MMMM d, yyyy h:mm aa"
+            showTimeSelect
+            timeFormat="h:mm aa"
+            timeIntervals={15}
+            timeCaption="Time"
+            locale="en"
+            placeholderText="Select start date and time"
+            className={`date-picker-input ${fieldErrors.eventStartDate ? 'invalid-field' : ''}`}
+            popperPlacement="bottom-start"
+            disabledKeyboardNavigation
+/>
               {fieldErrors.eventStartDate && (
                 <div className="validation-error">
                   {formData.eventStartDate && isDateBlocked(formData.eventStartDate)
@@ -1151,10 +1150,10 @@ const Aap = () => {
                     const dateStr = normalizeDateToUTC(date);
                     const count = eventsPerDate[dateStr] || 0;
                     const isBlocked = isDateBlocked(date);
-
+                  
                     if (isBlocked) return 'blocked-day';
                     if (count >= 3) return 'fully-booked-day';
-                    if (count >= 2) return 'approaching-limit-day';
+                    if (count >= 1) return 'approaching-limit-day';
                     return '';
                   }}
                   dateFormat="MMMM d, yyyy h:mm aa"
