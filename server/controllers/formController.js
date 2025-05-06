@@ -958,10 +958,10 @@ exports.updateForm = async (req, res) => {
     }
     
     await session.commitTransaction();
-    session.endSession();
-
+    await session.endSession();
+    
     res.status(200).json({
-      message: isDeclinedResubmission ? 'Form updated and resubmitted successfully' : 'Form updated successfully',
+      message: hasDeclinedStep ? 'Form updated and review process restarted' : 'Form updated successfully',
       form: updatedForm,
       tracker: tracker ? await EventTracker.findOne({ formId }) : null
     });
