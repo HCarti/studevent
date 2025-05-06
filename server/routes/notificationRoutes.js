@@ -9,7 +9,8 @@ const {
   createEventNotification,
   createOrganizationNotification,
   createApprovalNotification,
-  createLiquidationNotification
+  createLiquidationNotification,
+  deleteNotification
 } = require('../controllers/notificationController');
 
 // Get notifications by user email
