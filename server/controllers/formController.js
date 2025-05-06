@@ -746,52 +746,52 @@ exports.updateForm = async (req, res) => {
     }
 
     // Authorization check
-                const isSubmitter = form.emailAddress === user.email || 
-                (form.createdBy && form.createdBy.equals(user._id));
-            const isAdmin = user.role === 'Admin';
+       const isSubmitter = form.emailAddress === user.email || 
+                       (form.createdBy && form.createdBy.equals(user._id));
+    const isAdmin = user.role === 'Admin';
+    
+    if (!isSubmitter && !isAdmin) {
+      await session.abortTransaction();
+      await session.endSession();
+      return res.status(403).json({ 
+        message: 'Only the original submitter or admin can edit this form' 
+      });
+    }
 
-            if (!isSubmitter && !isAdmin) {
-            await session.abortTransaction();
-            await session.endSession();
-            return res.status(403).json({ 
-            message: 'Only the original submitter or admin can edit this form' 
-            });
-            }
+    // Find the tracker
+    const tracker = await EventTracker.findOne({ formId }).session(session);
+    
+    // Check if this is a declined form that's being resubmitted
+    const hasDeclinedStep = tracker && tracker.steps.some(step => step.status === 'declined');
+    const isDeanApproved = tracker && tracker.steps.some(
+      step => step.stepName === 'Dean' && step.status === 'approved'
+    );
 
-            // Find the tracker
-            const tracker = await EventTracker.findOne({ formId }).session(session);
-
-            // Check if this is a declined form that's being resubmitted
-            const hasDeclinedStep = tracker && tracker.steps.some(step => step.status === 'declined');
-            const isDeanApproved = tracker && tracker.steps.some(
-            step => step.stepName === 'Dean' && step.status === 'approved'
-            );
-
-            // For non-declined forms, perform regular checks
-            if (tracker && !hasDeclinedStep) {
-            if (form.formType === 'Project') {
-            const isUnderReview = tracker.steps.some(
-            step => step.status === 'approved' || step.status === 'declined'
-            );
-
-            if (isUnderReview) {
-            await session.abortTransaction();
-            await session.endSession();
-            return res.status(403).json({ 
+    // For non-declined forms, perform regular checks
+    if (tracker && !hasDeclinedStep) {
+      if (form.formType === 'Project') {
+        const isUnderReview = tracker.steps.some(
+          step => step.status === 'approved' || step.status === 'declined'
+        );
+        
+        if (isUnderReview) {
+          await session.abortTransaction();
+          await session.endSession();
+          return res.status(403).json({ 
             message: 'Project form cannot be edited once review has started' 
-            });
-            }
-            } else {
-            const isDeanReviewing = tracker.currentAuthority === 'Dean';
+          });
+        }
+      } else {
+        const isDeanReviewing = tracker.currentAuthority === 'Dean';
 
-            if (isDeanReviewing || isDeanApproved) {
-            await session.abortTransaction();
-            await session.endSession();
-            return res.status(403).json({ 
+        if (isDeanReviewing || isDeanApproved) {
+          await session.abortTransaction();
+          await session.endSession();
+          return res.status(403).json({ 
             message: 'Form cannot be edited once it reaches the Dean for review/approval' 
-            });
-           }
-         }
+          });
+        }
+      }
     }
 
     
@@ -856,7 +856,7 @@ exports.updateForm = async (req, res) => {
       
       if (!isOrganizationUser && !isAdmin) {
         await session.abortTransaction();
-        await session.endSession();
+        session.endSession();
         return res.status(403).json({ 
           message: 'Only the organization can update a declined form' 
         });
@@ -885,7 +885,7 @@ exports.updateForm = async (req, res) => {
       runValidators: true,
       session
     };
-
+    
     let updatedForm;
     if (form instanceof LocalOffCampus) {
       updatedForm = await LocalOffCampus.findByIdAndUpdate(
@@ -893,7 +893,7 @@ exports.updateForm = async (req, res) => {
         { 
           ...updates,
           lastEdited: new Date(),
-          status: hasDeclinedStep ? 'pending' : form.status
+          status: hasDeclinedStep ? 'pending' : form.status // Use 'pending' instead of 'resubmitted'
         },
         updateOptions
       );
@@ -903,7 +903,7 @@ exports.updateForm = async (req, res) => {
         { 
           ...updates,
           lastEdited: new Date(),
-          finalStatus: hasDeclinedStep ? 'pending' : form.finalStatus
+          finalStatus: hasDeclinedStep ? 'pending' : form.finalStatus // Use 'pending' instead of 'resubmitted'
         },
         updateOptions
       );
@@ -957,22 +957,18 @@ exports.updateForm = async (req, res) => {
         createdAt: new Date()
       }], { session });
     }
-
+    
     await session.commitTransaction();
-    await session.endSession();
+    session.endSession();
 
     res.status(200).json({
-      message: hasDeclinedStep ? 'Form updated and review process restarted' : 'Form updated successfully',
+      message: isDeclinedResubmission ? 'Form updated and resubmitted successfully' : 'Form updated successfully',
       form: updatedForm,
       tracker: tracker ? await EventTracker.findOne({ formId }) : null
     });
 
   } catch (error) {
-    // Only abort transaction if it hasn't been committed yet
-    if (session.inTransaction()) {
-      await session.abortTransaction();
-    }
-    await session.endSession();
+    session.endSession();
     
     console.error("Form Update Error:", {
       message: error.message,
