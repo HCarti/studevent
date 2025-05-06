@@ -343,6 +343,7 @@ const formSchema = new mongoose.Schema({
 
     // ====BUDGET PROPOSAL====
 // In your Form schema
+// In your Form schema
 attachedBudget: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'BudgetProposal',
@@ -350,31 +351,17 @@ attachedBudget: {
       validator: async function(v) {
         if (!v) return true; // Optional attachment
         
-        // Get the form's organization context
-        let orgId;
-        if (this.studentOrganization) {
-          // Activity form - use explicit studentOrganization
-          orgId = this.studentOrganization;
-        } else if (this.createdBy) {
-          // Project form - get org from creator
-          const user = await mongoose.model('User').findById(this.createdBy);
-          orgId = user?.organizationId || user?._id; // Handle org users
-        }
-        
-        if (!orgId) return false; // No org context
-        
-        // Check budget belongs to the same org
+        // Just check existence and active status
         const budget = await mongoose.model('BudgetProposal').findOne({
           _id: v,
-          organization: orgId,
           isActive: true
         });
         
         return !!budget;
       },
-      message: 'Budget must belong to your organization and be active'
+      message: 'Budget must exist and be active'
     }
-},
+  },
       
     // ===== COMMON FIELDS =====
     currentStep: { type: Number, default: 0 },
