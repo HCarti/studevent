@@ -892,7 +892,7 @@ exports.updateForm = async (req, res) => {
         { 
           ...updates,
           lastEdited: new Date(),
-          status: isDeclinedResubmission ? 'resubmitted' : form.status
+          status: hasDeclinedStep ? 'resubmitted' : form.status
         },
         updateOptions
       );
@@ -902,7 +902,7 @@ exports.updateForm = async (req, res) => {
         { 
           ...updates,
           lastEdited: new Date(),
-          finalStatus: isDeclinedResubmission ? 'resubmitted' : form.finalStatus
+          finalStatus: hasDeclinedStep ? 'resubmitted' : form.finalStatus
         },
         updateOptions
       );
