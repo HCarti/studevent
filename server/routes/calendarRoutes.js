@@ -121,6 +121,31 @@ router.get('/occupied-slots', async (req, res) => {
   }
 });
 
+// Get event counts per date
+router.get('/event-counts', async (req, res) => {
+  try {
+    const events = await CalendarEvent.find({}, 'startDate endDate');
+    
+    const eventCounts = {};
+    
+    events.forEach(event => {
+      const start = moment.utc(event.startDate).startOf('day');
+      const end = moment.utc(event.endDate).startOf('day');
+      
+      // Count events per date
+      for (let date = start.clone(); date <= end; date.add(1, 'days')) {
+        const dateStr = date.format('YYYY-MM-DD');
+        eventCounts[dateStr] = (eventCounts[dateStr] || 0) + 1;
+      }
+    });
+    
+    res.json({ eventCounts });
+  } catch (error) {
+    console.error('Error in /event-counts:', error);
+    res.status(500).json({ error: 'Failed to fetch event counts' });
+  }
+});
+
 
 // Get event counts per date
 // In your existing /events/range route, add this at the beginning:

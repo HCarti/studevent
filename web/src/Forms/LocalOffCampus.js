@@ -379,6 +379,7 @@ const Localoffcampus = () => {
         const newRemarks = e.target.value;
         setLocalRemarks(newRemarks);
         onChange(value, newRemarks);
+        onChange(value, e.target.value);
       };
 
       // Handle compliance change
@@ -421,7 +422,7 @@ const Localoffcampus = () => {
           <td className="remarks-cell">
             <input
               type="text"
-              value={localRemarks}
+              value={remarks || ''}
               onChange={handleRemarksChange}
               placeholder="Enter remarks..."
             />
@@ -701,6 +702,7 @@ const Localoffcampus = () => {
         });
       } catch (error) {
         console.error('Error:', error);
+        navigate('/submitted-forms');
         setSnackbar({
           open: true,
           message: `An error occurred while submitting the form: ${error.message}`,
