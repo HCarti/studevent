@@ -328,9 +328,9 @@ const Aap = () => {
       }
   
       const budget = await response.json();
-      
-      // Verify budget is active and belongs to the right organization
       const user = JSON.parse(localStorage.getItem('user'));
+  
+      // Verify budget is active and belongs to the right organization
       if (!budget.isActive) {
         throw new Error('Attached budget is not active');
       }
