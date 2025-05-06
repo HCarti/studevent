@@ -425,7 +425,10 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
                           )}
                           <button
                             className="delete-notification-btn"
-                            onClick={() => deleteNotification(notification._id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteNotification(notification._id);
+                            }}
                           >
                             <FiTrash2 />
                           </button>

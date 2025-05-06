@@ -236,7 +236,10 @@ const NotificationsPage = () => {
                   )}
                   <button
                     className="delete-notification-btn"
-                    onClick={() => deleteNotification(notification._id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteNotification(notification._id);
+                    }}
                   >
                     Delete
                   </button>
