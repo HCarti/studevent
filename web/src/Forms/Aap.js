@@ -214,23 +214,28 @@ const Aap = () => {
         throw new Error('User not authenticated');
       }
   
+      // Debug: Log user info
+      console.log('Fetching budgets for user:', {
+        id: user._id,
+        role: user.role,
+        organization: user.organizationId
+      });
+  
       // Fetch the user's available budgets
       let url = 'https://studevent-server.vercel.app/api/budgets';
-      let queryParams = [];
+      let queryParams = ['isActive=true']; // Always filter active budgets
   
+      // Adjust query based on user role
       if (user.role === 'Organization') {
         queryParams.push(`organization=${user._id}`);
       } else if (user.role !== 'Admin') {
         queryParams.push(`createdBy=${user._id}`);
       }
   
-      queryParams.push('isActive=true');
+      const fullUrl = `${url}?${queryParams.join('&')}`;
+      console.log('Fetching budgets from:', fullUrl);
   
-      if (queryParams.length > 0) {
-        url += `?${queryParams.join('&')}`;
-      }
-  
-      const response = await fetch(url, {
+      const response = await fetch(fullUrl, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -238,58 +243,43 @@ const Aap = () => {
       });
   
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API Error:', {
+          status: response.status,
+          error: errorData
+        });
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
   
       let budgets = await response.json();
-      if (!Array.isArray(budgets)) budgets = [];
+      console.log('Received budgets:', budgets);
   
-      // Handle attached budget in edit mode
-      const budgetIdToUse = attachedBudgetId || formData.attachedBudget;
-      
-      if (isEditMode && budgetIdToUse) {
-        const hasAttachedBudget = budgets.some(b => b._id === budgetIdToUse);
-        
-        if (!hasAttachedBudget) {
+      if (!Array.isArray(budgets)) {
+        console.warn('Expected array but got:', typeof budgets);
+        budgets = [];
+      }
+  
+      // Handle edit mode logic
+      if (isEditMode && formData.attachedBudget) {
+        const budgetId = formData.attachedBudget;
+        if (!budgets.some(b => b._id === budgetId)) {
           try {
-            const attachedBudget = await fetchSingleBudget(budgetIdToUse);
+            const attachedBudget = await fetchSingleBudget(budgetId);
             if (attachedBudget) {
               budgets = [...budgets, attachedBudget];
+              console.log('Added attached budget to list:', attachedBudget);
             }
           } catch (error) {
             console.error('Failed to fetch attached budget:', error);
           }
         }
-  
-        // Find the selected budget
-        const selectedBudget = budgets.find(b => b._id === budgetIdToUse);
-        
-        if (selectedBudget) {
-          // Map the budget source to the dropdown options
-          let budgetSource = 'Org'; // Default value
-          if (selectedBudget.nameOfRso) {
-            if (selectedBudget.nameOfRso.includes('College') || selectedBudget.nameOfRso.includes('Department')) {
-              budgetSource = 'College/Department';
-            } else if (selectedBudget.nameOfRso.includes('SDAO')) {
-              budgetSource = 'SDAO';
-            }
-          }
-  
-          setFormData(prev => ({
-            ...prev,
-            budgetProposals: budgets,
-            budgetAmount: selectedBudget.grandTotal || '',
-            budgetFrom: budgetSource, // Use the mapped value
-            attachedBudget: selectedBudget._id
-          }));
-          return;
-        }
       }
   
-      // Default case for new forms or when no budget is attached
+      // Update form state
       setFormData(prev => ({
         ...prev,
         budgetProposals: budgets,
+        // For new forms, reset these fields
         ...(!isEditMode && {
           budgetAmount: '',
           budgetFrom: '',
@@ -298,7 +288,10 @@ const Aap = () => {
       }));
   
     } catch (error) {
-      console.error('Error fetching budgets:', error);
+      console.error('Error in fetchBudgetProposals:', {
+        message: error.message,
+        stack: error.stack
+      });
       setBudgetLoadError(
         error.message || 'Failed to load budget proposals. Please try again later.'
       );
@@ -1190,71 +1183,92 @@ const Aap = () => {
               <div className="validation-error">Please Enter A Organizer</div>
             )}
 
-              <div className="budget-selection">
-              <label className="required-field">Attached Budget Proposal:</label>
-              <select
-                name="attachedBudget"
-                value={formData.attachedBudget || ''}
-                onChange={e => {
-                  const budgetId = e.target.value;
-                  const selectedBudget = formData.budgetProposals.find(b => b._id === budgetId);
-                  
-                  // Map the budget source to dropdown options
-                  let budgetSource = 'Org'; // Default value
-                  if (selectedBudget?.nameOfRso) {
-                    if (selectedBudget.nameOfRso.includes('College') || selectedBudget.nameOfRso.includes('Department')) {
-                      budgetSource = 'College/Department';
-                    } else if (selectedBudget.nameOfRso.includes('SDAO')) {
-                      budgetSource = 'SDAO';
-                    }
-                  }
+<div className="budget-selection">
+  <label className="required-field">Attached Budget Proposal:</label>
+  {loading ? (
+    <div className="loading-message">Loading budgets...</div>
+  ) : (
+    <>
+      <select
+        name="attachedBudget"
+        value={formData.attachedBudget || ''}
+        onChange={e => {
+          const budgetId = e.target.value;
+          const selectedBudget = formData.budgetProposals.find(b => b._id === budgetId);
+          
+          // Map the budget source to dropdown options
+          let budgetSource = 'Org'; // Default value
+          if (selectedBudget?.nameOfRso) {
+            if (selectedBudget.nameOfRso.includes('College') || 
+                selectedBudget.nameOfRso.includes('Department')) {
+              budgetSource = 'College/Department';
+            } else if (selectedBudget.nameOfRso.includes('SDAO')) {
+              budgetSource = 'SDAO';
+            }
+          }
 
-                  setFormData(prev => ({
-                    ...prev,
-                    attachedBudget: budgetId,
-                    budgetAmount: selectedBudget?.grandTotal || '',
-                    budgetFrom: budgetSource
-                  }));
-                }}
-              >
-                <option value="">Select a budget proposal...</option>
-                {formData.budgetProposals?.map(budget => (
-                  <option key={budget._id} value={budget._id}>
-                    {budget.eventTitle} - ₱{budget.grandTotal?.toLocaleString()}
-                  </option>
-                ))}
-              </select>
-                {loading && <div>Loading budgets...</div>}
-                {budgetLoadError && <div className="error-message">{budgetLoadError}</div>}
-              </div>
+          setFormData(prev => ({
+            ...prev,
+            attachedBudget: budgetId,
+            budgetAmount: selectedBudget?.grandTotal || '',
+            budgetFrom: budgetSource
+          }));
+        }}
+        disabled={loading || budgetLoadError}
+      >
+        <option value="">Select a budget proposal...</option>
+        {formData.budgetProposals?.map(budget => (
+          <option key={budget._id} value={budget._id}>
+            {budget.eventTitle} - ₱{budget.grandTotal?.toLocaleString()}
+          </option>
+        ))}
+      </select>
+      
+      {formData.budgetProposals?.length === 0 && !budgetLoadError && (
+        <div className="info-message">No available budget proposals found</div>
+      )}
+      
+      {budgetLoadError && (
+        <div className="error-message">
+          {budgetLoadError}
+          <button 
+            onClick={fetchBudgetProposals}
+            className="retry-button"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+    </>
+  )}
 
-            {budgetLoadError && <div className="error-message">{budgetLoadError}</div>}
+  <label className="required-field">Budget Amount:</label>
+  <input
+    type="number"
+    name="budgetAmount"
+    value={formData.budgetAmount}
+    onChange={handleChange}
+    readOnly={!!formData.attachedBudget}
+    className={fieldErrors.budgetAmount ? 'invalid-field' : ''}
+    min="0"
+    disabled={loading}
+  />
 
-            <label className="required-field">Budget Amount:</label>
-              <input
-                type="number"
-                name="budgetAmount"
-                value={formData.budgetAmount}
-                onChange={handleChange}
-                readOnly={!!formData.attachedBudget}
-                className={fieldErrors.budgetAmount ? 'invalid-field' : ''}
-                min="0"
-              />
-
-              <label className="required-field">Budget From:</label>
-              <select
-                name="budgetFrom"
-                value={formData.budgetFrom}
-                onChange={handleChange}
-                readOnly={!!formData.attachedBudget}
-                className={fieldErrors.budgetFrom ? 'invalid-field' : ''}
-              >
-                <option value="">Select An Option...</option>
-                <option value="College/Department">College/Department</option>
-                <option value="Org">Organization</option>
-                <option value="SDAO">SDAO</option>
-              </select>
-
+  <label className="required-field">Budget From:</label>
+  <select
+    name="budgetFrom"
+    value={formData.budgetFrom}
+    onChange={handleChange}
+    readOnly={!!formData.attachedBudget}
+    className={fieldErrors.budgetFrom ? 'invalid-field' : ''}
+    disabled={loading}
+  >
+    <option value="">Select An Option...</option>
+    <option value="College/Department">College/Department</option>
+    <option value="Org">Organization</option>
+    <option value="SDAO">SDAO</option>
+  </select>
+</div>
             <p className="venue-note">
               Note: Budget amount is not automatically approved by this system. Please confirm
               budget availability separately with the budget management before submission.
