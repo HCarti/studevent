@@ -884,7 +884,7 @@ exports.updateForm = async (req, res) => {
       runValidators: true,
       session
     };
-
+    
     let updatedForm;
     if (form instanceof LocalOffCampus) {
       updatedForm = await LocalOffCampus.findByIdAndUpdate(
@@ -892,7 +892,7 @@ exports.updateForm = async (req, res) => {
         { 
           ...updates,
           lastEdited: new Date(),
-          status: hasDeclinedStep ? 'resubmitted' : form.status
+          status: hasDeclinedStep ? 'pending' : form.status // Use 'pending' instead of 'resubmitted'
         },
         updateOptions
       );
@@ -902,33 +902,33 @@ exports.updateForm = async (req, res) => {
         { 
           ...updates,
           lastEdited: new Date(),
-          finalStatus: hasDeclinedStep ? 'resubmitted' : form.finalStatus
+          finalStatus: hasDeclinedStep ? 'pending' : form.finalStatus // Use 'pending' instead of 'resubmitted'
         },
         updateOptions
       );
     }
-
+    
     // Update calendar event if needed
     if (['Activity', 'Project'].includes(form.formType)) {
       if (updates.eventStartDate || updates.eventEndDate || updates.venue || updates.eventTitle) {
         await updateCalendarEventFromForm(updatedForm);
       }
     }
-
+    
     // Notification handling
-    if (isDeclinedResubmission) {
+    if (hasDeclinedStep) {
       const currentStep = tracker.steps.find(step => step.stepName === tracker.currentStep);
       if (currentStep) {
         const reviewers = await User.find({ 
           role: currentStep.reviewerRole,
           status: 'Active'
         }).session(session);
-
+    
         await Promise.all(reviewers.map(async reviewer => {
           try {
             await notificationController.createNotification(
               reviewer.email,
-              `A ${form.formType} form you previously declined has been updated and resubmitted for your review.`,
+              `A ${form.formType} form you previously declined has been updated and requires your review.`,
               'tracker',
               { 
                 formId: form._id, 
@@ -943,12 +943,12 @@ exports.updateForm = async (req, res) => {
         }));
       }
     }
-
+    
     // Send confirmation
     if (form.emailAddress) {
       await Notification.create([{
         userEmail: form.emailAddress,
-        message: `Your ${form.formType} form has been ${isDeclinedResubmission ? 'updated and resubmitted' : 'updated'} successfully!`,
+        message: `Your ${form.formType} form has been ${hasDeclinedStep ? 'updated and requires review' : 'updated'} successfully!`,
         type: 'tracker',
         formId: form._id,
         formType: form.formType,
@@ -956,7 +956,7 @@ exports.updateForm = async (req, res) => {
         createdAt: new Date()
       }], { session });
     }
-
+    
     await session.commitTransaction();
     session.endSession();
 
