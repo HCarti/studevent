@@ -205,7 +205,7 @@ const Aap = () => {
     return isValid;
   };
 
-  const fetchBudgetProposals = async () => {
+  const fetchBudgetProposals = async (attachedBudgetId = null) => {
     try {
       const token = localStorage.getItem('token');
       const user = JSON.parse(localStorage.getItem('user'));
@@ -214,7 +214,7 @@ const Aap = () => {
         throw new Error('User not authenticated');
       }
   
-      // 1. First fetch the user's available budgets
+      // Fetch the user's available budgets
       let url = 'https://studevent-server.vercel.app/api/budgets';
       let queryParams = [];
   
@@ -244,31 +244,56 @@ const Aap = () => {
       let budgets = await response.json();
       if (!Array.isArray(budgets)) budgets = [];
   
-      // 2. In edit mode, ensure attached budget is included even if not normally available
-      if (isEditMode && formData.attachedBudget) {
-        const hasAttachedBudget = budgets.some(b => b._id === formData.attachedBudget);
+      // Handle attached budget in edit mode
+      const budgetIdToUse = attachedBudgetId || formData.attachedBudget;
+      
+      if (isEditMode && budgetIdToUse) {
+        const hasAttachedBudget = budgets.some(b => b._id === budgetIdToUse);
         
         if (!hasAttachedBudget) {
           try {
-            const attachedBudget = await fetchSingleBudget(formData.attachedBudget);
+            const attachedBudget = await fetchSingleBudget(budgetIdToUse);
             if (attachedBudget) {
               budgets = [...budgets, attachedBudget];
             }
           } catch (error) {
             console.error('Failed to fetch attached budget:', error);
-            // Continue with available budgets even if attached budget fails to load
           }
+        }
+  
+        // Find the selected budget
+        const selectedBudget = budgets.find(b => b._id === budgetIdToUse);
+        
+        if (selectedBudget) {
+          // Map the budget source to the dropdown options
+          let budgetSource = 'Org'; // Default value
+          if (selectedBudget.nameOfRso) {
+            if (selectedBudget.nameOfRso.includes('College') || selectedBudget.nameOfRso.includes('Department')) {
+              budgetSource = 'College/Department';
+            } else if (selectedBudget.nameOfRso.includes('SDAO')) {
+              budgetSource = 'SDAO';
+            }
+          }
+  
+          setFormData(prev => ({
+            ...prev,
+            budgetProposals: budgets,
+            budgetAmount: selectedBudget.grandTotal || '',
+            budgetFrom: budgetSource, // Use the mapped value
+            attachedBudget: selectedBudget._id
+          }));
+          return;
         }
       }
   
-      // 3. Update form state with all available budgets
+      // Default case for new forms or when no budget is attached
       setFormData(prev => ({
         ...prev,
         budgetProposals: budgets,
-        // Only update budget amount/from if we're not in edit mode
         ...(!isEditMode && {
           budgetAmount: '',
-          budgetFrom: ''
+          budgetFrom: '',
+          attachedBudget: ''
         })
       }));
   
@@ -317,22 +342,9 @@ const Aap = () => {
       return budget;
     } catch (error) {
       console.error('Error fetching single budget:', error);
-      throw error; // Re-throw to handle in calling function
+      throw error;
     }
   };
-  
-  // Call this in useEffect when component mounts
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        await fetchBudgetProposals();
-      } catch (error) {
-        console.error('Failed to load budget proposals:', error);
-      }
-    };
-    
-    loadData();
-  }, [isEditMode]); // Add isEditMode as dependency
 
   // Fetch form data if in edit mode
   useEffect(() => {
@@ -382,7 +394,7 @@ const Aap = () => {
         // 3. Format all data for the form
         const formattedData = {
           ...formData,
-          attachedBudget: formData.attachedBudget?._id || formData.attachedBudget || null,
+          attachedBudget: formData.attachedBudget?._id || formData.attachedBudget || '',
           organizationId: formData.studentOrganization?._id || formData.studentOrganization || '',
           studentOrganization: organizationName, // Use the resolved name
           eventStartDate: formData.eventStartDate
@@ -395,6 +407,7 @@ const Aap = () => {
         };
 
         setFormData(formattedData);
+        await fetchBudgetProposals(formattedData.attachedBudget);
       } catch (error) {
         console.error('Error fetching form:', error);
         alert('Failed to load form data');
@@ -1077,94 +1090,94 @@ const Aap = () => {
             </p>
 
             <label className="required-field">Event Start Date:</label>
-<DatePicker
-  selected={formData.eventStartDate ? new Date(formData.eventStartDate) : null}
-  onChange={date => handleDateChange(date, 'eventStartDate')}
-  minDate={new Date()}
-  filterDate={date => {
-    // Check both event limits and blocked dates
-    const dateStr = normalizeDateToUTC(date);
-    const isBlocked = isDateBlocked(date);
-    const isOccupied = (eventsPerDate[dateStr] || 0) >= 3;
-    
-    return !isBlocked && !isOccupied;
-  }}
-  dayClassName={date => {
-    const dateStr = normalizeDateToUTC(date);
-    const count = eventsPerDate[dateStr] || 0;
-    const isBlocked = isDateBlocked(date);
+              <DatePicker
+                selected={formData.eventStartDate ? new Date(formData.eventStartDate) : null}
+                onChange={date => handleDateChange(date, 'eventStartDate')}
+                minDate={new Date()}
+                filterDate={date => {
+                  // Check both event limits and blocked dates
+                  const dateStr = normalizeDateToUTC(date);
+                  const isBlocked = isDateBlocked(date);
+                  const isOccupied = (eventsPerDate[dateStr] || 0) >= 3;
+                  
+                  return !isBlocked && !isOccupied;
+                }}
+                dayClassName={date => {
+                  const dateStr = normalizeDateToUTC(date);
+                  const count = eventsPerDate[dateStr] || 0;
+                  const isBlocked = isDateBlocked(date);
 
-    if (isBlocked) return 'blocked-day';
-    if (count >= 3) return 'fully-booked-day';
-    if (count >= 2) return 'approaching-limit-day';
-    return '';
-  }}
-  dateFormat="MMMM d, yyyy h:mm aa"
-  showTimeSelect
-  timeFormat="h:mm aa"
-  timeIntervals={15}
-  timeCaption="Time"
-  locale="en"
-  placeholderText="Select start date and time"
-  className={`date-picker-input ${fieldErrors.eventStartDate ? 'invalid-field' : ''}`}
-  popperPlacement="bottom-start"
-  disabledKeyboardNavigation
-/>
-{fieldErrors.eventStartDate && (
-  <div className="validation-error">
-    {formData.eventStartDate && isDateBlocked(formData.eventStartDate)
-      ? 'This date has been blocked by administrators'
-      : formData.eventStartDate && 
-        eventsPerDate[moment(formData.eventStartDate).format('YYYY-MM-DD')] >= 3
-      ? 'This date has reached the maximum number of events (3)'
-      : 'Please select a valid start date'}
-  </div>
-)}
+                  if (isBlocked) return 'blocked-day';
+                  if (count >= 3) return 'fully-booked-day';
+                  if (count >= 2) return 'approaching-limit-day';
+                  return '';
+                }}
+                dateFormat="MMMM d, yyyy h:mm aa"
+                showTimeSelect
+                timeFormat="h:mm aa"
+                timeIntervals={15}
+                timeCaption="Time"
+                locale="en"
+                placeholderText="Select start date and time"
+                className={`date-picker-input ${fieldErrors.eventStartDate ? 'invalid-field' : ''}`}
+                popperPlacement="bottom-start"
+                disabledKeyboardNavigation
+              />
+              {fieldErrors.eventStartDate && (
+                <div className="validation-error">
+                  {formData.eventStartDate && isDateBlocked(formData.eventStartDate)
+                    ? 'This date has been blocked by administrators'
+                    : formData.eventStartDate && 
+                      eventsPerDate[moment(formData.eventStartDate).format('YYYY-MM-DD')] >= 3
+                    ? 'This date has reached the maximum number of events (3)'
+                    : 'Please select a valid start date'}
+                </div>
+              )}
 
-<label className="required-field">Event End Date:</label>
-<DatePicker
-  selected={formData.eventEndDate ? new Date(formData.eventEndDate) : null}
-  onChange={date => handleDateChange(date, 'eventEndDate')}
-  minDate={formData.eventStartDate ? new Date(formData.eventStartDate) : new Date()}
-  filterDate={date => {
-    // Check both event limits and blocked dates
-    const dateStr = normalizeDateToUTC(date);
-    const isBlocked = isDateBlocked(date);
-    const isOccupied = (eventsPerDate[dateStr] || 0) >= 3;
-    
-    return !isBlocked && !isOccupied;
-  }}
-  dayClassName={date => {
-    const dateStr = normalizeDateToUTC(date);
-    const count = eventsPerDate[dateStr] || 0;
-    const isBlocked = isDateBlocked(date);
+                <label className="required-field">Event End Date:</label>
+                <DatePicker
+                  selected={formData.eventEndDate ? new Date(formData.eventEndDate) : null}
+                  onChange={date => handleDateChange(date, 'eventEndDate')}
+                  minDate={formData.eventStartDate ? new Date(formData.eventStartDate) : new Date()}
+                  filterDate={date => {
+                    // Check both event limits and blocked dates
+                    const dateStr = normalizeDateToUTC(date);
+                    const isBlocked = isDateBlocked(date);
+                    const isOccupied = (eventsPerDate[dateStr] || 0) >= 3;
+                    
+                    return !isBlocked && !isOccupied;
+                  }}
+                  dayClassName={date => {
+                    const dateStr = normalizeDateToUTC(date);
+                    const count = eventsPerDate[dateStr] || 0;
+                    const isBlocked = isDateBlocked(date);
 
-    if (isBlocked) return 'blocked-day';
-    if (count >= 3) return 'fully-booked-day';
-    if (count >= 2) return 'approaching-limit-day';
-    return '';
-  }}
-  dateFormat="MMMM d, yyyy h:mm aa"
-  showTimeSelect
-  timeFormat="h:mm aa"
-  timeIntervals={15}
-  timeCaption="Time"
-  locale="en"
-  placeholderText="Select end date and time"
-  className={`date-picker-input ${fieldErrors.eventEndDate ? 'invalid-field' : ''}`}
-  popperPlacement="bottom-start"
-  disabledKeyboardNavigation
-/>
-{fieldErrors.eventEndDate && (
-  <div className="validation-error">
-    {formData.eventEndDate && isDateBlocked(formData.eventEndDate)
-      ? 'This date has been blocked by administrators'
-      : formData.eventEndDate && 
-        eventsPerDate[moment(formData.eventEndDate).format('YYYY-MM-DD')] >= 3
-      ? 'This date has reached the maximum number of events (3)'
-      : 'End date must be after start date'}
-  </div>
-)}
+                    if (isBlocked) return 'blocked-day';
+                    if (count >= 3) return 'fully-booked-day';
+                    if (count >= 2) return 'approaching-limit-day';
+                    return '';
+                  }}
+                  dateFormat="MMMM d, yyyy h:mm aa"
+                  showTimeSelect
+                  timeFormat="h:mm aa"
+                  timeIntervals={15}
+                  timeCaption="Time"
+                  locale="en"
+                  placeholderText="Select end date and time"
+                  className={`date-picker-input ${fieldErrors.eventEndDate ? 'invalid-field' : ''}`}
+                  popperPlacement="bottom-start"
+                  disabledKeyboardNavigation
+                />
+                {fieldErrors.eventEndDate && (
+                  <div className="validation-error">
+                    {formData.eventEndDate && isDateBlocked(formData.eventEndDate)
+                      ? 'This date has been blocked by administrators'
+                      : formData.eventEndDate && 
+                        eventsPerDate[moment(formData.eventEndDate).format('YYYY-MM-DD')] >= 3
+                      ? 'This date has reached the maximum number of events (3)'
+                      : 'End date must be after start date'}
+                  </div>
+                )}
             <label className="required-field">Organizer:</label>
             <input
               type="text"
@@ -1177,62 +1190,70 @@ const Aap = () => {
               <div className="validation-error">Please Enter A Organizer</div>
             )}
 
-            <div className="budget-selection">
+              <div className="budget-selection">
               <label className="required-field">Attached Budget Proposal:</label>
-                  <select
-              name="attachedBudget"
-              value={formData.attachedBudget || ''}
-              onChange={e => {
-                const budgetId = e.target.value;
-                const selectedBudget = formData.budgetProposals.find(b => b._id === budgetId);
-                
-                setFormData(prev => ({
-                  ...prev,
-                  attachedBudget: budgetId,
-                  budgetAmount: selectedBudget?.grandTotal || '',
-                  budgetFrom: selectedBudget?.nameOfRso || 'Org'
-                }));
-              }}
-            >
-              <option value="">Select a budget proposal...</option>
-              {formData.budgetProposals?.map(budget => (
-                <option 
-                  key={budget._id} 
-                  value={budget._id}
-                  selected={formData.attachedBudget === budget._id}
-                >
-                  {budget.eventTitle} - ₱{budget.grandTotal?.toLocaleString()}
-                </option>
-              ))}
-            </select>
-            </div>
+              <select
+                name="attachedBudget"
+                value={formData.attachedBudget || ''}
+                onChange={e => {
+                  const budgetId = e.target.value;
+                  const selectedBudget = formData.budgetProposals.find(b => b._id === budgetId);
+                  
+                  // Map the budget source to dropdown options
+                  let budgetSource = 'Org'; // Default value
+                  if (selectedBudget?.nameOfRso) {
+                    if (selectedBudget.nameOfRso.includes('College') || selectedBudget.nameOfRso.includes('Department')) {
+                      budgetSource = 'College/Department';
+                    } else if (selectedBudget.nameOfRso.includes('SDAO')) {
+                      budgetSource = 'SDAO';
+                    }
+                  }
+
+                  setFormData(prev => ({
+                    ...prev,
+                    attachedBudget: budgetId,
+                    budgetAmount: selectedBudget?.grandTotal || '',
+                    budgetFrom: budgetSource
+                  }));
+                }}
+              >
+                <option value="">Select a budget proposal...</option>
+                {formData.budgetProposals?.map(budget => (
+                  <option key={budget._id} value={budget._id}>
+                    {budget.eventTitle} - ₱{budget.grandTotal?.toLocaleString()}
+                  </option>
+                ))}
+              </select>
+                {loading && <div>Loading budgets...</div>}
+                {budgetLoadError && <div className="error-message">{budgetLoadError}</div>}
+              </div>
 
             {budgetLoadError && <div className="error-message">{budgetLoadError}</div>}
 
             <label className="required-field">Budget Amount:</label>
-            <input
-              type="number"
-              name="budgetAmount"
-              value={formData.budgetAmount}
-              onChange={handleChange}
-              readOnly={!!formData.attachedBudget}
-              className={fieldErrors.budgetAmount ? 'invalid-field' : ''}
-              min="0"
-            />
+              <input
+                type="number"
+                name="budgetAmount"
+                value={formData.budgetAmount}
+                onChange={handleChange}
+                readOnly={!!formData.attachedBudget}
+                className={fieldErrors.budgetAmount ? 'invalid-field' : ''}
+                min="0"
+              />
 
-            <label className="required-field">Budget From:</label>
-            <select
-              name="budgetFrom"
-              value={formData.budgetFrom}
-              onChange={handleChange}
-              readOnly={!!formData.attachedBudget}
-              className={fieldErrors.budgetFrom ? 'invalid-field' : ''}
-            >
-              <option value="">Select An Option...</option>
-              <option value="College/Department">College/Department</option>
-              <option value="Org">Organization</option>
-              <option value="SDAO">SDAO</option>
-            </select>
+              <label className="required-field">Budget From:</label>
+              <select
+                name="budgetFrom"
+                value={formData.budgetFrom}
+                onChange={handleChange}
+                readOnly={!!formData.attachedBudget}
+                className={fieldErrors.budgetFrom ? 'invalid-field' : ''}
+              >
+                <option value="">Select An Option...</option>
+                <option value="College/Department">College/Department</option>
+                <option value="Org">Organization</option>
+                <option value="SDAO">SDAO</option>
+              </select>
 
             <p className="venue-note">
               Note: Budget amount is not automatically approved by this system. Please confirm

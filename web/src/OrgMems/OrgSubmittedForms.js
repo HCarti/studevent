@@ -12,7 +12,6 @@ const OrgSubmittedForms = () => {
     const [formToDelete, setFormToDelete] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
-    const [isNavigating, setIsNavigating] = useState(false); // Add a new state for navigation loading
 
     useEffect(() => {
         const fetchForms = async () => {
@@ -85,41 +84,49 @@ const OrgSubmittedForms = () => {
     const isFormEditable = (form) => {
         const status = form.finalStatus?.toLowerCase() || form.status?.toLowerCase();
         
-        // 1. First check - always allow editing if form was declined
+        // 1. Always allow editing if form was declined
         if (status === 'declined') {
             return true;
         }
         
-        // 2. Local Off-Campus forms keep their existing logic
+        // 2. Local Off-Campus forms
         if (form.formType === 'LocalOffCampus' || form.isLocalOffCampus) {
-            if (form.formPhase === 'AFTER') return status !== 'approved';
+            if (form.formPhase === 'AFTER') {
+                return status !== 'approved';
+            }
             if (form.formPhase === 'BEFORE') {
-                return status === 'approved' || status === 'submitted' || 
-                       status === 'pending' || status === 'draft';
+                // Only allow editing when status is exactly 'approved' (to start After Report)
+                return status === 'approved';
             }
             return false;
         }
         
-        // 3. For regular forms, only allow editing if still at adviser step
+        // 3. For all other forms (Activity, Project, etc.), don't allow editing once approved
+        if (status === 'approved') {
+            return false;
+        }
+        
+        // 4. For regular forms, only allow editing if still at adviser step
         if (form.tracker?.steps?.length > 0) {
             const firstStep = form.tracker.steps[0];
             return form.tracker.currentStep === firstStep.stepName && 
                    firstStep.status === 'pending';
         }
         
-        // 4. Fallback for older forms without tracker
+        // 5. Fallback for older forms without tracker
         if (form.reviewStages) {
             const firstStepIndex = 0; // Adviser is always first step
             return form.currentStep <= firstStepIndex;
         }
         
-        // 5. Final fallback
+        // 6. Final fallback
         return status === 'draft' || status === 'pending' || status === 'submitted';
     };
+
     const isFormDeletable = (form) => {
-        if (form.formType === 'LocalOffCampus') {
-            return form.formPhase === 'BEFORE' && 
-                   (form.status === 'submitted' || form.status === 'pending' || form.status === 'draft');
+        // Always return false for LocalOffCampus forms
+        if (form.formType === 'LocalOffCampus' || form.isLocalOffCampus) {
+            return false;
         }
         
         // Original logic for other forms
@@ -215,40 +222,40 @@ const OrgSubmittedForms = () => {
         setError(null);
     };
 
-    const handleEditClick = async (e, form) => {
+    // In OrgSubmittedForms.js
+    const handleEditClick = (e, form) => {
         e.stopPropagation();
-        setIsNavigating(true); // Show loading before navigation
         
-        try {
-            if (form.formType === 'LocalOffCampus' || form.isLocalOffCampus) {
-                if (form.formPhase === 'AFTER') {
-                    navigate('/localoffcampus', { 
-                        state: { 
-                            editAfterForm: true,
-                            formData: form,
-                            beforeFormId: form.eventId
-                        } 
-                    });
-                } else if (form.status === 'approved') {
-                    navigate('/localoffcampus', { 
-                        state: { 
-                            startAfterForm: true,
-                            beforeFormId: form._id
-                        } 
-                    });
-                } else {
-                    navigate('/localoffcampus', { 
-                        state: { 
-                            editBeforeForm: true,
-                            formData: form 
-                        } 
-                    });
-                }
+        if (form.formType === 'LocalOffCampus' || form.isLocalOffCampus) {
+            if (form.formPhase === 'AFTER') {
+                // Edit existing AFTER report
+                navigate('/localoffcampus', { 
+                    state: { 
+                        editAfterForm: true,
+                        formData: form,
+                        beforeFormId: form.eventId
+                    } 
+                });
+            } else if (form.status === 'approved') {
+                // Start new AFTER report for approved BEFORE form
+                navigate('/localoffcampus', { 
+                    state: { 
+                        startAfterForm: true,  // Changed from editAfterForm
+                        beforeFormId: form._id
+                    } 
+                });
             } else {
-                navigate(`/edit-form/${form._id}`, { state: { formData: form } });
+                // Edit BEFORE form
+                navigate('/localoffcampus', { 
+                    state: { 
+                        editBeforeForm: true,
+                        formData: form 
+                    } 
+                });
             }
-        } finally {
-            setIsNavigating(false); // Hide loading after navigation
+        } else {
+            // Original edit logic for other forms
+            navigate(`/edit-form/${form._id}`, { state: { formData: form } });
         }
     };
 
@@ -311,11 +318,6 @@ const OrgSubmittedForms = () => {
 
     return (
         <div className="org-submitted-forms-container">
-            {isNavigating && (
-                <div className="navigation-loader-overlay">
-                    <div className="navigation-loader"></div>
-                </div>
-            )}
             <h2>My Submitted Forms</h2>
             {error && (
                 <p className={`status-message ${error.includes("success") ? "success" : "error"}`}>
@@ -323,13 +325,12 @@ const OrgSubmittedForms = () => {
                 </p>
             )}
     
-            {/* Responsive Loader */}
-            <div className={`loader-container ${!loading ? 'hidden' : ''}`}>
-                <div className="loader"></div>
-                <p className="loading-text">Loading...</p>
-            </div>
-
-            {!loading && (
+            {loading ? (
+                <div className="org-submitted-loading-spinner">
+                    <div className="org-submitted-spinner"></div>
+                    <p>Loading your forms...</p>
+                </div>
+            ) : (
                 <>
                     <div className="search-and-filter">
                         <div className="search-container">
@@ -396,10 +397,9 @@ const OrgSubmittedForms = () => {
                                             className="edit-button"
                                             onClick={(e) => handleEditClick(e, form)}
                                         >
-                                            {form.formType === 'LocalOffCampus' && 
-                                            form.formPhase === 'BEFORE' && 
-                                            (form.status === 'approved' || form.finalStatus === 'approved')
-                                                ? 'Complete AFTER'
+                                            {form.formType === 'LocalOffCampus' && form.formPhase === 'BEFORE' && 
+                                            (form.finalStatus === 'approved' || form.status === 'approved')
+                                                ? 'Start After Report'
                                                 : 'Edit'}
                                         </button>
                                     )}
