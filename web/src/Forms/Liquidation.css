@@ -1,6 +1,7 @@
 .liquidation-container {
   font-family: 'Segoe UI', Arial, sans-serif;
   max-width: 900px;
+  height:850px;
   margin: 0 auto;
   padding: 30px;
   color: #333;
@@ -127,7 +128,6 @@
   align-items: center;
   width: 100%;
   max-width: 800px;
-  border: 1px solid;
   padding: 15px;
   background-color: #f8f9fa;
   border-radius: 6px;
@@ -175,6 +175,7 @@
 
 .data-section, .liquidation-results {
   margin-top: 5px;
+  margin-bottom: 30px;
   padding: 25px;
   border-radius: 10px;
   background-color: #fff;
