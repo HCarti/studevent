@@ -42,6 +42,7 @@ router.post('/event-notification', authenticateToken, createEventNotification);
 router.post('/organization-notification', authenticateToken, createOrganizationNotification);
 router.post('/approval-notification', authenticateToken, createApprovalNotification);
 router.post('/liquidation-notification', authenticateToken, createLiquidationNotification);
+router.delete('/notifications/:notificationId', authenticateToken, deleteNotification);
 
 router.post('/mark-read', authenticateToken, markNotificationAsRead); // Protect route
 

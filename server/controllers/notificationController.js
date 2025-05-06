@@ -154,3 +154,30 @@ exports.markNotificationAsUnread = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
+
+exports.deleteNotification = async (req, res) => {
+  try {
+    const { notificationId } = req.params;
+    
+    if (!notificationId) {
+      return res.status(400).json({ error: 'Notification ID is required' });
+    }
+
+    // Verify the notification belongs to the requesting user
+    const notification = await Notification.findOne({
+      _id: notificationId,
+      userEmail: req.user.email
+    });
+
+    if (!notification) {
+      return res.status(404).json({ error: 'Notification not found or unauthorized' });
+    }
+
+    await Notification.findByIdAndDelete(notificationId);
+    
+    res.json({ message: 'Notification deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
