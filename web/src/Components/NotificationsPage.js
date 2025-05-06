@@ -7,6 +7,32 @@ const NotificationsPage = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const deleteNotification = async (notificationId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://studevent-server.vercel.app/api/notifications/${notificationId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete notification: ${response.status}`);
+      }
+
+      // Remove the deleted notification from local state
+      setNotifications(prevNotifications => 
+        prevNotifications.filter(notification => notification._id !== notificationId)
+      );
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      // Optional: Add user-friendly error handling, e.g., show an error toast
+      alert('Failed to delete notification. Please try again.');
+    }
+  };
+
   useEffect(() => {
     fetchNotifications();
   }, []);
@@ -99,9 +125,7 @@ const NotificationsPage = () => {
     navigate(`/tracker/${trackerId}`);
   };
 
-  const handleBackClick = () => {
-    navigate(-1);
-  };
+  // Back button removed
 
   const handleNotificationClick = async notification => {
     // If notification is not read, mark it as read
@@ -155,9 +179,6 @@ const NotificationsPage = () => {
     <div className="notifications-page">
       <div className="notifications-header">
         <h1>Notifications</h1>
-        <button className="back-button" onClick={handleBackClick}>
-          ← Back
-        </button>
       </div>
 
       <div className="notifications-container">
@@ -201,24 +222,24 @@ const NotificationsPage = () => {
                   {notification.read ? (
                     <button
                       className="mark-unread-btn"
-                      onClick={e => {
-                        e.stopPropagation();
-                        markNotificationAsUnread(notification._id);
-                      }}
+                      onClick={() => markNotificationAsUnread(notification._id)}
                     >
-                      Mark as Unread
+                      Mark Unread
                     </button>
                   ) : (
                     <button
                       className="mark-read-btn"
-                      onClick={e => {
-                        e.stopPropagation();
-                        markNotificationAsRead(notification._id);
-                      }}
+                      onClick={() => markNotificationAsRead(notification._id)}
                     >
-                      Mark as Read
+                      Mark Read
                     </button>
                   )}
+                  <button
+                    className="delete-notification-btn"
+                    onClick={() => deleteNotification(notification._id)}
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             ))
