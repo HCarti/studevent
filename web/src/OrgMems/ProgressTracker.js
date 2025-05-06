@@ -30,7 +30,6 @@ const ProgressTracker = () => {
     const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
     const [feedbackError, setFeedbackError] = useState('');
     const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
-    const [budgetData, setBudgetData] = useState(null);
     const [allDataLoaded, setAllDataLoaded] = useState(false);
     const [fetchError, setFetchError] = useState(null);
     const [organizationType, setOrganizationType] = useState(null);
@@ -56,67 +55,89 @@ const ProgressTracker = () => {
         if (!signatures) return {};
         
         const baseSignatures = {
-            adviser: {
-                signature: signatures.adviser?.signature?.url || signatures.adviser?.signature,
-                date: signatures.adviser?.date,
-                status: signatures.adviser?.status
-            },
-            admin: {
-                signature: signatures.admin?.signature?.url || signatures.admin?.signature,
-                date: signatures.admin?.date,
-                status: signatures.admin?.status
-            },
-            academicdirector: {
-                signature: signatures.academicdirector?.signature?.url || signatures.academicdirector?.signature,
-                date: signatures.academicdirector?.date,
-                status: signatures.academicdirector?.status
-            },
-            academicservices: {
-                signature: signatures.academicservices?.signature?.url || signatures.academicservices?.signature,
-                date: signatures.academicservices?.date,
-                status: signatures.academicservices?.status
-            },
-            executivedirector: {
-                signature: signatures.executivedirector?.signature?.url || signatures.executivedirector?.signature,
-                date: signatures.executivedirector?.date,
-                status: signatures.executivedirector?.status
-            }
+          adviser: {
+            firstName: signatures.adviser?.user?.firstName || signatures.adviser?.firstName,
+            lastName: signatures.adviser?.user?.lastName || signatures.adviser?.lastName,
+            signature: signatures.adviser?.signature?.url || signatures.adviser?.signature,
+            date: signatures.adviser?.date,
+            status: signatures.adviser?.status
+          },
+          admin: {
+            firstName: signatures.admin?.user?.firstName || signatures.admin?.firstName,
+            lastName: signatures.admin?.user?.lastName || signatures.admin?.lastName,
+            signature: signatures.admin?.signature?.url || signatures.admin?.signature,
+            date: signatures.admin?.date,
+            status: signatures.admin?.status
+          },
+          academicdirector: {
+            firstName: signatures.academicdirector?.user?.firstName || signatures.academicdirector?.firstName,
+            lastName: signatures.academicdirector?.user?.lastName || signatures.academicdirector?.lastName,
+            signature: signatures.academicdirector?.signature?.url || signatures.academicdirector?.signature,
+            date: signatures.academicdirector?.date,
+            status: signatures.academicdirector?.status
+          },
+          academicservices: {
+            firstName: signatures.academicservices?.user?.firstName || signatures.academicservices?.firstName,
+            lastName: signatures.academicservices?.user?.lastName || signatures.academicservices?.lastName,
+            signature: signatures.academicservices?.signature?.url || signatures.academicservices?.signature,
+            date: signatures.academicservices?.date,
+            status: signatures.academicservices?.status
+          },
+          executivedirector: {
+            firstName: signatures.executivedirector?.user?.firstName || signatures.executivedirector?.firstName,
+            lastName: signatures.executivedirector?.user?.lastName || signatures.executivedirector?.lastName,
+            signature: signatures.executivedirector?.signature?.url || signatures.executivedirector?.signature,
+            date: signatures.executivedirector?.date,
+            status: signatures.executivedirector?.status
+          }
         };
-
+      
         if (orgType === 'Recognized Student Organization - Academic') {
-            baseSignatures.dean = {
-                signature: signatures.dean?.signature?.url || signatures.dean?.signature,
-                date: signatures.dean?.date,
-                status: signatures.dean?.status
-            };
-        }
-
-        return baseSignatures;
-    };
-
-    const transformBudgetData = (rawBudget) => {
-        if (!rawBudget || typeof rawBudget !== 'object') {
-            return null;
+          baseSignatures.dean = {
+            firstName: signatures.dean?.user?.firstName || signatures.dean?.firstName,
+            lastName: signatures.dean?.user?.lastName || signatures.dean?.lastName,
+            signature: signatures.dean?.signature?.url || signatures.dean?.signature,
+            date: signatures.dean?.date,
+            status: signatures.dean?.status
+          };
         }
       
+        return baseSignatures;
+      };
+
+    const transformBudgetData = (rawBudget) => {
+        // Handle null/undefined cases
+        if (!rawBudget) return null;
+        
+        // Handle both populated and reference budget objects
+        const budget = typeof rawBudget === 'object' 
+          ? (rawBudget.items ? rawBudget : null) // If it's an object but has no items, it's likely just a reference
+          : null;
+      
+        if (!budget) {
+          console.warn('Invalid budget format:', rawBudget);
+          return null;
+        }
+      
+        // Transform the budget data
         return {
-            nameOfRso: rawBudget.nameOfRso || rawBudget.nameOfiso || 'N/A',
-            eventTitle: rawBudget.eventTitle || 'N/A',
-            grandTotal: rawBudget.grandTotal || 0,
-            createdAt: rawBudget.createdAt || new Date().toISOString(),
-            items: (rawBudget.items || []).map(item => ({
-                description: item.description || 'Unspecified Item',
-                quantity: item.quantity || 0,
-                unitCost: item.unitCost || 0,
-                totalCost: item.totalCost || (item.quantity * item.unitCost) || 0,
-                unit: item.unit || '-'
-            })),
-            createdBy: {
-                name: 'Organization Representative',
-                _id: rawBudget.createdBy
-            }
+          nameOfRso: budget.nameOfRso || budget.nameOfiso || 'N/A',
+          eventTitle: budget.eventTitle || 'N/A',
+          grandTotal: budget.grandTotal || 0,
+          createdAt: budget.createdAt || new Date().toISOString(),
+          items: (budget.items || []).map(item => ({
+            description: item.description || 'Unspecified Item',
+            quantity: item.quantity || 0,
+            unitCost: item.unitCost || 0,
+            totalCost: item.totalCost || (item.quantity * item.unitCost) || 0,
+            unit: item.unit || '-'
+          })),
+          createdBy: {
+            name: budget.createdBy?.name || 'Organization Representative',
+            _id: budget.createdBy?._id || budget.createdBy
+          }
         };
-    };
+      };
 
     useEffect(() => {
         const checkAdviserAssignment = async () => {
@@ -171,26 +192,6 @@ const ProgressTracker = () => {
         };
 
 
-    const fetchBudgetData = async (budgetId) => {
-        try {
-            const response = await fetch(`https://stundevelop-server.vercel.app/api/budgets/${budgetId}`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-        
-            if (!response.ok) {
-                throw new Error("Budget fetch failed");
-            }
-        
-            return await response.json();
-        } catch (error) {
-            console.error("Budget fetch error:", error);
-            return null;
-        }
-    };
-
     useEffect(() => {
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
@@ -212,13 +213,17 @@ const ProgressTracker = () => {
           setFetchError(null);
           const token = localStorage.getItem("token");
           
-          // Fetch all data in parallel
+          // Fetch all data in parallel without custom headers
           const [formRes, signaturesRes, trackerRes] = await Promise.all([
             fetch(`https://studevent-server.vercel.app/api/forms/${formId}`, {
-              headers: { "Authorization": `Bearer ${token}` }
+              headers: { 
+                "Authorization": `Bearer ${token}`
+              }
             }),
             fetch(`https://studevent-server.vercel.app/api/tracker/signatures/${formId}`, {
-              headers: { "Authorization": `Bearer ${token}` }
+              headers: { 
+                "Authorization": `Bearer ${token}`
+              }
             }),
             fetch(`https://studevent-server.vercel.app/api/tracker/${formId}?deepPopulate=true`, {
               headers: { "Authorization": `Bearer ${token}` }
@@ -240,24 +245,18 @@ const ProgressTracker = () => {
                          organizationType;
       
           setOrganizationType(orgType);
-      
-          // Fetch budget data if exists
-          let budgetData = null;
-          if (formData.attachedBudget) {
-            const budgetId = typeof formData.attachedBudget === 'object' 
-              ? formData.attachedBudget._id 
-              : formData.attachedBudget;
-            budgetData = await fetchBudgetData(budgetId);
-          }
-      
-          // Enhanced step data processing with user lookup
+          
+          // Process tracker data with user details
           const processedTrackerData = await processTrackerData(trackerData, token);
-      
+          
+          // If signatures don't include names, fetch them separately
+          const enhancedSignatures = await enhanceSignaturesWithNames(signaturesData, token);
+          
+          // Set all state at once
           setFormDetails(sanitizeFormData(formData));
-          setReviewSignatures(sanitizeSignatures(signaturesData, orgType));
+          setReviewSignatures(sanitizeSignatures(enhancedSignatures, orgType));
           setTrackerData(processedTrackerData);
           setCurrentStep(String(processedTrackerData.currentStep));
-          setBudgetData(budgetData);
           setAllDataLoaded(true);
         } catch (error) {
           console.error("Error in fetchAllData:", error);
@@ -267,22 +266,88 @@ const ProgressTracker = () => {
           setLoading(false);
         }
       };
+
+      const enhanceSignaturesWithNames = async (signatures, token) => {
+        if (!signatures) return signatures;
+      
+        console.log('Original signatures data:', signatures);
+      
+        const roles = [
+          'adviser',
+          'admin',
+          'dean',
+          'academicdirector',
+          'academicservices',
+          'executivedirector'
+        ];
+      
+        const enhancedSignatures = { ...signatures };
+      
+        for (const role of roles) {
+          if (enhancedSignatures[role] && enhancedSignatures[role].user) {
+            try {
+              const userId = typeof enhancedSignatures[role].user === 'string'
+                ? enhancedSignatures[role].user
+                : enhancedSignatures[role].user._id;
+      
+              if (userId) {
+                console.log(`Fetching user details for ${role} (ID: ${userId})`);
+                
+                const userRes = await fetch(
+                  `https://studevent-server.vercel.app/api/users/${userId}`,
+                  { headers: { "Authorization": `Bearer ${token}` } }
+                );
+      
+                if (userRes.ok) {
+                  const userData = await userRes.json();
+                  console.log(`Fetched user details for ${role}:`, {
+                    firstName: userData.firstName,
+                    lastName: userData.lastName
+                  });
+      
+                  enhancedSignatures[role] = {
+                    ...enhancedSignatures[role],
+                    firstName: userData.firstName,
+                    lastName: userData.lastName,
+                    user: {
+                      _id: userId,
+                      firstName: userData.firstName,
+                      lastName: userData.lastName
+                    }
+                  };
+                } else {
+                  console.warn(`Failed to fetch user details for ${role}, status: ${userRes.status}`);
+                }
+              }
+            } catch (error) {
+              console.error(`Error fetching ${role} user details:`, error);
+            }
+          } else {
+            console.log(`No user data to fetch for ${role}`, enhancedSignatures[role]);
+          }
+        }
+      
+        console.log('Enhanced signatures with names:', enhancedSignatures);
+        return enhancedSignatures;
+      };
       
       // Helper function to ensure all reviewer data is properly populated
       const processTrackerData = async (trackerData, token) => {
         if (!trackerData?.steps) return trackerData;
       
-        // Process each step to ensure we have reviewer details
+        console.log('Processing tracker steps:', trackerData.steps);
+      
         const processedSteps = await Promise.all(
           trackerData.steps.map(async (step) => {
-            // If reviewedBy exists but doesn't have name fields, fetch user details
-            if (step.reviewedBy && (!step.reviewedBy.firstName || !step.reviewedBy.lastName)) {
+            if (step.reviewedBy) {
               try {
                 const userId = typeof step.reviewedBy === 'string' 
                   ? step.reviewedBy 
                   : step.reviewedBy._id;
       
                 if (userId) {
+                  console.log(`Fetching reviewer details for step ${step.stepName} (ID: ${userId})`);
+                  
                   const userRes = await fetch(
                     `https://studevent-server.vercel.app/api/users/${userId}`,
                     { headers: { "Authorization": `Bearer ${token}` } }
@@ -290,8 +355,13 @@ const ProgressTracker = () => {
       
                   if (userRes.ok) {
                     const userData = await userRes.json();
+                    console.log(`Fetched reviewer details for ${step.stepName}:`, {
+                      firstName: userData.firstName,
+                      lastName: userData.lastName
+                    });
+      
                     step.reviewedBy = {
-                      ...step.reviewedBy,
+                      ...(typeof step.reviewedBy === 'object' ? step.reviewedBy : {}),
                       firstName: userData.firstName,
                       lastName: userData.lastName,
                       email: userData.email
@@ -299,13 +369,14 @@ const ProgressTracker = () => {
                   }
                 }
               } catch (error) {
-                console.error("Error fetching user details:", error);
+                console.error(`Error processing step ${step.stepName}:`, error);
               }
             }
             return step;
           })
         );
       
+        console.log('Processed tracker steps with names:', processedSteps);
         return { ...trackerData, steps: processedSteps };
       };
 
@@ -398,33 +469,62 @@ const ProgressTracker = () => {
     };
 
     const SafePDFDownload = () => {
-        if (!allDataLoaded) return null;
-        
+        if (!allDataLoaded || !formDetails) {
+          console.log('PDF generation waiting for:', {
+            allDataLoaded,
+            formDetails: !!formDetails,
+            attachedBudget: formDetails?.attachedBudget
+          });
+          return null;
+        }
+      
+        // Debug log to verify data before PDF generation
+        console.log('PDF Generation Data:', {
+          formType: formDetails.formType,
+          formData: sanitizeFormData(formDetails),
+          attachedBudget: formDetails.attachedBudget,
+          transformedBudget: formDetails.attachedBudget 
+            ? transformBudgetData(formDetails.attachedBudget)
+            : null,
+          signatures: reviewSignatures
+        });
+      
         return (
-            <PDFDownloadLink
-                document={React.createElement(
-                    getPdfComponent(formDetails?.formType),
-                    { 
-                        formData: sanitizeFormData(formDetails),
-                        budgetData: budgetData,
-                        signatures: reviewSignatures
-                    }
-                )}
-                fileName={getPdfFileName(formDetails?.formType, formDetails)}
-            >
-                {({ loading }) => (
-                    <Button 
-                        variant="contained" 
-                        color="primary"
-                        disabled={loading || pdfStatus.loading}
-                        startIcon={(loading || pdfStatus.loading) ? <CircularProgress size={20} /> : null}
-                    >
-                        {loading ? 'Generating PDF...' : `Download ${formDetails?.formType || 'Form'} PDF`}
-                    </Button>
-                )}
-            </PDFDownloadLink>
+          <PDFDownloadLink
+            document={React.createElement(
+              getPdfComponent(formDetails.formType),
+              { 
+                formData: sanitizeFormData(formDetails),
+                // Use attachedBudget directly from formDetails
+                budgetData: formDetails.attachedBudget 
+                  ? transformBudgetData(formDetails.attachedBudget)
+                  : null,
+                signatures: reviewSignatures
+              }
+            )}
+            fileName={getPdfFileName(formDetails.formType, formDetails)}
+          >
+            {({ loading, error }) => {
+              // Handle PDF generation states
+              if (error) {
+                console.error('PDF generation error:', error);
+                setPdfStatus({ loading: false, error: 'Failed to generate PDF', success: false });
+              }
+              
+              return (
+                <Button 
+                  variant="contained" 
+                  color="primary"
+                  disabled={loading || pdfStatus.loading}
+                  startIcon={(loading || pdfStatus.loading) ? <CircularProgress size={20} /> : null}
+                >
+                  {loading ? 'Generating PDF...' : `Download ${formDetails.formType} PDF`}
+                </Button>
+              );
+            }}
+          </PDFDownloadLink>
         );
-    };
+      };
 
     const renderProgressSteps = () => {
         if (!trackerData || !trackerData.steps) return null;
@@ -631,7 +731,6 @@ const ProgressTracker = () => {
                                     getPdfComponent(formDetails?.formType),
                                     { 
                                         formData: sanitizeFormData(formDetails),
-                                        budgetData: budgetData,
                                         signatures: reviewSignatures
                                     }
                                 )}

@@ -358,89 +358,142 @@ const Localoffcampus = () => {
   );
 
   // Compliance row component
-  const ComplianceRow = React.memo(
-    ({ label, value, remarks, onChange, nested = false, indent = false, hasError = false }) => {
-      // Create a ref to track if it's the initial render
-      const isInitialRender = React.useRef(true);
-      // Local state for remarks
-      const [localRemarks, setLocalRemarks] = React.useState(remarks || '');
-
-      // Update local remarks when parent remarks change (but not on initial render)
-      React.useEffect(() => {
-        if (isInitialRender.current) {
-          isInitialRender.current = false;
-        } else {
-          setLocalRemarks(remarks || '');
-        }
-      }, [remarks]);
-
-      // Handle local remarks change
-      const handleRemarksChange = e => {
-        const newRemarks = e.target.value;
-        setLocalRemarks(newRemarks);
-        onChange(value, newRemarks);
-        onChange(value, e.target.value);
-      };
-
-      // Handle compliance change
-      const handleComplianceChange = newValue => {
-        onChange(newValue, localRemarks);
-      };
-
+  const StableRemarksInput = React.memo(
+    ({ value, onChange, inputRef }) => {
       return (
-        <tr
-          className={`compliance-row ${nested ? 'nested-row' : ''} ${indent ? 'indent-row' : ''} ${
-            hasError ? 'compliance-error' : ''
-          }`}
-        >
-          <td className="activity-label">
-            {label}
-            {hasError && <span className="required-asterisk">*</span>}
-          </td>
-          <td className="compliance-cell">
-            <div className="compliance-options">
-              <label>
-                <input
-                  type="radio"
-                  name={`${label}-compliance`}
-                  checked={value === 'yes'}
-                  onChange={() => handleComplianceChange('yes')}
-                />{' '}
-                Yes
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name={`${label}-compliance`}
-                  checked={value === 'no'}
-                  onChange={() => handleComplianceChange('no')}
-                />{' '}
-                No
-              </label>
-            </div>
-          </td>
-          <td className="remarks-cell">
-            <input
-              type="text"
-              value={remarks || ''}
-              onChange={handleRemarksChange}
-              placeholder="Enter remarks..."
-            />
-          </td>
-        </tr>
+        <input
+          ref={inputRef}
+          type="text"
+          value={value || ''}
+          onChange={onChange}
+          placeholder="Enter remarks..."
+        />
       );
     },
-    (prevProps, nextProps) => {
-      // Only re-render if these specific props change
-      return (
-        prevProps.label === nextProps.label &&
-        prevProps.value === nextProps.value &&
-        prevProps.remarks === nextProps.remarks &&
-        prevProps.hasError === nextProps.hasError
-      );
-    }
+    (prevProps, nextProps) => prevProps.value === nextProps.value
   );
-
+  
+  const StableRemarksCell = ({ remarks, onChange }) => {
+    const inputRef = useRef(null);
+    
+    // This ensures we maintain focus even during rapid updates
+    const [localValue, setLocalValue] = useState(remarks || '');
+    const [isFocused, setIsFocused] = useState(false);
+  
+    // Sync with parent value
+    useEffect(() => {
+      if (!isFocused) {
+        setLocalValue(remarks || '');
+      }
+    }, [remarks, isFocused]);
+  
+    const handleChange = (e) => {
+      const newValue = e.target.value;
+      setLocalValue(newValue);
+      onChange(newValue);
+    };
+  
+    const handleFocus = () => {
+      setIsFocused(true);
+    };
+  
+    const handleBlur = () => {
+      setIsFocused(false);
+      onChange(localValue); // Final update on blur
+    };
+  
+    // Maintain focus on the input
+    useEffect(() => {
+      if (isFocused && inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, [isFocused, remarks]);
+  
+    return (
+      <input
+        ref={inputRef}
+        type="text"
+        value={localValue}
+        onChange={handleChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        placeholder="Enter remarks..."
+      />
+    );
+  };
+  
+  const ComplianceRow = React.memo(({ label, value, remarks, onChange, hasError }) => {
+    const inputRef = useRef(null);
+    const [localRemarks, setLocalRemarks] = useState(remarks || '');
+  
+    // Handle focus preservation
+    useEffect(() => {
+      if (inputRef.current && document.activeElement === inputRef.current) {
+        const { selectionStart, selectionEnd } = inputRef.current;
+        requestAnimationFrame(() => {
+          inputRef.current.focus();
+          inputRef.current.setSelectionRange(selectionStart, selectionEnd);
+        });
+      }
+    }, [remarks]); // Only run when remarks prop changes
+  
+    const handleComplianceChange = (newValue) => {
+      onChange(newValue, localRemarks);
+    };
+  
+    const handleRemarksChange = (e) => {
+      const newRemarks = e.target.value;
+      setLocalRemarks(newRemarks);
+      onChange(value, newRemarks);
+    };
+  
+    return (
+      <tr className={`compliance-row ${hasError ? 'compliance-error' : ''}`}>
+        <td className="activity-label">
+          {label}
+          {hasError && <span className="required-asterisk">*</span>}
+        </td>
+        <td className="compliance-cell">
+          <div className="compliance-options">
+            <label>
+              <input
+                type="radio"
+                name={`${label}-compliance`}
+                checked={value === 'yes'}
+                onChange={() => handleComplianceChange('yes')}
+              />{' '}
+              Yes
+            </label>
+            <label>
+              <input
+                type="radio"
+                name={`${label}-compliance`}
+                checked={value === 'no'}
+                onChange={() => handleComplianceChange('no')}
+              />{' '}
+              No
+            </label>
+          </div>
+        </td>
+        <td className="remarks-cell">
+          <input
+            ref={inputRef}
+            type="text"
+            value={localRemarks}
+            onChange={handleRemarksChange}
+            placeholder="Enter remarks..."
+          />
+        </td>
+      </tr>
+    );
+  }, (prevProps, nextProps) => {
+    return (
+      prevProps.label === nextProps.label &&
+      prevProps.value === nextProps.value &&
+      prevProps.remarks === nextProps.remarks &&
+      prevProps.hasError === nextProps.hasError
+    );
+  });
   // Validate current section
   const validateSection = useCallback(
     step => {
