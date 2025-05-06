@@ -746,13 +746,13 @@ exports.updateForm = async (req, res) => {
     }
 
     // Authorization check
-       const isSubmitter = form.emailAddress === user.email || 
+    const isSubmitter = form.emailAddress === user.email || 
                        (form.createdBy && form.createdBy.equals(user._id));
     const isAdmin = user.role === 'Admin';
     
     if (!isSubmitter && !isAdmin) {
       await session.abortTransaction();
-      await session.endSession();
+      session.endSession();
       return res.status(403).json({ 
         message: 'Only the original submitter or admin can edit this form' 
       });
@@ -776,7 +776,7 @@ exports.updateForm = async (req, res) => {
         
         if (isUnderReview) {
           await session.abortTransaction();
-          await session.endSession();
+          session.endSession();
           return res.status(403).json({ 
             message: 'Project form cannot be edited once review has started' 
           });
@@ -786,14 +786,13 @@ exports.updateForm = async (req, res) => {
 
         if (isDeanReviewing || isDeanApproved) {
           await session.abortTransaction();
-          await session.endSession();
+          session.endSession();
           return res.status(403).json({ 
             message: 'Form cannot be edited once it reaches the Dean for review/approval' 
           });
         }
       }
     }
-
     
     // Enhanced budget validation with debug logging
     // In your updateForm controller
