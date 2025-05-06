@@ -25,64 +25,111 @@ const OrgTrackerViewer = () => {
     const isLocalOffCampus = state?.formType === 'LocalOffCampus' || 
                            state?.form?.formType === 'LocalOffCampus';
 
-    useEffect(() => {
-        if (!formId) return;
+                           useEffect(() => {
+                            if (!formId) return;
+                        
+                            const fetchData = async () => {
+                                try {
+                                    const token = localStorage.getItem("token");
+                                    if (!token) throw new Error("No token found. Please log in again.");
+                        
+                                    // Determine endpoint based on form type
+                                    let trackerEndpoint;
+                                    if (isLocalOffCampus) {
+                                        trackerEndpoint = `https://studevent-server.vercel.app/api/local-off-campus/${formId}/tracker`;
+                                    } else {
+                                        trackerEndpoint = `https://studevent-server.vercel.app/api/tracker/${formId}?deepPopulate=true`;
+                                    }
+                        
+                                    // Fetch tracker data
+                                    const trackerRes = await fetch(trackerEndpoint, {
+                                        headers: {
+                                            "Authorization": `Bearer ${token}`,
+                                            "Content-Type": "application/json",
+                                        },
+                                    });
+                        
+                                    if (!trackerRes.ok) {
+                                        throw new Error(`Error fetching tracker data: ${trackerRes.statusText}`);
+                                    }
+                        
+                                    let trackerData = await trackerRes.json();
+                                    
+                                    // Process the tracker data to ensure reviewer details are populated
+                                    trackerData = await processTrackerData(trackerData);
+                                    
+                                    setTrackerData(trackerData);
+                        
+                                    // Fetch form details only for regular forms
+                                    if (!isLocalOffCampus) {
+                                        const formRes = await fetch(`https://studevent-server.vercel.app/api/forms/${formId}`, {
+                                            headers: {
+                                                "Authorization": `Bearer ${token}`,
+                                                "Content-Type": "application/json",
+                                            },
+                                        });
+                                        
+                                        if (!formRes.ok) throw new Error(`Error fetching form data: ${formRes.statusText}`);
+                                        setFormDetails(await formRes.json());
+                                    }
+                        
+                                    // Check for existing feedback
+                                    if (trackerData.feedback) {
+                                        setFeedbackSubmitted(true);
+                                    }
+                                } catch (error) {
+                                    console.error("Error fetching data:", error.message);
+                                    setError(`Failed to load tracker: ${error.message}`);
+                                } finally {
+                                    setLoading(false);
+                                }
+                            };
+                        
+                            fetchData();
+                        }, [formId, isLocalOffCampus]);
+
+    const processTrackerData = async (trackerData) => {
+        if (!trackerData?.steps) return trackerData;
+      
+        const token = localStorage.getItem("token");
+        if (!token) return trackerData;
     
-        const fetchData = async () => {
-            try {
-                const token = localStorage.getItem("token");
-                if (!token) throw new Error("No token found. Please log in again.");
+        // Process each step to ensure we have reviewer details
+        const processedSteps = await Promise.all(
+          trackerData.steps.map(async (step) => {
+            // If reviewedBy exists but doesn't have name fields, fetch user details
+            if (step.reviewedBy && (!step.reviewedBy.firstName || !step.reviewedBy.lastName)) {
+              try {
+                const userId = typeof step.reviewedBy === 'string' 
+                  ? step.reviewedBy 
+                  : step.reviewedBy._id;
     
-                // Determine endpoint based on form type
-                let trackerEndpoint;
-                if (isLocalOffCampus) {
-                    trackerEndpoint = `https://studevent-server.vercel.app/api/local-off-campus/${formId}/tracker`;
-                } else {
-                    trackerEndpoint = `https://studevent-server.vercel.app/api/tracker/${formId}?deepPopulate=true`;
+                if (userId) {
+                  const userRes = await fetch(
+                    `https://studevent-server.vercel.app/api/users/${userId}`,
+                    { headers: { "Authorization": `Bearer ${token}` } }
+                  );
+    
+                  if (userRes.ok) {
+                    const userData = await userRes.json();
+                    step.reviewedBy = {
+                      ...step.reviewedBy,
+                      firstName: userData.firstName,
+                      lastName: userData.lastName,
+                      email: userData.email
+                    };
+                  }
                 }
-    
-                // Fetch tracker data
-                const trackerRes = await fetch(trackerEndpoint, {
-                    headers: {
-                        "Authorization": `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                });
-    
-                if (!trackerRes.ok) {
-                    throw new Error(`Error fetching tracker data: ${trackerRes.statusText}`);
-                }
-    
-                const trackerData = await trackerRes.json();
-                setTrackerData(trackerData);
-    
-                // Fetch form details only for regular forms
-                if (!isLocalOffCampus) {
-                    const formRes = await fetch(`https://studevent-server.vercel.app/api/forms/${formId}`, {
-                        headers: {
-                            "Authorization": `Bearer ${token}`,
-                            "Content-Type": "application/json",
-                        },
-                    });
-                    
-                    if (!formRes.ok) throw new Error(`Error fetching form data: ${formRes.statusText}`);
-                    setFormDetails(await formRes.json());
-                }
-    
-                // Check for existing feedback
-                if (trackerData.feedback) {
-                    setFeedbackSubmitted(true);
-                }
-            } catch (error) {
-                console.error("Error fetching data:", error.message);
-                setError(`Failed to load tracker: ${error.message}`);
-            } finally {
-                setLoading(false);
+              } catch (error) {
+                console.error("Error fetching user details:", error);
+              }
             }
-        };
+            return step;
+          })
+        );
     
-        fetchData();
-    }, [formId, isLocalOffCampus]);
+        return { ...trackerData, steps: processedSteps };
+    };
 
     const handleViewForms = () => {
         if (isLocalOffCampus) {
@@ -147,22 +194,10 @@ const OrgTrackerViewer = () => {
     const renderReviewerInfo = (step) => {
         let reviewerName = 'Unknown Reviewer';
         
-        // First try to get from reviewedBy object
         if (step.reviewedBy) {
             if (typeof step.reviewedBy === 'object') {
-                if (step.reviewedBy.firstName || step.reviewedBy.lastName) {
-                    reviewerName = `${step.reviewedBy.firstName || ''} ${step.reviewedBy.lastName || ''}`.trim();
-                } else if (step.reviewedBy.email) {
-                    reviewerName = step.reviewedBy.email.split('@')[0];
-                }
-            } else if (typeof step.reviewedBy === 'string') {
-                // If it's just an ID string, try to get from reviewerName field
-                reviewerName = step.reviewerName || `User ${step.reviewedBy.substring(0, 5)}...`;
+                reviewerName = `${step.reviewedBy.firstName || ''} ${step.reviewedBy.lastName || ''}`.trim();
             }
-        }
-        // Fallback to reviewerName if available
-        if (!reviewerName || reviewerName === 'Unknown Reviewer') {
-            reviewerName = step.reviewerName || reviewerName;
         }
     
         return (
