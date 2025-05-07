@@ -11,5 +11,6 @@ router.post('/submit',
 
 router.get('/', liquidationController.getLiquidations);
 router.get('/:id/url', liquidationController.getFileUrl); // Changed endpoint
+router.patch('/:id/status', liquidationController.updateLiquidationStatus);
 
 module.exports = router;

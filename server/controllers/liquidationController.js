@@ -1,6 +1,7 @@
 const Liquidation = require('../models/Liquidation');
 const { put } = require('@vercel/blob');
 const Notification = require('../models/Notification');
+const User = require('../models/User');
 
 exports.submitLiquidation = async (req, res) => {
   try {
@@ -49,9 +50,13 @@ exports.submitLiquidation = async (req, res) => {
   }
 };
 // Get all liquidations
+// controllers/liquidationController.js
 exports.getLiquidations = async (req, res) => {
   try {
-    const liquidations = await Liquidation.find().sort({ createdAt: -1 }); // Fixed typo
+    const liquidations = await Liquidation.find()
+      .sort({ createdAt: -1 })
+      .populate('submittedBy', 'name email'); // Populate user details if needed
+      
     res.json({ 
       success: true, 
       count: liquidations.length,
@@ -86,6 +91,52 @@ exports.getFileUrl = async (req, res) => {
       success: false, 
       message: 'Failed to get file URL',
       error: error.message 
+    });
+  }
+};
+
+// Add this new controller method
+exports.updateLiquidationStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, remarks } = req.body;
+
+    const updatedLiquidation = await Liquidation.findByIdAndUpdate(
+      id,
+      { status, remarks },
+      { new: true }
+    );
+
+    if (!updatedLiquidation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Liquidation not found'
+      });
+    }
+
+    // Create notification for the submitter
+    if (updatedLiquidation.submittedBy) {
+      const user = await User.findById(updatedLiquidation.submittedBy);
+      if (user) {
+        const notificationMessage = `Your liquidation (${updatedLiquidation.fileName}) has been ${status}`;
+        await Notification.create({
+          userEmail: user.email,
+          message: notificationMessage,
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Liquidation status updated',
+      data: updatedLiquidation
+    });
+  } catch (error) {
+    console.error('Status update error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update liquidation status',
+      error: error.message
     });
   }
 };
