@@ -41,7 +41,7 @@ app.use(
     },
     credentials: true, // Allow cookies if needed
     allowedHeaders: ['Authorization', 'Content-Type'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   })
 );
 
