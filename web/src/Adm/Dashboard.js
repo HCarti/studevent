@@ -102,48 +102,48 @@
       fetchData();
     }, []);
 
-    const handleStatusUpdate = async (status) => {
-      try {
-        const token = localStorage.getItem("token");
-        const response = await fetch(`https://student-server.vercel.app/api/liquidation/${selectedLiquidation._id}/status`, {
-          method: 'PATCH',
-          headers: { 
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ 
-            status, 
-            remarks: remarks || '' 
-          })
-        });
+const handleStatusUpdate = async (status) => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await fetch(`https://student-server.vercel.app/api/liquidation/${selectedLiquidation._id}/status`, {
+      method: 'PATCH',
+      headers: { 
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ 
+        status, 
+        remarks: remarks || '' 
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update status');
+    }
+
+    const updatedData = await response.json();
     
-        if (!response.ok) {
-          throw new Error('Failed to update status');
-        }
+    // Update the liquidations state
+    setLiquidations(prev => prev.map(liq => 
+      liq._id === selectedLiquidation._id ? { ...liq, status, remarks } : liq
+    ));
     
-        const updatedData = await response.json();
-        
-        // Update the liquidations state
-        setLiquidations(prev => prev.map(liq => 
-          liq._id === selectedLiquidation._id ? { ...liq, status, remarks } : liq
-        ));
-        
-        setNotification({
-          open: true,
-          message: `Liquidation ${status.toLowerCase()} successfully`,
-          severity: 'success'
-        });
-        
-        handleCloseModal();
-      } catch (error) {
-        console.error("Error updating liquidation status:", error);
-        setNotification({
-          open: true,
-          message: 'Failed to update liquidation status',
-          severity: 'error'
-        });
-      }
-    };
+    setNotification({
+      open: true,
+      message: `Liquidation ${status.toLowerCase()} successfully`,
+      severity: 'success'
+    });
+    
+    handleCloseModal();
+  } catch (error) {
+    console.error("Error updating liquidation status:", error);
+    setNotification({
+      open: true,
+      message: 'Failed to update liquidation status',
+      severity: 'error'
+    });
+  }
+};
 
     // Organization distribution data
     const orgDistribution = [
