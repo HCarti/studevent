@@ -101,11 +101,12 @@ exports.updateLiquidationStatus = async (req, res) => {
     const { id } = req.params;
     const { status, remarks } = req.body;
 
+    // Update the liquidation status
     const updatedLiquidation = await Liquidation.findByIdAndUpdate(
       id,
       { status, remarks },
       { new: true }
-    );
+    ).populate('submittedBy', 'email name'); // Populate submitter details
 
     if (!updatedLiquidation) {
       return res.status(404).json({
@@ -116,15 +117,29 @@ exports.updateLiquidationStatus = async (req, res) => {
 
     // Create notification for the submitter
     if (updatedLiquidation.submittedBy) {
-      const user = await User.findById(updatedLiquidation.submittedBy);
-      if (user) {
-        const notificationMessage = `Your liquidation (${updatedLiquidation.fileName}) has been ${status}`;
-        await Notification.create({
-          userEmail: user.email,
-          message: notificationMessage,
-        });
-      }
+      const message = `Your liquidation "${updatedLiquidation.fileName}" has been ${status}. ${remarks ? `Remarks: ${remarks}` : ''}`;
+      
+      await Notification.create({
+        userEmail: updatedLiquidation.submittedBy.email,
+        message: message,
+        type: 'liquidation',
+        read: false,
+        organizationId: updatedLiquidation.submittedBy._id
+      });
+
+      console.log(`Notification created for ${updatedLiquidation.submittedBy.email}`);
     }
+
+    // Also notify admin (optional)
+    const adminEmail = 'nnnavarro@nu-moa.edu.ph'; // Your admin email
+    const adminMessage = `Liquidation "${updatedLiquidation.fileName}" by ${updatedLiquidation.organization} has been ${status}`;
+    
+    await Notification.create({
+      userEmail: adminEmail,
+      message: adminMessage,
+      type: 'liquidation',
+      read: false
+    });
 
     res.json({
       success: true,

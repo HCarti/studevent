@@ -105,13 +105,16 @@
     const handleStatusUpdate = async (status) => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch(`https://studevent-server.vercel.app/api/liquidation/${selectedLiquidation._id}`, {
+        const response = await fetch(`https://student-server.vercel.app/api/liquidation/${selectedLiquidation._id}/status`, {
           method: 'PATCH',
           headers: { 
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({ status, remarks })
+          body: JSON.stringify({ 
+            status, 
+            remarks: remarks || '' 
+          })
         });
     
         if (!response.ok) {
@@ -122,7 +125,7 @@
         
         // Update the liquidations state
         setLiquidations(prev => prev.map(liq => 
-          liq._id === selectedLiquidation._id ? { ...liq, status } : liq
+          liq._id === selectedLiquidation._id ? { ...liq, status, remarks } : liq
         ));
         
         setNotification({
