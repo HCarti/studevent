@@ -7,7 +7,6 @@
   border-radius: 12px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
   font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  min-height: auto;
   width: calc(100% - 2rem);
 }
 
@@ -25,6 +24,7 @@
 /* Main Form Fields */
 .budget-form .form-group {
   margin-bottom: 1.25rem;
+  width: 100%;
 }
 
 .budget-form label {
@@ -35,6 +35,7 @@
   font-size: 0.95rem;
 }
 
+/* Input Fields */
 .budget-form input[type="text"],
 .budget-form input[type="number"] {
   width: 100%;
@@ -51,6 +52,19 @@
   border-color: #4285f4;
   box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
   background-color: #fff;
+}
+
+/* Specific Field Fixes */
+.input-group-nameofRSO {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.input-group-event-title {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
 /* Budget Items Table */
@@ -180,17 +194,17 @@
 .grand-total {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  width: 100%;
   margin-top: 1.5rem;
   padding-top: 1rem;
   border-top: 2px solid #f0f2f5;
-  gap: 0.75rem;
 }
 
 .grand-total label {
   font-weight: 600;
   color: #2c3e50;
   font-size: 1.1rem;
+  margin-bottom: 0.5rem;
 }
 
 .grand-total input {
@@ -203,20 +217,6 @@
   color: #2c3e50;
   text-align: right;
   background-color: #f8fafc;
-}
-
-/* Input Groups */
-.input-group-nameofRSO {
-  display: flex;
-  align-items: center;
-  width: 100%;
-}
-
-.input-group {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
 }
 
 /* Error Styling */
@@ -306,7 +306,7 @@
   }
 }
 
-/* Tablet and Desktop Layout */
+/* Tablet Layout */
 @media (min-width: 768px) {
   .budget-form {
     padding: 1.5rem;
@@ -359,9 +359,14 @@
   .grand-total input {
     width: 180px;
   }
+
+  .input-group-nameofRSO,
+  .input-group-event-title {
+    max-width: 500px;
+  }
 }
 
-/* Desktop Enhancements */
+/* Desktop Layout */
 @media (min-width: 1024px) {
   .budget-form {
     padding: 2rem;
@@ -374,5 +379,9 @@
 
   .budget-row input {
     padding: 0.6rem;
+  }
+
+  .grand-total input {
+    width: 200px;
   }
 }
