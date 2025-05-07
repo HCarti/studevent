@@ -1,4 +1,7 @@
 // models/Liquidation.js
+const mongoose = require('mongoose');
+
+// models/Liquidation.js
 const liquidationSchema = new mongoose.Schema({
   organization: { type: String, required: true },
   fileName: { type: String, required: true },
@@ -12,3 +15,5 @@ const liquidationSchema = new mongoose.Schema({
   remarks: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
+
+module.exports = mongoose.model('Liquidation', liquidationSchema);
