@@ -240,7 +240,7 @@ const OrgSubmittedForms = () => {
                 // Start new AFTER report for approved BEFORE form
                 navigate('/localoffcampus', { 
                     state: { 
-                        startAfterForm: true,  // Changed from editAfterForm
+                        startAfterForm: true,
                         beforeFormId: form._id
                     } 
                 });
@@ -253,6 +253,13 @@ const OrgSubmittedForms = () => {
                     } 
                 });
             }
+        } else if (form.formType === 'Project') {
+            // Handle Project form edit - redirect to Project form with ID
+            navigate(`/project/${form._id}`, { 
+                state: { 
+                    formData: form 
+                } 
+            });
         } else {
             // Original edit logic for other forms
             navigate(`/edit-form/${form._id}`, { state: { formData: form } });

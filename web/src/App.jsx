@@ -334,6 +334,15 @@ const App = () => {
             }
           />
 
+        <Route
+          path="/project/:formId"
+          element={
+            <MemberLayout>
+              <Project />
+            </MemberLayout>
+          }
+        />
+
           <Route
             path="/localoffcampus"
             element={

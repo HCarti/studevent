@@ -332,7 +332,7 @@ const BudgetForm = () => {
     }
   
     try {
-      // Prepare the budget data
+      // Prepare the budget data (unchanged)
       const budgetData = {
         nameOfRso: formData.nameOfRso.trim(),
         eventTitle: formData.eventTitle?.trim() || 'Budget Proposal',
@@ -351,7 +351,7 @@ const BudgetForm = () => {
         isActive: true,
         status: 'draft'
       };
-
+  
       // Determine if we're submitting or saving as draft
       const isSubmission = location.pathname.includes('/submit');
       if (isSubmission) {
@@ -385,50 +385,17 @@ const BudgetForm = () => {
         `Budget ${isEditMode ? 'updated' : isSubmission ? 'submitted' : 'saved'} successfully`, 
         'success'
       );
-
-      // Handle navigation - modified this section
-      if (location.state?.returnPath) {
-        // 1. FIRST try to load from localStorage
-        let activityData = null;
-        try {
-          const savedData = localStorage.getItem('activityFormDraft');
-          if (savedData) {
-            activityData = JSON.parse(savedData);
-            console.log('Loaded from localStorage:', activityData);
-          }
-        } catch (e) {
-          console.error('Failed to parse localStorage data:', e);
+  
+      // Navigation after successful submission
+      setTimeout(() => {
+        if (formData.targetFormType && formData.targetFormId) {
+          // If this is associated with another form, navigate back to that form
+          navigate(`/forms/${formData.targetFormType}/${formData.targetFormId}`);
+        } else {
+          // Otherwise, navigate to the submitted forms page
+          navigate('/forms');
         }
-    
-        // 2. Fall back to navigation state if needed
-        if (!activityData && location.state.activityFormData) {
-          activityData = location.state.activityFormData;
-          console.log('Fell back to navigation state data');
-        }
-    
-        // 3. Navigate back with the data
-        setTimeout(() => {
-          navigate(location.state.returnPath, {
-            state: {
-              selectedBudget: result,
-              activityFormData: activityData,
-              fromBudgetSubmission: true
-            },
-            replace: true
-          });
-    
-          // 4. Clean up localStorage AFTER navigation is initiated
-          localStorage.removeItem('activityFormDraft');
-        }, 1500);
-    }
-    else if (formData.targetFormId) {
-        setTimeout(() => {
-          navigate(`/activity/${formData.targetFormType.toLowerCase()}/${formData.targetFormId}`);
-        }, 1500);
-      }
-      else if (isSubmission) {
-        setTimeout(() => navigate('/budgets'), 1500);
-      }
+      }, 2000); // Wait 2 seconds before navigating to let user see the success message
   
     } catch (error) {
       console.error('Submission error:', error);
@@ -439,7 +406,7 @@ const BudgetForm = () => {
     } finally {
       setLoading(false);
     }
-};
+  };
   
   return (
     <div className="budget-form">

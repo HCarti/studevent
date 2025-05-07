@@ -7,6 +7,8 @@
   border-radius: 12px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
   font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  align-content: center;
+  height: 780px;
 }
 
 /* Form Header */

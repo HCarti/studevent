@@ -10,6 +10,7 @@
   background-attachment: fixed;
   background-position: center;
   background-size: cover;
+  height: 800px;
   overflow-x: hidden;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -119,7 +120,7 @@
   align-items: center;
   justify-content: center;
   max-width: 60%;
-  max-height: 65vh; /* Set maximum height for the form container */
+  max-height: 75vh; /* Set maximum height for the form container */
   overflow-y: auto; /* Enable vertical scrolling */
 }
 
@@ -650,9 +651,47 @@ textarea {
   background-color: #f0f0f0;
 }
 
-.disabled-section {
+/* Add to your LocalOff.css */
+.disabled-phase {
   pointer-events: none;
-  opacity: 0.5;
+  opacity: 0.6;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.disabled-phase .check-icon,
+.disabled-phase .error-icon {
+  color: #999 !important;
+}
+
+.after-phase-container.disabled-phase {
+  pointer-events: none;
+  opacity: 0.6;
+  background-color: #f5f5f5;
+}
+
+.phase-notice {
+  background-color: #f0f0f0;
+  padding: 15px;
+  border-radius: 5px;
+  margin-top: 15px;
+  color: #666;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.lock-icon {
+  color: #888;
+  margin-bottom: 5px;
+}
+
+.phase-header {
+  margin-bottom: 20px;
+  position: relative;
 }
 
 .submit-before-btn {
