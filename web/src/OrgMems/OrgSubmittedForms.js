@@ -273,7 +273,7 @@ const OrgSubmittedForms = () => {
           switch(status) {
             case 'approved': return 'approved';
             case 'rejected':
-            case 'declined': return 'rejected';
+            case 'declined': return 'declined'; // Changed from 'rejected' to 'declined'
             case 'draft': return 'draft';
             case 'submitted':
             case 'pending': 
@@ -282,7 +282,7 @@ const OrgSubmittedForms = () => {
         }
         if (!status) return 'pending';
         if (status === 'approved') return 'approved';
-        if (status === 'declined' || status === 'rejected') return 'rejected';
+        if (status === 'declined' || status === 'rejected') return 'declined'; // Changed from 'rejected' to 'declined'
         if (status === 'draft') return 'draft';
         return 'pending';
     };
