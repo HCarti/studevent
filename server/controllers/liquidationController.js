@@ -102,71 +102,74 @@ exports.updateLiquidationStatus = async (req, res) => {
     const { id } = req.params;
     const { status, remarks } = req.body;
 
-    // Find and update the liquidation, populating the submitter's details
-   // Update this line in your controller
+    // 1. First get the liquidation without population to see raw data
+    const rawLiquidation = await Liquidation.findById(id);
+    console.log('Raw liquidation before update:', {
+      _id: rawLiquidation._id,
+      submittedBy: rawLiquidation.submittedBy,
+      organization: rawLiquidation.organization
+    });
+
+    // 2. Update and populate
     const updatedLiquidation = await Liquidation.findByIdAndUpdate(
       id,
       { status, remarks },
       { new: true }
-    ).populate('submittedBy', 'email organizationName role'); // Add role to the population
+    ).populate('submittedBy', 'email organizationName role');
 
-    if (!updatedLiquidation) {
-      return res.status(404).json({
-        success: false,
-        message: 'Liquidation not found'
-      });
+    // 3. Fallback if population fails
+    let submitter = updatedLiquidation.submittedBy;
+    if (!submitter && rawLiquidation.submittedBy) {
+      console.log('Population failed, manually fetching user...');
+      submitter = await User.findById(rawLiquidation.submittedBy);
     }
 
-    // Create notification for the submitter (organization)
-    if (updatedLiquidation.submittedBy) {
-      let recipientEmail = updatedLiquidation.submittedBy.email;
-      let recipientName = '';
+    if (!submitter) {
+      console.warn('No submitter found, using organization field as fallback');
+      const message = `Liquidation "${updatedLiquidation.fileName}" by ${updatedLiquidation.organization} has been ${status}.` +
+                     (remarks ? `\nRemarks: ${remarks}` : '');
       
-      // Handle organization vs individual users differently
-      if (updatedLiquidation.submittedBy.role === 'Organization') {
-        recipientName = updatedLiquidation.submittedBy.organizationName || 'Your Organization';
-      } else {
-        // For other roles (Admin, Authority, etc.)
-        recipientName = updatedLiquidation.submittedBy.firstName || 'User';
-      }
-
-      const message = `${recipientName}, your liquidation "${updatedLiquidation.fileName}" has been ${status}.` + 
-                    (remarks ? `\nRemarks: ${remarks}` : '');
-
-      await Notification.create({
-        userEmail: recipientEmail,
-        message: message,
-        type: 'liquidation',
-        read: false,
-        organizationId: updatedLiquidation.submittedBy._id
+      // Find organization user by name as fallback
+      const orgUser = await User.findOne({
+        role: 'Organization',
+        organizationName: updatedLiquidation.organization
       });
 
-      console.log(`Notification created for ${recipientEmail}`);
-    }
-
-    // Create notification for the submitter (organization)
-    if (updatedLiquidation.submittedBy) {
-      const submitterEmail = updatedLiquidation.submittedBy.email;
-      const message = `Your liquidation "${updatedLiquidation.fileName}" has been ${status}.` + 
+      if (orgUser) {
+        await Notification.create({
+          userEmail: orgUser.email,
+          message: message,
+          type: 'liquidation',
+          read: false,
+          organizationId: orgUser._id
+        });
+        console.log('Fallback notification created using organization name match');
+      } else {
+        console.error('Could not find organization user:', updatedLiquidation.organization);
+      }
+    } else {
+      // Normal notification flow
+      const recipientName = submitter.role === 'Organization' 
+        ? submitter.organizationName 
+        : submitter.firstName || 'User';
+      
+      const message = `${recipientName}, your liquidation "${updatedLiquidation.fileName}" has been ${status}.` +
                      (remarks ? `\nRemarks: ${remarks}` : '');
 
       await Notification.create({
-        userEmail: submitterEmail,
+        userEmail: submitter.email,
         message: message,
         type: 'liquidation',
         read: false,
-        organizationId: updatedLiquidation.submittedBy._id
+        organizationId: submitter._id
       });
-
-      console.log(`Notification created for ${submitterEmail}`);
-    } else {
-      console.warn('No submitter found for liquidation:', updatedLiquidation._id);
+      console.log('Standard notification created');
     }
 
-    // Create notification for admin (optional)
+    // Admin notification (unchanged)
     const adminMessage = `Liquidation "${updatedLiquidation.fileName}" by ${updatedLiquidation.organization} has been ${status}`;
     await Notification.create({
-      userEmail: 'nnnavarro@nu-moa.edu.ph', // Admin email
+      userEmail: 'nnnavarro@nu-moa.edu.ph',
       message: adminMessage,
       type: 'liquidation',
       read: false
