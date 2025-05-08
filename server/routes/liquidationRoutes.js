@@ -60,7 +60,7 @@ router.post('/resubmit', async (req, res) => {
 
     // Create notification for admin
     await Notification.create({
-      userEmail: 'admin@example.com',
+      userEmail: 'nnnavarro@nu-moa.edu.ph',
       message: `Liquidation ${req.file ? 'file and ' : ''}remarks updated by ${req.user.organizationName}`,
       type: 'liquidation'
     });
