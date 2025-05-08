@@ -36,7 +36,7 @@ router.get('/my-submissions', async (req, res) => {
 });
 
 // In your liquidationRoutes.js
-router.post('/resubmit', authenticateToken, blobUploadMiddleware.single('file'), async (req, res) => {
+router.post('/resubmit',  blobUploadMiddleware.single('file'), async (req, res) => {
   try {
     const { liquidationId, remarks, resetStatus } = req.body;
     let updateData = { 
