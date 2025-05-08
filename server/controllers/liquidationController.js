@@ -96,17 +96,18 @@ exports.getFileUrl = async (req, res) => {
 };
 
 // Add this new controller method
+// controllers/liquidationController.js
 exports.updateLiquidationStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, remarks } = req.body;
 
-    // Update the liquidation status
+    // Find and update the liquidation, populating the submitter's details
     const updatedLiquidation = await Liquidation.findByIdAndUpdate(
       id,
       { status, remarks },
       { new: true }
-    ).populate('submittedBy', 'email name'); // Populate submitter details
+    ).populate('submittedBy', 'email'); // Make sure this matches your User model
 
     if (!updatedLiquidation) {
       return res.status(404).json({
@@ -115,27 +116,29 @@ exports.updateLiquidationStatus = async (req, res) => {
       });
     }
 
-    // Create notification for the submitter
+    // Create notification for the submitter (organization)
     if (updatedLiquidation.submittedBy) {
-      const message = `Your liquidation "${updatedLiquidation.fileName}" has been ${status}. ${remarks ? `Remarks: ${remarks}` : ''}`;
-      
+      const submitterEmail = updatedLiquidation.submittedBy.email;
+      const message = `Your liquidation "${updatedLiquidation.fileName}" has been ${status}.` + 
+                     (remarks ? `\nRemarks: ${remarks}` : '');
+
       await Notification.create({
-        userEmail: updatedLiquidation.submittedBy.email,
+        userEmail: submitterEmail,
         message: message,
         type: 'liquidation',
         read: false,
         organizationId: updatedLiquidation.submittedBy._id
       });
 
-      console.log(`Notification created for ${updatedLiquidation.submittedBy.email}`);
+      console.log(`Notification created for ${submitterEmail}`);
+    } else {
+      console.warn('No submitter found for liquidation:', updatedLiquidation._id);
     }
 
-    // Also notify admin (optional)
-    const adminEmail = 'nnnavarro@nu-moa.edu.ph'; // Your admin email
+    // Create notification for admin (optional)
     const adminMessage = `Liquidation "${updatedLiquidation.fileName}" by ${updatedLiquidation.organization} has been ${status}`;
-    
     await Notification.create({
-      userEmail: adminEmail,
+      userEmail: 'nnnavarro@nu-moa.edu.ph', // Admin email
       message: adminMessage,
       type: 'liquidation',
       read: false

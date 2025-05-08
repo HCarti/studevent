@@ -102,48 +102,45 @@
       fetchData();
     }, []);
 
-const handleStatusUpdate = async (status) => {
-  try {
-    const token = localStorage.getItem("token");
-    const response = await fetch(`https://student-server.vercel.app/api/liquidation/${selectedLiquidation._id}/status`, {
-      method: 'PATCH',
-      headers: { 
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ 
-        status, 
-        remarks: remarks || '' 
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to update status');
-    }
-
-    const updatedData = await response.json();
+    const handleStatusUpdate = async (status) => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`https://studevent-server.vercel.app/api/liquidation/${selectedLiquidation._id}/status`, {
+          method: 'PATCH',
+          headers: { 
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ status, remarks })
+        });
     
-    // Update the liquidations state
-    setLiquidations(prev => prev.map(liq => 
-      liq._id === selectedLiquidation._id ? { ...liq, status, remarks } : liq
-    ));
+        if (!response.ok) {
+          throw new Error('Failed to update status');
+        }
     
-    setNotification({
-      open: true,
-      message: `Liquidation ${status.toLowerCase()} successfully`,
-      severity: 'success'
-    });
-    
-    handleCloseModal();
-  } catch (error) {
-    console.error("Error updating liquidation status:", error);
-    setNotification({
-      open: true,
-      message: 'Failed to update liquidation status',
-      severity: 'error'
-    });
-  }
-};
+        const updatedData = await response.json();
+        
+        // Update the liquidations state
+        setLiquidations(prev => prev.map(liq => 
+          liq._id === selectedLiquidation._id ? { ...liq, status } : liq
+        ));
+        
+        setNotification({
+          open: true,
+          message: `Liquidation ${status.toLowerCase()} successfully`,
+          severity: 'success'
+        });
+        
+        handleCloseModal();
+      } catch (error) {
+        console.error("Error updating liquidation status:", error);
+        setNotification({
+          open: true,
+          message: 'Failed to update liquidation status',
+          severity: 'error'
+        });
+      }
+    };
 
     // Organization distribution data
     const orgDistribution = [
@@ -776,168 +773,133 @@ const handleStatusUpdate = async (status) => {
         </Grid>
 
         {/* Liquidation Modal */}
-        <Dialog
-          open={!!selectedLiquidation}
-          onClose={handleCloseModal}
-          maxWidth="sm"
-          fullWidth
-          PaperProps={{
-            sx: {
-              borderRadius: 3,
-              bgcolor: 'background.paper',
-              p: 2
+       {/* Liquidation Modal */}
+<Dialog
+  open={!!selectedLiquidation}
+  onClose={handleCloseModal}
+  maxWidth="sm"
+  fullWidth
+  PaperProps={{
+    sx: {
+      borderRadius: 3,
+      bgcolor: 'background.paper',
+      p: 2,
+      background: `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.95)} 0%, ${alpha(theme.palette.background.default, 0.95)} 100%)`,
+      boxShadow: theme.shadows[10],
+      border: `1px solid ${alpha(theme.palette.divider, 0.1)}`
+    }
+  }}
+>
+  {selectedLiquidation && (
+    <>
+      <DialogTitle sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between',
+        pb: 1,
+        position: 'relative',
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          bottom: 0,
+          left: 24,
+          right: 24,
+          height: '1px',
+          background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.2)}, transparent)`,
+          opacity: 0.5
+        }
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Avatar 
+            sx={{ 
+              bgcolor: getAvatarColor(selectedLiquidation.organization),
+              width: 40,
+              height: 40,
+              border: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+              boxShadow: theme.shadows[2]
+            }}
+          >
+            {selectedLiquidation.organization?.charAt(0) || '?'}
+          </Avatar>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              {selectedLiquidation.organization || 'Unknown Organization'}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Liquidation Details
+            </Typography>
+          </Box>
+        </Box>
+        <IconButton 
+          onClick={handleCloseModal} 
+          size="small"
+          sx={{
+            '&:hover': {
+              bgcolor: alpha(theme.palette.error.main, 0.1)
             }
           }}
         >
-          {selectedLiquidation && (
-            <>
-              <DialogTitle sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between',
-                pb: 1
-              }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Avatar 
-                    sx={{ 
-                      bgcolor: getAvatarColor(selectedLiquidation.organization),
-                      width: 40,
-                      height: 40,
-                      border: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`
-                    }}
-                  >
-                    {selectedLiquidation.organization?.charAt(0) || '?'}
-                  </Avatar>
-                  <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                      {selectedLiquidation.organization || 'Unknown Organization'}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Liquidation Details
-                    </Typography>
-                  </Box>
-                </Box>
-                <IconButton onClick={handleCloseModal} size="small">
-                  <Icon icon={closeIcon} />
-                </IconButton>
-              </DialogTitle>
-              {/* Liquidation Modal - Updated Content */}
-              <DialogContent>
-                <Box sx={{ mt: 2 }}>
-                  <Box sx={{ mb: 3 }}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      File Name
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                      {selectedLiquidation.fileName}
-                    </Typography>
-                  </Box>
-                  
-                  <Box sx={{ mb: 3 }}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Status
-                    </Typography>
-                    <Chip 
-                      label={selectedLiquidation.status || 'Pending'} 
-                      size="small"
-                      color={
-                        selectedLiquidation.status === 'Approved' ? 'success' : 
-                        selectedLiquidation.status === 'Declined' ? 'error' : 'default'
-                      }
-                      sx={{ 
-                        fontWeight: 600,
-                        textTransform: 'capitalize'
-                      }}
-                    />
-                  </Box>
-                  
-                  <Box sx={{ mb: 3 }}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Remarks
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                      {selectedLiquidation.remarks || 'No remarks provided'}
-                    </Typography>
-                  </Box>
-                  
-                  <Box sx={{ mb: 3 }}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Submission Date
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                      {selectedLiquidation.createdAt ? 
-                        new Date(selectedLiquidation.createdAt).toLocaleDateString() : 
-                        'N/A'}
-                    </Typography>
-                  </Box>
-                  
-                  <Box sx={{ mb: 3 }}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      File URL
-                    </Typography>
-                    <Typography 
-                      variant="body1" 
-                      sx={{ 
-                        fontWeight: 500,
-                        wordBreak: 'break-all'
-                      }}
-                    >
-                      {selectedLiquidation.fileUrl}
-                    </Typography>
-                  </Box>
-                </Box>
-              </DialogContent>
-              <DialogActions sx={{ p: 2, pt: 0 }}>
-                <Button 
-                  variant="outlined" 
-                  onClick={handleCloseModal}
+          <Icon icon={closeIcon} />
+        </IconButton>
+      </DialogTitle>
+      
+      <DialogContent>
+        <Box sx={{ mt: 2 }}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  File Name
+                </Typography>
+                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                  {selectedLiquidation.fileName}
+                </Typography>
+              </Box>
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  Status
+                </Typography>
+                <Chip 
+                  label={selectedLiquidation.status || 'Pending'} 
+                  size="small"
+                  color={
+                    selectedLiquidation.status === 'Approved' ? 'success' : 
+                    selectedLiquidation.status === 'Declined' ? 'error' : 'default'
+                  }
                   sx={{ 
-                    borderRadius: 2,
-                    textTransform: 'none'
+                    fontWeight: 600,
+                    textTransform: 'capitalize',
+                    px: 1,
+                    py: 0.5
                   }}
-                >
-                  Close
-                </Button>
-                <Button 
-                  variant="contained" 
-                  color="success"
-                  onClick={() => handleStatusUpdate('Approved')}
-                  sx={{ 
-                    borderRadius: 2,
-                    textTransform: 'none'
-                  }}
-                >
-                  Approve
-                </Button>
-                <Button 
-                  variant="contained" 
-                  color="error"
-                  onClick={() => handleStatusUpdate('Declined')}
-                  sx={{ 
-                    borderRadius: 2,
-                    textTransform: 'none'
-                  }}
-                >
-                  Decline
-                </Button>
-                <Button 
-                  variant="contained" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDownload(selectedLiquidation.fileUrl, selectedLiquidation.fileName);
-                  }}
-                  startIcon={<Icon icon={downloadIcon} />}
-                  sx={{ 
-                    borderRadius: 2,
-                    textTransform: 'none'
-                  }}
-                >
-                  Download
-                </Button>
-
-                <Box sx={{ mb: 3 }}>
+                />
+              </Box>
+            </Grid>
+          </Grid>
+          
+          <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Add Remarks
+              Submission Date
+            </Typography>
+            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+              {selectedLiquidation.createdAt ? 
+                new Date(selectedLiquidation.createdAt).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }) : 
+                'N/A'}
+            </Typography>
+          </Box>
+          
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+              Add New Remarks
             </Typography>
             <TextField
               fullWidth
@@ -946,39 +908,97 @@ const handleStatusUpdate = async (status) => {
               variant="outlined"
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
-              placeholder="Enter remarks for this liquidation..."
+              placeholder="Enter your remarks here..."
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  '& fieldset': {
+                    borderColor: alpha(theme.palette.divider, 0.3)
+                  },
+                  '&:hover fieldset': {
+                    borderColor: theme.palette.primary.main
+                  }
+                }
+              }}
             />
           </Box>
-              </DialogActions>
-              <DialogActions sx={{ p: 2, pt: 0 }}>
-                <Button 
-                  variant="outlined" 
-                  onClick={handleCloseModal}
-                  sx={{ 
-                    borderRadius: 2,
-                    textTransform: 'none'
-                  }}
-                >
-                  Close
-                </Button>
-                <Button 
-                  variant="contained" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDownload(selectedLiquidation.fileUrl, selectedLiquidation.fileName);
-                  }}
-                  startIcon={<Icon icon={downloadIcon} />}
-                  sx={{ 
-                    borderRadius: 2,
-                    textTransform: 'none'
-                  }}
-                >
-                  Download File
-                </Button>
-              </DialogActions>
-            </>
-          )}
-        </Dialog>
+        </Box>
+      </DialogContent>
+      
+      <DialogActions sx={{ 
+        p: 2, 
+        pt: 0,
+        gap: 1,
+        flexWrap: 'wrap',
+        justifyContent: 'space-between'
+      }}>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button 
+            variant="contained" 
+            color="success"
+            onClick={() => handleStatusUpdate('Approved')}
+            sx={{ 
+              borderRadius: 2,
+              textTransform: 'none',
+              px: 3,
+              fontWeight: 600
+            }}
+          >
+            Approve
+          </Button>
+          <Button 
+            variant="contained" 
+            color="error"
+            onClick={() => handleStatusUpdate('Declined')}
+            sx={{ 
+              borderRadius: 2,
+              textTransform: 'none',
+              px: 3,
+              fontWeight: 600
+            }}
+          >
+            Decline
+          </Button>
+        </Box>
+        
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button 
+            variant="outlined" 
+            onClick={handleCloseModal}
+            sx={{ 
+              borderRadius: 2,
+              textTransform: 'none',
+              px: 3,
+              fontWeight: 600
+            }}
+          >
+            Close
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDownload(selectedLiquidation.fileUrl, selectedLiquidation.fileName);
+            }}
+            startIcon={<Icon icon={downloadIcon} />}
+            sx={{ 
+              borderRadius: 2,
+              textTransform: 'none',
+              px: 3,
+              fontWeight: 600,
+              bgcolor: 'primary.dark',
+              '&:hover': {
+                bgcolor: 'primary.main'
+              }
+            }}
+          >
+            Download
+          </Button>
+        </Box>
+      </DialogActions>
+    </>
+  )}
+</Dialog>
 
         {/* Feedback Modal */}
         <Dialog
