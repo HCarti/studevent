@@ -34,4 +34,48 @@ router.get('/my-submissions', async (req, res) => {
   }
 });
 
+// In your liquidationRoutes.js
+router.post('/resubmit', authenticateToken, async (req, res) => {
+  try {
+    const { liquidationId, remarks } = req.body;
+    let updateData = { remarks };
+    
+    // Handle file upload if present
+    if (req.file) {
+      const blob = await put(req.file.originalname, req.file.buffer, {
+        access: 'public',
+        contentType: req.file.mimetype,
+      });
+      updateData.fileName = req.file.originalname;
+      updateData.fileUrl = blob.url;
+      updateData.status = 'Pending'; // Reset status when file changes
+    }
+
+    const updatedLiquidation = await Liquidation.findByIdAndUpdate(
+      liquidationId,
+      updateData,
+      { new: true }
+    );
+
+    // Create notification for admin
+    await Notification.create({
+      userEmail: 'admin@example.com',
+      message: `Liquidation ${req.file ? 'file and ' : ''}remarks updated by ${req.user.organizationName}`,
+      type: 'liquidation'
+    });
+
+    res.json({
+      success: true,
+      message: 'Liquidation updated successfully',
+      data: updatedLiquidation
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update liquidation',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
