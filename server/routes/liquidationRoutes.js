@@ -3,6 +3,7 @@ const router = express.Router();
 const liquidationController = require('../controllers/liquidationController');
 const { blobUploadMiddleware } = require('../middleware/blobMiddleware'); // New!
 const Liquidation = require('../models/Liquidation'); // Assuming you have a Liquidation model
+const Notification = require('../models/Notification');
 
 // Since we're using Vercel Blob, we need a custom middleware
 router.post('/submit', 
