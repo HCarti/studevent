@@ -35,7 +35,7 @@ router.get('/my-submissions', async (req, res) => {
 });
 
 // In your liquidationRoutes.js
-router.post('/resubmit', authenticateToken, async (req, res) => {
+router.post('/resubmit', async (req, res) => {
   try {
     const { liquidationId, remarks } = req.body;
     let updateData = { remarks };
