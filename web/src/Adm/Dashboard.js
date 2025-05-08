@@ -34,6 +34,7 @@
     const [mounted, setMounted] = useState(false);
     const [feedbacks, setFeedbacks] = useState([]);
     const [liquidations, setLiquidations] = useState([]);
+    const [refreshKey, setRefreshKey] = useState(0); // Add refresh key
     const [remarks, setRemarks] = useState('');
     const [loading, setLoading] = useState({
       feedbacks: true,
@@ -102,6 +103,33 @@
       fetchData();
     }, []);
 
+    
+// Fetch liquidations with useEffect
+      useEffect(() => {
+        const fetchLiquidations = async () => {
+          try {
+            const token = localStorage.getItem("token");
+            const response = await fetch('https://studevent-server.vercel.app/api/liquidation', {
+              headers: { "Authorization": `Bearer ${token}` },
+            });
+            
+            const data = await response.json();
+            if (response.ok) {
+              setLiquidations(data.data || []);
+            }
+          } catch (error) {
+            console.error("Error fetching liquidations:", error);
+          }
+        };
+
+        fetchLiquidations();
+      }, [refreshKey]); // Add refreshKey as dependency
+
+      // Create a function to force refresh
+      const refreshLiquidations = () => {
+        setRefreshKey(prev => prev + 1);
+      };
+
     const handleStatusUpdate = async (status) => {
       try {
         const token = localStorage.getItem("token");
@@ -124,6 +152,8 @@
         setLiquidations(prev => prev.map(liq => 
           liq._id === selectedLiquidation._id ? { ...liq, status } : liq
         ));
+
+        refreshLiquidations();
         
         setNotification({
           open: true,

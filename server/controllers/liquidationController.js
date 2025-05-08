@@ -113,7 +113,7 @@ exports.updateLiquidationStatus = async (req, res) => {
     // 2. Update and populate
     const updatedLiquidation = await Liquidation.findByIdAndUpdate(
       id,
-      { status, remarks },
+      { status, remarks, updatedAt: new Date() }, // Add updatedAt
       { new: true }
     ).populate('submittedBy', 'email organizationName role');
 
