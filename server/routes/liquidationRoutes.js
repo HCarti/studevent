@@ -15,7 +15,7 @@ router.get('/:id/url', liquidationController.getFileUrl); // Changed endpoint
 router.patch('/:id/status', liquidationController.updateLiquidationStatus);
 
 // In your liquidationRoutes.js
-router.get('/my-submissions', authenticateToken, async (req, res) => {
+router.get('/my-submissions', async (req, res) => {
   try {
     const liquidations = await Liquidation.find({ 
       submittedBy: req.user.id 
