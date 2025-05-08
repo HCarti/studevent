@@ -19,6 +19,7 @@ const Liquidation = () => {
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [modalFile, setModalFile] = useState(null);
   const [modalRemarks, setModalRemarks] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0); // Add refresh key state
 
   const handleDragEnter = (e) => {
     e.preventDefault();
@@ -94,6 +95,36 @@ const Liquidation = () => {
     const fetchSubmittedLiquidations = async () => {
       try {
         setLoadingSubmissions(true);
+        const token = localStorage.getItem("token");
+        const response = await fetch('https://studevent-server.vercel.app/api/liquidation/my-submissions', {
+          headers: { "Authorization": `Bearer ${token}` },
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+          setSubmittedLiquidations(data.data || []);
+        } else {
+          throw new Error(data.message || 'Failed to fetch submissions');
+        }
+      } catch (error) {
+        console.error("Error fetching liquidations:", error);
+        setError('Could not load your submissions');
+      } finally {
+        setLoadingSubmissions(false);
+      }
+    };
+  
+    fetchSubmittedLiquidations();
+  }, [refreshKey]); // Add refreshKey as dependency
+
+  const refreshLiquidations = () => {
+    setRefreshKey(prev => prev + 1); // This will trigger the useEffect
+  };
+
+  useEffect(() => {
+    const fetchSubmittedLiquidations = async () => {
+      try {
+        setLoadingSubmissions(true);
         const response = await fetch('https://studevent-server.vercel.app/api/liquidation/my-submissions', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -150,47 +181,67 @@ const Liquidation = () => {
       }
     
       setIsLoading(true);
+      setError('');
+      
       try {
         const formData = new FormData();
+        
+        // Always include these fields
+        formData.append('liquidationId', selectedSubmission._id);
+        formData.append('remarks', modalRemarks || '');
+        formData.append('resetStatus', 'true');
+        
+        // Only append file if it exists
         if (modalFile) {
           formData.append('file', modalFile);
         }
-        formData.append('remarks', modalRemarks);
-        formData.append('liquidationId', selectedSubmission._id);
-        formData.append('resetStatus', 'true'); // Add this flag
     
+        const token = localStorage.getItem('token');
         const response = await fetch('https://studevent-server.vercel.app/api/liquidation/resubmit', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`
           },
           body: formData
         });
     
         const data = await response.json();
+        
         if (!response.ok) {
           throw new Error(data.message || 'Resubmission failed');
         }
     
-        setSuccess('Liquidation resubmitted successfully!');
-        // Update local state to show pending status
+        // OPTION 1: Optimistic update + refresh
+        // Immediately update local state
         setSubmittedLiquidations(prev => prev.map(liq => 
-          liq._id === selectedSubmission._id ? { 
-            ...liq, 
+          liq._id === selectedSubmission._id ? {
+            ...liq,
             status: 'Pending',
             remarks: modalRemarks,
             ...(modalFile && { 
               fileName: modalFile.name,
-              fileUrl: data.newFileUrl // Make sure your backend returns this
+              fileUrl: data.newFileUrl
             })
           } : liq
         ));
         
+        // Then trigger a full refresh to ensure data consistency
+        refreshLiquidations();
+    
+        // OPTION 2: Or just use the server response directly
+        // setSubmittedLiquidations(prev => prev.map(liq => 
+        //   liq._id === data.data._id ? data.data : liq
+        // ));
+    
+        setSuccess('Liquidation resubmitted successfully! Status is now Pending.');
         setSelectedSubmission(null);
         setModalFile(null);
         setModalRemarks('');
       } catch (error) {
-        setError(error.message);
+        console.error('Resubmission error:', error);
+        setError(error.message || 'Failed to resubmit liquidation');
+        // If error occurs, refresh to get correct state
+        refreshLiquidations();
       } finally {
         setIsLoading(false);
       }

@@ -36,11 +36,14 @@ router.get('/my-submissions', async (req, res) => {
 });
 
 // In your liquidationRoutes.js
-// In your liquidationRoutes.js
-router.post('/resubmit',async (req, res) => {
+router.post('/resubmit', authenticateToken, blobUploadMiddleware.single('file'), async (req, res) => {
   try {
     const { liquidationId, remarks, resetStatus } = req.body;
-    let updateData = { remarks };
+    let updateData = { 
+      remarks,
+      status: 'Pending', // Always set to pending on resubmit
+      updatedAt: new Date()
+    };
     
     // Handle file upload if present
     if (req.file) {
@@ -50,35 +53,39 @@ router.post('/resubmit',async (req, res) => {
       });
       updateData.fileName = req.file.originalname;
       updateData.fileUrl = blob.url;
-      updateData.status = 'Pending'; // Always set to Pending when file changes
-    } else if (resetStatus === 'true') {
-      // If no file change but resetStatus flag is set
-      updateData.status = 'Pending';
     }
 
     const updatedLiquidation = await Liquidation.findByIdAndUpdate(
       liquidationId,
       updateData,
       { new: true }
-    );
+    ).populate('submittedBy', 'email organizationName');
+
+    if (!updatedLiquidation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Liquidation not found'
+      });
+    }
 
     // Create notification for admin
     await Notification.create({
       userEmail: 'nnnavarro@nu-moa.edu.ph',
-      message: `Liquidation ${req.file ? 'file and ' : ''}remarks updated by ${req.user.organizationName}`,
-      type: 'liquidation'
+      message: `Liquidation ${req.file ? 'file and ' : ''}was resubmitted by ${updatedLiquidation.submittedBy.organizationName}`,
+      type: 'liquidation',
+      read: false
     });
 
     res.json({
       success: true,
-      message: 'Liquidation updated successfully',
-      data: updatedLiquidation,
-      newFileUrl: req.file ? blob.url : null
+      message: 'Liquidation resubmitted successfully',
+      data: updatedLiquidation
     });
   } catch (error) {
+    console.error('Resubmission error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to update liquidation',
+      message: 'Failed to resubmit liquidation',
       error: error.message
     });
   }
