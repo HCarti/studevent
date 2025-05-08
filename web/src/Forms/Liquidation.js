@@ -212,18 +212,14 @@ const Liquidation = () => {
         }
     
         // OPTION 1: Optimistic update + refresh
-        // Immediately update local state
-        setSubmittedLiquidations(prev => prev.map(liq => 
-          liq._id === selectedSubmission._id ? {
-            ...liq,
-            status: 'Pending',
-            remarks: modalRemarks,
-            ...(modalFile && { 
-              fileName: modalFile.name,
-              fileUrl: data.newFileUrl
-            })
-          } : liq
-        ));
+        // Update local state
+    setSubmittedLiquidations(prev => prev.map(liq => 
+      liq._id === selectedSubmission._id ? {
+        ...data.data, // Use server response
+        fileName: modalFile ? modalFile.name : liq.fileName,
+        fileUrl: modalFile ? data.data.fileUrl : liq.fileUrl
+      } : liq
+    ));
         
         // Then trigger a full refresh to ensure data consistency
         refreshLiquidations();

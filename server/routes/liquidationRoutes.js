@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const liquidationController = require('../controllers/liquidationController');
 const { blobUploadMiddleware } = require('../middleware/blobMiddleware'); // New!
+const { put } = require('@vercel/blob'); // Add this import
 const Liquidation = require('../models/Liquidation'); // Assuming you have a Liquidation model
 const Notification = require('../models/Notification');
 
@@ -36,11 +37,11 @@ router.get('/my-submissions', async (req, res) => {
 });
 
 // In your liquidationRoutes.js
-router.post('/resubmit',  blobUploadMiddleware.single('file'), async (req, res) => {
+router.post('/resubmit', blobUploadMiddleware.single('file'), async (req, res) => {
   try {
-    const { liquidationId, remarks, resetStatus } = req.body;
+    const { liquidationId, remarks } = req.body;
     let updateData = { 
-      remarks,
+      remarks: remarks || '',
       status: 'Pending', // Always set to pending on resubmit
       updatedAt: new Date()
     };
@@ -51,8 +52,13 @@ router.post('/resubmit',  blobUploadMiddleware.single('file'), async (req, res) 
         access: 'public',
         contentType: req.file.mimetype,
       });
-      updateData.fileName = req.file.originalname;
-      updateData.fileUrl = blob.url;
+      
+      updateData = {
+        ...updateData,
+        fileName: req.file.originalname,
+        fileUrl: blob.url,
+        fileUpdatedAt: new Date()
+      };
     }
 
     const updatedLiquidation = await Liquidation.findByIdAndUpdate(
@@ -73,7 +79,8 @@ router.post('/resubmit',  blobUploadMiddleware.single('file'), async (req, res) 
       userEmail: 'nnnavarro@nu-moa.edu.ph',
       message: `Liquidation ${req.file ? 'file and ' : ''}was resubmitted by ${updatedLiquidation.submittedBy.organizationName}`,
       type: 'liquidation',
-      read: false
+      read: false,
+      createdAt: new Date()
     });
 
     res.json({
