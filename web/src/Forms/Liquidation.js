@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
 import axios from 'axios';
 import './Liquidation.css';
@@ -15,6 +15,8 @@ const Liquidation = () => {
   // State for liquidation data
   const [uploadedData, setUploadedData] = useState(null);
   const [processedData, setProcessedData] = useState(null);
+  const [submittedLiquidations, setSubmittedLiquidations] = useState([]);
+  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
 
   const handleDragEnter = (e) => {
     e.preventDefault();
@@ -85,6 +87,33 @@ const Liquidation = () => {
     
     reader.readAsArrayBuffer(file);
   };
+
+  useEffect(() => {
+    const fetchSubmittedLiquidations = async () => {
+      try {
+        setLoadingSubmissions(true);
+        const response = await fetch('https://studevent-server.vercel.app/api/liquidations/my-submissions', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+          setSubmittedLiquidations(data.data || []);
+        } else {
+          throw new Error(data.message || 'Failed to fetch submissions');
+        }
+      } catch (error) {
+        console.error('Error fetching liquidations:', error);
+        setError('Could not load your submissions');
+      } finally {
+        setLoadingSubmissions(false);
+      }
+    };
+
+    fetchSubmittedLiquidations();
+  }, [success]); // Refetch when new submission succeeds
 
   const processLiquidationData = (data) => {
     const processed = data.map(item => ({
@@ -241,6 +270,56 @@ const Liquidation = () => {
         {success && <div className="success-message">{success}</div>}
       </div>
 
+      <div className="submissions-section">
+          <h2 className="section-title">Your Submissions</h2>
+          
+          {loadingSubmissions ? (
+            <div className="loading-submissions">
+              <div className="loader"></div>
+              <p>Loading your submissions...</p>
+            </div>
+          ) : submittedLiquidations.length > 0 ? (
+            <div className="submissions-list">
+              <table>
+                <thead>
+                  <tr>
+                    <th>File Name</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Remarks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {submittedLiquidations.map((submission) => (
+                    <tr key={submission._id}>
+                      <td>
+                        <a 
+                          href={submission.fileUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                        >
+                          {submission.fileName}
+                        </a>
+                      </td>
+                      <td>{new Date(submission.createdAt).toLocaleDateString()}</td>
+                      <td>
+                        <span className={`status-badge ${submission.status.toLowerCase()}`}>
+                          {submission.status}
+                        </span>
+                      </td>
+                      <td>{submission.remarks || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="no-submissions">
+              <p>You haven't submitted any liquidations yet</p>
+            </div>
+          )}
+        </div>
+
       {/* Data Preview Section */}
       {uploadedData && (
         <div className="data-section">
@@ -267,8 +346,6 @@ const Liquidation = () => {
           </div>
         </div>
       )}
-
-      {/* Processed Liquidation Data Section */}
     </div>
   );
 };

@@ -285,6 +285,72 @@ tr:hover {
   margin-right: 8px;
 }
 
+/* Add these to your existing CSS */
+.liquidation-sections {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.submissions-section {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.submissions-list table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.submissions-list th, 
+.submissions-list td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.submissions-list th {
+  font-weight: 600;
+  color: #555;
+}
+
+.status-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-badge.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.approved {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-badge.declined {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.loading-submissions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.no-submissions {
+  padding: 2rem;
+  text-align: center;
+  color: #666;
+}
+
 @media (max-width: 768px) {
   .dropzone-content {
     max-width: 50vh;
