@@ -28,6 +28,12 @@
   max-width: 50%;
   max-height: 65vh; /* Set maximum height for the form container */
   overflow-y: auto; /* Enable vertical scrolling */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE and Edge */
+}
+
+.inner-forms-1::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
 }
 
 /* Sidebar Styles */
@@ -938,4 +944,15 @@ input[type='checkbox'] {
   .inner-forms-1 textarea {
     min-height: 80px;
   }
+}
+
+html, body {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE and Edge */
+  overflow-x: hidden; /* Hide horizontal scrollbar if not already hidden */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
 }
