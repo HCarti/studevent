@@ -103,17 +103,45 @@ exports.updateLiquidationStatus = async (req, res) => {
     const { status, remarks } = req.body;
 
     // Find and update the liquidation, populating the submitter's details
+   // Update this line in your controller
     const updatedLiquidation = await Liquidation.findByIdAndUpdate(
       id,
       { status, remarks },
       { new: true }
-    ).populate('submittedBy', 'email'); // Make sure this matches your User model
+    ).populate('submittedBy', 'email organizationName role'); // Add role to the population
 
     if (!updatedLiquidation) {
       return res.status(404).json({
         success: false,
         message: 'Liquidation not found'
       });
+    }
+
+    // Create notification for the submitter (organization)
+    if (updatedLiquidation.submittedBy) {
+      let recipientEmail = updatedLiquidation.submittedBy.email;
+      let recipientName = '';
+      
+      // Handle organization vs individual users differently
+      if (updatedLiquidation.submittedBy.role === 'Organization') {
+        recipientName = updatedLiquidation.submittedBy.organizationName || 'Your Organization';
+      } else {
+        // For other roles (Admin, Authority, etc.)
+        recipientName = updatedLiquidation.submittedBy.firstName || 'User';
+      }
+
+      const message = `${recipientName}, your liquidation "${updatedLiquidation.fileName}" has been ${status}.` + 
+                    (remarks ? `\nRemarks: ${remarks}` : '');
+
+      await Notification.create({
+        userEmail: recipientEmail,
+        message: message,
+        type: 'liquidation',
+        read: false,
+        organizationId: updatedLiquidation.submittedBy._id
+      });
+
+      console.log(`Notification created for ${recipientEmail}`);
     }
 
     // Create notification for the submitter (organization)
