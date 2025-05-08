@@ -28,12 +28,12 @@
   max-width: 50%;
   max-height: 65vh; /* Set maximum height for the form container */
   overflow-y: auto; /* Enable vertical scrolling */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important;  /* IE and Edge */
 }
 
 .inner-forms-1::-webkit-scrollbar {
-  display: none; /* Safari and Chrome */
+  display: none !important; /* Safari and Chrome */
 }
 
 /* Sidebar Styles */
@@ -947,12 +947,12 @@ input[type='checkbox'] {
 }
 
 html, body {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important;  /* IE and Edge */
   overflow-x: hidden; /* Hide horizontal scrollbar if not already hidden */
 }
 
 html::-webkit-scrollbar,
 body::-webkit-scrollbar {
-  display: none; /* Safari and Chrome */
+  display: none !important; /* Safari and Chrome */
 }
