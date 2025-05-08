@@ -36,9 +36,10 @@ router.get('/my-submissions', async (req, res) => {
 });
 
 // In your liquidationRoutes.js
-router.post('/resubmit', async (req, res) => {
+// In your liquidationRoutes.js
+router.post('/resubmit', authenticateToken, async (req, res) => {
   try {
-    const { liquidationId, remarks } = req.body;
+    const { liquidationId, remarks, resetStatus } = req.body;
     let updateData = { remarks };
     
     // Handle file upload if present
@@ -49,7 +50,10 @@ router.post('/resubmit', async (req, res) => {
       });
       updateData.fileName = req.file.originalname;
       updateData.fileUrl = blob.url;
-      updateData.status = 'Pending'; // Reset status when file changes
+      updateData.status = 'Pending'; // Always set to Pending when file changes
+    } else if (resetStatus === 'true') {
+      // If no file change but resetStatus flag is set
+      updateData.status = 'Pending';
     }
 
     const updatedLiquidation = await Liquidation.findByIdAndUpdate(
@@ -68,7 +72,8 @@ router.post('/resubmit', async (req, res) => {
     res.json({
       success: true,
       message: 'Liquidation updated successfully',
-      data: updatedLiquidation
+      data: updatedLiquidation,
+      newFileUrl: req.file ? blob.url : null
     });
   } catch (error) {
     res.status(500).json({

@@ -148,7 +148,7 @@ const Liquidation = () => {
         setError('Please make changes to resubmit');
         return;
       }
-  
+    
       setIsLoading(true);
       try {
         const formData = new FormData();
@@ -157,7 +157,8 @@ const Liquidation = () => {
         }
         formData.append('remarks', modalRemarks);
         formData.append('liquidationId', selectedSubmission._id);
-  
+        formData.append('resetStatus', 'true'); // Add this flag
+    
         const response = await fetch('https://studevent-server.vercel.app/api/liquidation/resubmit', {
           method: 'POST',
           headers: {
@@ -165,13 +166,26 @@ const Liquidation = () => {
           },
           body: formData
         });
-  
+    
         const data = await response.json();
         if (!response.ok) {
           throw new Error(data.message || 'Resubmission failed');
         }
-  
+    
         setSuccess('Liquidation resubmitted successfully!');
+        // Update local state to show pending status
+        setSubmittedLiquidations(prev => prev.map(liq => 
+          liq._id === selectedSubmission._id ? { 
+            ...liq, 
+            status: 'Pending',
+            remarks: modalRemarks,
+            ...(modalFile && { 
+              fileName: modalFile.name,
+              fileUrl: data.newFileUrl // Make sure your backend returns this
+            })
+          } : liq
+        ));
+        
         setSelectedSubmission(null);
         setModalFile(null);
         setModalRemarks('');
