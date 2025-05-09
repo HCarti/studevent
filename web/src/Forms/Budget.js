@@ -8,21 +8,54 @@ const BudgetForm = () => {
   const location = useLocation();
   const isEditMode = !!formId;
   const [loading, setLoading] = useState(isEditMode);
-  const [formData, setFormData] = useState({
+
+  const initialBudgetFormData = {
     nameOfRso: "",
     eventTitle: "",
     grandTotal: 0,
     targetFormType: location.state?.targetFormType || null,
     targetFormId: location.state?.targetFormId || null
-  });
-  
-  const [rows, setRows] = useState([{ 
+  };
+  const initialRowsData = [{ 
     quantity: "", 
     unit: "", 
     description: "", 
     unitCost: "", 
     totalCost: "" 
-  }]);
+  }];
+
+  const [formData, setFormData] = useState(initialBudgetFormData);
+  const [rows, setRows] = useState(initialRowsData);
+
+  useEffect(() => {
+    if (!isEditMode) {
+      const savedState = localStorage.getItem('budgetFormState');
+      if (savedState) {
+        try {
+          const parsed = JSON.parse(savedState);
+          setFormData(parsed.formData || initialBudgetFormData);
+          setRows(Array.isArray(parsed.rows) && parsed.rows.length > 0 ? parsed.rows : initialRowsData);
+        } catch (e) {
+          console.error("Error parsing Budget localStorage data", e);
+          setFormData(initialBudgetFormData);
+          setRows(initialRowsData);
+        }
+      }
+    } else {
+      // For edit mode, initial state is set, and fetchFormData will update it.
+      // We don't load from localStorage here to prioritize server data.
+    }
+  }, [isEditMode]); // Run once on mount, depending on isEditMode
+
+  // Save combined state to localStorage
+  useEffect(() => {
+    if (isEditMode && loading) { // Don't save while initial data for edit mode is loading
+      return;
+    }
+    const currentState = { formData, rows };
+    localStorage.setItem('budgetFormState', JSON.stringify(currentState));
+  }, [formData, rows, isEditMode, loading]);
+
   const [formSent, setFormSent] = useState(false);
   const [notification, setNotification] = useState({ visible: false, message: "", type: "" });
   const [errors, setErrors] = useState({
@@ -386,6 +419,13 @@ const BudgetForm = () => {
         'success'
       );
   
+      // Clear localStorage on successful submission/save if it's a new form or always if desired
+      if (!isEditMode) {
+        localStorage.removeItem('budgetFormState');
+      }
+      // If in edit mode, you might choose to keep it or clear it based on workflow.
+      // For now, clearing only for new forms as per typical reset behavior.
+
       // Navigation after successful submission
       setTimeout(() => {
         if (formData.targetFormType && formData.targetFormId) {

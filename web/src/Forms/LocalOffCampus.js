@@ -8,7 +8,7 @@ import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 
 const Localoffcampus = () => {
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     formPhase: 'BEFORE',
     nameOfHei: 'National University MOA',
     region: 'NCR',
@@ -48,6 +48,37 @@ const Localoffcampus = () => {
     ],
     problemsEncountered: '',
     recommendation: ''
+  };
+
+  const [formData, setFormData] = useState(() => {
+    const locState = location.state; // Check location.state first
+    if (locState && (locState.startAfterForm || locState.editAfterForm || locState.editBeforeForm)) {
+      return initialFormData; // Will be populated by useEffect based on location.state
+    }
+    const savedData = localStorage.getItem('localOffCampusFormData');
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        // Basic rehydration, specific date/array handling might be needed if issues arise
+        return {
+          ...initialFormData,
+          ...parsed,
+          // Example: ensure basicInformation is an array with at least one item
+          basicInformation: (Array.isArray(parsed.basicInformation) && parsed.basicInformation.length > 0) 
+                            ? parsed.basicInformation.map(info => ({...initialFormData.basicInformation[0], ...info})) 
+                            : initialFormData.basicInformation,
+          activitiesOffCampus: (Array.isArray(parsed.activitiesOffCampus) && parsed.activitiesOffCampus.length > 0)
+                            ? parsed.activitiesOffCampus.map(act => ({...initialFormData.activitiesOffCampus[0], ...act}))
+                            : initialFormData.activitiesOffCampus,
+          afterActivity: (Array.isArray(parsed.afterActivity) && parsed.afterActivity.length > 0)
+                            ? parsed.afterActivity.map(act => ({...initialFormData.afterActivity[0], ...act}))
+                            : initialFormData.afterActivity,
+        };
+      } catch (e) {
+        console.error("Error parsing LocalOffCampus localStorage data", e);
+      }
+    }
+    return initialFormData;
   });
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -775,6 +806,9 @@ const Localoffcampus = () => {
           severity: 'success'
         });
   
+        // Clear localStorage as the BEFORE phase is complete
+        localStorage.removeItem('localOffCampusFormData');
+
         // Redirect to organization's submitted forms page after a delay
         setTimeout(() => {
           navigate('/forms');
@@ -866,6 +900,9 @@ const Localoffcampus = () => {
           message: 'AFTER report submitted successfully!',
           severity: 'success'
         });
+
+        // Clear localStorage as the AFTER phase is complete
+        localStorage.removeItem('localOffCampusFormData');
 
         setTimeout(() => navigate('/org-submitted-forms'), 1500);
       } catch (error) {
@@ -1508,6 +1545,19 @@ default:
       </div>
     );
   };
+
+  // Save formData to localStorage
+  useEffect(() => {
+    // Avoid saving initial/empty state when specific loading conditions are met
+    // (e.g., when location.state is being processed or approval is being checked)
+    if (location.state || isCheckingApproval) {
+        // If location.state is present, specific useEffects will set formData.
+        // If approval is being checked, wait for it to complete.
+        // This prevents overwriting fetched/intended state with potentially stale localStorage state too early.
+    } else {
+        localStorage.setItem('localOffCampusFormData', JSON.stringify(formData));
+    }
+  }, [formData, location.state, isCheckingApproval]);
 
   return (
     <div className="form-ubox-4">

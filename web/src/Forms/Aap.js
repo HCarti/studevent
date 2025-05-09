@@ -16,11 +16,11 @@ const Aap = () => {
   const navigate = useNavigate();
   const isEditMode = !!formId; // Determine if we're in edit mode
 
-  // Initialize form state
-  const [formData, setFormData] = useState({
+  // Define initial form data structure
+  const initialFormData = {
     presidentSignature: '',
     presidentName: '',
-    organizationId: '', // Add this new field
+    organizationId: '',
     eventLocation: '',
     applicationDate: new Date().toISOString().split('T')[0],
     studentOrganization: '',
@@ -54,8 +54,33 @@ const Aap = () => {
     emergencyFirstAid: '',
     fireSafety: '',
     weather: '',
-    attachedBudget: null, // ID of attached budget proposal
-    budgetProposals: [] // List of available budgets for dropdown
+    attachedBudget: null,
+    budgetProposals: []
+  };
+
+  // Initialize form state
+  const [formData, setFormData] = useState(() => {
+    if (isEditMode) {
+      return initialFormData; // Will be populated by fetchFormData
+    }
+    const savedData = localStorage.getItem('aapFormData');
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        return {
+          ...initialFormData,
+          ...parsed,
+          applicationDate: parsed.applicationDate || new Date().toISOString().split('T')[0],
+          eventStartDate: parsed.eventStartDate || '',
+          eventEndDate: parsed.eventEndDate || '',
+          // Ensure budgetProposals is an array, as it's populated by API calls later
+          budgetProposals: Array.isArray(parsed.budgetProposals) ? parsed.budgetProposals : []
+        };
+      } catch (e) {
+        console.error("Error parsing Aap localStorage data", e);
+      }
+    }
+    return initialFormData;
   });
 
   const [fieldErrors, setFieldErrors] = useState({
@@ -102,6 +127,14 @@ const Aap = () => {
   const [submitSuccessVisible, setSubmitSuccessVisible] = useState(false);
   const [budgetLoadError, setBudgetLoadError] = useState(null);
   const [blockedDates, setBlockedDates] = useState([]);
+
+  // Save formData to localStorage
+  useEffect(() => {
+    if (isEditMode && loading) { // Don't save while initial data for edit mode is loading
+      return;
+    }
+    localStorage.setItem('aapFormData', JSON.stringify(formData));
+  }, [formData, isEditMode, loading]);
 
   // Notification component
   const Notification = ({ message, type = 'success' }) => {
@@ -830,11 +863,13 @@ const Aap = () => {
       setSubmitSuccessVisible(true);
       setTimeout(() => {
         setSubmitSuccessVisible(false);
+        localStorage.removeItem('aapFormData'); // Clear localStorage for new form
         navigate('/');
       }, 1000);
 
       // Reset form if new submission (preserve organization info)
       if (!isEditMode) {
+        localStorage.removeItem('aapFormData'); // Clear localStorage for new form
         const userData = JSON.parse(localStorage.getItem('user'));
         setFormData({
           // Reset all fields except organization info

@@ -9,7 +9,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 const Project = () => {
   const { formId } = useParams(); // Add this with other route hooks
   const isEditMode = !!formId; // Determine if we're in edit mode
-  const [formData, setFormData] = useState({
+
+  const initialFormData = {
     // Project Overview
     projectTitle: '',
     projectDescription: '',
@@ -34,8 +35,36 @@ const Project = () => {
     // Budget Proposal
     budgetAmount: '',
     budgetFrom: '',
-    attachedBudget: null, // ID of attached budget proposal
-    budgetProposals: [] // List of available budgets for dropdown
+    attachedBudget: null,
+    budgetProposals: []
+  };
+
+  const [formData, setFormData] = useState(() => {
+    if (isEditMode) {
+      return initialFormData; // Will be populated by fetchFormData
+    }
+    const savedData = localStorage.getItem('projectFormData');
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        return {
+          ...initialFormData,
+          ...parsed,
+          startDate: parsed.startDate || '',
+          endDate: parsed.endDate || '',
+          programFlow: Array.isArray(parsed.programFlow) && parsed.programFlow.length > 0 ? parsed.programFlow : [{ timeRange: '', segment: '' }],
+          projectHeads: Array.isArray(parsed.projectHeads) && parsed.projectHeads.length > 0 ? parsed.projectHeads : [{ headName: '', designatedOffice: '' }],
+          workingCommittees: Array.isArray(parsed.workingCommittees) && parsed.workingCommittees.length > 0 ? parsed.workingCommittees : [{ workingName: '', designatedTask: '' }],
+          taskDeligation: Array.isArray(parsed.taskDeligation) && parsed.taskDeligation.length > 0 ? parsed.taskDeligation : [{ taskList: '', deadline: '' }],
+          timelineSchedules: Array.isArray(parsed.timelineSchedules) && parsed.timelineSchedules.length > 0 ? parsed.timelineSchedules : [{ publicationMaterials: '', schedule: '' }],
+          schoolEquipments: Array.isArray(parsed.schoolEquipments) && parsed.schoolEquipments.length > 0 ? parsed.schoolEquipments : [{ equipments: '', estimatedQuantity: '' }],
+          budgetProposals: Array.isArray(parsed.budgetProposals) ? parsed.budgetProposals : []
+        };
+      } catch (e) {
+        console.error("Error parsing Project localStorage data", e);
+      }
+    }
+    return initialFormData;
   });
 
   const [fieldErrors, setFieldErrors] = useState({
@@ -154,6 +183,14 @@ const Project = () => {
 
   // Add ref for the mobile step tracker
   const mobileStepTrackerRef = useRef(null);
+
+  // Save formData to localStorage
+  useEffect(() => {
+    if (isEditMode && loading) { // Don't save while initial data for edit mode is loading
+      return;
+    }
+    localStorage.setItem('projectFormData', JSON.stringify(formData));
+  }, [formData, isEditMode, loading]);
 
   // Effect to scroll to the active step when current step changes
   useEffect(() => {
@@ -792,6 +829,7 @@ const isDateBlocked = (date) => {
 
       // Reset form if not in edit mode
       if (!isEditMode) {
+        localStorage.removeItem('projectFormData'); // Clear localStorage
         setFormData({
           projectTitle: '',
           projectDescription: '',

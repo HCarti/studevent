@@ -4,7 +4,7 @@ import './Liquidation.css';
 
 const Liquidation = () => {
   // State for file handling
-  const [fileName, setFileName] = useState('');
+  const [fileName, setFileName] = useState(() => localStorage.getItem('liquidationFileName') || '');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -12,14 +12,55 @@ const Liquidation = () => {
   const [isDragging, setIsDragging] = useState(false);
   
   // State for liquidation data
-  const [uploadedData, setUploadedData] = useState(null);
-  const [processedData, setProcessedData] = useState(null);
+  const [uploadedData, setUploadedData] = useState(() => {
+    const saved = localStorage.getItem('liquidationUploadedData');
+    try {
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      console.error("Error parsing liquidationUploadedData from localStorage", e);
+      return null;
+    }
+  });
+  const [processedData, setProcessedData] = useState(() => {
+    const saved = localStorage.getItem('liquidationProcessedData');
+    try {
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      console.error("Error parsing liquidationProcessedData from localStorage", e);
+      return null;
+    }
+  });
   const [submittedLiquidations, setSubmittedLiquidations] = useState([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [modalFile, setModalFile] = useState(null);
   const [modalRemarks, setModalRemarks] = useState('');
   const [refreshKey, setRefreshKey] = useState(0); // Add refresh key state
+
+  // Save relevant states to localStorage
+  useEffect(() => {
+    if (fileName) {
+      localStorage.setItem('liquidationFileName', fileName);
+    } else {
+      localStorage.removeItem('liquidationFileName');
+    }
+  }, [fileName]);
+
+  useEffect(() => {
+    if (uploadedData) {
+      localStorage.setItem('liquidationUploadedData', JSON.stringify(uploadedData));
+    } else {
+      localStorage.removeItem('liquidationUploadedData');
+    }
+  }, [uploadedData]);
+
+  useEffect(() => {
+    if (processedData) {
+      localStorage.setItem('liquidationProcessedData', JSON.stringify(processedData));
+    } else {
+      localStorage.removeItem('liquidationProcessedData');
+    }
+  }, [processedData]);
 
   const handleDragEnter = (e) => {
     e.preventDefault();
@@ -300,6 +341,10 @@ const Liquidation = () => {
       setProcessedData(null);
       setFileBlob(null);
       document.getElementById('excel-upload').value = '';
+      // Clear localStorage
+      localStorage.removeItem('liquidationFileName');
+      localStorage.removeItem('liquidationUploadedData');
+      localStorage.removeItem('liquidationProcessedData');
     } catch (error) {
       setError(error.message || 'Submission failed');
     } finally {
@@ -371,7 +416,12 @@ const Liquidation = () => {
                   onClick={() => {
                     setFileName('');
                     setFileBlob(null);
+                    setUploadedData(null); // Also clear data linked to the file
+                    setProcessedData(null); // Also clear data linked to the file
                     document.getElementById('excel-upload').value = '';
+                    localStorage.removeItem('liquidationFileName');
+                    localStorage.removeItem('liquidationUploadedData');
+                    localStorage.removeItem('liquidationProcessedData');
                   }}
                 >
                   Change File
