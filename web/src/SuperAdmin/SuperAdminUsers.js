@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "./SuperAdminUsers.css";
-import { FaSearch } from "react-icons/fa";
+import { FaSearch} from "react-icons/fa";
+import { Link } from "react-router-dom";
+import { IoTrashBinSharp } from "react-icons/io5";
 
 // Icons
 const EditIcon = () => (
@@ -182,17 +184,17 @@ const SuperAdminUsers = () => {
       <h1 className="dashboard-title">ORGANIZATION MANAGEMENT</h1>
       <p className="dashboard-subtitle">Track and manage all your organizations</p>
       <div className="dashboard-controls">
-        <div className="search-bar-container">
-          <FaSearch className="search-icon" />
-          <input
-            type="text"
-            className="search-bar"
-            placeholder="Search organizations..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </div>
+  <div className="search-bar-container">
+    <FaSearch className="search-icon" />
+    <input
+      type="text"
+      className="search-bar"
+      placeholder="Search organizations..."
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+    />
+  </div>
+</div>
       <div className="results-count">
         <span>{filteredOrganizations.length}</span> organizations found
       </div>
@@ -320,23 +322,23 @@ const SuperAdminUsers = () => {
       )}
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="modal-overlay">
-          <div className="delete-confirmation-modal">
-            <h3>Confirm Deletion</h3>
-            <p>Are you sure you want to delete this organization permanently?</p>
-            <p className="warning-text">This action cannot be undone.</p>
-            {deleteError && <p className="error-message">{deleteError}</p>}
-            <div className="modal-actions">
-              <button className="btn cancel-delete-btn" onClick={cancelDelete}>
-                Cancel
-              </button>
-              <button className="btn confirm-delete-btn" onClick={confirmDelete}>
-                Delete Organization
-              </button>
+          <div className="modal-overlay">
+            <div className="delete-confirmation-modal">
+              <h3>Confirm Deletion</h3>
+              <p>This organization will be moved to trash and automatically deleted after 30 days.</p>
+              <p>You can restore it from the trash bin during this period.</p>
+              {deleteError && <p className="error-message">{deleteError}</p>}
+              <div className="modal-actions">
+                <button className="btn cancel-delete-btn" onClick={cancelDelete}>
+                  Cancel
+                </button>
+                <button className="btn confirm-delete-btn" onClick={confirmDelete}>
+                  Move to Trash
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
     </div>
   );
 };

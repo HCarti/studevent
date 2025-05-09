@@ -493,7 +493,6 @@ const Liquidation = () => {
                   <th>File Name</th>
                   <th>Date</th>
                   <th>Status</th>
-                  <th>Remarks</th>
                 </tr>
               </thead>
               <tbody>
@@ -519,7 +518,6 @@ const Liquidation = () => {
                 {submission.status}
               </span>
             </td>
-            <td>{submission.remarks || '-'}</td>
             {/* Removed the actions column */}
           </tr>
         ))}

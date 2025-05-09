@@ -51,6 +51,10 @@ router.get('/getall', authenticateToken, usersController.getAllUsers);
 router.put('/update/profile', authenticateToken, usersController.updateProfile);
 router.put('/change-password', authenticateToken, usersController.changePassword);
 router.post('/check-adviser-assignment', authenticateToken, usersController.checkAdviserAssignment);
+// Add these routes to user_routes.js
+router.delete('/permanent/:id', authenticateToken, usersController.permanentlyDeleteUser);
+router.patch('/restore/:id', authenticateToken, usersController.restoreUser);
+router.get('/organizations/deleted', authenticateToken, usersController.getDeletedOrganizations);
 
 // User registration route with dual signature support
 router.post('/', 

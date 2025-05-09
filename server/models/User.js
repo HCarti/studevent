@@ -83,6 +83,15 @@ const userSchema = new Schema({
     type: String,
     default: 'Active'
   },
+  // In your User model schema, add:
+  deletedAt: {
+    type: Date,
+    default: null
+  },
+  isDeleted: {
+    type: Boolean,
+    default: false
+  }
 });
 
 const User = mongoose.model('User', userSchema);

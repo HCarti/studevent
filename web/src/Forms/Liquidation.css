@@ -242,16 +242,18 @@ tr:hover {
 }
 
 .status-badge {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: capitalize;
 }
 
 .status-badge.pending {
-  background-color: #fff3cd;
-  color: #856404;
+  background-color: #fef3c7;
+  color: #92400e;
 }
 
 .submit-btn {
@@ -359,13 +361,13 @@ tr:hover {
 }
 
 .status-badge.approved {
-  background: #d4edda;
-  color: #155724;
+  background-color: #d1fae5;
+  color: #065f46;
 }
 
 .status-badge.declined {
-  background: #f8d7da;
-  color: #721c24;
+  background-color: #fee2e2;
+  color: #991b1b;
 }
 
 .loading-submissions {
@@ -388,90 +390,133 @@ tr:hover {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  backdrop-filter: blur(2px);
 }
 
 .submission-modal {
   background-color: white;
-  border-radius: 8px;
+  border-radius: 10px;
   width: 90%;
-  max-width: 600px;
-  max-height: 90vh;
+  max-width: 800px; /* Increased from 600px */
+  max-height: 85vh;
   overflow-y: auto;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
+  padding: 20px 25px;
   border-bottom: 1px solid #eee;
+  background-color: #f9fafb;
+  border-radius: 10px 10px 0 0;
 }
 
 .modal-header h3 {
   margin: 0;
-  font-size: 20px;
+  font-size: 22px;
   color: #2c3e50;
+  font-weight: 600;
 }
 
 .close-modal {
   background: none;
   border: none;
-  font-size: 24px;
+  font-size: 28px;
   cursor: pointer;
   color: #777;
+  transition: color 0.2s;
+}
+
+.close-modal:hover {
+  color: #333;
 }
 
 .modal-content {
-  padding: 20px;
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
 }
 
 .modal-section {
-  margin-bottom: 20px;
+  margin-bottom: 0;
 }
 
 .modal-section h4 {
-  margin: 0 0 10px 0;
+  margin: 0 0 12px 0;
   font-size: 16px;
   color: #444;
+  font-weight: 500;
 }
 
 .file-link {
   display: inline-block;
-  padding: 8px 12px;
-  background-color: #f5f5f5;
-  border-radius: 4px;
+  padding: 10px 15px;
+  background-color: #f5f7fa;
+  border-radius: 6px;
   color: #3b82f6;
   text-decoration: none;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .file-link:hover {
-  text-decoration: underline;
+  background-color: #ebf2ff;
+  text-decoration: none;
 }
 
 .remarks-input {
   width: 100%;
-  min-height: 100px;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  min-height: 120px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
   resize: none;
+  background-color: #f9fafb;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.remarks-input:read-only {
+  background-color: #f5f7fa;
+  color: #666;
 }
 
 .file-upload-label {
-  display: inline-block;
-  padding: 8px 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
   background-color: #3b82f6;
   color: white;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
-  transition: background-color 0.2s;
+  font-weight: 500;
+  transition: all 0.2s;
+  border: none;
 }
 
 .file-upload-label:hover {
@@ -479,29 +524,48 @@ tr:hover {
 }
 
 .new-file-preview {
-  margin-top: 10px;
-  padding: 10px;
+  margin-top: 15px;
+  padding: 12px 15px;
   background-color: #f8fafc;
-  border: 1px dashed #ddd;
-  border-radius: 4px;
+  border: 1px dashed #d1d5db;
+  border-radius: 6px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.new-file-preview span:first-child {
+  font-weight: 500;
+  color: #333;
+}
+
+.new-file-preview span:last-child {
+  color: #6b7280;
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 15px;
   margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
 }
 
 .cancel-btn {
   padding: 10px 20px;
   background-color: #f5f5f5;
-  border: none;
-  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
   cursor: pointer;
-  color: #333;
+  color: #4b5563;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.cancel-btn:hover {
+  background-color: #e5e7eb;
 }
 
 .resubmit-btn {
@@ -509,12 +573,18 @@ tr:hover {
   background-color: #10b981;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.resubmit-btn:hover {
+  background-color: #0d9e6e;
 }
 
 .resubmit-btn:disabled {
-  background-color: #ccc;
+  background-color: #d1d5db;
   cursor: not-allowed;
 }
 
