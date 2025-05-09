@@ -374,7 +374,7 @@ const App = () => {
           <Route
             path="/progtrack/:formId"
             element={
-              <ProtectedRoute allowedRoles={['Admin', 'Authority']}>
+              <ProtectedRoute allowedRoles={['Admin', 'Authority','SuperAdmin']}>
                 <ProgressTracker />
               </ProtectedRoute>
             }

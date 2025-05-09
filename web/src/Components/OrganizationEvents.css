@@ -305,6 +305,41 @@
   text-align: center;
 }
 
+
+/* Blocked dates styling */
+.blocked-date {
+  opacity: 1;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255, 99, 71, 0.3),
+    rgba(255, 99, 71, 0.3) 5px,
+    rgba(255, 99, 71, 0.4) 5px,
+    rgba(255, 99, 71, 0.4) 10px
+  );
+}
+
+.fc .fc-daygrid-day-blocked .fc-daygrid-day-frame {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255, 99, 71, 0.1),
+    rgba(255, 99, 71, 0.1) 5px,
+    rgba(255, 99, 71, 0.2) 5px,
+    rgba(255, 99, 71, 0.2) 10px
+  );
+}
+
+.fc-daygrid-day-blocked .fc-daygrid-day-number {
+  color: #d9534f;
+  font-weight: bold;
+  position: relative;
+}
+
+.fc-daygrid-day-blocked .fc-daygrid-day-number::after {
+  content: "✖";
+  margin-left: 3px;
+  font-size: 0.8em;
+}
+
 /* ===== Responsive Design ===== */
 @media (max-width: 1024px) {
   .calendar-content-container {

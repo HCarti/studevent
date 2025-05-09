@@ -457,17 +457,31 @@ const getAllUsers = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const userId = req.user._id; // Get from authenticated token
+    const userId = req.user._id;
     const { firstName, lastName, email } = req.body;
+
+    // Handle file upload if provided
+    let imageUrl;
+    if (req.files && req.files.image) {
+      const imageBlob = await put(
+        `user-${userId}-image-${Date.now()}`,
+        req.files.image[0].buffer,
+        { access: 'public' }
+      );
+      imageUrl = imageBlob.url;
+    }
 
     // Basic validation
     if (!firstName || !lastName || !email) {
       return res.status(400).json({ message: 'First name, last name, and email are required' });
     }
 
+    const updateData = { firstName, lastName, email };
+    if (imageUrl) updateData.image = imageUrl;
+
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { firstName, lastName, email },
+      updateData,
       { new: true, runValidators: true }
     ).select('-password');
 

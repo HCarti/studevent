@@ -15,6 +15,7 @@ const OrganizationEvents = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const [blockedDates, setBlockedDates] = useState([]);
   const calendarRef = React.useRef(null);
 
   // Get auth token and user info
@@ -85,6 +86,40 @@ const OrganizationEvents = () => {
       };
     }
   };
+
+const fetchBlockedDates = async () => {
+  try {
+    const authHeaders = getAuthHeaders();
+    if (!authHeaders) return;
+
+    const response = await axios.get(
+      'https://studevent-server.vercel.app/api/calendar/blocked-dates',
+      authHeaders
+    );
+
+    if (response.data && response.data.length > 0) {
+      const formattedBlockedDates = response.data.map(date => ({
+        start: moment(date).format('YYYY-MM-DD'), // Ensure proper formatting
+        display: 'background',
+        backgroundColor: '#ffcccc', // Solid light red
+        borderColor: '#ff9999',
+        className: 'blocked-date',
+        allDay: true,
+        overlap: false,
+        id: `blocked-${date}` // Add unique ID
+      }));
+      console.log('Formatted blocked dates:', formattedBlockedDates);
+      setBlockedDates(formattedBlockedDates);
+    }
+  } catch (err) {
+    console.error('Error fetching blocked dates:', err);
+  }
+};
+
+useEffect(() => {
+  fetchCalendarEvents();
+  fetchBlockedDates();
+}, []);
 
   // Calculate event duration
   const calculateDuration = (start, end) => {
@@ -285,27 +320,39 @@ const OrganizationEvents = () => {
       <div className="calendar-content-container">
         <div className="calendar-main-wrapper">
           <div className="calendar-component-container">
-            <FullCalendar
-              ref={calendarRef}
-              plugins={[dayGridPlugin, interactionPlugin]}
-              initialView="dayGridMonth"
-              headerToolbar={{
-                left: 'prev,today,next',
-                center: 'title',
-                right: ''
-              }}
-              events={events}
-              eventContent={renderEventContent}
-              displayEventTime={false}
-              eventDisplay="block"
-              dayMaxEventRows={3}
-              dayMaxEvents={false}
-              selectable={true}
-              dateClick={handleDateClick}
-              eventClick={handleEventClick}
-              datesSet={handleDatesSet}
-              height="600px"
-            />
+<FullCalendar
+  ref={calendarRef}
+  plugins={[dayGridPlugin, interactionPlugin]}
+  initialView="dayGridMonth"
+  headerToolbar={{
+    left: 'prev,today,next',
+    center: 'title',
+    right: ''
+  }}
+  events={[...events, ...blockedDates]}
+  eventContent={renderEventContent}
+  displayEventTime={false}
+  eventDisplay="block"
+  dayMaxEventRows={3}
+  dayMaxEvents={false}
+  selectable={true}
+  dateClick={handleDateClick}
+  eventClick={info => {
+    if (info.event.display === 'background') {
+      alert('This date is blocked and cannot be selected.');
+      return;
+    }
+    handleEventClick(info);
+  }}
+  datesSet={handleDatesSet}
+  height="600px"
+  eventOrder="display"
+  eventDidMount={(info) => {
+    if (info.event.display === 'background') {
+      info.el.style.zIndex = '1'; // Ensure background events stay behind
+    }
+  }}
+/>
           </div>
         </div>
 
