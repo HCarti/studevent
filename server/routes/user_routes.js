@@ -40,20 +40,18 @@ const handleUploadErrors = (err, req, res, next) => {
 router.post('/login', usersController.login);
 
 // Protected routes
-// Protected routes
 router.get('/organizations', authenticateToken, usersController.getOrganizations);
 router.get('/current', authenticateToken, usersController.getCurrentUser);
-router.get('/getall', authenticateToken, usersController.getAllUsers);  // Moved up
-router.get('/organizations/academic', authenticateToken, usersController.getAcademicOrganizations);
-router.get('/organizations/deleted', authenticateToken, usersController.getDeletedOrganizations);  // Moved up
-router.get('/:id', authenticateToken, usersController.getUserById);     // Moved down
+router.get('/:id', authenticateToken, usersController.getUserById);
 router.delete('/:id', authenticateToken, usersController.deleteUserById);
-router.delete('/permanent/:id', authenticateToken, usersController.permanentlyDeleteUser);
-router.patch('/restore/:id', authenticateToken, usersController.restoreUser);
+router.get('/organizations/academic', authenticateToken, usersController.getAcademicOrganizations);
 router.put('/organizations/:id', authenticateToken, usersController.updateOrganization);
+// Add this with your other routes
+router.get('/getall', authenticateToken, usersController.getAllUsers);
 router.put('/update/profile', authenticateToken, usersController.updateProfile);
 router.put('/change-password', authenticateToken, usersController.changePassword);
 router.post('/check-adviser-assignment', authenticateToken, usersController.checkAdviserAssignment);
+
 
 // User registration route with dual signature support
 router.post('/', 
