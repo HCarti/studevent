@@ -638,35 +638,78 @@ const permanentlyDeleteUser = async (req, res) => {
 // Add this new method for restoring from trash
 const restoreUser = async (req, res) => {
   try {
+    console.log(`Attempting to restore user: ${req.params.id}`);
+    
     const userToRestore = await User.findById(req.params.id);
     
     if (!userToRestore) {
-      return res.status(404).json({ message: 'User not found' });
+      console.log('User not found for restoration');
+      return res.status(404).json({ 
+        success: false,
+        message: 'User not found',
+        id: req.params.id
+      });
     }
 
-    userToRestore.isDeleted = false;
-    userToRestore.deletedAt = null;
-    await userToRestore.save();
+    console.log('User found, proceeding with restoration');
+    
+    // Update the user document
+    const result = await User.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: {
+          isDeleted: false,
+          deletedAt: null,
+          status: 'Active' // Optionally set status back to Active
+        }
+      },
+      { new: true }
+    );
 
+    if (!result) {
+      console.log('Restoration update failed');
+      return res.status(500).json({ 
+        success: false,
+        message: 'Failed to update user status during restoration'
+      });
+    }
+
+    console.log('Restoration successful');
+    
     // Log the action if performed by SuperAdmin
     if (req.user.role === 'SuperAdmin') {
       await logSuperAdminAction(
         req.user,
         'USER_RESTORED',
-        userToRestore,
+        result, // Use the updated document
         {
-          email: userToRestore.email,
-          role: userToRestore.role
+          email: result.email,
+          role: result.role,
+          restoredAt: new Date()
         }
       );
     }
 
-    res.status(200).json({ message: 'User restored successfully' });
+    res.status(200).json({ 
+      success: true,
+      message: 'User restored successfully',
+      data: {
+        id: result._id,
+        email: result.email,
+        isDeleted: result.isDeleted,
+        status: result.status
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error restoring user' });
+    console.error('Error in restoreUser:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error restoring user',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
-
 // Get deleted organizations (for TrashBin)
 const getDeletedOrganizations = async (req, res) => {
   try {

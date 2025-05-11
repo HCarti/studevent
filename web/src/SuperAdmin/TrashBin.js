@@ -89,25 +89,55 @@ const TrashBin = () => {
     setDeleteError(null);
   };
 
-  const handleRestoreClick = async (orgId) => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.patch(
-        `https://studevent-server.vercel.app/api/users/restore/${orgId}`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+const handleRestoreClick = async (orgId) => {
+  try {
+    setRestoreError(null);
+    const token = localStorage.getItem('token');
+    
+    console.log(`Attempting to restore organization: ${orgId}`);
+    
+    const response = await axios.patch(
+      `https://studevent-server.vercel.app/api/users/restore/${orgId}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    console.log('Restore response:', response.data);
+    
+    if (response.data && response.data.success) {
+      // Remove the restored organization from the deleted list
       setDeletedOrganizations(deletedOrganizations.filter(org => org._id !== orgId));
-      setRestoreError(null);
-    } catch (error) {
-      console.error("Error restoring organization:", error);
-      setRestoreError("Failed to restore organization. Please try again.");
+      
+      // Optional: Show success message
+      alert('Organization restored successfully');
+    } else {
+      const errorMsg = response.data?.message || 'Unknown error occurred during restoration';
+      console.error('Restore failed:', errorMsg);
+      setRestoreError(errorMsg);
     }
-  };
+  } catch (error) {
+    console.error("Error in handleRestoreClick:", error);
+    
+    let errorMsg = "Failed to restore organization. Please try again.";
+    if (error.response) {
+      // Server responded with error status
+      console.error('Server response:', error.response.data);
+      errorMsg = error.response.data.message || 
+                error.response.data.error || 
+                errorMsg;
+    } else if (error.request) {
+      // No response received
+      console.error('No response received:', error.request);
+      errorMsg = "No response from server. Please check your connection.";
+    }
+    
+    setRestoreError(errorMsg);
+  }
+};
 
   const filteredOrganizations = deletedOrganizations.filter((org) => {
     return (
