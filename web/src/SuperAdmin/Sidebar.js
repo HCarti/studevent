@@ -27,10 +27,10 @@ const Sidebar = () => {
   const menuItems = [
     { name: 'Dashboard', icon: <MdDashboard />, path: '/superadmin/controlpanel' },
     { name: 'Users', icon: <FaUsers />, path: '/superadmin/adminuser' },
+    { name: 'TrasBin', icon:<IoTrashBinSharp />, path: '/superadmin/s-admintrash-bin' },
     { name: 'Add User', icon: <FaUserPlus />, path: '/superadmin/adduser' },
     { name: 'Activity Logs', icon:<TbLogs />, path: '/superadmin/s-adminlogs' },
-    { name: 'Calendar', icon:<IoCalendarSharp />, path: '/superadmin/s-admincalendar' },
-    { name: 'TrasBin', icon:<IoTrashBinSharp />, path: '/superadmin/s-admintrash-bin' }
+    { name: 'Calendar', icon:<IoCalendarSharp />, path: '/superadmin/s-admincalendar' }
   ];
 
   const handleItemClick = (path) => {

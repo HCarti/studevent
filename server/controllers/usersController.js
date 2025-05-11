@@ -301,13 +301,16 @@ const deleteUserById = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    await User.findByIdAndDelete(req.params.id);
+    // Soft delete instead of hard delete
+    userToDelete.isDeleted = true;
+    userToDelete.deletedAt = new Date();
+    await userToDelete.save();
 
     // Log the action if performed by SuperAdmin
     if (req.user.role === 'SuperAdmin') {
       await logSuperAdminAction(
         req.user,
-        'USER_DELETED',
+        'USER_SOFT_DELETED',
         null,
         {
           email: userToDelete.email,
@@ -316,15 +319,16 @@ const deleteUserById = async (req, res) => {
       );
     }
 
-    res.status(200).json({ message: 'User deleted successfully' });
+    res.status(200).json({ message: 'User moved to trash successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting user' });
+    res.status(500).json({ message: 'Error moving user to trash' });
   }
 };
 
 // Get all organizations with their president signatures
 const getOrganizations = async (req, res) => {
   try {
+    
     const organizations = await User.find({ role: 'Organization' })
       .select('organizationName organizationType presidentName presidentSignature status logo email');
     res.status(200).json(organizations);
@@ -333,6 +337,7 @@ const getOrganizations = async (req, res) => {
     res.status(500).json({ message: 'Error fetching organizations' });
   }
 };
+
 
 // Get all academic organizations
 const getAcademicOrganizations = async (req, res) => {
@@ -560,6 +565,83 @@ const checkAdviserAssignment = async (req, res) => {
   }
 };
 
+// Add this new method for permanent deletion
+const permanentlyDeleteUser = async (req, res) => {
+  try {
+    const userToDelete = await User.findById(req.params.id);
+    
+    if (!userToDelete) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    await User.findByIdAndDelete(req.params.id);
+
+    // Log the action if performed by SuperAdmin
+    if (req.user.role === 'SuperAdmin') {
+      await logSuperAdminAction(
+        req.user,
+        'USER_PERMANENTLY_DELETED',
+        null,
+        {
+          email: userToDelete.email,
+          role: userToDelete.role
+        }
+      );
+    }
+
+    res.status(200).json({ message: 'User permanently deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error permanently deleting user' });
+  }
+};
+
+// Add this new method for restoring from trash
+const restoreUser = async (req, res) => {
+  try {
+    const userToRestore = await User.findById(req.params.id);
+    
+    if (!userToRestore) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    userToRestore.isDeleted = false;
+    userToRestore.deletedAt = null;
+    await userToRestore.save();
+
+    // Log the action if performed by SuperAdmin
+    if (req.user.role === 'SuperAdmin') {
+      await logSuperAdminAction(
+        req.user,
+        'USER_RESTORED',
+        userToRestore,
+        {
+          email: userToRestore.email,
+          role: userToRestore.role
+        }
+      );
+    }
+
+    res.status(200).json({ message: 'User restored successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error restoring user' });
+  }
+};
+
+// Get deleted organizations (for TrashBin)
+const getDeletedOrganizations = async (req, res) => {
+  try {
+    const organizations = await User.find({ 
+      role: 'Organization',
+      isDeleted: true
+    }).select('organizationName organizationType presidentName presidentSignature status logo email deletedAt');
+    
+    res.status(200).json(organizations);
+  } catch (error) {
+    console.error('Error fetching deleted organizations:', error);
+    res.status(500).json({ message: 'Error fetching deleted organizations' });
+  }
+};
+
 module.exports = { 
   getUserById, 
   updateUser, 
@@ -573,5 +655,8 @@ module.exports = {
   getAllUsers,
   updateProfile,
   checkAdviserAssignment,
-  changePassword
+  changePassword,
+  permanentlyDeleteUser,
+  restoreUser,
+  getDeletedOrganizations
 };
