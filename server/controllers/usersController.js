@@ -335,7 +335,7 @@ const deleteUserById = async (req, res) => {
     if (req.user.role === 'SuperAdmin') {
       await logSuperAdminAction(
         req.user,
-        'USER_DELETED',
+        'USER_SOFT_DELETED',
         null,
         {
           email: userToDelete.email,
