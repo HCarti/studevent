@@ -295,18 +295,43 @@ const getUserById = async (req, res) => {
 // Delete user by ID
 const deleteUserById = async (req, res) => {
   try {
+    console.log(`Attempting to soft delete user: ${req.params.id}`);
+    
     const userToDelete = await User.findById(req.params.id);
     
     if (!userToDelete) {
-      return res.status(404).json({ message: 'User not found' });
+      console.log('User not found');
+      return res.status(404).json({ 
+        success: false,
+        message: 'User not found',
+        id: req.params.id
+      });
     }
 
-    // Soft delete instead of hard delete
-    userToDelete.isDeleted = true;
-    userToDelete.deletedAt = new Date();
-    await userToDelete.save();
+    console.log('User found, proceeding with soft delete');
+    
+    const result = await User.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: {
+          isDeleted: true,
+          deletedAt: new Date(),
+          status: 'Inactive'
+        }
+      },
+      { new: true }
+    );
 
-    // Log the action if performed by SuperAdmin
+    if (!result) {
+      console.log('Update operation failed');
+      return res.status(500).json({ 
+        success: false,
+        message: 'Failed to update user status'
+      });
+    }
+
+    console.log('Soft delete successful');
+    
     if (req.user.role === 'SuperAdmin') {
       await logSuperAdminAction(
         req.user,
@@ -319,9 +344,24 @@ const deleteUserById = async (req, res) => {
       );
     }
 
-    res.status(200).json({ message: 'User moved to trash successfully' });
+    res.status(200).json({ 
+      success: true,
+      message: 'User moved to trash successfully',
+      data: {
+        id: result._id,
+        email: result.email,
+        isDeleted: result.isDeleted,
+        deletedAt: result.deletedAt
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error moving user to trash' });
+    console.error('Error in deleteUserById:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error moving user to trash',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 

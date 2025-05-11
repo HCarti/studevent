@@ -72,25 +72,55 @@ const SuperAdminUsers = () => {
     setDeleteError(null);
   };
 
-  const confirmDelete = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.delete(
-        `https://studevent-server.vercel.app/api/users/${userToDelete}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+const confirmDelete = async () => {
+  try {
+    setDeleteError(null);
+    const token = localStorage.getItem('token');
+    
+    console.log(`Attempting to delete user: ${userToDelete}`);
+    
+    const response = await axios.delete(
+      `https://studevent-server.vercel.app/api/users/${userToDelete}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    console.log('Delete response:', response.data);
+    
+    if (response.data && response.data.success) {
       setOrganizations(organizations.filter((user) => user._id !== userToDelete));
       setShowDeleteModal(false);
       setUserToDelete(null);
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      setDeleteError("Failed to delete user. Please try again.");
+      
+      // Optional: Show success message
+      alert('Organization moved to trash successfully');
+    } else {
+      const errorMsg = response.data?.message || 'Unknown error occurred';
+      console.error('Delete failed:', errorMsg);
+      setDeleteError(errorMsg);
     }
-  };
+  } catch (error) {
+    console.error("Error in confirmDelete:", error);
+    
+    let errorMsg = "Failed to delete user. Please try again.";
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      console.error('Server response:', error.response.data);
+      errorMsg = error.response.data.message || 
+                error.response.data.error || 
+                errorMsg;
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('No response received:', error.request);
+      errorMsg = "No response from server. Please check your connection.";
+    }
+    
+    setDeleteError(errorMsg);
+  }
+};
 
   const cancelDelete = () => {
     setShowDeleteModal(false);
