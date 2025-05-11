@@ -4,6 +4,7 @@ import "./SuperAdminUsers.css";
 import { FaSearch} from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { IoTrashBinSharp } from "react-icons/io5";
+import { IoClose } from "react-icons/io5";
 
 // Icons
 const EditIcon = () => (
@@ -42,6 +43,11 @@ const SuperAdminUsers = () => {
   const [deleteError, setDeleteError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [notification, setNotification] = useState({
+    show: false,
+    message: '',
+    type: 'success' // 'success' or 'error'
+  });
 
   useEffect(() => {
     const fetchOrganizations = async () => {
@@ -94,6 +100,7 @@ const confirmDelete = async () => {
       setOrganizations(organizations.filter((user) => user._id !== userToDelete));
       setShowDeleteModal(false);
       setUserToDelete(null);
+      showNotification('Organization moved to trash successfully');
       
       // Optional: Show success message
       alert('Organization moved to trash successfully');
@@ -119,6 +126,7 @@ const confirmDelete = async () => {
     }
     
     setDeleteError(errorMsg);
+    showNotification(errorMsg, 'error');
   }
 };
 
@@ -201,6 +209,23 @@ const confirmDelete = async () => {
     }
   };
 
+  const showNotification = (message, type = 'success') => {
+  setNotification({
+    show: true,
+    message,
+    type
+  });
+  
+  // Auto-hide after 5 seconds
+  setTimeout(() => {
+    setNotification(prev => ({...prev, show: false}));
+  }, 5000);
+};
+
+const closeNotification = () => {
+  setNotification(prev => ({...prev, show: false}));
+};
+
   const filteredOrganizations = organizations.filter((org) => {
     return (
       org.organizationName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -211,6 +236,17 @@ const confirmDelete = async () => {
 
   return (
     <div className="table-container">
+      {/* Notification System */}
+    {notification.show && (
+      <div className={`sad-users-notification ${notification.type}`}>
+        <div className="sad-users-notification-content">
+          {notification.message}
+          <button className="sad-users-notification-close" onClick={closeNotification}>
+            <IoClose />
+          </button>
+        </div>
+      </div>
+    )}
       <h1 className="dashboard-title">ORGANIZATION MANAGEMENT</h1>
       <p className="dashboard-subtitle">Track and manage all your organizations</p>
       <div className="dashboard-controls">

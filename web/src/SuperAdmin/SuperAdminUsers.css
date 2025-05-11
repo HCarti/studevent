@@ -669,6 +669,70 @@
   }
 }
 
+/* Notification Styles */
+.sad-users-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out;
+  max-width: 400px;
+}
+
+.sad-users-notification.success {
+  background-color: #23b26d;
+}
+
+.sad-users-notification.error {
+  background-color: #e74c3c;
+}
+
+.sad-users-notification-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sad-users-notification-close {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  margin-left: 1rem;
+  display: flex;
+  align-items: center;
+  padding: 0.25rem;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.sad-users-notification-close:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.sad-users-notification-close svg {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
 .card-grid-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
