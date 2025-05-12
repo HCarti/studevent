@@ -293,19 +293,26 @@ const updateTrackerStep = async (req, res) => {
     }
 
 let form;
-    try {
-      // First try LocalOffCampus with proper ObjectId creation
-      if (tracker.formId) {
-        const formId = new mongoose.Types.ObjectId(tracker.formId); // Use new keyword
-        form = await LocalOffCampus.findById(formId).session(session);
-        console.log('LocalOffCampus lookup result:', form ? 'Found' : 'Not found');
+try {
+  // First check if tracker.formId exists and is valid
+  if (!tracker.formId) {
+    await session.abortTransaction();
+    await session.endSession();
+    return res.status(404).json({ 
+      message: "Tracker has no associated form",
+      trackerId: tracker._id
+    });
+  }
 
-        // If not found, try regular Form collection
-        if (!form) {
-          form = await Form.findById(formId).session(session);
-          console.log('Form collection lookup result:', form ? 'Found' : 'Not found');
-        }
-      }
+  // No need to create new ObjectId - tracker.formId should already be one
+  form = await LocalOffCampus.findById(tracker.formId).session(session);
+  console.log('LocalOffCampus lookup result:', form ? 'Found' : 'Not found');
+
+  // If not found, try regular Form collection
+  if (!form) {
+    form = await Form.findById(tracker.formId).session(session);
+    console.log('Form collection lookup result:', form ? 'Found' : 'Not found');
+  }
 
       if (!form) {
         await session.abortTransaction();
