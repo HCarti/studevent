@@ -300,7 +300,10 @@ const updateTrackerStep = async (req, res) => {
 
         // Try LocalOffCampus first, then regular Form
         form = await LocalOffCampus.findById(formId)
-          .populate('studentOrganization', 'email organizationName') || 
+          .populate({
+          path: 'organizationId',
+          select: 'email organizationName organizationType'
+        }) || 
           await mongoose.model('Form').findById(formId)
             .populate('studentOrganization', 'email organizationName');
       } catch (error) {
