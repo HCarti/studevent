@@ -277,6 +277,14 @@
       borderBottomColor: '#eee',
       marginVertical: 8
     },
+    guidanceParagraph: {
+    fontSize: 9,
+    color: '#555',
+    marginBottom: 15,
+    lineHeight: 1.3,
+    textAlign: 'justify',
+    fontStyle: 'italic',
+  },
     
   });
 
@@ -363,46 +371,46 @@
     );
 
     const renderBudgetSection = () => {
-      if (!budgetData) return null;
-    
-      return (
-        <Page size="A4" style={styles.page} wrap>
-          <View style={styles.header} fixed>
-            <Image src={NU_logo} style={styles.logo} />
-            <View style={styles.headerText}>
-              <Text style={styles.title}>NU MOA</Text>
-              <Text>Student Development and Activities Office</Text>
-              <Text>Attached Budget Proposal</Text>
-            </View>
+  if (!budgetData) return null;
+
+  return (
+    <Page size="A4" style={styles.page} wrap>
+      <View style={styles.header} fixed>
+        <Image src={NU_logo} style={styles.logo} />
+        <View style={styles.headerText}>
+          <Text style={styles.title}>NU MOA</Text>
+          <Text>Student Development and Activities Office</Text>
+          <Text>Attached Budget Proposal</Text>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>BUDGET PROPOSAL DETAILS</Text>
+        <View style={styles.compactTable}>
+          <View style={styles.compactTableRow}>
+            <Text style={styles.compactTableFirstCell}>Name Of RSO:</Text>
+            <Text style={styles.compactTableCell}>
+              {budgetData.nameOfRso || 'N/A'}
+            </Text>
           </View>
-    
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>BUDGET PROPOSAL DETAILS</Text>
-            <View style={styles.compactTable}>
-              <View style={styles.compactTableRow}>
-                <Text style={styles.compactTableFirstCell}>Name Of RSO:</Text>
-                <Text style={styles.compactTableCell}>
-                  {budgetData.nameOfRso || 'N/A'}
-                </Text>
-              </View>
-              <View style={styles.compactTableIndentedRow}>
-                <Text style={styles.compactTableFirstCell}>Event Title</Text>
-                <Text style={styles.compactTableCell}>
-                  {budgetData.eventTitle || 'N/A'}
-                </Text>
-              </View>
-              <View style={styles.compactTableIndentedRow}>
-              <Text style={styles.compactTableFirstCell}>Total Budget</Text>
-              <Text style={[styles.compactTableCell, { fontWeight: 'bold' }]}>
-                {typeof budgetData.grandTotal === 'number'
-                  ? `₱${budgetData.grandTotal.toLocaleString('en-PH')}`
-                  : 'N/A'}
-              </Text>
-            </View>
-            </View>
+          <View style={styles.compactTableIndentedRow}>
+            <Text style={styles.compactTableFirstCell}>Event Title</Text>
+            <Text style={styles.compactTableCell}>
+              {budgetData.eventTitle || 'N/A'}
+            </Text>
           </View>
-    
-          <View style={styles.section}>
+          <View style={styles.compactTableIndentedRow}>
+            <Text style={styles.compactTableFirstCell}>Total Budget</Text>
+            <Text style={[styles.compactTableCell, { fontWeight: 'bold' }]}>
+              {typeof budgetData.grandTotal === 'number'
+                ? `₱${budgetData.grandTotal.toLocaleString('en-PH')}`
+                : 'N/A'}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.section}>
         <Text style={styles.sectionTitle}>BUDGET ITEM BREAKDOWN</Text>
         <View style={styles.table}>
           <View style={[styles.tableRow, styles.tableHeader]}>
@@ -437,34 +445,140 @@
           ))}
         </View>
       </View>
-    
-          <View style={styles.signatureSection}>
-            <Text style={styles.signatureTitle}>BUDGET APPROVAL</Text>
-            <View style={styles.signatureRowGap}>
-              <View style={styles.borderedSignatureColumn}>
-                <Text style={styles.signatureLabel}>Prepared by:</Text>
-                <View style={styles.signatureValue}></View>
-                <Text style={styles.signatureName}>
-                  {budgetData.createdBy?.name || 'Organization Representative'}
-                </Text>
-                <Text style={styles.dateText}>Date: {formatDate(budgetData.createdAt)}</Text>
-              </View>
-              <View style={styles.borderedSignatureColumn}>
-                <Text style={styles.signatureLabel}>Approved by:</Text>
-                <View style={styles.signatureValue}></View>
-                <Text style={styles.signatureName}>Authorized Signatory</Text>
-                <Text style={styles.dateText}>Date: ___________________</Text>
-              </View>
-            </View>
-          </View>
-    
-          <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
-            `Page ${pageNumber} of ${totalPages}`
-          )} fixed />
-        </Page>
-      );
-    };
 
+      {/* Budget Signatures and Endorsements */}
+      <View style={styles.signatureSection}>
+        <Text style={styles.signatureTitle}>BUDGET SIGNATURES / ENDORSEMENTS</Text>
+        <View style={styles.signatureRowGap}>
+          {/* President's Signature */}
+          <View style={styles.borderedSignatureColumn}>
+            <Text style={styles.signatureLabel}>a. Organization President</Text>
+            <View style={styles.signatureDivider} />
+            {presidentSignature ? (
+              <>
+                <Image 
+                  src={presidentSignature} 
+                  style={styles.signatureImage}
+                />
+                <Text style={styles.signatureName}>{presidentName || 'President'}</Text>
+                <Text style={styles.dateText}>Date: ___________________</Text>
+              </>
+            ) : (
+              <>
+                <View style={styles.signatureValue}></View>
+                <Text style={styles.signatureName}>{presidentName || 'President'}</Text>
+                <Text style={styles.dateText}>Date: ___________________</Text>
+              </>
+            )}
+          </View>
+          
+          {/* Faculty Adviser */}
+          <View style={styles.borderedSignatureColumn}>
+            <Text style={styles.signatureLabel}>b. Faculty Adviser</Text>
+            <View style={styles.signatureDivider} />
+            {signatures.adviser ? (
+              <>
+                {signatures.adviser.signature ? (
+                  <Image 
+                    src={signatures.adviser.signature} 
+                    style={styles.signatureImage}
+                  />
+                ) : (
+                  <View style={styles.signatureValue}></View>
+                )}
+                <Text style={styles.signatureName}>
+                  {signatures.adviser.firstName || signatures.adviser.lastName
+                    ? `${signatures.adviser.firstName || ''} ${signatures.adviser.lastName || ''}`.trim()
+                    : 'ADVISER NAME'}
+                </Text>
+                <Text style={styles.dateText}>
+                  Date: {signatures.adviser.date ? formatDate(signatures.adviser.date) : "___________________"}
+                </Text>
+              </>
+            ) : (
+              <>
+                <View style={styles.signatureValue}></View>
+                <Text style={styles.signatureName}>ADVISER NAME</Text>
+                <Text style={styles.dateText}>Date: ___________________</Text>
+              </>
+            )}
+          </View>
+        </View>
+      </View>
+
+      {/* Budget Approvals */}
+      <View style={styles.signatureSection}>
+        <Text style={styles.signatureTitle}>BUDGET APPROVALS</Text>
+        
+        {/* Dean & Admin */}
+        <View style={styles.signatureRowGap}>
+          <View style={styles.borderedSignatureColumn}>
+            <SignatureField 
+              title="a. Dean"
+              firstName={signatures.dean?.firstName}
+              lastName={signatures.dean?.lastName}
+              signature={signatures.dean?.signature}
+              date={signatures.dean?.date}
+              status={signatures.dean?.status}
+            />
+          </View>
+          
+          <View style={styles.borderedSignatureColumn}>
+            <SignatureField 
+              title="b. Admin"
+              firstName={signatures.admin?.firstName}
+              lastName={signatures.admin?.lastName}
+              signature={signatures.admin?.signature}
+              date={signatures.admin?.date}
+              status={signatures.admin?.status}
+            />
+          </View>
+        </View>
+        
+        {/* Academic Services & Academic Director */}
+        <View style={styles.signatureRowGap}>
+          <View style={styles.borderedSignatureColumn}>
+            <SignatureField 
+              title="c. Academic Services"
+              firstName={signatures.academicservices?.firstName}
+              lastName={signatures.academicservices?.lastName}
+              signature={signatures.academicservices?.signature}
+              date={signatures.academicservices?.date}
+              status={signatures.academicservices?.status}
+            />
+          </View>
+          
+          <View style={styles.borderedSignatureColumn}>
+            <SignatureField 
+              title="d. Academic Director"
+              firstName={signatures.academicdirector?.firstName}
+              lastName={signatures.academicdirector?.lastName}
+              signature={signatures.academicdirector?.signature}
+              date={signatures.academicdirector?.date}
+              status={signatures.academicdirector?.status}
+            />
+          </View>
+        </View>
+        
+        {/* Executive Director */}
+        <View style={[styles.borderedSignatureColumn, { width: '100%' }]}>
+          <SignatureField 
+            title="e. Executive Director"
+            firstName={signatures.executivedirector?.firstName}
+            lastName={signatures.executivedirector?.lastName}
+            signature={signatures.executivedirector?.signature}
+            date={signatures.executivedirector?.date}
+            status={signatures.executivedirector?.status}
+          />
+        </View>
+      </View>
+
+      <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
+        `Page ${pageNumber} of ${totalPages}`
+      )} fixed />
+    </Page>
+  );
+};
 
     return (
       <Document>
@@ -483,6 +597,12 @@
           </View>
 
           <Text style={styles.formTitle}>STUDENT ORGANIZATION ACTIVITY APPLICATION FORM</Text>
+
+          <Text style={styles.guidanceParagraph}>
+        This template provides guidance notes for event organizers and will help in the approval of the detailed Event Proposal/Plan. 
+        This Event Proposal/Plan should be submitted at least 1 to 3 months before the event to allow time for preparation and purchasing process. 
+        Please route this form and submit the signed form to: (1) Your Faculty Adviser/College Dean/Academic Director; and (2) SDAO.
+      </Text>
 
           {/* Event Location and Date */}
           <View style={styles.section}>
