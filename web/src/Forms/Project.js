@@ -39,10 +39,10 @@ const Project = () => {
     budgetProposals: []
   };
 
-  const [formData, setFormData] = useState(() => {
-    if (isEditMode) {
-      return initialFormData; // Will be populated by fetchFormData
-    }
+const [formData, setFormData] = useState(() => {
+  if (isEditMode) {
+    return initialFormData; // Will be populated by fetchFormData
+  }
     const savedData = localStorage.getItem('projectFormData');
     if (savedData) {
       try {
@@ -185,12 +185,20 @@ const Project = () => {
   const mobileStepTrackerRef = useRef(null);
 
   // Save formData to localStorage
-  useEffect(() => {
-    if (isEditMode && loading) { // Don't save while initial data for edit mode is loading
-      return;
-    }
+// Save formData to localStorage only in edit mode
+useEffect(() => {
+  if (isEditMode && !loading) { // Only save in edit mode after loading
     localStorage.setItem('projectFormData', JSON.stringify(formData));
-  }, [formData, isEditMode, loading]);
+  }
+}, [formData, isEditMode, loading]);
+
+useEffect(() => {
+  // Clear localStorage when creating a new form
+  if (!isEditMode) {
+    localStorage.removeItem('projectFormData');
+  }
+}, [isEditMode]);
+
 
   // Effect to scroll to the active step when current step changes
   useEffect(() => {
@@ -218,59 +226,64 @@ const Project = () => {
 
   useEffect(() => {
     const fetchFormData = async () => {
-      if (!isEditMode) return;
+  if (!isEditMode) return;
 
-      try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`https://studevent-server.vercel.app/api/forms/${formId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-
-        if (!response.ok) throw new Error('Failed to fetch form');
-
-        const formData = await response.json();
-
-        // Format the data for the form
-        const formattedData = {
-          ...formData,
-          startDate: formData.startDate ? new Date(formData.startDate).toISOString() : '',
-          endDate: formData.endDate ? new Date(formData.endDate).toISOString() : '',
-          // Format array fields if needed
-          programFlow: formData.programFlow || [{ timeRange: '', segment: '' }],
-          projectHeads: formData.projectHeads || [{ headName: '', designatedOffice: '' }],
-          workingCommittees: formData.workingCommittees || [
-            { workingName: '', designatedTask: '' }
-          ],
-          taskDeligation: formData.taskDeligation || [{ taskList: '', deadline: '' }],
-          timelineSchedules: formData.timelineSchedules || [
-            { publicationMaterials: '', schedule: '' }
-          ],
-          schoolEquipments: formData.schoolEquipments || [
-            { equipments: '', estimatedQuantity: '' }
-          ],
-          // Budget fields
-          budgetAmount: formData.budgetAmount || '',
-          budgetFrom: formData.budgetFrom || 'Org', // Default to 'Org' if empty
-          attachedBudget: formData.attachedBudget || null,
-          budgetProposals: formData.budgetProposals || []
-        };
-
-        setFormData(formattedData);
-      } catch (error) {
-        console.error('Error fetching form:', error);
-        setNotification({
-          visible: true,
-          message: 'Failed to load form data',
-          type: 'error'
-        });
-        setTimeout(() => setNotification({ visible: false }), 3000);
-        navigate('/submitted-forms');
-      } finally {
-        setLoading(false);
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`https://studevent-server.vercel.app/api/forms/${formId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
       }
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch form');
+
+    const formData = await response.json();
+
+    // Format the data for the form
+    const formattedData = {
+      ...formData,
+      startDate: formData.startDate ? new Date(formData.startDate).toISOString() : '',
+      endDate: formData.endDate ? new Date(formData.endDate).toISOString() : '',
+      // Format array fields if needed
+      programFlow: formData.programFlow || [{ timeRange: '', segment: '' }],
+      projectHeads: formData.projectHeads || [{ headName: '', designatedOffice: '' }],
+      workingCommittees: formData.workingCommittees || [
+        { workingName: '', designatedTask: '' }
+      ],
+      taskDeligation: formData.taskDeligation || [{ taskList: '', deadline: '' }],
+      timelineSchedules: formData.timelineSchedules || [
+        { publicationMaterials: '', schedule: '' }
+      ],
+      schoolEquipments: formData.schoolEquipments || [
+        { equipments: '', estimatedQuantity: '' }
+      ],
+      // Budget fields - ensure these are properly set
+      budgetAmount: formData.budgetAmount || '',
+      budgetFrom: formData.budgetFrom || 'Org', // Ensure this has a default value
+      attachedBudget: formData.attachedBudget?._id || formData.attachedBudget || null,
+      budgetProposals: formData.budgetProposals || []
     };
+
+    setFormData(formattedData);
+    
+    // If there's an attached budget, ensure it's in the proposals list
+    if (formattedData.attachedBudget) {
+      fetchSingleBudget(formattedData.attachedBudget);
+    }
+  } catch (error) {
+    console.error('Error fetching form:', error);
+    setNotification({
+      visible: true,
+      message: 'Failed to load form data',
+      type: 'error'
+    });
+    setTimeout(() => setNotification({ visible: false }), 3000);
+    navigate('/submitted-forms');
+  } finally {
+    setLoading(false);
+  }
+};
 
     fetchFormData();
   }, [formId, isEditMode, navigate]);
@@ -341,30 +354,36 @@ const Project = () => {
   };
 
   // Updated helper function to fetch a single budget
-  const fetchSingleBudget = async budgetId => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`https://studevent-server.vercel.app/api/budgets/${budgetId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const budget = await response.json();
-        setFormData(prev => ({
-          ...prev,
-          budgetProposals: [...prev.budgetProposals, budget]
-        }));
-      } else {
-        throw new Error(`Failed to fetch budget: ${response.status}`);
+const fetchSingleBudget = async budgetId => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`https://studevent-server.vercel.app/api/budgets/${budgetId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
       }
-    } catch (error) {
-      console.error('Error fetching single budget:', error);
-      // Optionally set an error state here if needed
+    });
+
+    if (response.ok) {
+      const budget = await response.json();
+      const validBudgetFromOptions = ['College/Department', 'Org', 'SDAO'];
+      const budgetFromValue = budget.nameOfRso && validBudgetFromOptions.includes(budget.nameOfRso)
+        ? budget.nameOfRso
+        : 'Org';
+
+      setFormData(prev => ({
+        ...prev,
+        budgetProposals: [...prev.budgetProposals, budget],
+        ...(prev.attachedBudget === budget._id && {
+          budgetAmount: budget.grandTotal,
+          budgetFrom: budgetFromValue
+        })
+      }));
     }
-  };
+  } catch (error) {
+    console.error('Error fetching single budget:', error);
+  }
+};
 
   // Call this in useEffect when component mounts
   useEffect(() => {
@@ -830,26 +849,8 @@ const isDateBlocked = (date) => {
       // Reset form if not in edit mode
       if (!isEditMode) {
         localStorage.removeItem('projectFormData'); // Clear localStorage
-        setFormData({
-          projectTitle: '',
-          projectDescription: '',
-          projectObjectives: '',
-          startDate: '',
-          endDate: '',
-          venue: '',
-          targetParticipants: '',
-          projectGuidelines: '',
-          programFlow: [{ timeRange: '', segment: '' }],
-          projectHeads: [{ headName: '', designatedOffice: '' }],
-          workingCommittees: [{ workingName: '', designatedTask: '' }],
-          taskDeligation: [{ taskList: '', deadline: '' }],
-          timelineSchedules: [{ publicationMaterials: '', schedule: '' }],
-          schoolEquipments: [{ equipments: '', estimatedQuantity: '' }],
-          budgetAmount: '',
-          budgetFrom: '',
-          attachedBudget: null,
-          budgetProposals: []
-        });
+        setFormData(initialFormData); // Reset form state
+        setCurrentStep(0); // Reset to first step
       }
 
       // Redirect after 3 seconds
@@ -1574,33 +1575,25 @@ const isDateBlocked = (date) => {
               )}
             </div>
 
-            <div className="form-group">
-              <label className="required-field">Budget From:</label>
-              <select
-                name="budgetFrom"
-                value={formData.budgetFrom}
-                onChange={handleChange}
-                readOnly={!!formData.attachedBudget}
-                className={fieldErrors.budgetFrom ? 'invalid-field' : ''}
-              >
-                <option value="">Select An Option...</option>
-                <option
-                  value="College/Department"
-                  selected={formData.budgetFrom === 'College/Department'}
-                >
-                  College/Department
-                </option>
-                <option value="Org" selected={formData.budgetFrom === 'Org'}>
-                  Organization
-                </option>
-                <option value="SDAO" selected={formData.budgetFrom === 'SDAO'}>
-                  SDAO
-                </option>
-              </select>
-              {fieldErrors.budgetFrom && (
-                <span className="validation-error">Budget source is required</span>
-              )}
-            </div>
+           <div className="form-group">
+          <label className="required-field">Budget From:</label>
+          <select
+            name="budgetFrom"
+            value={formData.budgetFrom || ''}
+            onChange={handleChange}
+            readOnly={!!formData.attachedBudget}
+            className={fieldErrors.budgetFrom ? 'invalid-field' : ''}
+          >
+            <option value="">Select An Option...</option>
+            <option value="College/Department">College/Department</option>
+            <option value="Org">Organization</option>
+            <option value="SDAO">SDAO</option>
+          </select>
+          {fieldErrors.budgetFrom && (
+            <span className="validation-error">Budget source is required</span>
+          )}
+        </div>
+
 
             <p className="venue-note">
               Note: Budget amount is not automatically approved by this system. Please confirm

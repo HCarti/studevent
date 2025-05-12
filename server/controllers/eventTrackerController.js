@@ -294,15 +294,17 @@ const updateTrackerStep = async (req, res) => {
 
 let form;
     try {
-      // First try LocalOffCampus with proper casting
-      form = await LocalOffCampus.findById(mongoose.Types.ObjectId(tracker.formId)).session(session);
-      console.log('LocalOffCampus lookup result:', form ? 'Found' : 'Not found');
+      // First try LocalOffCampus with proper ObjectId creation
+      if (tracker.formId) {
+        const formId = new mongoose.Types.ObjectId(tracker.formId); // Use new keyword
+        form = await LocalOffCampus.findById(formId).session(session);
+        console.log('LocalOffCampus lookup result:', form ? 'Found' : 'Not found');
 
-      // If not found, try regular Form collection
-      if (!form) {
-        form = await Form.findById(mongoose.Types.ObjectId(tracker.formId))
-          .session(session);
-        console.log('Form collection lookup result:', form ? 'Found' : 'Not found');
+        // If not found, try regular Form collection
+        if (!form) {
+          form = await Form.findById(formId).session(session);
+          console.log('Form collection lookup result:', form ? 'Found' : 'Not found');
+        }
       }
 
       if (!form) {
