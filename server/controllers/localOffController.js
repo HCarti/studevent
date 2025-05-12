@@ -5,14 +5,27 @@ const EventTracker = require('../models/EventTracker');
 const mongoose = require('mongoose');
 
 // Helper function to get required reviewers based on form phase
-const getRequiredReviewers = (formPhase) => {
+const getRequiredReviewers = async (formPhase, organizationId = null) => {
   if (formPhase === 'BEFORE') {
-    return [
+    const baseSteps = [
       { stepName: "Academic Services", reviewerRole: "Academic Services" },
-      { stepName: "Dean", reviewerRole: "Dean" },
       { stepName: "Admin", reviewerRole: "Admin" },
       { stepName: "Executive Director", reviewerRole: "Executive Director" }
     ];
+
+    // Only add Dean step if this is an academic organization
+    if (organizationId) {
+      const org = await User.findById(organizationId);
+      if (org && org.organizationType === 'Recognized Student Organization - Academic') {
+        // Insert Dean step after Academic Services
+        baseSteps.splice(1, 0, { 
+          stepName: "Dean", 
+          reviewerRole: "Dean" 
+        });
+      }
+    }
+
+    return baseSteps;
   } else { // AFTER form
     return [
       { stepName: "Academic Services", reviewerRole: "Academic Services" },
@@ -57,6 +70,14 @@ exports.submitLocalOffCampusBefore = async (req, res) => {
       });
     }
 
+    // Get the user's organization (if any)
+    let organizationId = null;
+    if (req.user.organizationId) {
+      organizationId = req.user.organizationId;
+    } else if (req.user.role === 'Organization') {
+      organizationId = req.user._id;
+    }
+
     // Create the BEFORE form
     const newForm = new LocalOffCampus({
       formPhase: "BEFORE",
@@ -68,13 +89,14 @@ exports.submitLocalOffCampusBefore = async (req, res) => {
       submittedBy: req.user._id,
       status: "submitted",
       emailAddress: req.user.email,
-      currentStep: 0 // Add currentStep to track progress
+      currentStep: 0,
+      organizationId: organizationId // Store organization reference
     });
 
     const savedForm = await newForm.save({ session });
 
-    // Create progress tracker - MODIFIED THIS SECTION
-    const requiredReviewers = getRequiredReviewers('BEFORE');
+    // Create progress tracker with dynamic reviewers
+    const requiredReviewers = await getRequiredReviewers('BEFORE', organizationId);
     const tracker = new EventTracker({
       formId: savedForm._id,
       formType: "LocalOffCampus",
@@ -87,11 +109,13 @@ exports.submitLocalOffCampusBefore = async (req, res) => {
         timestamp: null
       })),
       currentStep: 0,
-      currentAuthority: requiredReviewers[0].reviewerRole // Set first reviewer as current
+      currentAuthority: requiredReviewers[0].reviewerRole,
+      organizationId: organizationId // Store organization reference
     });
 
     const savedTracker = await tracker.save({ session });
 
+    // Rest of the function remains the same...
     // Update form with tracker reference
     await LocalOffCampus.findByIdAndUpdate(
       savedForm._id,
@@ -105,24 +129,23 @@ exports.submitLocalOffCampusBefore = async (req, res) => {
         userEmail: req.user.email,
         message: `Your Local Off-Campus BEFORE form has been submitted!`,
         read: false,
-        type: "event", // Changed from "form-submission"
+        type: "event",
         timestamp: new Date(),
         trackerId: savedTracker._id
       }], { session });
     }
     
-
-    // Send notifications to first reviewers (Academic Services)
-    const academicServicesUsers = await User.find({ 
-      role: "Academic Services" 
+    // Send notifications to first reviewers
+    const firstReviewers = await User.find({ 
+      role: requiredReviewers[0].reviewerRole 
     }).session(session);
 
-    const reviewerNotifications = academicServicesUsers.map(user => ({
+    const reviewerNotifications = firstReviewers.map(user => ({
       userEmail: user.email,
       message: `New Local Off-Campus BEFORE form submitted by ${req.user.name || 'an organization'}`,
       read: false,
       timestamp: new Date(),
-      type: "organization", // Changed from "review-request"
+      type: "organization",
       link: `/review/local-off-campus/${savedForm._id}`,
       formId: savedForm._id,
       trackerId: savedTracker._id
