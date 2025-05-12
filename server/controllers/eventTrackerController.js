@@ -246,14 +246,17 @@ const getReviewSignatures = async (req, res) => {
 const updateTrackerStep = async (req, res) => {
   let session; // Declare session at the top
   try {
+    session = await mongoose.startSession();
+    await session.startTransaction(); // Start transaction here
     const { trackerId, stepId } = req.params;
     const { status, remarks, signature } = req.body;
     const userId = req.user._id;
     const { role, faculty, email: currentUserEmail, firstName, lastName } = req.user;
-    session = await mongoose.startSession();
 
     // Validate user and request
-    if (!req.user) {
+      if (!req.user) {
+      await session.abortTransaction();
+      await session.endSession();
       return res.status(403).json({ message: "Unauthorized: Missing user credentials." });
     }
 
@@ -309,7 +312,7 @@ const updateTrackerStep = async (req, res) => {
 
       // Update tracker's formType if needed
       if (!tracker.formType) {
-        if (form.formPhase) { // Local Off-Campus forms have formPhase
+        if (form.formPhase) {
           tracker.formType = 'LocalOffCampus';
         } else {
           tracker.formType = form.formType || 'Activity';
@@ -326,8 +329,11 @@ const updateTrackerStep = async (req, res) => {
     // Find the step
     const step = tracker.steps.find(step => step._id.toString() === stepId);
     if (!step) {
+      await session.abortTransaction();
+      await session.endSession();
       return res.status(404).json({ message: "Step not found" });
     }
+
 
        // Additional validation for Advisers - must be assigned to this organization
        if (faculty === "Adviser") {
