@@ -289,47 +289,32 @@ const updateTrackerStep = async (req, res) => {
 
     let form;
     try {
-      // First try LocalOffCampus collection
+      // First try LocalOffCampus collection (no formType check needed)
       form = await LocalOffCampus.findById(tracker.formId).session(session);
       
-      // If not found, try regular Form collection
+      // If not found, try regular Form collection (for Activity/Project forms)
       if (!form) {
         form = await Form.findById(tracker.formId)
           .populate('studentOrganization', 'email organizationName')
           .session(session);
       }
 
-      // If still not found, try Budget collection
-      if (!form) {
-        form = await BudgetProposal.findById(tracker.formId).session(session);
-      }
-
       if (!form) {
         await session.abortTransaction();
         session.endSession();
-        return res.status(404).json({ 
-          message: "Form not found in any collection",
-          formId: tracker.formId,
-          searchedCollections: ['LocalOffCampus', 'Form', 'BudgetProposal']
-        });
+        return res.status(404).json({ message: "Form not found" });
       }
 
-      // Update tracker's formType if not set or incorrect
+      // Determine form type for tracker reference
       if (!tracker.formType) {
-        if (form instanceof LocalOffCampus) {
-          tracker.formType = 'LocalOffCampus';
-        } else if (form instanceof BudgetProposal) {
-          tracker.formType = 'Budget';
-        } else {
-          tracker.formType = form.formType || 'Activity'; // default
-        }
+        tracker.formType = form.formPhase ? 'LocalOffCampus' : (form.formType || 'Activity');
         await tracker.save({ session });
       }
     } catch (error) {
       await session.abortTransaction();
       session.endSession();
-      console.error("Form detection error:", error);
-      return res.status(500).json({ message: "Error locating form", error: error.message });
+      console.error("Form lookup error:", error);
+      return res.status(500).json({ message: "Error locating form" });
     }
 
     // Find the step
