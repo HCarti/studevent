@@ -244,11 +244,13 @@ const getReviewSignatures = async (req, res) => {
 
 // Update event tracker progress
 const updateTrackerStep = async (req, res) => {
+  let session; // Declare session at the top
   try {
     const { trackerId, stepId } = req.params;
     const { status, remarks, signature } = req.body;
     const userId = req.user._id;
     const { role, faculty, email: currentUserEmail, firstName, lastName } = req.user;
+    session = await mongoose.startSession();
 
     // Validate user and request
     if (!req.user) {
@@ -289,10 +291,10 @@ const updateTrackerStep = async (req, res) => {
 
     let form;
     try {
-      // First try LocalOffCampus collection (no formType check needed)
+      // Try LocalOffCampus first
       form = await LocalOffCampus.findById(tracker.formId).session(session);
       
-      // If not found, try regular Form collection (for Activity/Project forms)
+      // If not found, try regular Form collection
       if (!form) {
         form = await Form.findById(tracker.formId)
           .populate('studentOrganization', 'email organizationName')
@@ -301,19 +303,23 @@ const updateTrackerStep = async (req, res) => {
 
       if (!form) {
         await session.abortTransaction();
-        session.endSession();
-        return res.status(404).json({ message: "Form not found" });
+        await session.endSession();
+        return res.status(404).json({ message: "Form not found in any collection" });
       }
 
-      // Determine form type for tracker reference
+      // Update tracker's formType if needed
       if (!tracker.formType) {
-        tracker.formType = form.formPhase ? 'LocalOffCampus' : (form.formType || 'Activity');
+        if (form.formPhase) { // Local Off-Campus forms have formPhase
+          tracker.formType = 'LocalOffCampus';
+        } else {
+          tracker.formType = form.formType || 'Activity';
+        }
         await tracker.save({ session });
       }
     } catch (error) {
       await session.abortTransaction();
-      session.endSession();
-      console.error("Form lookup error:", error);
+      await session.endSession();
+      console.error("Form detection error:", error);
       return res.status(500).json({ message: "Error locating form" });
     }
 
