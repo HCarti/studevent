@@ -270,21 +270,23 @@ const updateTrackerStep = async (req, res) => {
     }
 
     // Fetch the tracker with populated form and organization data
+    // Fetch the tracker with proper population
     const tracker = await EventTracker.findById(trackerId)
       .populate({
         path: 'formId',
-        populate: {
-          path: 'studentOrganization',
-          select: 'organizationName'
-        }
+        model: 'LocalOffCampus'  // Explicitly specify the model
       })
       .populate({
         path: 'steps.reviewedBy',
         select: 'firstName lastName email role faculty organization'
       });
-    
+
     if (!tracker) {
       return res.status(404).json({ message: "Tracker not found" });
+    }
+
+    if (!tracker.formId) {
+      return res.status(404).json({ message: "Form reference missing in tracker" });
     }
 
     let form;
