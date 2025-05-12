@@ -289,15 +289,22 @@ const updateTrackerStep = async (req, res) => {
 
     let form;
     try {
-      form = await LocalOffCampus.findById(tracker.formId._id) || 
-             await mongoose.model('Form').findById(tracker.formId._id)
-               .populate('studentOrganization', 'email organizationName');
+      // Try LocalOffCampus first if it's an off-campus form
+      if (tracker.formType === 'LocalOffCampus') {
+        form = await LocalOffCampus.findById(tracker.formId);
+      }
+      
+      // If not found or not off-campus, try regular Form collection
+      if (!form) {
+        form = await Form.findById(tracker.formId)
+          .populate('studentOrganization', 'email organizationName');
+      }
+
+      if (!form) {
+        return res.status(404).json({ message: "Form not found" });
+      }
     } catch (error) {
       console.error("Error finding form:", error);
-      return res.status(404).json({ message: "Form not found" });
-    }
-
-    if (!form) {
       return res.status(404).json({ message: "Form not found" });
     }
 

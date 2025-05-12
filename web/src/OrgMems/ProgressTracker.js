@@ -416,22 +416,47 @@ const ProgressTracker = () => {
         }
     };
 
-    const handleSaveClick = async () => {
-        if (!trackerData || !user) return;
+const handleSaveClick = async () => {
+    // 1. Validate required data exists
+    if (!trackerData || !user) {
+        console.error("Missing trackerData or user");
+        return;
+    }
 
-        const token = localStorage.getItem("token");
-        if (!token) return;
+    const token = localStorage.getItem("token");
+    if (!token) {
+        console.error("No auth token found");
+        return;
+    }
 
-        const status = isApprovedChecked ? "approved" : "declined";
-        const trackerId = trackerData._id || formId;
-        const step = trackerData.steps.find(step => 
-            step.status === "pending" || step.status === "declined"
-        );
+    // 2. Prepare request data
+    const status = isApprovedChecked ? "approved" : "declined";
+    const trackerId = trackerData._id; // Remove formId fallback as it's not needed
+    
+    // 3. Find the current step (first pending or declined step)
+    const step = trackerData.steps.find(step => 
+        step.status === "pending" || step.status === "declined"
+    );
 
-        if (!step) return;
+    if (!step) {
+        console.error("No pending or declined steps found");
+        return;
+    }
 
-        try {
-            await fetch(`https://studevent-server.vercel.app/api/tracker/update-step/${trackerId}/${step._id}`, {
+    try {
+        // 4. Add debug logging before the request
+        console.log("Submitting tracker update:", {
+            trackerId,
+            stepId: step._id,
+            status,
+            hasRemarks: !!remarks,
+            hasSignature: !!user.signature
+        });
+
+        // 5. Make the API request with better error handling
+        const response = await fetch(
+            `https://studevent-server.vercel.app/api/tracker/update-step/${trackerId}/${step._id}`, 
+            {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -442,15 +467,39 @@ const ProgressTracker = () => {
                     remarks: remarks || "", 
                     signature: user.signature 
                 }),
-            });
+            }
+        );
 
-            await fetchAllData();
-            setIsEditing(false);
-            setRemarks("");
-        } catch (error) {
-            console.error("Update error:", error);
+        // 6. Handle non-successful responses
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error("Server responded with error:", {
+                status: response.status,
+                error: errorData.message || "Unknown error"
+            });
+            throw new Error(errorData.message || "Failed to update tracker");
         }
-    };
+
+        // 7. Process successful response
+        const responseData = await response.json();
+        console.log("Update successful:", responseData);
+
+        // 8. Refresh data and reset form
+        await fetchAllData();
+        setIsEditing(false);
+        setRemarks("");
+        
+    } catch (error) {
+        // 9. Enhanced error handling
+        console.error("Update failed:", {
+            error: error.message,
+            stack: error.stack
+        });
+        
+        // Show user-friendly error message
+        alert(`Update failed: ${error.message || "Please check console for details"}`);
+    }
+};
 
     const getPdfComponent = (formType) => {
         switch (formType) {
@@ -527,68 +576,71 @@ const ProgressTracker = () => {
       };
 
     const renderProgressSteps = () => {
-        if (!trackerData || !trackerData.steps) return null;
-    
-        return trackerData.steps.map((step, index) => {
-            if (step.stepName === 'Dean' && organizationType !== 'Recognized Student Organization - Academic') {
-                return null;
-            }
-    
-            let reviewerName = 'Unknown Reviewer';
-            if (step.reviewedBy) {
-                if (typeof step.reviewedBy === 'object') {
-                    if (step.reviewedBy.firstName || step.reviewedBy.lastName) {
-                        reviewerName = `${step.reviewedBy.firstName || ''} ${step.reviewedBy.lastName || ''}`.trim();
-                    } else if (step.reviewedBy.email) {
-                        reviewerName = step.reviewedBy.email.split('@')[0];
-                    }
-                } else if (typeof step.reviewedBy === 'string') {
-                    reviewerName = `User ${step.reviewedBy.substring(0, 5)}...`;
+    if (!trackerData || !trackerData.steps) return null;
+
+    return trackerData.steps.map((step, index) => {
+        // Only skip Dean step for non-academic orgs in regular forms, not Local Off-Campus
+        if (step.stepName === 'Dean' && 
+            formDetails?.formType !== 'LocalOffCampus' && 
+            organizationType !== 'Recognized Student Organization - Academic') {
+            return null;
+        }
+
+        let reviewerName = 'Unknown Reviewer';
+        if (step.reviewedBy) {
+            if (typeof step.reviewedBy === 'object') {
+                if (step.reviewedBy.firstName || step.reviewedBy.lastName) {
+                    reviewerName = `${step.reviewedBy.firstName || ''} ${step.reviewedBy.lastName || ''}`.trim();
+                } else if (step.reviewedBy.email) {
+                    reviewerName = step.reviewedBy.email.split('@')[0];
                 }
+            } else if (typeof step.reviewedBy === 'string') {
+                reviewerName = `User ${step.reviewedBy.substring(0, 5)}...`;
             }
+        }
 
-            // Determine icon and status class
-            let icon, statusClass;
-            if (step.status === 'approved') {
-                icon = <CheckCircleIcon />;
-                statusClass = '';
-            } else if (step.status === 'declined') {
-                icon = <HighlightOffIcon />;
-                statusClass = 'declined';
-            } else {
-                icon = <RadioButtonUncheckedIcon />;
-                statusClass = 'pending';
-            }
+        // Rest of the rendering logic remains the same...
+        let icon, statusClass;
+        if (step.status === 'approved') {
+            icon = <CheckCircleIcon />;
+            statusClass = '';
+        } else if (step.status === 'declined') {
+            icon = <HighlightOffIcon />;
+            statusClass = 'declined';
+        } else {
+            icon = <RadioButtonUncheckedIcon />;
+            statusClass = 'pending';
+        }
 
-            return (
-                <div key={index} className="step-container">
-                    <div className={`progress-step ${statusClass}`}>{icon}</div>
-                    <div className="step-label">
-                        <span className="step-date">
-                            {step.timestamp ? new Date(step.timestamp).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : ''}
-                        </span>
-                        <strong>{step.stepName}</strong>
-                        <div style={{ color: '#444', marginBottom: 4 }}>
-                            {step.status === 'approved' && 'Step approved.'}
-                            {step.status === 'declined' && 'Step declined.'}
-                            {step.status === 'pending' && 'Awaiting review.'}
-                        </div>
-                        {step.status !== 'pending' && (
-                            <div className="reviewer-info">
-                                <small><span style={{ fontWeight: 'bold' }}>Reviewed by:</span> {reviewerName}</small>
-                                {step.timestamp && (
-                                    <small><span style={{ fontWeight: 'bold' }}>Time:</span> {new Date(step.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>
-                                )}
-                                {step.remarks && (
-                                    <small className="remarks"><span style={{ fontWeight: 'bold' }}>Remarks:</span> {step.remarks}</small>
-                                )}
-                            </div>
-                        )}
+        return (
+            <div key={index} className="step-container">
+                <div className={`progress-step ${statusClass}`}>{icon}</div>
+                <div className="step-label">
+                    <span className="step-date">
+                        {step.timestamp ? new Date(step.timestamp).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : ''}
+                    </span>
+                    <strong>{step.stepName}</strong>
+                    <div style={{ color: '#444', marginBottom: 4 }}>
+                        {step.status === 'approved' && 'Step approved.'}
+                        {step.status === 'declined' && 'Step declined.'}
+                        {step.status === 'pending' && 'Awaiting review.'}
                     </div>
+                    {step.status !== 'pending' && (
+                        <div className="reviewer-info">
+                            <small><span style={{ fontWeight: 'bold' }}>Reviewed by:</span> {reviewerName}</small>
+                            {step.timestamp && (
+                                <small><span style={{ fontWeight: 'bold' }}>Time:</span> {new Date(step.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>
+                            )}
+                            {step.remarks && (
+                                <small className="remarks"><span style={{ fontWeight: 'bold' }}>Remarks:</span> {step.remarks}</small>
+                            )}
+                        </div>
+                    )}
                 </div>
-            );
-        });
-    };
+            </div>
+        );
+    });
+};
 
     const isTrackerCompleted = () => {
         if (!trackerData || !trackerData.steps) return false;
