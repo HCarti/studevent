@@ -244,19 +244,14 @@ const getReviewSignatures = async (req, res) => {
 
 // Update event tracker progress
 const updateTrackerStep = async (req, res) => {
-  let session; // Declare session at the top
   try {
-    session = await mongoose.startSession();
-    await session.startTransaction(); // Start transaction here
     const { trackerId, stepId } = req.params;
     const { status, remarks, signature } = req.body;
     const userId = req.user._id;
     const { role, faculty, email: currentUserEmail, firstName, lastName } = req.user;
 
     // Validate user and request
-      if (!req.user) {
-      await session.abortTransaction();
-      await session.endSession();
+    if (!req.user) {
       return res.status(403).json({ message: "Unauthorized: Missing user credentials." });
     }
 
@@ -292,70 +287,25 @@ const updateTrackerStep = async (req, res) => {
       return res.status(404).json({ message: "Tracker not found" });
     }
 
-let form;
-try {
-  // First check if tracker.formId exists and is valid
-  if (!tracker.formId) {
-    await session.abortTransaction();
-    await session.endSession();
-    return res.status(404).json({ 
-      message: "Tracker has no associated form",
-      trackerId: tracker._id
-    });
-  }
-
-  // No need to create new ObjectId - tracker.formId should already be one
-  form = await LocalOffCampus.findById(tracker.formId).session(session);
-  console.log('LocalOffCampus lookup result:', form ? 'Found' : 'Not found');
-
-  // If not found, try regular Form collection
-  if (!form) {
-    form = await Form.findById(tracker.formId).session(session);
-    console.log('Form collection lookup result:', form ? 'Found' : 'Not found');
-  }
-
-      if (!form) {
-        await session.abortTransaction();
-        await session.endSession();
-        return res.status(404).json({ 
-          message: "Form not found in any collection",
-          formId: tracker.formId,
-          searchedCollections: ['LocalOffCampus', 'Form']
-        });
-      }
-
-      // Now populate organization if needed
-      if (form.studentOrganization && typeof form.studentOrganization === 'object') {
-        await form.populate('studentOrganization', 'email organizationName').execPopulate();
-      }
-
-      // Update tracker's formType if needed
-      if (!tracker.formType) {
-        tracker.formType = form.formPhase ? 'LocalOffCampus' : (form.formType || 'Activity');
-        await tracker.save({ session });
-      }
+    let form;
+    try {
+      form = await LocalOffCampus.findById(tracker.formId._id) || 
+             await mongoose.model('Form').findById(tracker.formId._id)
+               .populate('studentOrganization', 'email organizationName');
     } catch (error) {
-      await session.abortTransaction();
-      await session.endSession();
-      console.error("Form detection error:", {
-        message: error.message,
-        formId: tracker.formId,
-        error
-      });
-      return res.status(500).json({ 
-        message: "Error locating form",
-        error: error.message 
-      });
+      console.error("Error finding form:", error);
+      return res.status(404).json({ message: "Form not found" });
+    }
+
+    if (!form) {
+      return res.status(404).json({ message: "Form not found" });
     }
 
     // Find the step
     const step = tracker.steps.find(step => step._id.toString() === stepId);
     if (!step) {
-      await session.abortTransaction();
-      await session.endSession();
       return res.status(404).json({ message: "Step not found" });
     }
-
 
        // Additional validation for Advisers - must be assigned to this organization
        if (faculty === "Adviser") {

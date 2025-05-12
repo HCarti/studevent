@@ -416,47 +416,22 @@ const ProgressTracker = () => {
         }
     };
 
-const handleSaveClick = async () => {
-    // 1. Validate required data exists
-    if (!trackerData || !user) {
-        console.error("Missing trackerData or user");
-        return;
-    }
+    const handleSaveClick = async () => {
+        if (!trackerData || !user) return;
 
-    const token = localStorage.getItem("token");
-    if (!token) {
-        console.error("No auth token found");
-        return;
-    }
+        const token = localStorage.getItem("token");
+        if (!token) return;
 
-    // 2. Prepare request data
-    const status = isApprovedChecked ? "approved" : "declined";
-    const trackerId = trackerData._id; // Remove formId fallback as it's not needed
-    
-    // 3. Find the current step (first pending or declined step)
-    const step = trackerData.steps.find(step => 
-        step.status === "pending" || step.status === "declined"
-    );
+        const status = isApprovedChecked ? "approved" : "declined";
+        const trackerId = trackerData._id || formId;
+        const step = trackerData.steps.find(step => 
+            step.status === "pending" || step.status === "declined"
+        );
 
-    if (!step) {
-        console.error("No pending or declined steps found");
-        return;
-    }
+        if (!step) return;
 
-    try {
-        // 4. Add debug logging before the request
-        console.log("Submitting tracker update:", {
-            trackerId,
-            stepId: step._id,
-            status,
-            hasRemarks: !!remarks,
-            hasSignature: !!user.signature
-        });
-
-        // 5. Make the API request with better error handling
-        const response = await fetch(
-            `https://studevent-server.vercel.app/api/tracker/update-step/${trackerId}/${step._id}`, 
-            {
+        try {
+            await fetch(`https://studevent-server.vercel.app/api/tracker/update-step/${trackerId}/${step._id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -467,39 +442,15 @@ const handleSaveClick = async () => {
                     remarks: remarks || "", 
                     signature: user.signature 
                 }),
-            }
-        );
-
-        // 6. Handle non-successful responses
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            console.error("Server responded with error:", {
-                status: response.status,
-                error: errorData.message || "Unknown error"
             });
-            throw new Error(errorData.message || "Failed to update tracker");
+
+            await fetchAllData();
+            setIsEditing(false);
+            setRemarks("");
+        } catch (error) {
+            console.error("Update error:", error);
         }
-
-        // 7. Process successful response
-        const responseData = await response.json();
-        console.log("Update successful:", responseData);
-
-        // 8. Refresh data and reset form
-        await fetchAllData();
-        setIsEditing(false);
-        setRemarks("");
-        
-    } catch (error) {
-        // 9. Enhanced error handling
-        console.error("Update failed:", {
-            error: error.message,
-            stack: error.stack
-        });
-        
-        // Show user-friendly error message
-        alert(`Update failed: ${error.message || "Please check console for details"}`);
-    }
-};
+    };
 
     const getPdfComponent = (formType) => {
         switch (formType) {
