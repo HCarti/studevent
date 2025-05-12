@@ -292,38 +292,51 @@ const updateTrackerStep = async (req, res) => {
       return res.status(404).json({ message: "Tracker not found" });
     }
 
-    let form;
+let form;
     try {
-      // Try LocalOffCampus first
-      form = await LocalOffCampus.findById(tracker.formId).session(session);
-      
+      // First try LocalOffCampus with proper casting
+      form = await LocalOffCampus.findById(mongoose.Types.ObjectId(tracker.formId)).session(session);
+      console.log('LocalOffCampus lookup result:', form ? 'Found' : 'Not found');
+
       // If not found, try regular Form collection
       if (!form) {
-        form = await Form.findById(tracker.formId)
-          .populate('studentOrganization', 'email organizationName')
+        form = await Form.findById(mongoose.Types.ObjectId(tracker.formId))
           .session(session);
+        console.log('Form collection lookup result:', form ? 'Found' : 'Not found');
       }
 
       if (!form) {
         await session.abortTransaction();
         await session.endSession();
-        return res.status(404).json({ message: "Form not found in any collection" });
+        return res.status(404).json({ 
+          message: "Form not found in any collection",
+          formId: tracker.formId,
+          searchedCollections: ['LocalOffCampus', 'Form']
+        });
+      }
+
+      // Now populate organization if needed
+      if (form.studentOrganization && typeof form.studentOrganization === 'object') {
+        await form.populate('studentOrganization', 'email organizationName').execPopulate();
       }
 
       // Update tracker's formType if needed
       if (!tracker.formType) {
-        if (form.formPhase) {
-          tracker.formType = 'LocalOffCampus';
-        } else {
-          tracker.formType = form.formType || 'Activity';
-        }
+        tracker.formType = form.formPhase ? 'LocalOffCampus' : (form.formType || 'Activity');
         await tracker.save({ session });
       }
     } catch (error) {
       await session.abortTransaction();
       await session.endSession();
-      console.error("Form detection error:", error);
-      return res.status(500).json({ message: "Error locating form" });
+      console.error("Form detection error:", {
+        message: error.message,
+        formId: tracker.formId,
+        error
+      });
+      return res.status(500).json({ 
+        message: "Error locating form",
+        error: error.message 
+      });
     }
 
     // Find the step
