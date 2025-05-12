@@ -270,23 +270,25 @@ const updateTrackerStep = async (req, res) => {
     }
 
     // Fetch the tracker with populated form and organization data
-    // Fetch the tracker with proper population
     const tracker = await EventTracker.findById(trackerId)
       .populate({
         path: 'formId',
         model: 'LocalOffCampus'  // Explicitly specify the model
+        })
+      .populate({
+        path: 'formId',
+        populate: {
+          path: 'studentOrganization',
+          select: 'organizationName'
+        }
       })
       .populate({
         path: 'steps.reviewedBy',
         select: 'firstName lastName email role faculty organization'
       });
-
+    
     if (!tracker) {
       return res.status(404).json({ message: "Tracker not found" });
-    }
-
-    if (!tracker.formId) {
-      return res.status(404).json({ message: "Form reference missing in tracker" });
     }
 
     let form;
@@ -301,9 +303,9 @@ const updateTrackerStep = async (req, res) => {
         // Try LocalOffCampus first, then regular Form
         form = await LocalOffCampus.findById(formId)
           .populate({
-          path: 'submittedBy',
-          select: 'email organizationName organizationType'
-        }) || 
+            path: 'submittedBy',
+            select: 'email organizationName organizationType'
+          }) || 
           await mongoose.model('Form').findById(formId)
             .populate('studentOrganization', 'email organizationName');
       } catch (error) {
