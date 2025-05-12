@@ -103,7 +103,6 @@ const confirmDelete = async () => {
       showNotification('Organization moved to trash successfully');
       
       // Optional: Show success message
-      alert('Organization moved to trash successfully');
     } else {
       const errorMsg = response.data?.message || 'Unknown error occurred';
       console.error('Delete failed:', errorMsg);

@@ -8,6 +8,7 @@ import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 
 const Localoffcampus = () => {
+  const location = useLocation(); // <-- Add this line at the top
   const initialFormData = {
     formPhase: 'BEFORE',
     nameOfHei: 'National University MOA',
@@ -87,7 +88,6 @@ const Localoffcampus = () => {
   const [eventId, setEventId] = useState(null);
   const [notificationVisible, setNotificationVisible] = useState(false);
   const [isEditingAfter, setIsEditingAfter] = useState(false);
-  const location = useLocation();
   const navigate = useNavigate();
   const [validationTrigger, setValidationTrigger] = useState(0);
   const [shouldValidate, setShouldValidate] = useState(false);
