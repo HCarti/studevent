@@ -288,18 +288,23 @@ const updateTrackerStep = async (req, res) => {
     }
 
     let form;
-    try {
-      form = await LocalOffCampus.findById(tracker.formId._id) || 
-             await mongoose.model('Form').findById(tracker.formId._id)
-               .populate('studentOrganization', 'email organizationName');
-    } catch (error) {
-      console.error("Error finding form:", error);
-      return res.status(404).json({ message: "Form not found" });
-    }
+      try {
+        // Get the actual form ID (handles both populated and non-populated cases)
+        const formId = tracker.formId?._id || tracker.formId;
+        
+        if (!formId) {
+          return res.status(404).json({ message: "Form ID not found in tracker" });
+        }
 
-    if (!form) {
-      return res.status(404).json({ message: "Form not found" });
-    }
+        // Try LocalOffCampus first, then regular Form
+        form = await LocalOffCampus.findById(formId)
+          .populate('studentOrganization', 'email organizationName') || 
+          await mongoose.model('Form').findById(formId)
+            .populate('studentOrganization', 'email organizationName');
+      } catch (error) {
+        console.error("Error finding form:", error);
+        return res.status(404).json({ message: "Form not found" });
+      }
 
     // Find the step
     const step = tracker.steps.find(step => step._id.toString() === stepId);
