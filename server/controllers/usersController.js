@@ -515,16 +515,6 @@ const updateProfile = async (req, res) => {
     }
 
     const updateData = { firstName, lastName, email };
-    
-    // Handle file upload if provided
-    if (req.files && req.files.image) {
-      const imageBlob = await put(
-        `user-${userId}-image-${Date.now()}`,
-        req.files.image[0].buffer,
-        { access: 'public' }
-      );
-      updateData.image = imageBlob.url;
-    }
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,

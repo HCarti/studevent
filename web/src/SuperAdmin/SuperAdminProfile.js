@@ -128,44 +128,56 @@ const SuperAdminProfile = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSaveChanges = async () => {
-    try {
-      setIsSaving(true);
-      const token = localStorage.getItem('token');
-      
-      const formData = new FormData();
-      formData.append('firstName', editedUser.firstName);
-      formData.append('lastName', editedUser.lastName);
-      formData.append('email', editedUser.email);
-      if (profileImage) {
-        formData.append('image', profileImage);
-      }
+const handleSaveChanges = async () => {
+  // First, validate required fields
+  if (!editedUser.firstName || !editedUser.lastName || !editedUser.email) {
+    toast.error('Please fill in all required fields');
+    return;
+  }
 
-      await axios.put(
-        'https://studevent-server.vercel.app/api/users/update/profile',
-        formData,
-        { 
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-          } 
-        }
-      );
-      
-      setUser(prev => ({
-        ...prev,
-        ...editedUser
-      }));
-      
-      setIsEditing(false);
-      toast.success('Profile updated successfully!');
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast.error('Failed to update profile. Please try again.');
-    } finally {
-      setIsSaving(false);
+  try {
+    setIsSaving(true);
+    const token = localStorage.getItem('token');
+    
+    const formData = new FormData();
+    formData.append('firstName', editedUser.firstName || '');
+    formData.append('lastName', editedUser.lastName || '');
+    formData.append('email', editedUser.email || '');
+    
+    if (profileImage) {
+      formData.append('image', profileImage);
     }
-  };
+
+    await axios.put(
+      'https://studevent-server.vercel.app/api/users/update/profile',
+      formData,
+      { 
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        } 
+      }
+    );
+    
+    setUser(prev => ({
+      ...prev,
+      ...editedUser,
+      image: imagePreview // Update the image preview in user state
+    }));
+    
+    setIsEditing(false);
+    toast.success('Profile updated successfully!');
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    if (error.response?.data?.message) {
+      toast.error(error.response.data.message);
+    } else {
+      toast.error('Failed to update profile. Please try again.');
+    }
+  } finally {
+    setIsSaving(false);
+  }
+};
 
   const handleSavePassword = async () => {
     if (!validatePasswordChange()) return;
