@@ -133,18 +133,21 @@ const handleSaveChanges = async () => {
     setIsSaving(true);
     const token = localStorage.getItem('token');
     
+    // Create form data
     const formData = new FormData();
     
-    // Append all fields (not just changed ones)
+    // Always include all fields (required by your current backend validation)
     formData.append('firstName', editedUser.firstName);
     formData.append('lastName', editedUser.lastName);
     formData.append('email', editedUser.email);
     
+    // Only append image if it exists
     if (profileImage) {
       formData.append('image', profileImage);
     }
 
     // Debugging - log what's being sent
+    console.log('FormData contents:');
     for (let [key, value] of formData.entries()) {
       console.log(key, value);
     }
@@ -156,14 +159,19 @@ const handleSaveChanges = async () => {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
-        } 
+        },
+        transformRequest: (data, headers) => {
+          // Remove Content-Type header - let axios set it automatically
+          delete headers['Content-Type'];
+          return data;
+        }
       }
     );
-    
-    // Verify the response data
+
+    // Verify the response
     console.log('Server response:', response.data);
     
-    // Update state with ALL returned user data
+    // Update ALL user state from server response
     setUser(response.data.user);
     setImagePreview(response.data.user.image || imagePreview);
     
@@ -171,9 +179,10 @@ const handleSaveChanges = async () => {
     toast.success('Profile updated successfully!');
   } catch (error) {
     console.error('Update error:', error);
-    toast.error(error.response?.data?.message || 'Update failed');
+    toast.error(error.response?.data?.message || 'Update failed. Please try again.');
   } finally {
     setIsSaving(false);
+    setProfileImage(null);
   }
 };
 

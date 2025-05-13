@@ -504,29 +504,26 @@ const updateProfile = async (req, res) => {
   try {
     const userId = req.user._id;
     
-    // Debugging logs - check what's actually being received
-    console.log('Raw request body:', req.body);
-    console.log('Files received:', req.file);
+    // Debugging logs - critical for troubleshooting
+    console.log('Request body fields:', {
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      email: req.body.email
+    });
+    console.log('Uploaded file:', req.file ? 'Exists' : 'None');
 
-    // Get current user data first
+    // Get current user data
     const currentUser = await User.findById(userId);
     if (!currentUser) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Prepare update data - use req.body fields or current values
+    // Create update object - use provided values or current ones
     const updateData = {
       firstName: req.body.firstName || currentUser.firstName,
       lastName: req.body.lastName || currentUser.lastName,
       email: req.body.email || currentUser.email
     };
-
-    // Validate required fields
-    if (!updateData.firstName || !updateData.lastName || !updateData.email) {
-      return res.status(400).json({ 
-        message: 'First name, last name, and email are required' 
-      });
-    }
 
     // Handle image upload if present
     if (req.file) {
@@ -539,27 +536,26 @@ const updateProfile = async (req, res) => {
     }
 
     // Perform the update
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: userId },
       updateData,
       { new: true, runValidators: true }
     ).select('-password');
 
     if (!updatedUser) {
-      return res.status(404).json({ message: 'User update failed' });
+      return res.status(400).json({ message: 'Update failed' });
     }
 
-    // Debugging log - check what's being saved
-    console.log('Updated user data:', updatedUser);
-
+    // Return the complete updated user data
     res.status(200).json({
       message: 'Profile updated successfully',
       user: updatedUser
     });
+
   } catch (error) {
-    console.error('Update profile error:', error);
+    console.error('Update error:', error);
     res.status(500).json({ 
-      message: 'Error updating profile',
+      message: 'Server error during update',
       error: error.message 
     });
   }
