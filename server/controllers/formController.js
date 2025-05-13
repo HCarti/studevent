@@ -192,13 +192,37 @@ exports.getAllForms = async (req, res) => {
       return res.status(401).json({ error: "Authentication required" });
     }
 
-    // Get all form types in parallel
+    // Get user info from request (assuming it's added by auth middleware)
+    const user = req.user;
+
+    // Build base query for filtering
+    let formQuery = {};
+    let localOffQuery = {};
+
+    // Filter for advisers and deans
+    if (user.role === 'Adviser' || user.role === 'Dean') {
+      // Get the organization(s) this user is associated with
+      const associatedOrgs = await User.find({
+        $or: [
+          { _id: user.organizationId },
+          { organizationName: user.organizationName }
+        ]
+      }).select('_id organizationName');
+
+      const orgIds = associatedOrgs.map(org => org._id);
+      
+      // Filter forms by these organizations
+      formQuery.studentOrganization = { $in: orgIds };
+      localOffQuery.nameOfHei = { $in: associatedOrgs.map(org => org.organizationName) };
+    }
+
+    // Get all form types in parallel with filtering
     const [regularForms, localOffForms] = await Promise.all([
-      Form.find({})
+      Form.find(formQuery)
         .populate("studentOrganization")
         .populate("attachedBudget")
         .lean(),
-      LocalOffCampus.find({})
+      LocalOffCampus.find(localOffQuery)
         .populate("submittedBy")
         .lean()
     ]);

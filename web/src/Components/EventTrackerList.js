@@ -94,12 +94,19 @@ const EventTrackerList = () => {
     });
   };
 
-  const getOrganizationName = (form) => {
-    if (form.formType === 'LocalOffCampus') return form.nameOfHei || form.organizationName || 'Local Event';
-    if (form.formType === 'Budget') return form.nameOfRso;
-    if (form.formType === 'Project') return organizations[form.emailAddress] || 'Unknown';
-    return form.studentOrganization?.organizationName || organizations[form.emailAddress] || 'Unknown';
-  };
+// In EventTrackerList.js, update getOrganizationName to handle adviser/dean views better:
+const getOrganizationName = (form) => {
+  if (form.formType === 'LocalOffCampus') return form.nameOfHei || form.organizationName || 'Local Event';
+  if (form.formType === 'Budget') return form.nameOfRso;
+  if (form.formType === 'Project') {
+    return form.studentOrganization?.organizationName || 
+           organizations[form.emailAddress] || 
+           'Unknown Project';
+  }
+  return form.studentOrganization?.organizationName || 
+         organizations[form.emailAddress] || 
+         'Unknown Organization';
+};
 
   const getEventTitle = (form) => {
     if (form.formType === 'LocalOffCampus') return `Local Event (${form.formPhase})`;

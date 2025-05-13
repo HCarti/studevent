@@ -460,7 +460,7 @@
   background-color: #0d2b8e;
 }
 
-.remove-btn:hover {
+.proj-remove-btn:hover {
   background-color: #f8d7da;
 }
 
@@ -471,6 +471,7 @@
   padding: 8px 16px;
   border-radius: 6px;
   font-size: 0.9rem;
+  margin-top: 5px;
   cursor: pointer;
   transition: all 0.2s;
   margin-top: 10px;
@@ -479,26 +480,27 @@
   gap: 6px;
 }
 
-.remove-btn {
+.proj-remove-btn {
   background: none;
   border: none;
-  color: #dc3545;
+  color: #81686b;
   font-size: 1.2rem;
   cursor: pointer;
-  width: 30px;
+  width: 90px;
   height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 30%;
   transition: all 0.2s;
 }
 .add-btn:hover {
   background-color: #218838;
 }
 
-.remove-btn:hover {
+.proj-remove-btn:hover {
   background-color: #c82333;
+  color: white;
 }
 
 /* Form Navigation */
@@ -618,7 +620,7 @@
   }
 
   .add-btn,
-  .remove-btn {
+  .proj-remove-btn {
     padding: 10px 16px; /* Larger touch target for buttons */
   }
 
@@ -903,13 +905,58 @@
 
 .array-item {
   width: 100%;
-  margin-bottom: 20px;
-  padding: 15px;
+  margin-bottom: 15px;
+  padding: 12px;
   background-color: #f9f9f9;
   border-radius: 8px;
-  box-sizing: border-box; /* Add this */
+  border: 1px solid #e0e0e0;
 }
+
 
 .array-item .form-row {
   width: 100%; /* Ensure full width */
+  gap: 15px;
+}
+
+.array-item .proj-remove-btn {
+  margin-top: 8px;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  height: auto;
+  width: auto;
+  border-radius: 4px;
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.array-item input[type='text'],
+.array-item input[type='date'],
+.array-item input[type='number'],
+.array-item textarea,
+.array-item select {
+  padding: 8px 12px;
+}
+
+/* Make the timeline/date inputs more compact */
+.array-item input[type='date'] {
+  padding: 7px 10px;
+}
+
+/* Reduce vertical spacing between array items */
+.array-item + .array-item {
+  margin-top: -5px;
+}
+
+/* For the program flow table - make rows more compact */
+.program-flow-table td {
+  padding: 6px 8px;
+}
+
+.program-flow-table th {
+  padding: 8px;
+}
+
+/* Make time inputs more compact */
+.time-input {
+  padding: 6px 8px;
 }

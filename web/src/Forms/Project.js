@@ -1184,7 +1184,7 @@ const isDateBlocked = (date) => {
                         {index > 0 && (
                           <button
                             type="button"
-                            className="remove-btn"
+                            className="proj-remove-btn"
                             onClick={() => removeArrayItem('programFlow', index)}
                             title="Remove this segment"
                           >
@@ -1257,7 +1257,7 @@ const isDateBlocked = (date) => {
                 {index > 0 && (
                   <button
                     type="button"
-                    className="remove-btn"
+                    className="proj-remove-btn"
                     onClick={() => removeArrayItem('projectHeads', index)}
                   >
                     Remove
@@ -1314,7 +1314,7 @@ const isDateBlocked = (date) => {
                 {index > 0 && (
                   <button
                     type="button"
-                    className="remove-btn"
+                    className="proj-remove-btn"
                     onClick={() => removeArrayItem('workingCommittees', index)}
                   >
                     Remove
@@ -1376,7 +1376,7 @@ const isDateBlocked = (date) => {
                 {index > 0 && (
                   <button
                     type="button"
-                    className="remove-btn"
+                    className="proj-remove-btn"
                     onClick={() => removeArrayItem('taskDeligation', index)}
                   >
                     Remove
@@ -1435,7 +1435,7 @@ const isDateBlocked = (date) => {
                 {index > 0 && (
                   <button
                     type="button"
-                    className="remove-btn"
+                    className="proj-remove-btn"
                     onClick={() => removeArrayItem('timelineSchedules', index)}
                   >
                     Remove
@@ -1496,7 +1496,7 @@ const isDateBlocked = (date) => {
                 {index > 0 && (
                   <button
                     type="button"
-                    className="remove-btn"
+                    className="proj-remove-btn"
                     onClick={() => removeArrayItem('schoolEquipments', index)}
                   >
                     Remove
