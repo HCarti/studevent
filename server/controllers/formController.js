@@ -185,54 +185,83 @@ const getRequiredReviewers = async (formType, organizationId = null) => {
 };
 
 // Main controller methods
-// In formController.js
+// formController.js
 exports.getAllForms = async (req, res) => {
   try {
-    const user = req.user; // Assuming user is attached by auth middleware
+    const user = req.user;
+    console.log('Current user making request:', {
+      _id: user._id,
+      role: user.role,
+      organizationId: user.organizationId,
+      faculty: user.faculty,
+      organizationName: user.organizationName
+    });
 
-    // Build the base queries
+    // Build base queries
     let formQuery = {};
     let localOffQuery = {};
+    let filterApplied = false;
 
-    // For Advisers - only show forms from their assigned organization
+    // For Advisers
     if (user.role === 'Adviser') {
+      console.log('Processing as Adviser');
       const org = await User.findOne({
         _id: user.organizationId,
         role: "Organization"
-      }).select('_id organizationName');
+      }).select('_id organizationName').lean();
+
+      console.log('Found organization for adviser:', org);
 
       if (org) {
         formQuery.studentOrganization = org._id;
         localOffQuery.nameOfHei = org.organizationName;
+        filterApplied = true;
+        console.log(`Adviser filter applied for org: ${org.organizationName}`);
       } else {
-        // If no organization found, return empty array
+        console.log('No organization found for adviser');
         return res.status(200).json([]);
       }
     }
 
-    // For Deans - show forms from academic organizations in their faculty
+    // For Deans
     if (user.role === 'Dean') {
+      console.log('Processing as Dean');
       const orgs = await User.find({
         organizationType: 'Recognized Student Organization - Academic',
         faculty: user.faculty
-      }).select('_id organizationName');
+      }).select('_id organizationName').lean();
+
+      console.log(`Found ${orgs.length} academic orgs in faculty ${user.faculty}`);
 
       if (orgs.length > 0) {
         formQuery.studentOrganization = { $in: orgs.map(o => o._id) };
         localOffQuery.nameOfHei = { $in: orgs.map(o => o.organizationName) };
+        filterApplied = true;
+        console.log(`Dean filter applied for orgs: ${orgs.map(o => o.organizationName).join(', ')}`);
       } else {
-        // If no organizations in faculty, return empty array
+        console.log('No academic organizations found in faculty');
         return res.status(200).json([]);
       }
     }
 
-    // For Organization users - only show their own forms
+    // For Organizations
     if (user.role === 'Organization') {
+      console.log('Processing as Organization');
       formQuery.studentOrganization = user._id;
       localOffQuery.nameOfHei = user.organizationName;
+      filterApplied = true;
+      console.log(`Organization filter applied for ${user.organizationName}`);
     }
 
-    // Fetch forms with the appropriate filters
+    if (!filterApplied) {
+      console.log('No specific filters applied (likely Admin user)');
+    }
+
+    // Debug: Log the final queries
+    console.log('Final formQuery:', formQuery);
+    console.log('Final localOffQuery:', localOffQuery);
+
+    // Fetch forms
     const [regularForms, localOffForms] = await Promise.all([
       Form.find(formQuery)
         .populate({
@@ -249,7 +278,9 @@ exports.getAllForms = async (req, res) => {
         .lean()
     ]);
 
-    // Rest of your existing transformation logic...
+    console.log(`Found ${regularForms.length} regular forms and ${localOffForms.length} local off-campus forms`);
+
+    // Transform and combine forms
     const transformedLocalOffForms = localOffForms.map(form => ({
       ...form,
       _id: form._id,
@@ -264,8 +295,9 @@ exports.getAllForms = async (req, res) => {
     }));
 
     const allForms = [...regularForms, ...transformedLocalOffForms];
+    console.log(`Total forms to return: ${allForms.length}`);
 
-    // Fetch tracker data for all forms
+    // Add tracker data
     const formsWithTrackers = await Promise.all(
       allForms.map(async form => {
         try {
@@ -284,10 +316,10 @@ exports.getAllForms = async (req, res) => {
 
     res.status(200).json(formsWithTrackers);
   } catch (error) {
-    console.error("Error fetching forms:", error);
+    console.error("Error in getAllForms:", error);
     res.status(500).json({ 
-      error: "Internal Server Error", 
-      details: error.message 
+      error: "Internal Server Error",
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
