@@ -135,13 +135,18 @@ const handleSaveChanges = async () => {
     
     const formData = new FormData();
     
-    // Always send all fields (but use edited values where available)
-    formData.append('firstName', editedUser.firstName || user.firstName);
-    formData.append('lastName', editedUser.lastName || user.lastName);
-    formData.append('email', editedUser.email || user.email);
+    // Append all fields (not just changed ones)
+    formData.append('firstName', editedUser.firstName);
+    formData.append('lastName', editedUser.lastName);
+    formData.append('email', editedUser.email);
     
     if (profileImage) {
       formData.append('image', profileImage);
+    }
+
+    // Debugging - log what's being sent
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value);
     }
 
     const response = await axios.put(
@@ -155,30 +160,20 @@ const handleSaveChanges = async () => {
       }
     );
     
-    // Update both user state and image preview
-    setUser(prev => ({
-      ...prev,
-      ...response.data.user,
-      image: response.data.user.image || imagePreview
-    }));
+    // Verify the response data
+    console.log('Server response:', response.data);
     
-    // Reset image preview if a new image was uploaded
-    if (profileImage) {
-      setImagePreview(response.data.user.image);
-    }
+    // Update state with ALL returned user data
+    setUser(response.data.user);
+    setImagePreview(response.data.user.image || imagePreview);
     
     setIsEditing(false);
     toast.success('Profile updated successfully!');
   } catch (error) {
-    console.error('Error updating profile:', error);
-    if (error.response?.data?.message) {
-      toast.error(error.response.data.message);
-    } else {
-      toast.error('Failed to update profile. Please try again.');
-    }
+    console.error('Update error:', error);
+    toast.error(error.response?.data?.message || 'Update failed');
   } finally {
     setIsSaving(false);
-    setProfileImage(null); // Reset profile image state after upload
   }
 };
 

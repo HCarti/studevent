@@ -504,28 +504,32 @@ const updateProfile = async (req, res) => {
   try {
     const userId = req.user._id;
     
-    // Get the current user first
+    // Debugging logs - check what's actually being received
+    console.log('Raw request body:', req.body);
+    console.log('Files received:', req.file);
+
+    // Get current user data first
     const currentUser = await User.findById(userId);
     if (!currentUser) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Use body-parser for multipart forms (already handled by multer)
+    // Prepare update data - use req.body fields or current values
     const updateData = {
       firstName: req.body.firstName || currentUser.firstName,
       lastName: req.body.lastName || currentUser.lastName,
       email: req.body.email || currentUser.email
     };
 
-    // Basic validation
+    // Validate required fields
     if (!updateData.firstName || !updateData.lastName || !updateData.email) {
-      return res.status(400).json({ message: 'First name, last name, and email are required' });
+      return res.status(400).json({ 
+        message: 'First name, last name, and email are required' 
+      });
     }
 
     // Handle image upload if present
     if (req.file) {
-      // Process the uploaded file here (similar to your other routes)
-      // For example:
       const imageBlob = await put(
         `user-${Date.now()}-profile`,
         req.file.buffer,
@@ -534,19 +538,30 @@ const updateProfile = async (req, res) => {
       updateData.image = imageBlob.url;
     }
 
+    // Perform the update
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       updateData,
       { new: true, runValidators: true }
     ).select('-password');
 
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User update failed' });
+    }
+
+    // Debugging log - check what's being saved
+    console.log('Updated user data:', updatedUser);
+
     res.status(200).json({
       message: 'Profile updated successfully',
       user: updatedUser
     });
   } catch (error) {
-    console.error('Error updating profile:', error);
-    res.status(500).json({ message: 'Error updating profile', error: error.message });
+    console.error('Update profile error:', error);
+    res.status(500).json({ 
+      message: 'Error updating profile',
+      error: error.message 
+    });
   }
 };
 
