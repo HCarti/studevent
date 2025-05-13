@@ -129,16 +129,11 @@ const SuperAdminProfile = () => {
   };
 
 const handleSaveChanges = async () => {
-  // First, validate required fields
-  if (!editedUser.firstName || !editedUser.lastName || !editedUser.email) {
-    toast.error('Please fill in all required fields');
-    return;
-  }
-
   try {
     setIsSaving(true);
     const token = localStorage.getItem('token');
     
+    // Create FormData and ensure all fields have values
     const formData = new FormData();
     formData.append('firstName', editedUser.firstName || '');
     formData.append('lastName', editedUser.lastName || '');
@@ -148,7 +143,15 @@ const handleSaveChanges = async () => {
       formData.append('image', profileImage);
     }
 
-    await axios.put(
+    // Debug output
+    console.log('Sending:', {
+      firstName: editedUser.firstName,
+      lastName: editedUser.lastName,
+      email: editedUser.email,
+      hasImage: !!profileImage
+    });
+
+    const response = await axios.put(
       'https://studevent-server.vercel.app/api/users/update/profile',
       formData,
       { 
@@ -159,16 +162,23 @@ const handleSaveChanges = async () => {
       }
     );
     
+    console.log('Response:', response.data);
+
     setUser(prev => ({
       ...prev,
       ...editedUser,
-      image: imagePreview // Update the image preview in user state
+      ...(imagePreview && { image: imagePreview })
     }));
     
     setIsEditing(false);
     toast.success('Profile updated successfully!');
   } catch (error) {
-    console.error('Error updating profile:', error);
+    console.error('Error details:', {
+      message: error.message,
+      response: error.response?.data,
+      stack: error.stack
+    });
+    
     if (error.response?.data?.message) {
       toast.error(error.response.data.message);
     } else {

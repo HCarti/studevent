@@ -502,6 +502,9 @@ const getAllUsers = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
+    console.log('Received update request with body:', req.body);
+    console.log('Received files:', req.file || req.files);
+
     const userId = req.user._id;
     
     // Get fields from the form data
@@ -509,8 +512,11 @@ const updateProfile = async (req, res) => {
     const lastName = req.body.lastName;
     const email = req.body.email;
 
+    console.log('Parsed fields:', { firstName, lastName, email });
+
     // Basic validation
     if (!firstName || !lastName || !email) {
+      console.log('Validation failed - missing fields');
       return res.status(400).json({ message: 'First name, last name, and email are required' });
     }
 
