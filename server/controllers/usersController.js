@@ -502,25 +502,25 @@ const getAllUsers = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    console.log('Received update request with body:', req.body);
-    console.log('Received files:', req.file || req.files);
-
     const userId = req.user._id;
     
-    // Get fields from the form data
-    const firstName = req.body.firstName;
-    const lastName = req.body.lastName;
-    const email = req.body.email;
-
-    console.log('Parsed fields:', { firstName, lastName, email });
-
-    // Basic validation
-    if (!firstName || !lastName || !email) {
-      console.log('Validation failed - missing fields');
-      return res.status(400).json({ message: 'First name, last name, and email are required' });
+    // Get the current user first
+    const currentUser = await User.findById(userId);
+    if (!currentUser) {
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    const updateData = { firstName, lastName, email };
+    // Use existing values as defaults if not provided
+    const updateData = {
+      firstName: req.body.firstName || currentUser.firstName,
+      lastName: req.body.lastName || currentUser.lastName,
+      email: req.body.email || currentUser.email
+    };
+
+    // Validate email format if provided
+    if (req.body.email && !/^\S+@\S+\.\S+$/.test(req.body.email)) {
+      return res.status(400).json({ message: 'Invalid email format' });
+    }
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
@@ -528,16 +528,15 @@ const updateProfile = async (req, res) => {
       { new: true, runValidators: true }
     ).select('-password');
 
-    if (!updatedUser) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
     res.status(200).json({
       message: 'Profile updated successfully',
       user: updatedUser
     });
   } catch (error) {
     console.error('Error updating profile:', error);
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ message: error.message });
+    }
     res.status(500).json({ message: 'Error updating profile' });
   }
 };

@@ -133,23 +133,34 @@ const handleSaveChanges = async () => {
     setIsSaving(true);
     const token = localStorage.getItem('token');
     
-    // Create FormData and ensure all fields have values
     const formData = new FormData();
-    formData.append('firstName', editedUser.firstName || '');
-    formData.append('lastName', editedUser.lastName || '');
-    formData.append('email', editedUser.email || '');
+    
+    // Only append fields that have actually changed
+    if (editedUser.firstName !== user.firstName) {
+      formData.append('firstName', editedUser.firstName);
+    }
+    if (editedUser.lastName !== user.lastName) {
+      formData.append('lastName', editedUser.lastName);
+    }
+    if (editedUser.email !== user.email) {
+      formData.append('email', editedUser.email);
+    }
     
     if (profileImage) {
       formData.append('image', profileImage);
     }
 
-    // Debug output
-    console.log('Sending:', {
-      firstName: editedUser.firstName,
-      lastName: editedUser.lastName,
-      email: editedUser.email,
-      hasImage: !!profileImage
-    });
+    // If no fields were changed (except possibly image)
+    if (
+      formData.get('firstName') === null &&
+      formData.get('lastName') === null &&
+      formData.get('email') === null &&
+      !profileImage
+    ) {
+      toast.info('No changes detected');
+      setIsEditing(false);
+      return;
+    }
 
     const response = await axios.put(
       'https://studevent-server.vercel.app/api/users/update/profile',
@@ -162,23 +173,16 @@ const handleSaveChanges = async () => {
       }
     );
     
-    console.log('Response:', response.data);
-
     setUser(prev => ({
       ...prev,
-      ...editedUser,
-      ...(imagePreview && { image: imagePreview })
+      ...response.data.user, // Use the updated user data from server
+      image: imagePreview
     }));
     
     setIsEditing(false);
     toast.success('Profile updated successfully!');
   } catch (error) {
-    console.error('Error details:', {
-      message: error.message,
-      response: error.response?.data,
-      stack: error.stack
-    });
-    
+    console.error('Error updating profile:', error);
     if (error.response?.data?.message) {
       toast.error(error.response.data.message);
     } else {
