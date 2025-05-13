@@ -185,21 +185,16 @@ const getRequiredReviewers = async (formType, organizationId = null) => {
 };
 
 // Main controller methods
+// In formController.js
 exports.getAllForms = async (req, res) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) {
-      return res.status(401).json({ error: "Authentication required" });
-    }
+    const user = req.user; // Assuming user is attached by auth middleware
 
-    // Get user info from request
-    const user = req.user;
-
-    // Build base queries
+    // Build the base queries
     let formQuery = {};
     let localOffQuery = {};
 
-    // Filter for advisers - only show forms from their assigned organization
+    // For Advisers - only show forms from their assigned organization
     if (user.role === 'Adviser') {
       const org = await User.findOne({
         _id: user.organizationId,
@@ -209,43 +204,52 @@ exports.getAllForms = async (req, res) => {
       if (org) {
         formQuery.studentOrganization = org._id;
         localOffQuery.nameOfHei = org.organizationName;
+      } else {
+        // If no organization found, return empty array
+        return res.status(200).json([]);
       }
     }
 
-    // Filter for deans - only show forms from academic organizations in their faculty
+    // For Deans - show forms from academic organizations in their faculty
     if (user.role === 'Dean') {
       const orgs = await User.find({
         organizationType: 'Recognized Student Organization - Academic',
-        faculty: user.faculty // Assuming dean has faculty field
+        faculty: user.faculty
       }).select('_id organizationName');
 
-      const orgIds = orgs.map(o => o._id);
-      const orgNames = orgs.map(o => o.organizationName);
-
-      if (orgIds.length > 0) {
-        formQuery.studentOrganization = { $in: orgIds };
-        localOffQuery.nameOfHei = { $in: orgNames };
+      if (orgs.length > 0) {
+        formQuery.studentOrganization = { $in: orgs.map(o => o._id) };
+        localOffQuery.nameOfHei = { $in: orgs.map(o => o.organizationName) };
+      } else {
+        // If no organizations in faculty, return empty array
+        return res.status(200).json([]);
       }
     }
 
-    // For organization users - only show their own forms
+    // For Organization users - only show their own forms
     if (user.role === 'Organization') {
       formQuery.studentOrganization = user._id;
       localOffQuery.nameOfHei = user.organizationName;
     }
 
-    // Get all form types with the appropriate filters
+    // Fetch forms with the appropriate filters
     const [regularForms, localOffForms] = await Promise.all([
       Form.find(formQuery)
-        .populate("studentOrganization")
+        .populate({
+          path: "studentOrganization",
+          select: "_id organizationName"
+        })
         .populate("attachedBudget")
         .lean(),
       LocalOffCampus.find(localOffQuery)
-        .populate("submittedBy")
+        .populate({
+          path: "submittedBy",
+          select: "_id email firstName lastName"
+        })
         .lean()
     ]);
 
-    // Rest of the existing transformation logic...
+    // Rest of your existing transformation logic...
     const transformedLocalOffForms = localOffForms.map(form => ({
       ...form,
       _id: form._id,
@@ -287,6 +291,7 @@ exports.getAllForms = async (req, res) => {
     });
   }
 };
+
 // Update getFormById to populate attachedBudget:
 exports.getFormById = async (req, res) => {
   try {
