@@ -135,31 +135,13 @@ const handleSaveChanges = async () => {
     
     const formData = new FormData();
     
-    // Only append fields that have actually changed
-    if (editedUser.firstName !== user.firstName) {
-      formData.append('firstName', editedUser.firstName);
-    }
-    if (editedUser.lastName !== user.lastName) {
-      formData.append('lastName', editedUser.lastName);
-    }
-    if (editedUser.email !== user.email) {
-      formData.append('email', editedUser.email);
-    }
+    // Always send all fields (but use edited values where available)
+    formData.append('firstName', editedUser.firstName || user.firstName);
+    formData.append('lastName', editedUser.lastName || user.lastName);
+    formData.append('email', editedUser.email || user.email);
     
     if (profileImage) {
       formData.append('image', profileImage);
-    }
-
-    // If no fields were changed (except possibly image)
-    if (
-      formData.get('firstName') === null &&
-      formData.get('lastName') === null &&
-      formData.get('email') === null &&
-      !profileImage
-    ) {
-      toast.info('No changes detected');
-      setIsEditing(false);
-      return;
     }
 
     const response = await axios.put(
@@ -173,11 +155,17 @@ const handleSaveChanges = async () => {
       }
     );
     
+    // Update both user state and image preview
     setUser(prev => ({
       ...prev,
-      ...response.data.user, // Use the updated user data from server
-      image: imagePreview
+      ...response.data.user,
+      image: response.data.user.image || imagePreview
     }));
+    
+    // Reset image preview if a new image was uploaded
+    if (profileImage) {
+      setImagePreview(response.data.user.image);
+    }
     
     setIsEditing(false);
     toast.success('Profile updated successfully!');
@@ -190,6 +178,7 @@ const handleSaveChanges = async () => {
     }
   } finally {
     setIsSaving(false);
+    setProfileImage(null); // Reset profile image state after upload
   }
 };
 

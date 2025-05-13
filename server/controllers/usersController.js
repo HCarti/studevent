@@ -510,16 +510,28 @@ const updateProfile = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Use existing values as defaults if not provided
+    // Use body-parser for multipart forms (already handled by multer)
     const updateData = {
       firstName: req.body.firstName || currentUser.firstName,
       lastName: req.body.lastName || currentUser.lastName,
       email: req.body.email || currentUser.email
     };
 
-    // Validate email format if provided
-    if (req.body.email && !/^\S+@\S+\.\S+$/.test(req.body.email)) {
-      return res.status(400).json({ message: 'Invalid email format' });
+    // Basic validation
+    if (!updateData.firstName || !updateData.lastName || !updateData.email) {
+      return res.status(400).json({ message: 'First name, last name, and email are required' });
+    }
+
+    // Handle image upload if present
+    if (req.file) {
+      // Process the uploaded file here (similar to your other routes)
+      // For example:
+      const imageBlob = await put(
+        `user-${Date.now()}-profile`,
+        req.file.buffer,
+        { access: 'public' }
+      );
+      updateData.image = imageBlob.url;
     }
 
     const updatedUser = await User.findByIdAndUpdate(
@@ -534,10 +546,7 @@ const updateProfile = async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating profile:', error);
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({ message: error.message });
-    }
-    res.status(500).json({ message: 'Error updating profile' });
+    res.status(500).json({ message: 'Error updating profile', error: error.message });
   }
 };
 
