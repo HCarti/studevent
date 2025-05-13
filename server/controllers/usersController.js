@@ -503,18 +503,11 @@ const getAllUsers = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { firstName, lastName, email } = req.body;
-
-    // Handle file upload if provided
-    let imageUrl;
-    if (req.files && req.files.image) {
-      const imageBlob = await put(
-        `user-${userId}-image-${Date.now()}`,
-        req.files.image[0].buffer,
-        { access: 'public' }
-      );
-      imageUrl = imageBlob.url;
-    }
+    
+    // Get fields from the form data
+    const firstName = req.body.firstName;
+    const lastName = req.body.lastName;
+    const email = req.body.email;
 
     // Basic validation
     if (!firstName || !lastName || !email) {
@@ -522,7 +515,16 @@ const updateProfile = async (req, res) => {
     }
 
     const updateData = { firstName, lastName, email };
-    if (imageUrl) updateData.image = imageUrl;
+    
+    // Handle file upload if provided
+    if (req.files && req.files.image) {
+      const imageBlob = await put(
+        `user-${userId}-image-${Date.now()}`,
+        req.files.image[0].buffer,
+        { access: 'public' }
+      );
+      updateData.image = imageBlob.url;
+    }
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
