@@ -308,32 +308,6 @@ exports.getAllForms = async (req, res) => {
   }
 };
 
-// In formController.js
-exports.getAllFormsWithTrackers = async (req, res) => {
-  try {
-    const forms = await Form.find()
-      .populate('studentOrganization', 'organizationName organizationType faculty')
-      .lean();
-
-    const formsWithTrackers = await Promise.all(
-      forms.map(async (form) => {
-        const tracker = await EventTracker.findOne({ formId: form._id }).lean();
-        return {
-          ...form,
-          organizationName: form.studentOrganization?.organizationName,
-          organizationType: form.studentOrganization?.organizationType,
-          faculty: form.studentOrganization?.faculty,
-          currentStep: tracker?.currentStep || "N/A",
-          finalStatus: tracker?.steps?.find(s => s.stepName === tracker.currentStep)?.status || "pending"
-        };
-      })
-    );
-
-    res.status(200).json(formsWithTrackers);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
 
 // Update getFormById to populate attachedBudget:
 exports.getFormById = async (req, res) => {
