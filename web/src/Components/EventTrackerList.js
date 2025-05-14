@@ -12,8 +12,11 @@ const EventTrackerList = () => {
   const [userRole, setUserRole] = useState(null);
   const [userOrganizations, setUserOrganizations] = useState([]);
   const navigate = useNavigate();
+  const userData = JSON.parse(localStorage.getItem("user"));
+  const userFaculty = userData?.faculty;
+  const userId = userData?._id;
 
- useEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -23,36 +26,22 @@ const EventTrackerList = () => {
           return;
         }
 
-        // Fetch user profile to get role and organizations
-        const userResponse = await fetch("https://studevent-server.vercel.app/api/users/profile", {
-          headers: { "Authorization": `Bearer ${token}` },
-        });
+            // For Advisers and Deans, fetch their associated organizations
+          let userOrganizations = [];
+                if (userRole === 'Adviser' || userRole === 'Dean') {
+                  const orgsResponse = await fetch(
+                    `https://studevent-server.vercel.app/api/users/${userId}/organizations`, 
+                    { headers: { "Authorization": `Bearer ${token}` } }
+                  );
+                  
+                  if (orgsResponse.ok) {
+                    const orgsData = await orgsResponse.json();
+                    userOrganizations = orgsData.map(org => org.organizationName);
+                  }
+                }
 
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          setUserRole(userData.role);
-          
-          // For Advisers and Deans, fetch their associated organizations
-          if (userData.role === 'Adviser' || userData.role === 'Dean') {
-            const orgsResponse = await fetch(
-              `https://studevent-server.vercel.app/api/users/${userData._id}/organizations`, 
-              { headers: { "Authorization": `Bearer ${token}` } }
-            );
-            
-            if (orgsResponse.ok) {
-              const orgsData = await orgsResponse.json();
-              setUserOrganizations(orgsData.map(org => org.organizationName));
-            }
-          }
-        }
-
-        // Fetch forms with role-based filtering
-        let formsEndpoint = "https://studevent-server.vercel.app/api/forms/all";
-        if (userRole === 'Adviser' || userRole === 'Dean') {
-          formsEndpoint += `?role=${userRole}`;
-        }
-
-        const formsResponse = await fetch(formsEndpoint, {
+        // Fetch all forms
+        const formsResponse = await fetch("https://studevent-server.vercel.app/api/forms/all", {
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`,
@@ -64,14 +53,6 @@ const EventTrackerList = () => {
         
         if (!Array.isArray(formsData)) throw new Error("Invalid data format");
 
-        // Filter forms based on user role
-        if (userRole === 'Adviser' || userRole === 'Dean') {
-          formsData = formsData.filter(form => {
-            const orgName = getOrganizationName(form);
-            return userOrganizations.includes(orgName);
-          });
-        }
-
         // Add current step to each form
         const formsWithCurrentStep = await Promise.all(
           formsData.map(async (form) => {
@@ -81,14 +62,43 @@ const EventTrackerList = () => {
                 { headers: { "Authorization": `Bearer ${token}` } }
               );
               const trackerData = trackerResponse.ok ? await trackerResponse.json() : {};
-              return { ...form, currentStep: trackerData.currentStep || "N/A" };
+              return { 
+                ...form, 
+                currentStep: trackerData.currentStep || "N/A",
+                trackerData: trackerData // Store the full tracker data
+              };
             } catch {
-              return { ...form, currentStep: "N/A" };
+              return { 
+                ...form, 
+                currentStep: "N/A",
+                trackerData: null
+              };
             }
           })
         );
 
-        setForms(formsWithCurrentStep);
+        // Filter forms based on user role
+        let filteredForms = formsWithCurrentStep;
+        
+        if (userRole === 'Adviser') {
+          filteredForms = filteredForms.filter(form => {
+            const orgName = getOrganizationName(form);
+            return userOrganizations.includes(orgName);
+          });
+        } else if (userRole === 'Dean') {
+          filteredForms = filteredForms.filter(form => {
+            // 1. Check if form belongs to one of the dean's organizations
+            const orgName = getOrganizationName(form);
+            const isFromDeanOrg = userOrganizations.includes(orgName);
+            
+            // 2. Check if form is currently at "Dean" step
+            const isAtDeanStep = form.trackerData?.currentStep === "Dean";
+            
+            return isFromDeanOrg && isAtDeanStep;
+          });
+        }
+
+        setForms(filteredForms);
       } catch (error) {
         setError(error.message);
       } finally {
@@ -97,7 +107,7 @@ const EventTrackerList = () => {
     };
 
     fetchData();
-  }, [userRole, userOrganizations]);
+  }, [userRole, userFaculty, userId]);
 
   const handleViewDetails = (form) => {
     navigate(`/progtrack/${form._id}`, { state: { form } });
