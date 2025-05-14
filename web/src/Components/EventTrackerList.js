@@ -8,15 +8,15 @@ const EventTrackerList = () => {
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [organizations, setOrganizations] = useState({});
-  const [userRole, setUserRole] = useState(null);
+  const [organizations, setOrganizations] = useState
   const [userOrganizations, setUserOrganizations] = useState([]);
   const navigate = useNavigate();
+  // Get user data from localStorage
   const userData = JSON.parse(localStorage.getItem("user"));
-  const userFaculty = userData?.faculty;
+  const userRole = userData?.role;
   const userId = userData?._id;
 
-  useEffect(() => {
+    useEffect(() => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -26,19 +26,20 @@ const EventTrackerList = () => {
           return;
         }
 
-            // For Advisers and Deans, fetch their associated organizations
-          let userOrganizations = [];
-                if (userRole === 'Adviser' || userRole === 'Dean') {
-                  const orgsResponse = await fetch(
-                    `https://studevent-server.vercel.app/api/users/${userId}/organizations`, 
-                    { headers: { "Authorization": `Bearer ${token}` } }
-                  );
-                  
-                  if (orgsResponse.ok) {
-                    const orgsData = await orgsResponse.json();
-                    userOrganizations = orgsData.map(org => org.organizationName);
-                  }
-                }
+        // Fetch user's organizations if they're a dean or adviser
+        let organizations = [];
+        if (userRole === 'Adviser' || userRole === 'Dean') {
+          const orgsResponse = await fetch(
+            `https://studevent-server.vercel.app/api/users/${userId}/organizations`,
+            { headers: { "Authorization": `Bearer ${token}` } }
+          );
+          
+          if (orgsResponse.ok) {
+            const orgsData = await orgsResponse.json();
+            organizations = orgsData.map(org => org.organizationName);
+            setUserOrganizations(organizations);
+          }
+        }
 
         // Fetch all forms
         const formsResponse = await fetch("https://studevent-server.vercel.app/api/forms/all", {
@@ -65,7 +66,7 @@ const EventTrackerList = () => {
               return { 
                 ...form, 
                 currentStep: trackerData.currentStep || "N/A",
-                trackerData: trackerData // Store the full tracker data
+                trackerData: trackerData
               };
             } catch {
               return { 
@@ -87,11 +88,8 @@ const EventTrackerList = () => {
           });
         } else if (userRole === 'Dean') {
           filteredForms = filteredForms.filter(form => {
-            // 1. Check if form belongs to one of the dean's organizations
             const orgName = getOrganizationName(form);
             const isFromDeanOrg = userOrganizations.includes(orgName);
-            
-            // 2. Check if form is currently at "Dean" step
             const isAtDeanStep = form.trackerData?.currentStep === "Dean";
             
             return isFromDeanOrg && isAtDeanStep;
@@ -107,7 +105,7 @@ const EventTrackerList = () => {
     };
 
     fetchData();
-  }, [userRole, userFaculty, userId]);
+  }, [userRole, userId]);
 
   const handleViewDetails = (form) => {
     navigate(`/progtrack/${form._id}`, { state: { form } });

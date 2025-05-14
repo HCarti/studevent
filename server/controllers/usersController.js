@@ -745,41 +745,29 @@ const getDeletedOrganizations = async (req, res) => {
 // Get organizations for a specific user (dean or adviser)
 const getUserOrganizations = async (req, res) => {
   try {
-    const userId = req.params.userId;
-    
-    // Get the user first to determine their role
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    const user = await User.findById(req.params.userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
     let organizations = [];
-
+    
     if (user.role === 'Adviser') {
-      // For advisers, get the organization they're assigned to
+      // Return the single organization the adviser is assigned to
       organizations = await User.find({
         organizationName: user.organization,
         role: 'Organization'
-      }).select('organizationName organizationType logo');
-    } else if (user.role === 'Dean') {
-      // For deans, get all academic organizations in their faculty
+      }).select('organizationName');
+    } 
+    else if (user.role === 'Dean') {
+      // Return all academic organizations in the dean's faculty
       organizations = await User.find({
         organizationType: 'Recognized Student Organization - Academic',
         faculty: user.faculty
-      }).select('organizationName organizationType logo');
-    } else {
-      return res.status(400).json({ 
-        message: 'This endpoint is only for Advisers and Deans' 
-      });
+      }).select('organizationName');
     }
 
     res.status(200).json(organizations);
   } catch (error) {
-    console.error('Error getting user organizations:', error);
-    res.status(500).json({ 
-      message: 'Error fetching organizations',
-      error: error.message 
-    });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
