@@ -15,6 +15,7 @@ const FormsandSig = () => {
   const [showModal, setShowModal] = useState(false);
   const [activeStep, setActiveStep] = useState(null);
   const modalRef = useRef();
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -23,6 +24,19 @@ const FormsandSig = () => {
       setUserRole(parsedUser?.role);
       setOrganizationId(parsedUser?._id);
     }
+
+    // Handle responsive rendering
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+      if (window.innerWidth <= 768) {
+        setShowModal(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
 
   // Close modal when clicking outside
@@ -103,12 +117,14 @@ const FormsandSig = () => {
       <h1 className="fs-title">Forms and Signature</h1>
 
       {/* Icon to toggle modal */}
-      <div className="help-icon" onClick={() => setShowModal(!showModal)}>
-        <div className="help-tooltip">Click me</div>
-        <FaceIcon style={{ fontSize: '60px', color: '#2563eb' }} />
-      </div>
+      {!isMobile && (
+        <div className="help-icon" onClick={() => setShowModal(!showModal)}>
+          <div className="help-tooltip">Click me</div>
+          <FaceIcon style={{ fontSize: '60px', color: '#2563eb' }} />
+        </div>
+      )}
 
-      {showModal && (
+      {showModal && !isMobile && (
         <div className="modal-bottom-right-overlay">
           <div className="modal-content small" ref={modalRef}>
             <h2>Instructions</h2>

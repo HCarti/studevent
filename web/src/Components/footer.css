@@ -122,4 +122,8 @@
     .sb__footer-links_div {
         align-items: center;
     }
+
+    .footer {
+        display: none;
+    }
 }
