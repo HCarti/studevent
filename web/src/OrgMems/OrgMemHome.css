@@ -356,3 +356,9 @@ body, html {
     height: 200px;
   } */
 }
+
+@media screen and (max-width: 768px) {
+  .img-slide {
+    display: none;
+  }
+}

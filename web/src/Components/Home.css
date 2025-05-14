@@ -199,15 +199,82 @@ body {
 .home-footer-text p {
   margin: 8px 0;
   font-size: 15px;
-  color: #000;
-  font-weight: 400;
-  line-height: 1.6;
-  animation: fadeInUp 0.8s ease-out 0.3s both;
 }
 
-/* About Section Styles */
+/* Mobile Responsive Design */
+@media screen and (max-width: 768px) {
+  body {
+    background-image: none;
+    background-color: #f4f4f4;
+  }
+
+  .home-parallax-container {
+    padding: 10px;
+  }
+
+  .home-login-section {
+    padding: 20px 10px;
+  }
+
+  .home-login-container {
+    max-width: 100%;
+    width: 95%;
+  }
+
+  .home-login-box {
+    padding: 25px 15px;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  }
+
+  .home-login-title {
+    font-size: 22px;
+    margin-bottom: 24px;
+  }
+
+  .home-input-container {
+    padding: 10px 12px;
+    margin-bottom: 15px;
+  }
+
+  .home-input-icon {
+    font-size: 18px;
+  }
+
+  .home-email-input, 
+  .home-password-input {
+    font-size: 14px;
+  }
+
+  .home-login-btn {
+    padding: 12px 0;
+    font-size: 14px;
+    margin-top: 16px;
+  }
+
+  .home-logo-container {
+    margin: 20px 0;
+  }
+
+  .home-nu-logo {
+    width: 100px;
+  }
+
+  .home-footer-text {
+    margin-top: 15px;
+    margin-bottom: 20px;
+  }
+
+  .home-footer-text h3 {
+    font-size: 18px;
+  }
+
+  .home-footer-text p {
+    font-size: 13px;
+  }
+}
+
 .home-about-section {
-  padding: 0;
   margin: 32px 0 0 0;
   background: none;
   border-radius: 0;
