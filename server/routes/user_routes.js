@@ -47,6 +47,7 @@ router.delete('/:id', authenticateToken, usersController.deleteUserById);
 router.get('/organizations/academic', authenticateToken, usersController.getAcademicOrganizations);
 router.put('/organizations/:id', authenticateToken, usersController.updateOrganization);
 router.get('/:userId/organizations', authenticateToken, usersController.getUserOrganizations);
+router.get('/academic-organizations', authenticateToken, usersController.getAcademicOrganizationsByFaculty);
 // Add this with your other routes
 router.get('/getall', authenticateToken, usersController.getAllUsers);
 router.put('/update/profile', authenticateToken, usersController.updateProfile);

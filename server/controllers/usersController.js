@@ -771,6 +771,20 @@ const getUserOrganizations = async (req, res) => {
   }
 };
 
+const getAcademicOrganizationsByFaculty = async (req, res) => {
+  try {
+    const { faculty } = req.query;
+    const organizations = await User.find({
+      organizationType: 'Recognized Student Organization - Academic',
+      faculty: faculty
+    }).select('organizationName');
+    
+    res.status(200).json(organizations);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = { 
   getUserById, 
   updateUser, 
@@ -788,5 +802,6 @@ module.exports = {
   permanentlyDeleteUser,
   restoreUser,
   getDeletedOrganizations,
-  getUserOrganizations
+  getUserOrganizations, 
+  getAcademicOrganizationsByFaculty
 };
