@@ -189,13 +189,7 @@ const getRequiredReviewers = async (formType, organizationId = null) => {
 exports.getAllForms = async (req, res) => {
   try {
     const user = req.user;
-    console.log('Current user making request:', {
-      _id: user._id,
-      role: user.role,
-      organizationId: user.organizationId,
-      faculty: user.faculty,
-      organizationName: user.organizationName
-    });
+    const { role } = req.query; // Get role from query params if provided
 
     // Build base queries
     let formQuery = {};
@@ -203,43 +197,33 @@ exports.getAllForms = async (req, res) => {
     let filterApplied = false;
 
     // For Advisers
-    if (user.role === 'Adviser') {
-      console.log('Processing as Adviser');
+    if (user.role === 'Adviser' || role === 'Adviser') {
       const org = await User.findOne({
         _id: user.organizationId,
         role: "Organization"
       }).select('_id organizationName').lean();
 
-      console.log('Found organization for adviser:', org);
-
       if (org) {
         formQuery.studentOrganization = org._id;
         localOffQuery.nameOfHei = org.organizationName;
         filterApplied = true;
-        console.log(`Adviser filter applied for org: ${org.organizationName}`);
       } else {
-        console.log('No organization found for adviser');
         return res.status(200).json([]);
       }
     }
 
     // For Deans
-    if (user.role === 'Dean') {
-      console.log('Processing as Dean');
+    if (user.role === 'Dean' || role === 'Dean') {
       const orgs = await User.find({
         organizationType: 'Recognized Student Organization - Academic',
         faculty: user.faculty
       }).select('_id organizationName').lean();
 
-      console.log(`Found ${orgs.length} academic orgs in faculty ${user.faculty}`);
-
       if (orgs.length > 0) {
         formQuery.studentOrganization = { $in: orgs.map(o => o._id) };
         localOffQuery.nameOfHei = { $in: orgs.map(o => o.organizationName) };
         filterApplied = true;
-        console.log(`Dean filter applied for orgs: ${orgs.map(o => o.organizationName).join(', ')}`);
       } else {
-        console.log('No academic organizations found in faculty');
         return res.status(200).json([]);
       }
     }
