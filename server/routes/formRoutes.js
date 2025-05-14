@@ -35,7 +35,7 @@ router.get("/by-email/:email", async (req, res) => {
 });
 
 router.delete('/:formId', formController.deleteForm);
-router.get('/all', formController.getAllForms);
+router.get('/all', formController.getAllFormsWithTrackers);
 router.get('/:formId', formController.getFormById);
 router.put('/:formId', formController.updateForm);
 

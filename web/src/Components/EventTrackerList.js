@@ -49,7 +49,7 @@ const EventTrackerList = () => {
         setUserOrganizations(organizations);
 
         // Fetch all forms
-        const formsResponse = await fetch("https://studevent-server.vercel.app/api/forms/all", {
+        const formsResponse = await fetch("https://studevent-server.vercel.app/api/forms/all-with-trackers", {
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`,
@@ -88,21 +88,20 @@ const EventTrackerList = () => {
         let filteredForms = formsWithCurrentStep;
         
         if (userRole === 'Adviser') {
-          filteredForms = filteredForms.filter(form => {
-            const orgName = getOrganizationName(form);
-            const isFromAdviserOrg = organizations.includes(orgName);
-            const isAtAdviserStep = form.trackerData?.currentStep === "Adviser";
-            return isFromAdviserOrg && isAtAdviserStep;
+          filteredForms = formsData.filter(form => {
+            const orgMatch = form.organizationName === userOrganization;
+            const stepMatch = form.currentStep === "Adviser";
+            return orgMatch && stepMatch;
           });
         } else if (userRole === 'Dean') {
-          filteredForms = filteredForms.filter(form => {
-            const orgName = getOrganizationName(form);
-            const isFromDeanOrg = organizations.includes(orgName);
-            const isAtDeanStep = form.trackerData?.currentStep === "Dean";
-            return isFromDeanOrg && isAtDeanStep;
+          filteredForms = formsData.filter(form => {
+            const orgMatch = form.organizationType === 'Recognized Student Organization - Academic' && 
+                           form.faculty === userFaculty;
+            const stepMatch = form.currentStep === "Dean";
+            return orgMatch && stepMatch;
           });
         }
-
+        
         setForms(filteredForms);
       } catch (error) {
         setError(error.message);
