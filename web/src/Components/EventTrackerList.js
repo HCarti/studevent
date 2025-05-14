@@ -11,7 +11,7 @@ const EventTrackerList = () => {
   const [organizations, setOrganizations] = useState({});
   const navigate = useNavigate();
 
-  useEffect(() => {
+useEffect(() => {
   const fetchData = async () => {
     try {
       const token = localStorage.getItem("token");

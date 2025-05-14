@@ -189,20 +189,14 @@ const getRequiredReviewers = async (formType, organizationId = null) => {
 exports.getAllForms = async (req, res) => {
   try {
     const user = req.user;
-    const { role } = req.query; // Get role from query params if provided
-
-    // Build base queries
-    let formQuery = {};
-    let localOffQuery = {};
-    let filterApplied = false;
-
+    
     // For Admin users, return all forms without additional filtering
     if (user.role === 'Admin') {
       const [regularForms, localOffForms] = await Promise.all([
         Form.find({})
           .populate({
             path: "studentOrganization",
-            select: "_id organizationName"
+            select: "_id organizationName organizationType faculty"
           })
           .populate("attachedBudget")
           .lean(),
@@ -214,14 +208,13 @@ exports.getAllForms = async (req, res) => {
           .lean()
       ]);
 
+      // Transform and combine forms
       const transformedLocalOffForms = localOffForms.map(form => ({
         ...form,
-        _id: form._id,
         formType: 'LocalOffCampus',
         finalStatus: form.status,
         applicationDate: form.createdAt || new Date(),
         emailAddress: form.submittedBy?.email || form.emailAddress,
-        currentStep: form.currentStep || 0,
         eventTitle: `Local Off-Campus (${form.formPhase})`,
         nameOfHei: form.nameOfHei,
         organizationName: form.nameOfHei
@@ -235,7 +228,7 @@ exports.getAllForms = async (req, res) => {
           const tracker = await EventTracker.findOne({ formId: form._id }).lean();
           return {
             ...form,
-            currentStep: tracker?.currentStep || form.currentStep || 0,
+            currentStep: tracker?.currentStep || "N/A",
             trackerId: tracker?._id
           };
         })
@@ -244,41 +237,50 @@ exports.getAllForms = async (req, res) => {
       return res.status(200).json(formsWithTrackers);
     }
 
-    // For non-Admin users, apply role-specific filtering
-    if (user.role === 'Adviser' || role === 'Adviser') {
-      const org = await User.findOne({
-        _id: user.organizationId,
-        role: "Organization"
-      }).select('_id organizationName').lean();
+    // For non-Admin users, we need to filter by current step
+    // First get all forms that might be relevant
+    let formQuery = {};
+    let localOffQuery = {};
 
-      if (org) {
-        formQuery.studentOrganization = org._id;
-        localOffQuery.nameOfHei = org.organizationName;
-        filterApplied = true;
-      } else {
-        return res.status(200).json([]);
-      }
-    }
+    // Build initial queries based on user role
+    switch (user.role) {
+      case 'Adviser':
+        const org = await User.findOne({
+          _id: user.organizationId,
+          role: "Organization"
+        }).select('_id organizationName').lean();
 
-    if (user.role === 'Dean' || role === 'Dean') {
-      const orgs = await User.find({
-        organizationType: 'Recognized Student Organization - Academic',
-        faculty: user.faculty
-      }).select('_id organizationName').lean();
+        if (org) {
+          formQuery.studentOrganization = org._id;
+          localOffQuery.nameOfHei = org.organizationName;
+        } else {
+          return res.status(200).json([]);
+        }
+        break;
 
-      if (orgs.length > 0) {
-        formQuery.studentOrganization = { $in: orgs.map(o => o._id) };
-        localOffQuery.nameOfHei = { $in: orgs.map(o => o.organizationName) };
-        filterApplied = true;
-      } else {
-        return res.status(200).json([]);
-      }
-    }
+      case 'Dean':
+        const orgs = await User.find({
+          organizationType: 'Recognized Student Organization - Academic',
+          faculty: user.faculty
+        }).select('_id organizationName').lean();
 
-    if (user.role === 'Organization') {
-      formQuery.studentOrganization = user._id;
-      localOffQuery.nameOfHei = user.organizationName;
-      filterApplied = true;
+        if (orgs.length > 0) {
+          formQuery.studentOrganization = { $in: orgs.map(o => o._id) };
+          localOffQuery.nameOfHei = { $in: orgs.map(o => o.organizationName) };
+        } else {
+          return res.status(200).json([]);
+        }
+        break;
+
+      case 'Organization':
+        formQuery.studentOrganization = user._id;
+        localOffQuery.nameOfHei = user.organizationName;
+        break;
+
+      // For other roles (Academic Services, Academic Director, Executive Director)
+      // We'll get all forms and filter by current step later
+      default:
+        break;
     }
 
     // Fetch forms with initial filtering
@@ -286,7 +288,7 @@ exports.getAllForms = async (req, res) => {
       Form.find(formQuery)
         .populate({
           path: "studentOrganization",
-          select: "_id organizationName"
+          select: "_id organizationName organizationType faculty"
         })
         .populate("attachedBudget")
         .lean(),
@@ -301,12 +303,10 @@ exports.getAllForms = async (req, res) => {
     // Transform local off-campus forms
     const transformedLocalOffForms = localOffForms.map(form => ({
       ...form,
-      _id: form._id,
       formType: 'LocalOffCampus',
       finalStatus: form.status,
       applicationDate: form.createdAt || new Date(),
       emailAddress: form.submittedBy?.email || form.emailAddress,
-      currentStep: form.currentStep || 0,
       eventTitle: `Local Off-Campus (${form.formPhase})`,
       nameOfHei: form.nameOfHei,
       organizationName: form.nameOfHei
@@ -314,55 +314,44 @@ exports.getAllForms = async (req, res) => {
 
     let allForms = [...regularForms, ...transformedLocalOffForms];
 
-    // Add tracker data and filter by current step
+    // Add tracker data
     const formsWithTrackers = await Promise.all(
       allForms.map(async form => {
         const tracker = await EventTracker.findOne({ formId: form._id }).lean();
         return {
           ...form,
-          currentStep: tracker?.currentStep || form.currentStep || 0,
+          currentStep: tracker?.currentStep || "N/A",
           trackerId: tracker?._id
         };
       })
     );
 
     // Apply current step filtering based on user role
-    let filteredForms = formsWithTrackers;
-    if (user.role !== 'Admin') {
-      filteredForms = formsWithTrackers.filter(form => {
-        if (user.role === 'Adviser') {
-          return form.currentStep === 'Adviser' && 
-                 (form.studentOrganization?._id?.toString() === user.organizationId?.toString() || 
-                  form.nameOfHei === user.organizationName);
-        }
+    let filteredForms = formsWithTrackers.filter(form => {
+      switch (user.role) {
+        case 'Adviser':
+          return form.currentStep === 'Adviser';
         
-        if (user.role === 'Dean') {
+        case 'Dean':
           return form.currentStep === 'Dean' && 
-                 form.studentOrganization?.organizationType === 'Recognized Student Organization - Academic' &&
                  form.studentOrganization?.faculty === user.faculty;
-        }
         
-        if (user.role === 'Academic Services') {
+        case 'Academic Services':
           return form.currentStep === 'Academic Services';
-        }
         
-        if (user.role === 'Academic Director') {
+        case 'Academic Director':
           return form.currentStep === 'Academic Director';
-        }
         
-        if (user.role === 'Executive Director') {
+        case 'Executive Director':
           return form.currentStep === 'Executive Director';
-        }
         
-        if (user.role === 'Organization') {
-          return form.studentOrganization?._id?.toString() === user._id?.toString() || 
-                 form.emailAddress === user.email ||
-                 form.nameOfHei === user.organizationName;
-        }
+        case 'Organization':
+          return true; // Organizations see all their own forms regardless of step
         
-        return true;
-      });
-    }
+        default:
+          return false;
+      }
+    });
 
     res.status(200).json(filteredForms);
   } catch (error) {
