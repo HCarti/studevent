@@ -8,111 +8,47 @@ const EventTrackerList = () => {
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [userOrganizations, setUserOrganizations] = useState([]);
+  const [organizations, setOrganizations] = useState({});
   const navigate = useNavigate();
 
-  // Get user data safely from localStorage
-  const userData = JSON.parse(localStorage.getItem("user")) || {};
-  const userRole = userData?.role;
-  const userId = userData?._id;
-    const userFaculty = userData?.faculty;
-  const userOrganization = userData?.organization; // For advisers
-
-     useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setError("Please log in to view events");
-          setLoading(false);
-          return;
-        }
-
-        // Determine organizations this user should see
-        let organizations = [];
-        if (userRole === 'Adviser') {
-          // Adviser only sees their single assigned organization
-          if (userOrganization) {
-            organizations = [userOrganization];
-          }
-        } else if (userRole === 'Dean') {
-          // Dean sees all academic organizations in their faculty
-          const orgsResponse = await fetch(
-            `https://studevent-server.vercel.app/api/users/academic-organizations?faculty=${userFaculty}`,
-            { headers: { "Authorization": `Bearer ${token}` } }
-          );
-          if (orgsResponse.ok) {
-            const orgsData = await orgsResponse.json();
-            organizations = orgsData.map(org => org.organizationName);
-          }
-        }
-        setUserOrganizations(organizations);
-
-        // Fetch all forms
-        const formsResponse = await fetch("https://studevent-server.vercel.app/api/forms/all", {
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-        });
-
-        if (!formsResponse.ok) throw new Error("Failed to load events");
-        let formsData = await formsResponse.json();
-        if (!Array.isArray(formsData)) formsData = [];
-
-        // Add current step to each form
-        const formsWithCurrentStep = await Promise.all(
-          formsData.map(async (form) => {
-            try {
-              const trackerResponse = await fetch(
-                `https://studevent-server.vercel.app/api/tracker/${form._id}`,
-                { headers: { "Authorization": `Bearer ${token}` } }
-              );
-              const trackerData = trackerResponse.ok ? await trackerResponse.json() : {};
-              return { 
-                ...form, 
-                currentStep: trackerData.currentStep || "N/A",
-                trackerData: trackerData || {}
-              };
-            } catch {
-              return { 
-                ...form, 
-                currentStep: "N/A",
-                trackerData: {}
-              };
-            }
-          })
-        );
-
-        // Filter forms based on user role and current step
-        let filteredForms = formsWithCurrentStep;
-        
-        if (userRole === 'Adviser') {
-          filteredForms = filteredForms.filter(form => {
-            const orgName = getOrganizationName(form);
-            const isFromAdviserOrg = organizations.includes(orgName);
-            const isAtAdviserStep = form.trackerData?.currentStep === "Adviser";
-            return isFromAdviserOrg && isAtAdviserStep;
-          });
-        } else if (userRole === 'Dean') {
-          filteredForms = filteredForms.filter(form => {
-            const orgName = getOrganizationName(form);
-            const isFromDeanOrg = organizations.includes(orgName);
-            const isAtDeanStep = form.trackerData?.currentStep === "Dean";
-            return isFromDeanOrg && isAtDeanStep;
-          });
-        }
-
-        setForms(filteredForms);
-      } catch (error) {
-        setError(error.message);
-      } finally {
+  useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("Please log in to view events");
         setLoading(false);
+        return;
       }
-    };
 
-    fetchData();
-  }, [userRole, userId, userFaculty, userOrganization]);
+      const userData = JSON.parse(localStorage.getItem("user"));
+      if (!userData) {
+        throw new Error("User data not found");
+      }
+
+      // Fetch forms with role-based filtering already done in backend
+      const formsResponse = await fetch(`https://studevent-server.vercel.app/api/forms/all?role=${userData.role}`, {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (!formsResponse.ok) throw new Error("Failed to load events");
+      const formsData = await formsResponse.json();
+      
+      if (!Array.isArray(formsData)) throw new Error("Invalid data format");
+      
+      setForms(formsData);
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, []);
 
   const handleViewDetails = (form) => {
     navigate(`/progtrack/${form._id}`, { state: { form } });
@@ -134,19 +70,18 @@ const EventTrackerList = () => {
   };
 
 // In EventTrackerList.js, update getOrganizationName to handle adviser/dean views better:
-  const getOrganizationName = (form) => {
-    if (!form) return 'Unknown Organization';
-    
-    if (form.formType === 'LocalOffCampus') 
-      return form.nameOfHei || form.organizationName || 'Local Event';
-    
-    if (form.formType === 'Budget') 
-      return form.nameOfRso || 'Budget Proposal';
-    
+const getOrganizationName = (form) => {
+  if (form.formType === 'LocalOffCampus') return form.nameOfHei || form.organizationName || 'Local Event';
+  if (form.formType === 'Budget') return form.nameOfRso;
+  if (form.formType === 'Project') {
     return form.studentOrganization?.organizationName || 
-           form.organizationName || 
-           'Unknown Organization';
-  };
+           organizations[form.emailAddress] || 
+           'Unknown Project';
+  }
+  return form.studentOrganization?.organizationName || 
+         organizations[form.emailAddress] || 
+         'Unknown Organization';
+};
 
   const getEventTitle = (form) => {
     if (form.formType === 'LocalOffCampus') return `Local Event (${form.formPhase})`;
