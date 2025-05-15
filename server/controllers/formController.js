@@ -192,6 +192,7 @@ exports.getAllForms = async (req, res) => {
      console.log('User making request:', {
       _id: req.user._id,
       role: req.user.role,
+      authority: req.user.authority,
       organization: req.user.organization,
       deanForOrganization: req.user.deanForOrganization
     });
