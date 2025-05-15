@@ -203,7 +203,7 @@ exports.getAllForms = async (req, res) => {
           },
           {
             path: 'attachedBudget',
-            model: 'Budget'
+            model: 'BudgetProposal'
           }
         ]
       })
