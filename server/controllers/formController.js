@@ -189,6 +189,12 @@ const getRequiredReviewers = async (formType, organizationId = null) => {
 exports.getAllForms = async (req, res) => {
   try {
     const user = req.user;
+     console.log('User making request:', {
+      _id: req.user._id,
+      role: req.user.role,
+      organization: req.user.organization,
+      deanForOrganization: req.user.deanForOrganization
+    });
     
     // For Admin - return all forms with their trackers
     if (user.role === 'Admin') {
@@ -224,12 +230,14 @@ async function getFormsByTrackerStep(user) {
   if (user.role === 'Adviser') {
     // For Adviser - only forms from their specific organization
     if (!user.organization) {
-      console.log(`Adviser ${user._id} has no organization assigned`);
+      console.error('Adviser missing organization field');
       return [];
     }
 
     // Get form IDs from their organization
+   console.log(`Looking for forms in organization: ${user.organization}`);
     const orgFormIds = await getFormIdsForOrganization(user.organization);
+    console.log(`Found ${orgFormIds.length} form IDs for organization`);
     trackersQuery.formId = { $in: orgFormIds };
 
   } else if (user.role === 'Dean') {
