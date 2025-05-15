@@ -11,6 +11,84 @@ const notificationController = require('./notificationController');
 
 // HELPERS
 
+// Helper function to get form IDs for an organization name
+async function getFormIdsForOrganization(organizationName) {
+  const [regularForms, localOffForms] = await Promise.all([
+    Form.find({ 'studentOrganization.organizationName': organizationName })
+      .select('_id')
+      .lean(),
+    LocalOffCampus.find({ nameOfHei: organizationName })
+      .select('_id')
+      .lean()
+  ]);
+
+  return [
+    ...regularForms.map(f => f._id),
+    ...localOffForms.map(f => f._id)
+  ];
+}
+
+// Other helper functions remain the same
+async function getAllFormsWithTrackers() {
+  const [regularForms, localOffForms] = await Promise.all([
+    Form.find({})
+      .populate("studentOrganization", "_id organizationName organizationType faculty")
+      .populate("attachedBudget")
+      .lean(),
+    LocalOffCampus.find({}).populate("submittedBy", "_id email firstName lastName").lean()
+  ]);
+
+  const transformedLocalOffForms = transformLocalForms(localOffForms);
+  const allForms = [...regularForms, ...transformedLocalOffForms];
+  
+  return addTrackerData(allForms);
+}
+
+async function getOrganizationForms(orgId, orgName) {
+  const [regularForms, localOffForms] = await Promise.all([
+    Form.find({ studentOrganization: orgId })
+      .populate("studentOrganization", "_id organizationName organizationType faculty")
+      .populate("attachedBudget")
+      .lean(),
+    LocalOffCampus.find({ nameOfHei: orgName })
+      .populate("submittedBy", "_id email firstName lastName")
+      .lean()
+  ]);
+
+  const transformedLocalOffForms = transformLocalForms(localOffForms);
+  const allForms = [...regularForms, ...transformedLocalOffForms];
+  
+  return addTrackerData(allForms);
+}
+
+function transformLocalForms(localOffForms) {
+  return localOffForms.map(form => ({
+    ...form,
+    formType: 'LocalOffCampus',
+    finalStatus: form.status,
+    applicationDate: form.createdAt || new Date(),
+    emailAddress: form.submittedBy?.email || form.emailAddress,
+    eventTitle: `Local Off-Campus (${form.formPhase})`,
+    nameOfHei: form.nameOfHei,
+    organizationName: form.nameOfHei
+  }));
+}
+
+async function addTrackerData(forms) {
+  return Promise.all(
+    forms.map(async form => {
+      const tracker = await EventTracker.findOne({ formId: form._id }).lean();
+      return {
+        ...form,
+        currentStep: tracker?.currentStep || "N/A",
+        currentAuthority: tracker?.currentAuthority || "N/A",
+        trackerId: tracker?._id,
+        trackerData: tracker?.steps || []
+      };
+    })
+  );
+}
+
 // Enhanced event capacity check that handles both form types
 const checkEventCapacity = async (startDate, endDate, currentFormId = null) => {
   // Ensure moment is available
@@ -281,83 +359,6 @@ async function getFormsByTrackerStep(user) {
   });
 }
 
-// Helper function to get form IDs for an organization name
-async function getFormIdsForOrganization(organizationName) {
-  const [regularForms, localOffForms] = await Promise.all([
-    Form.find({ 'studentOrganization.organizationName': organizationName })
-      .select('_id')
-      .lean(),
-    LocalOffCampus.find({ nameOfHei: organizationName })
-      .select('_id')
-      .lean()
-  ]);
-
-  return [
-    ...regularForms.map(f => f._id),
-    ...localOffForms.map(f => f._id)
-  ];
-}
-
-// Other helper functions remain the same
-async function getAllFormsWithTrackers() {
-  const [regularForms, localOffForms] = await Promise.all([
-    Form.find({})
-      .populate("studentOrganization", "_id organizationName organizationType faculty")
-      .populate("attachedBudget")
-      .lean(),
-    LocalOffCampus.find({}).populate("submittedBy", "_id email firstName lastName").lean()
-  ]);
-
-  const transformedLocalOffForms = transformLocalForms(localOffForms);
-  const allForms = [...regularForms, ...transformedLocalOffForms];
-  
-  return addTrackerData(allForms);
-}
-
-async function getOrganizationForms(orgId, orgName) {
-  const [regularForms, localOffForms] = await Promise.all([
-    Form.find({ studentOrganization: orgId })
-      .populate("studentOrganization", "_id organizationName organizationType faculty")
-      .populate("attachedBudget")
-      .lean(),
-    LocalOffCampus.find({ nameOfHei: orgName })
-      .populate("submittedBy", "_id email firstName lastName")
-      .lean()
-  ]);
-
-  const transformedLocalOffForms = transformLocalForms(localOffForms);
-  const allForms = [...regularForms, ...transformedLocalOffForms];
-  
-  return addTrackerData(allForms);
-}
-
-function transformLocalForms(localOffForms) {
-  return localOffForms.map(form => ({
-    ...form,
-    formType: 'LocalOffCampus',
-    finalStatus: form.status,
-    applicationDate: form.createdAt || new Date(),
-    emailAddress: form.submittedBy?.email || form.emailAddress,
-    eventTitle: `Local Off-Campus (${form.formPhase})`,
-    nameOfHei: form.nameOfHei,
-    organizationName: form.nameOfHei
-  }));
-}
-
-async function addTrackerData(forms) {
-  return Promise.all(
-    forms.map(async form => {
-      const tracker = await EventTracker.findOne({ formId: form._id }).lean();
-      return {
-        ...form,
-        currentStep: tracker?.currentStep || "N/A",
-        currentAuthority: tracker?.currentAuthority || "N/A",
-        trackerId: tracker?._id,
-        trackerData: tracker?.steps || []
-      };
-    })
-  );
-}
 
 // Update getFormById to populate attachedBudget:
 exports.getFormById = async (req, res) => {
