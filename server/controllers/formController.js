@@ -190,7 +190,7 @@ exports.getAllForms = async (req, res) => {
   try {
     const user = req.user;
     
-    // For Admin users, return all forms without additional filtering
+    // For Admin users, return all forms without filtering
     if (user.role === 'Admin') {
       const [regularForms, localOffForms] = await Promise.all([
         Form.find({})
@@ -208,7 +208,6 @@ exports.getAllForms = async (req, res) => {
           .lean()
       ]);
 
-      // Transform and combine forms
       const transformedLocalOffForms = localOffForms.map(form => ({
         ...form,
         formType: 'LocalOffCampus',
@@ -222,7 +221,7 @@ exports.getAllForms = async (req, res) => {
 
       const allForms = [...regularForms, ...transformedLocalOffForms];
 
-      // Add tracker data
+      // Add tracker data to all forms
       const formsWithTrackers = await Promise.all(
         allForms.map(async form => {
           const tracker = await EventTracker.findOne({ formId: form._id }).lean();
@@ -237,53 +236,60 @@ exports.getAllForms = async (req, res) => {
       return res.status(200).json(formsWithTrackers);
     }
 
-    // For non-Admin users, we need to filter by current step
-    // First get all forms that might be relevant
+    // For non-Admin users, filter by current step and organization
+    let formsToReturn = [];
+    
+    // Common query for regular forms and local off-campus forms
     let formQuery = {};
     let localOffQuery = {};
 
-    // Build initial queries based on user role
+    // Handle each role specifically
     switch (user.role) {
       case 'Adviser':
-        const org = await User.findOne({
+        // Get the organization this adviser is associated with
+        const adviserOrg = await User.findOne({
           _id: user.organizationId,
           role: "Organization"
         }).select('_id organizationName').lean();
 
-        if (org) {
-          formQuery.studentOrganization = org._id;
-          localOffQuery.nameOfHei = org.organizationName;
-        } else {
-          return res.status(200).json([]);
-        }
+        if (!adviserOrg) return res.status(200).json([]);
+
+        // Only forms where:
+        // 1. currentStep is 'Adviser'
+        // 2. belongs to the adviser's organization
+        formQuery.studentOrganization = adviserOrg._id;
+        localOffQuery.nameOfHei = adviserOrg.organizationName;
         break;
 
       case 'Dean':
-        const orgs = await User.find({
+        // Get all academic organizations in this dean's faculty
+        const academicOrgs = await User.find({
           organizationType: 'Recognized Student Organization - Academic',
           faculty: user.faculty
         }).select('_id organizationName').lean();
 
-        if (orgs.length > 0) {
-          formQuery.studentOrganization = { $in: orgs.map(o => o._id) };
-          localOffQuery.nameOfHei = { $in: orgs.map(o => o.organizationName) };
-        } else {
-          return res.status(200).json([]);
-        }
+        if (academicOrgs.length === 0) return res.status(200).json([]);
+
+        // Only forms where:
+        // 1. currentStep is 'Dean'
+        // 2. belongs to an academic org in dean's faculty
+        formQuery.studentOrganization = { $in: academicOrgs.map(o => o._id) };
+        localOffQuery.nameOfHei = { $in: academicOrgs.map(o => o.organizationName) };
         break;
 
       case 'Organization':
+        // Organizations see all their own forms regardless of current step
         formQuery.studentOrganization = user._id;
         localOffQuery.nameOfHei = user.organizationName;
         break;
 
-      // For other roles (Academic Services, Academic Director, Executive Director)
-      // We'll get all forms and filter by current step later
+      // For other roles, we don't need initial organization filtering
+      // as they see forms based solely on current step
       default:
         break;
     }
 
-    // Fetch forms with initial filtering
+    // Fetch forms with initial organization filtering (if applicable)
     const [regularForms, localOffForms] = await Promise.all([
       Form.find(formQuery)
         .populate({
@@ -314,7 +320,7 @@ exports.getAllForms = async (req, res) => {
 
     let allForms = [...regularForms, ...transformedLocalOffForms];
 
-    // Add tracker data
+    // Add tracker data to all initially filtered forms
     const formsWithTrackers = await Promise.all(
       allForms.map(async form => {
         const tracker = await EventTracker.findOne({ formId: form._id }).lean();
@@ -326,15 +332,14 @@ exports.getAllForms = async (req, res) => {
       })
     );
 
-    // Apply current step filtering based on user role
-    let filteredForms = formsWithTrackers.filter(form => {
+    // Apply final current step filtering based on user role
+    formsToReturn = formsWithTrackers.filter(form => {
       switch (user.role) {
         case 'Adviser':
           return form.currentStep === 'Adviser';
         
         case 'Dean':
-          return form.currentStep === 'Dean' && 
-                 form.studentOrganization?.faculty === user.faculty;
+          return form.currentStep === 'Dean';
         
         case 'Academic Services':
           return form.currentStep === 'Academic Services';
@@ -346,14 +351,14 @@ exports.getAllForms = async (req, res) => {
           return form.currentStep === 'Executive Director';
         
         case 'Organization':
-          return true; // Organizations see all their own forms regardless of step
+          return true; // Organizations see all their forms
         
         default:
           return false;
       }
     });
 
-    res.status(200).json(filteredForms);
+    res.status(200).json(formsToReturn);
   } catch (error) {
     console.error("Error in getAllForms:", error);
     res.status(500).json({ 

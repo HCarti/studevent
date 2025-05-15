@@ -8,13 +8,10 @@ const EventTrackerList = () => {
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [userRole, setUserRole] = useState(null);
-  const [userFaculty, setUserFaculty] = useState(null);
-  const [userOrganizationId, setUserOrganizationId] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
@@ -23,30 +20,16 @@ const EventTrackerList = () => {
           return;
         }
 
-        // Fetch user data to get role and other info
-        const userResponse = await fetch("https://studevent-server.vercel.app/api/auth/me", {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-          },
-        });
-
-        if (!userResponse.ok) throw new Error("Failed to load user data");
-        const userData = await userResponse.json();
-        
-        setUserRole(userData.role);
-        setUserFaculty(userData.faculty);
-        setUserOrganizationId(userData.organizationId);
-
-        // Now fetch forms with the user context
-        const formsResponse = await fetch("https://studevent-server.vercel.app/api/forms/all", {
+        // Fetch forms - backend will automatically filter by current step
+        const response = await fetch("https://studevent-server.vercel.app/api/forms/all", {
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`,
           },
         });
 
-        if (!formsResponse.ok) throw new Error("Failed to load events");
-        let formsData = await formsResponse.json();
+        if (!response.ok) throw new Error("Failed to load events");
+        let formsData = await response.json();
         
         if (!Array.isArray(formsData)) throw new Error("Invalid data format");
 
@@ -64,9 +47,9 @@ const EventTrackerList = () => {
       }
     };
 
-    fetchUserData();
+    fetchData();
   }, []);
-
+  
   const handleViewDetails = (form) => {
     navigate(`/progtrack/${form._id}`, { state: { form } });
   };
@@ -236,4 +219,4 @@ const EventTrackerList = () => {
   );
 };
 
-export default EventTrackerList;
+export default EventTrackerList;  
