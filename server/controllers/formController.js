@@ -190,7 +190,7 @@ exports.getAllForms = async (req, res) => {
   try {
     const user = req.user;
     
-    // For Admin users, return all forms without filtering
+    // For Admin users, return all forms without any filtering
     if (user.role === 'Admin') {
       const [regularForms, localOffForms] = await Promise.all([
         Form.find({})
@@ -236,69 +236,73 @@ exports.getAllForms = async (req, res) => {
       return res.status(200).json(formsWithTrackers);
     }
 
-    // For non-Admin users, filter by current step and organization
-    let formsToReturn = [];
-    
-    // Common query for regular forms and local off-campus forms
-    let formQuery = {};
-    let localOffQuery = {};
+    // For Organizations, return all their forms regardless of currentStep
+    if (user.role === 'Organization') {
+      const [regularForms, localOffForms] = await Promise.all([
+        Form.find({ studentOrganization: user._id })
+          .populate({
+            path: "studentOrganization",
+            select: "_id organizationName organizationType faculty"
+          })
+          .populate("attachedBudget")
+          .lean(),
+        LocalOffCampus.find({ nameOfHei: user.organizationName })
+          .populate({
+            path: "submittedBy",
+            select: "_id email firstName lastName"
+          })
+          .lean()
+      ]);
 
-    // Handle each role specifically
-    switch (user.role) {
-      case 'Adviser':
-        // Get the organization this adviser is associated with
-        const adviserOrg = await User.findOne({
-          _id: user.organizationId,
-          role: "Organization"
-        }).select('_id organizationName').lean();
+      const transformedLocalOffForms = localOffForms.map(form => ({
+        ...form,
+        formType: 'LocalOffCampus',
+        finalStatus: form.status,
+        applicationDate: form.createdAt || new Date(),
+        emailAddress: form.submittedBy?.email || form.emailAddress,
+        eventTitle: `Local Off-Campus (${form.formPhase})`,
+        nameOfHei: form.nameOfHei,
+        organizationName: form.nameOfHei
+      }));
 
-        if (!adviserOrg) return res.status(200).json([]);
+      const allForms = [...regularForms, ...transformedLocalOffForms];
 
-        // Only forms where:
-        // 1. currentStep is 'Adviser'
-        // 2. belongs to the adviser's organization
-        formQuery.studentOrganization = adviserOrg._id;
-        localOffQuery.nameOfHei = adviserOrg.organizationName;
-        break;
+      // Add tracker data
+      const formsWithTrackers = await Promise.all(
+        allForms.map(async form => {
+          const tracker = await EventTracker.findOne({ formId: form._id }).lean();
+          return {
+            ...form,
+            currentStep: tracker?.currentStep || "N/A",
+            trackerId: tracker?._id
+          };
+        })
+      );
 
-      case 'Dean':
-        // Get all academic organizations in this dean's faculty
-        const academicOrgs = await User.find({
-          organizationType: 'Recognized Student Organization - Academic',
-          faculty: user.faculty
-        }).select('_id organizationName').lean();
-
-        if (academicOrgs.length === 0) return res.status(200).json([]);
-
-        // Only forms where:
-        // 1. currentStep is 'Dean'
-        // 2. belongs to an academic org in dean's faculty
-        formQuery.studentOrganization = { $in: academicOrgs.map(o => o._id) };
-        localOffQuery.nameOfHei = { $in: academicOrgs.map(o => o.organizationName) };
-        break;
-
-      case 'Organization':
-        // Organizations see all their own forms regardless of current step
-        formQuery.studentOrganization = user._id;
-        localOffQuery.nameOfHei = user.organizationName;
-        break;
-
-      // For other roles, we don't need initial organization filtering
-      // as they see forms based solely on current step
-      default:
-        break;
+      return res.status(200).json(formsWithTrackers);
     }
 
-    // Fetch forms with initial organization filtering (if applicable)
+    // For all other roles, only return forms where currentStep matches their role exactly
+    // First get all forms where currentStep matches user's role
+    const trackers = await EventTracker.find({ currentStep: user.role }).lean();
+    
+    if (trackers.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    // Get form IDs from trackers
+    const formIds = trackers.map(t => t.formId);
+
+    // Fetch all forms that match these IDs
     const [regularForms, localOffForms] = await Promise.all([
-      Form.find(formQuery)
+      Form.find({ _id: { $in: formIds } })
         .populate({
           path: "studentOrganization",
           select: "_id organizationName organizationType faculty"
         })
         .populate("attachedBudget")
         .lean(),
-      LocalOffCampus.find(localOffQuery)
+      LocalOffCampus.find({ _id: { $in: formIds } })
         .populate({
           path: "submittedBy",
           select: "_id email firstName lastName"
@@ -318,47 +322,19 @@ exports.getAllForms = async (req, res) => {
       organizationName: form.nameOfHei
     }));
 
-    let allForms = [...regularForms, ...transformedLocalOffForms];
+    const allForms = [...regularForms, ...transformedLocalOffForms];
 
-    // Add tracker data to all initially filtered forms
-    const formsWithTrackers = await Promise.all(
-      allForms.map(async form => {
-        const tracker = await EventTracker.findOne({ formId: form._id }).lean();
-        return {
-          ...form,
-          currentStep: tracker?.currentStep || "N/A",
-          trackerId: tracker?._id
-        };
-      })
-    );
-
-    // Apply final current step filtering based on user role
-    formsToReturn = formsWithTrackers.filter(form => {
-      switch (user.role) {
-        case 'Adviser':
-          return form.currentStep === 'Adviser';
-        
-        case 'Dean':
-          return form.currentStep === 'Dean';
-        
-        case 'Academic Services':
-          return form.currentStep === 'Academic Services';
-        
-        case 'Academic Director':
-          return form.currentStep === 'Academic Director';
-        
-        case 'Executive Director':
-          return form.currentStep === 'Executive Director';
-        
-        case 'Organization':
-          return true; // Organizations see all their forms
-        
-        default:
-          return false;
-      }
+    // Add tracker data
+    const formsWithTrackers = allForms.map(form => {
+      const tracker = trackers.find(t => t.formId.toString() === form._id.toString());
+      return {
+        ...form,
+        currentStep: tracker?.currentStep || "N/A",
+        trackerId: tracker?._id
+      };
     });
 
-    res.status(200).json(formsToReturn);
+    res.status(200).json(formsWithTrackers);
   } catch (error) {
     console.error("Error in getAllForms:", error);
     res.status(500).json({ 
