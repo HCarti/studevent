@@ -216,46 +216,86 @@ exports.getAllForms = async (req, res) => {
 };
 
 // Helper function to get forms where tracker.currentStep matches user role
-async function getFormsByTrackerStep(userRole) {
-  // 1. First find all trackers where currentStep matches user's role
-  const trackers = await EventTracker.find({ 
-    currentStep: userRole
-  }).lean();
+async function getFormsByTrackerStep(user) {
+  // Base query - forms at current step for user's role
+  let trackersQuery = { currentStep: user.role };
 
-  if (trackers.length === 0) return [];
+  // Additional filtering based on user role
+  if (user.role === 'Adviser') {
+    // For Adviser - only forms from their specific organization
+    if (!user.organization) {
+      console.log(`Adviser ${user._id} has no organization assigned`);
+      return [];
+    }
 
-  // 2. Get all form IDs from these trackers
-  const formIds = trackers.map(t => t.formId);
+    // Get form IDs from their organization
+    const orgFormIds = await getFormIdsForOrganization(user.organization);
+    trackersQuery.formId = { $in: orgFormIds };
 
-  // 3. Fetch forms and their organizations in a single query
+  } else if (user.role === 'Dean') {
+    // For Dean - only forms from academic orgs they're assigned to
+    if (!user.deanForOrganization) {
+      console.log(`Dean ${user._id} has no organizations assigned`);
+      return [];
+    }
+
+    // Get form IDs from their assigned academic orgs
+    const orgFormIds = await getFormIdsForOrganization(user.deanForOrganization);
+    trackersQuery.formId = { $in: orgFormIds };
+  }
+
+  // Execute the query
+  const trackers = await EventTracker.find(trackersQuery)
+    .populate('formId')
+    .lean();
+
+  const validTrackers = trackers.filter(t => t.formId && t.formId._id);
+  if (validTrackers.length === 0) return [];
+
+  // Rest of the processing...
+  const formIds = validTrackers.map(t => t.formId._id || t.formId);
+  
   const [regularForms, localOffForms] = await Promise.all([
     Form.find({ _id: { $in: formIds } })
-      .populate({
-        path: "studentOrganization",
-        select: "_id organizationName organizationType faculty"
-      })
-      .populate("attachedBudget")
+      .populate("studentOrganization")
       .lean(),
     LocalOffCampus.find({ _id: { $in: formIds } })
-      .populate("submittedBy", "_id email firstName lastName")
+      .populate("submittedBy")
       .lean()
   ]);
 
-  // 4. Transform local forms
   const transformedLocalOffForms = transformLocalForms(localOffForms);
   const allForms = [...regularForms, ...transformedLocalOffForms];
 
-  // 5. Map tracker data to forms
   return allForms.map(form => {
-    const tracker = trackers.find(t => t.formId.toString() === form._id.toString());
+    const tracker = validTrackers.find(t => 
+      (t.formId._id || t.formId).toString() === form._id.toString()
+    );
     return {
       ...form,
-      currentStep: tracker.currentStep, // Guaranteed to match userRole
+      currentStep: tracker.currentStep,
       currentAuthority: tracker.currentAuthority,
       trackerId: tracker._id,
       trackerData: tracker.steps || []
     };
   });
+}
+
+// Helper function to get form IDs for an organization name
+async function getFormIdsForOrganization(organizationName) {
+  const [regularForms, localOffForms] = await Promise.all([
+    Form.find({ 'studentOrganization.organizationName': organizationName })
+      .select('_id')
+      .lean(),
+    LocalOffCampus.find({ nameOfHei: organizationName })
+      .select('_id')
+      .lean()
+  ]);
+
+  return [
+    ...regularForms.map(f => f._id),
+    ...localOffForms.map(f => f._id)
+  ];
 }
 
 // Other helper functions remain the same
