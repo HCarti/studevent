@@ -217,21 +217,23 @@ exports.getAllForms = async (req, res) => {
 
 // Helper function to get forms where tracker.currentStep matches user role
 async function getFormsByTrackerStep(userRole) {
-  // 1. Find all trackers where currentStep matches user's role
+  // 1. First find all trackers where currentStep matches user's role
   const trackers = await EventTracker.find({ 
-    currentStep: userRole,
-    currentAuthority: userRole // Also check currentAuthority for extra security
+    currentStep: userRole
   }).lean();
 
   if (trackers.length === 0) return [];
 
-  // 2. Separate form IDs by type
+  // 2. Get all form IDs from these trackers
   const formIds = trackers.map(t => t.formId);
-  
-  // 3. Fetch all forms that have these trackers
+
+  // 3. Fetch forms and their organizations in a single query
   const [regularForms, localOffForms] = await Promise.all([
     Form.find({ _id: { $in: formIds } })
-      .populate("studentOrganization", "_id organizationName organizationType faculty")
+      .populate({
+        path: "studentOrganization",
+        select: "_id organizationName organizationType faculty"
+      })
       .populate("attachedBudget")
       .lean(),
     LocalOffCampus.find({ _id: { $in: formIds } })
@@ -239,19 +241,19 @@ async function getFormsByTrackerStep(userRole) {
       .lean()
   ]);
 
-  // 4. Transform and combine forms
+  // 4. Transform local forms
   const transformedLocalOffForms = transformLocalForms(localOffForms);
   const allForms = [...regularForms, ...transformedLocalOffForms];
 
-  // 5. Enrich forms with tracker data
+  // 5. Map tracker data to forms
   return allForms.map(form => {
     const tracker = trackers.find(t => t.formId.toString() === form._id.toString());
     return {
       ...form,
-      currentStep: tracker?.currentStep || userRole,
-      currentAuthority: tracker?.currentAuthority || userRole,
-      trackerId: tracker?._id,
-      trackerData: tracker?.steps || [] // Include all steps if needed
+      currentStep: tracker.currentStep, // Guaranteed to match userRole
+      currentAuthority: tracker.currentAuthority,
+      trackerId: tracker._id,
+      trackerData: tracker.steps || []
     };
   });
 }

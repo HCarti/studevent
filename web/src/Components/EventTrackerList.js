@@ -101,7 +101,7 @@ const EventTrackerList = () => {
 
     const getCurrentStepDisplay = (form) => {
     if (userRole === 'Admin') {
-      return `Step: ${form.currentStep} (${form.currentAuthority})`;
+      return `Current Step: ${form.currentStep}`;
     }
     return `Current Step: ${form.currentStep}`;
   };
