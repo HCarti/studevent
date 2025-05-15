@@ -20,7 +20,9 @@ const createToken = (user) => {
       logo: user.logo || '',
       signature: user.signature || '',
       presidentSignature: user.presidentSignature || '',
-      presidentName: user.presidentName || ''
+      presidentName: user.presidentName || '',
+      organization: user.organization || '',
+      deanForOrganization: user.deanForOrganization || '',
     },
     process.env.JWT_SECRET,
     { expiresIn: "1d" }
