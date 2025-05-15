@@ -8,6 +8,7 @@ const EventTrackerList = () => {
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [userRole, setUserRole] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -20,30 +21,31 @@ const EventTrackerList = () => {
           return;
         }
 
-        // Get user data from localStorage (set during login)
+        // Get user data from localStorage
         const userData = JSON.parse(localStorage.getItem("user"));
-        if (!userData) {
-          throw new Error("User data not found");
-        }
+        if (!userData) throw new Error("User data not found");
+        
+        setUserRole(userData.role);
 
-        // Send request to backend with user role/faculty info
         const response = await fetch("https://studevent-server.vercel.app/api/forms/all", {
           headers: {
-            "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`,
           },
         });
 
-        if (!response.ok) throw new Error("Failed to load events");
+        if (!response.ok) throw new Error(`Failed to load events: ${response.status}`);
         
         let formsData = await response.json();
         
         if (!Array.isArray(formsData)) throw new Error("Invalid data format");
 
-        // Verify currentStep exists
+        // Verify and enhance form data with tracker info
         formsData = formsData.map(form => ({
           ...form,
-          currentStep: form.currentStep || "N/A"
+          currentStep: form.currentStep || "N/A",
+          currentAuthority: form.currentAuthority || "N/A",
+          // Add additional tracker data if needed
+          trackerSteps: form.trackerData || []
         }));
 
         setForms(formsData);
@@ -58,7 +60,15 @@ const EventTrackerList = () => {
   }, []);
   
   const handleViewDetails = (form) => {
-    navigate(`/progtrack/${form._id}`, { state: { form } });
+    navigate(`/progtrack/${form._id}`, { 
+      state: { 
+        form,
+        // Pass additional tracker info to details page
+        currentStep: form.currentStep,
+        currentAuthority: form.currentAuthority,
+        trackerSteps: form.trackerSteps
+      } 
+    });
   };
 
   const getFilteredForms = () => {
@@ -87,6 +97,13 @@ const EventTrackerList = () => {
     return form.studentOrganization?.organizationName || 
            form.emailAddress || 
            'Unknown Organization';
+  };
+
+    const getCurrentStepDisplay = (form) => {
+    if (userRole === 'Admin') {
+      return `Step: ${form.currentStep} (${form.currentAuthority})`;
+    }
+    return `Current Step: ${form.currentStep}`;
   };
 
   const getEventTitle = (form) => {
@@ -163,7 +180,7 @@ const EventTrackerList = () => {
               </div>
             </div>
 
-            <div className="events-container">
+             <div className="events-container">
               {getFilteredForms().length > 0 ? (
                 getFilteredForms().map((form) => (
                   <div 
@@ -197,7 +214,9 @@ const EventTrackerList = () => {
                     </div>
                     
                     <div className="card-bottom">
-                      <span className="progress">Current Step: {form.currentStep}</span>
+                      <span className="progress">
+                        {getCurrentStepDisplay(form)}
+                      </span>
                       <button className="view-btn">
                         View Details
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
