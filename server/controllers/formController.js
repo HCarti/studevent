@@ -190,6 +190,10 @@ exports.getAllForms = async (req, res) => {
   try {
     const user = req.user; // From JWT middleware
     
+    if (!user || !user.role) {
+      return res.status(401).json({ error: "Unauthorized - Invalid user data" });
+    }
+    
     // For Admin - return all forms
     if (user.role === 'Admin') {
       const allForms = await getAllFormsWithTrackers();
@@ -203,7 +207,7 @@ exports.getAllForms = async (req, res) => {
     }
 
     // For all other roles - only forms where currentStep matches role
-    const roleSpecificForms = await getFormsByCurrentStep(user.role);
+    const roleSpecificForms = await getFormsByCurrentStep(user.role, user);
     return res.status(200).json(roleSpecificForms);
 
   } catch (error) {
@@ -244,25 +248,38 @@ async function getOrganizationForms(orgId, orgName) {
 
   const transformedLocalOffForms = transformLocalForms(localOffForms);
   const allForms = [...regularForms, ...transformedLocalOffForms];
+async function getFormsByCurrentStep(currentStep, user) {
+  // Build tracker query based on role and faculty
+  const trackerQuery = { currentStep };
   
-  return addTrackerData(allForms);
-}
+  // Add faculty-specific filter for certain roles
+  if (['Adviser', 'Dean'].includes(user.role)) {
+    trackerQuery['organizationFaculty'] = user.faculty;
+  }
 
-async function getFormsByCurrentStep(currentStep) {
   // First find all trackers at this step
-  const trackers = await EventTracker.find({ currentStep }).lean();
+  const trackers = await EventTracker.find(trackerQuery).lean();
   if (trackers.length === 0) return [];
 
   // Get form IDs from trackers
   const formIds = trackers.map(t => t.formId);
 
+  // Build form queries with faculty filter
+  const formQuery = { _id: { $in: formIds } };
+  const localOffQuery = { _id: { $in: formIds } };
+
+  if (['Adviser', 'Dean'].includes(user.role)) {
+    formQuery['studentOrganization.faculty'] = user.faculty;
+    localOffQuery['faculty'] = user.faculty;
+  }
+
   // Fetch all matching forms
   const [regularForms, localOffForms] = await Promise.all([
-    Form.find({ _id: { $in: formIds } })
+    Form.find(formQuery)
       .populate("studentOrganization", "_id organizationName organizationType faculty")
       .populate("attachedBudget")
       .lean(),
-    LocalOffCampus.find({ _id: { $in: formIds } })
+    LocalOffCampus.find(localOffQuery)
       .populate("submittedBy", "_id email firstName lastName")
       .lean()
   ]);
@@ -276,9 +293,11 @@ async function getFormsByCurrentStep(currentStep) {
     return {
       ...form,
       currentStep: tracker?.currentStep || "N/A",
-      trackerId: tracker?._id
+      trackerId: tracker?._id,
+      faculty: form.studentOrganization?.faculty || form.faculty
     };
   });
+}
 }
 
 function transformLocalForms(localOffForms) {
