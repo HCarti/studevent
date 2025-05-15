@@ -188,101 +188,24 @@ const getRequiredReviewers = async (formType, organizationId = null) => {
 // formController.js
 exports.getAllForms = async (req, res) => {
   try {
-    const user = req.user;
+    const user = req.user; // From JWT middleware
     
-    // 1. Get all trackers and populate forms, filtering out null formIds
-    const allTrackers = await EventTracker.find({ formId: { $ne: null } })
-      .populate({
-        path: 'formId',
-        match: { _id: { $exists: true } }, // Ensure form exists
-        populate: [
-          {
-            path: 'studentOrganization',
-            select: '_id organizationName organizationType faculty',
-            model: 'User'
-          },
-          {
-            path: 'attachedBudget',
-            model: 'Budget'
-          }
-        ]
-      })
-      .lean();
-
-    // 2. Transform data with proper null checks
-    const allForms = allTrackers
-      .filter(tracker => tracker.formId !== null) // Filter out null forms
-      .map(tracker => {
-        const form = tracker.formId;
-        
-        // Base form data
-        const baseForm = {
-          ...form,
-          currentStep: tracker.currentStep || 'N/A',
-          trackerId: tracker._id
-        };
-
-        // Special handling for LocalOffCampus forms
-        if (form.formType === 'LocalOffCampus') {
-          return {
-            ...baseForm,
-            finalStatus: form.status || 'pending',
-            applicationDate: form.createdAt || new Date(),
-            emailAddress: form.submittedBy?.email || form.emailAddress || '',
-            eventTitle: `Local Off-Campus (${form.formPhase || 'N/A'})`,
-            nameOfHei: form.nameOfHei || '',
-            organizationName: form.nameOfHei || ''
-          };
-        }
-
-        return baseForm;
-      });
-
-    // 3. Filter based on user role
-    let filteredForms = [];
-    
+    // For Admin - return all forms
     if (user.role === 'Admin') {
-      filteredForms = allForms;
-    } 
-    else if (user.role === 'Organization') {
-      filteredForms = allForms.filter(form => 
-        (form.studentOrganization?._id?.toString() === user._id.toString()) ||
-        (form.nameOfHei === user.organizationName)
-      );
-    }
-    else {
-      filteredForms = allForms.filter(form => form.currentStep === user.role);
-
-      // Additional role-specific filtering
-      if (user.role === 'Adviser' && user.organizationId) {
-        const org = await User.findById(user.organizationId).lean();
-        if (org) {
-          filteredForms = filteredForms.filter(form =>
-            (form.studentOrganization?._id?.toString() === org._id.toString()) ||
-            (form.nameOfHei === org.organizationName)
-          );
-        }
-      }
-      else if (user.role === 'Dean' && user.faculty) {
-        const academicOrgs = await User.find({
-          organizationType: 'Recognized Student Organization - Academic',
-          faculty: user.faculty
-        }).lean();
-
-        if (academicOrgs.length > 0) {
-          const orgIds = academicOrgs.map(o => o._id.toString());
-          const orgNames = academicOrgs.map(o => o.organizationName);
-          
-          filteredForms = filteredForms.filter(form =>
-            orgIds.includes(form.studentOrganization?._id?.toString()) ||
-            orgNames.includes(form.nameOfHei)
-          );
-        }
-      }
+      const allForms = await getAllFormsWithTrackers();
+      return res.status(200).json(allForms);
     }
 
-    res.status(200).json(filteredForms.filter(f => f !== null));
-    
+    // For Organization - return all their forms
+    if (user.role === 'Organization') {
+      const orgForms = await getOrganizationForms(user._id, user.organizationName);
+      return res.status(200).json(orgForms);
+    }
+
+    // For all other roles - only forms where currentStep matches role
+    const roleSpecificForms = await getFormsByCurrentStep(user.role);
+    return res.status(200).json(roleSpecificForms);
+
   } catch (error) {
     console.error("Error in getAllForms:", error);
     res.status(500).json({ 
@@ -291,6 +214,98 @@ exports.getAllForms = async (req, res) => {
     });
   }
 };
+
+// Helper functions
+async function getAllFormsWithTrackers() {
+  const [regularForms, localOffForms] = await Promise.all([
+    Form.find({})
+      .populate("studentOrganization", "_id organizationName organizationType faculty")
+      .populate("attachedBudget")
+      .lean(),
+    LocalOffCampus.find({}).populate("submittedBy", "_id email firstName lastName").lean()
+  ]);
+
+  const transformedLocalOffForms = transformLocalForms(localOffForms);
+  const allForms = [...regularForms, ...transformedLocalOffForms];
+  
+  return addTrackerData(allForms);
+}
+
+async function getOrganizationForms(orgId, orgName) {
+  const [regularForms, localOffForms] = await Promise.all([
+    Form.find({ studentOrganization: orgId })
+      .populate("studentOrganization", "_id organizationName organizationType faculty")
+      .populate("attachedBudget")
+      .lean(),
+    LocalOffCampus.find({ nameOfHei: orgName })
+      .populate("submittedBy", "_id email firstName lastName")
+      .lean()
+  ]);
+
+  const transformedLocalOffForms = transformLocalForms(localOffForms);
+  const allForms = [...regularForms, ...transformedLocalOffForms];
+  
+  return addTrackerData(allForms);
+}
+
+async function getFormsByCurrentStep(currentStep) {
+  // First find all trackers at this step
+  const trackers = await EventTracker.find({ currentStep }).lean();
+  if (trackers.length === 0) return [];
+
+  // Get form IDs from trackers
+  const formIds = trackers.map(t => t.formId);
+
+  // Fetch all matching forms
+  const [regularForms, localOffForms] = await Promise.all([
+    Form.find({ _id: { $in: formIds } })
+      .populate("studentOrganization", "_id organizationName organizationType faculty")
+      .populate("attachedBudget")
+      .lean(),
+    LocalOffCampus.find({ _id: { $in: formIds } })
+      .populate("submittedBy", "_id email firstName lastName")
+      .lean()
+  ]);
+
+  const transformedLocalOffForms = transformLocalForms(localOffForms);
+  const allForms = [...regularForms, ...transformedLocalOffForms];
+  
+  // Map tracker data to forms
+  return allForms.map(form => {
+    const tracker = trackers.find(t => t.formId.toString() === form._id.toString());
+    return {
+      ...form,
+      currentStep: tracker?.currentStep || "N/A",
+      trackerId: tracker?._id
+    };
+  });
+}
+
+function transformLocalForms(localOffForms) {
+  return localOffForms.map(form => ({
+    ...form,
+    formType: 'LocalOffCampus',
+    finalStatus: form.status,
+    applicationDate: form.createdAt || new Date(),
+    emailAddress: form.submittedBy?.email || form.emailAddress,
+    eventTitle: `Local Off-Campus (${form.formPhase})`,
+    nameOfHei: form.nameOfHei,
+    organizationName: form.nameOfHei
+  }));
+}
+
+async function addTrackerData(forms) {
+  return Promise.all(
+    forms.map(async form => {
+      const tracker = await EventTracker.findOne({ formId: form._id }).lean();
+      return {
+        ...form,
+        currentStep: tracker?.currentStep || "N/A",
+        trackerId: tracker?._id
+      };
+    })
+  );
+}
 
 // Update getFormById to populate attachedBudget:
 exports.getFormById = async (req, res) => {

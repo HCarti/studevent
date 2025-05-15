@@ -20,7 +20,13 @@ const EventTrackerList = () => {
           return;
         }
 
-        // Fetch forms - backend will automatically filter by current step
+        // Get user data from localStorage (set during login)
+        const userData = JSON.parse(localStorage.getItem("user"));
+        if (!userData) {
+          throw new Error("User data not found");
+        }
+
+        // Send request to backend with user role/faculty info
         const response = await fetch("https://studevent-server.vercel.app/api/forms/all", {
           headers: {
             "Content-Type": "application/json",
@@ -29,14 +35,15 @@ const EventTrackerList = () => {
         });
 
         if (!response.ok) throw new Error("Failed to load events");
+        
         let formsData = await response.json();
         
         if (!Array.isArray(formsData)) throw new Error("Invalid data format");
 
-        // Verify that currentStep exists on each form
+        // Verify currentStep exists
         formsData = formsData.map(form => ({
           ...form,
-          currentStep: form.currentStep || "N/A" // Ensure currentStep exists
+          currentStep: form.currentStep || "N/A"
         }));
 
         setForms(formsData);
