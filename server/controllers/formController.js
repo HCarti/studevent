@@ -189,28 +189,31 @@ const getRequiredReviewers = async (formType, organizationId = null) => {
 exports.getAllForms = async (req, res) => {
   try {
     const user = req.user;
-     console.log('User making request:', {
-      _id: req.user._id,
-      role: req.user.role,
-      faculty: req.user.faculty,
-      organization: req.user.organization,
-      deanForOrganization: req.user.deanForOrganization
+    console.log('User making request:', {
+      _id: user._id,
+      role: user.role,
+      faculty: user.faculty,
+      organization: user.organization,
+      deanForOrganization: user.deanForOrganization
     });
     
-    // For Admin - return all forms with their trackers
-    if (user.role === 'Admin') {
+    // For Admin (identified by faculty) - return all forms
+    if (user.faculty === 'Admin') {
+      console.log('Processing admin request');
       const allForms = await getAllFormsWithTrackers();
       return res.status(200).json(allForms);
     }
 
-    // For Organization - return all their forms with trackers
+    // For Organization - return all their forms
     if (user.role === 'Organization') {
+      console.log('Processing organization request');
       const orgForms = await getOrganizationForms(user._id, user.organizationName);
       return res.status(200).json(orgForms);
     }
 
-    // For other roles - only forms where tracker.currentStep matches user's role
-    const roleSpecificForms = await getFormsByTrackerStep(user.role);
+    // For Advisers and Deans (identified by faculty)
+    console.log(`Processing request for ${user.faculty}`);
+    const roleSpecificForms = await getFormsByTrackerStep(user);
     return res.status(200).json(roleSpecificForms);
 
   } catch (error) {
@@ -224,44 +227,57 @@ exports.getAllForms = async (req, res) => {
 
 // Helper function to get forms where tracker.currentStep matches user role
 async function getFormsByTrackerStep(user) {
-  // Base query - forms at current step for user's role
-  let trackersQuery = { currentStep: user.role };
+  // Determine the current step based on faculty
+  const currentStep = user.faculty === 'Adviser' ? 'Adviser' : 
+                     user.faculty === 'Dean' ? 'Dean' : 
+                     user.role;
 
-  // Additional filtering based on user role
-  if (user.role === 'Adviser') {
-    // For Adviser - only forms from their specific organization
+  console.log(`Processing forms for ${user.faculty || user.role} at step: ${currentStep}`);
+
+  let trackersQuery = { currentStep };
+
+  // Adviser-specific filtering
+  if (user.faculty === 'Adviser') {
     if (!user.organization) {
       console.error('Adviser missing organization field');
       return [];
     }
 
-    // Get form IDs from their organization
-   console.log(`Looking for forms in organization: ${user.organization}`);
+    console.log(`Looking for forms in organization: ${user.organization}`);
     const orgFormIds = await getFormIdsForOrganization(user.organization);
     console.log(`Found ${orgFormIds.length} form IDs for organization`);
+    
+    if (orgFormIds.length === 0) return [];
+    
     trackersQuery.formId = { $in: orgFormIds };
-
-  } else if (user.role === 'Dean') {
-    // For Dean - only forms from academic orgs they're assigned to
+  }
+  // Dean-specific filtering
+  else if (user.faculty === 'Dean') {
     if (!user.deanForOrganization) {
-      console.log(`Dean ${user._id} has no organizations assigned`);
+      console.error('Dean missing deanForOrganization field');
       return [];
     }
 
-    // Get form IDs from their assigned academic orgs
+    console.log(`Looking for forms in academic organization: ${user.deanForOrganization}`);
     const orgFormIds = await getFormIdsForOrganization(user.deanForOrganization);
+    console.log(`Found ${orgFormIds.length} form IDs for academic organization`);
+    
+    if (orgFormIds.length === 0) return [];
+    
     trackersQuery.formId = { $in: orgFormIds };
   }
 
-  // Execute the query
+  console.log('Final tracker query:', trackersQuery);
   const trackers = await EventTracker.find(trackersQuery)
     .populate('formId')
     .lean();
 
   const validTrackers = trackers.filter(t => t.formId && t.formId._id);
+  console.log(`Found ${validTrackers.length} valid trackers`);
+
   if (validTrackers.length === 0) return [];
 
-  // Rest of the processing...
+  // Get form data
   const formIds = validTrackers.map(t => t.formId._id || t.formId);
   
   const [regularForms, localOffForms] = await Promise.all([
