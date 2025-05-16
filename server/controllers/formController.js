@@ -197,7 +197,7 @@ exports.getAllForms = async (req, res) => {
       deanForOrganization: user.deanForOrganization
     });
     
-    // For Admin (identified by faculty) - return all forms
+    // For Admin - return all forms
     if (user.faculty === 'Admin') {
       console.log('Processing admin request');
       const allForms = await getAllFormsWithTrackers();
@@ -211,8 +211,8 @@ exports.getAllForms = async (req, res) => {
       return res.status(200).json(orgForms);
     }
 
-    // For Advisers and Deans (identified by faculty)
-    console.log(`Processing request for ${user.faculty}`);
+    // For all other roles
+    console.log(`Processing request for ${user.faculty || user.role}`);
     const roleSpecificForms = await getFormsByTrackerStep(user);
     return res.status(200).json(roleSpecificForms);
 
@@ -227,14 +227,20 @@ exports.getAllForms = async (req, res) => {
 
 // Helper function to get forms where tracker.currentStep matches user role
 async function getFormsByTrackerStep(user) {
-  // Determine the current step based on faculty
-  const currentStep = user.faculty === 'Adviser' ? 'Adviser' : 
-                     user.faculty === 'Dean' ? 'Dean' : 
-                     user.role;
+  // Determine current step based on role/faculty
+  let currentStep;
+  if (user.faculty === 'Adviser') {
+    currentStep = 'Adviser';
+  } else if (user.faculty === 'Dean') {
+    currentStep = 'Dean';
+  } else {
+    // For Academic Services, Academic Director, Executive Director
+    currentStep = user.role;
+  }
 
   console.log(`Processing forms for ${user.faculty || user.role} at step: ${currentStep}`);
 
-  let validTrackers = []; // Initialize here
+  let validTrackers = [];
 
   // Adviser-specific filtering
   if (user.faculty === 'Adviser') {
@@ -247,18 +253,13 @@ async function getFormsByTrackerStep(user) {
     const orgFormIds = await getFormIdsForOrganization(user.organization);
     console.log(`Found ${orgFormIds.length} form IDs for organization`);
     
-    if (orgFormIds.length === 0) {
-      console.log('No forms found for organization');
-      return [];
-    }
+    if (orgFormIds.length === 0) return [];
 
-    // Find trackers for these forms at Adviser step
     const trackers = await EventTracker.find({
       formId: { $in: orgFormIds },
       currentStep: 'Adviser'
     }).populate('formId').lean();
 
-    console.log(`Found ${trackers.length} trackers at Adviser step`);
     validTrackers = trackers.filter(t => t.formId && t.formId._id);
   }
   // Dean-specific filtering
@@ -269,34 +270,25 @@ async function getFormsByTrackerStep(user) {
     }
 
     console.log(`Looking for academic forms in organization: ${user.deanForOrganization}`);
-    
-    // 1. First verify this is an academic organization
-    const academicOrg = await User.findOne({
-      organizationName: user.deanForOrganization,
-      organizationType: 'Recognized Student Organization - Academic'
-    }).select('_id organizationName faculty').lean();
-
-    if (!academicOrg) {
-      console.error(`Organization ${user.deanForOrganization} is not an academic organization`);
-      return [];
-    }
-
-    // 2. Get all forms for this academic organization
     const orgFormIds = await getFormIdsForOrganization(user.deanForOrganization);
     console.log(`Found ${orgFormIds.length} form IDs for academic organization`);
     
-    if (orgFormIds.length === 0) {
-      console.log('No forms found for academic organization');
-      return [];
-    }
+    if (orgFormIds.length === 0) return [];
 
-    // 3. Find trackers for these forms at Dean step
     const trackers = await EventTracker.find({
       formId: { $in: orgFormIds },
       currentStep: 'Dean'
     }).populate('formId').lean();
 
-    console.log(`Found ${trackers.length} trackers at Dean step`);
+    validTrackers = trackers.filter(t => t.formId && t.formId._id);
+  }
+  // For Academic Services, Academic Director, Executive Director
+  else {
+    // Simply find all trackers at current step
+    const trackers = await EventTracker.find({
+      currentStep: currentStep
+    }).populate('formId').lean();
+
     validTrackers = trackers.filter(t => t.formId && t.formId._id);
   }
 
