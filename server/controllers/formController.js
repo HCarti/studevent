@@ -235,7 +235,7 @@ async function getFormsByTrackerStep(user) {
     currentStep = 'Dean';
   } else {
     // For Academic Services, Academic Director, Executive Director
-    currentStep = user.role;
+    currentStep = user.faculty;
   }
 
   console.log(`Processing forms for ${user.faculty || user.role} at step: ${currentStep}`);
