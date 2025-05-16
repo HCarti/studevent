@@ -369,18 +369,61 @@ async function getFormIdsForOrganization(organizationName) {
 
 // Other helper functions remain the same
 async function getAllFormsWithTrackers() {
-  const [regularForms, localOffForms] = await Promise.all([
-    Form.find({})
-      .populate("studentOrganization", "_id organizationName organizationType faculty")
-      .populate("attachedBudget")
-      .lean(),
-    LocalOffCampus.find({}).populate("submittedBy", "_id email firstName lastName").lean()
-  ]);
+  try {
+    console.log('Fetching all forms for admin');
+    
+    // Get all forms (both regular and local) with full population
+    const [regularForms, localOffForms] = await Promise.all([
+      Form.find({})
+        .populate({
+          path: "studentOrganization",
+          select: "_id organizationName organizationType faculty"
+        })
+        .populate("attachedBudget")
+        .lean(),
+      
+      LocalOffCampus.find({})
+        .populate("submittedBy", "_id email firstName lastName")
+        .lean()
+    ]);
 
-  const transformedLocalOffForms = transformLocalForms(localOffForms);
-  const allForms = [...regularForms, ...transformedLocalOffForms];
-  
-  return addTrackerData(allForms);
+    console.log(`Found ${regularForms.length} regular forms and ${localOffForms.length} local forms`);
+
+    // Transform local forms to match regular form structure
+    const transformedLocalOffForms = localOffForms.map(form => ({
+      ...form,
+      formType: 'LocalOffCampus',
+      finalStatus: form.status,
+      applicationDate: form.createdAt || new Date(),
+      emailAddress: form.submittedBy?.email || form.emailAddress,
+      eventTitle: `Local Off-Campus (${form.formPhase})`,
+      nameOfHei: form.nameOfHei,
+      organizationName: form.nameOfHei
+    }));
+
+    const allForms = [...regularForms, ...transformedLocalOffForms];
+    
+    // Add tracker data to all forms
+    const formsWithTrackers = await Promise.all(
+      allForms.map(async form => {
+        const tracker = await EventTracker.findOne({ formId: form._id }).lean();
+        return {
+          ...form,
+          currentStep: tracker?.currentStep || "N/A",
+          currentAuthority: tracker?.currentAuthority || "N/A",
+          trackerId: tracker?._id,
+          trackerData: tracker?.steps || []
+        };
+      })
+    );
+
+    console.log(`Returning ${formsWithTrackers.length} forms with tracker data`);
+    return formsWithTrackers;
+    
+  } catch (error) {
+    console.error('Error in getAllFormsWithTrackers:', error);
+    throw error; // Let the parent function handle the error
+  }
 }
 
 async function getOrganizationForms(orgId, orgName) {
