@@ -198,7 +198,7 @@ exports.getAllForms = async (req, res) => {
     });
     
     // For Admin - return all forms
-    if (user.role === 'Admin') {
+    if (user.role === 'Admin' || user.role === 'SuperAdmin') {
       console.log('Processing admin request');
       const allForms = await getAllFormsWithTrackers();
       return res.status(200).json(allForms);
