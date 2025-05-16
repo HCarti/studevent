@@ -247,9 +247,18 @@ async function getFormsByTrackerStep(user) {
     const orgFormIds = await getFormIdsForOrganization(user.organization);
     console.log(`Found ${orgFormIds.length} form IDs for organization`);
     
-    if (orgFormIds.length === 0) return [];
-    
-    trackersQuery.formId = { $in: orgFormIds };
+    if (orgFormIds.length === 0) {
+      console.log('No forms found for organization');
+      return [];
+    }
+
+    // Find trackers for these forms at Adviser step
+    const trackers = await EventTracker.find({
+      formId: { $in: orgFormIds },
+      currentStep: 'Adviser'
+    }).populate('formId').lean();
+
+    console.log(`Found ${trackers.length} trackers at Adviser step`);
   }
   // Dean-specific filtering
   else if (user.faculty === 'Dean') {
@@ -308,19 +317,49 @@ async function getFormsByTrackerStep(user) {
 
 // Helper function to get form IDs for an organization name
 async function getFormIdsForOrganization(organizationName) {
-  const [regularForms, localOffForms] = await Promise.all([
-    Form.find({ 'studentOrganization.organizationName': organizationName })
-      .select('_id')
-      .lean(),
-    LocalOffCampus.find({ nameOfHei: organizationName })
-      .select('_id')
-      .lean()
-  ]);
+  try {
+    // 1. First find the organization document to get its ID
+    const organization = await User.findOne({
+      organizationName: organizationName,
+      role: 'Organization'
+    }).select('_id').lean();
 
-  return [
-    ...regularForms.map(f => f._id),
-    ...localOffForms.map(f => f._id)
-  ];
+    if (!organization) {
+      console.log(`No organization found with name: ${organizationName}`);
+      return [];
+    }
+
+    console.log(`Found organization ID: ${organization._id} for ${organizationName}`);
+
+    // 2. Find all forms associated with this organization
+    const [regularForms, localOffForms] = await Promise.all([
+      // Regular forms where studentOrganization matches the org ID
+      Form.find({ 
+        $or: [
+          { studentOrganization: organization._id },
+          { 'studentOrganization.organizationName': organizationName }
+        ]
+      }).select('_id').lean(),
+      
+      // Local off-campus forms where nameOfHei matches
+      LocalOffCampus.find({ 
+        $or: [
+          { nameOfHei: organizationName },
+          { organizationName: organizationName }
+        ]
+      }).select('_id').lean()
+    ]);
+
+    console.log(`Found ${regularForms.length} regular forms and ${localOffForms.length} local forms`);
+    
+    return [
+      ...regularForms.map(f => f._id),
+      ...localOffForms.map(f => f._id)
+    ];
+  } catch (error) {
+    console.error('Error in getFormIdsForOrganization:', error);
+    return [];
+  }
 }
 
 // Other helper functions remain the same
