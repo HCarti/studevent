@@ -234,7 +234,7 @@ async function getFormsByTrackerStep(user) {
 
   console.log(`Processing forms for ${user.faculty || user.role} at step: ${currentStep}`);
 
-  let trackersQuery = { currentStep };
+  let validTrackers = []; // Initialize here
 
   // Adviser-specific filtering
   if (user.faculty === 'Adviser') {
@@ -259,51 +259,47 @@ async function getFormsByTrackerStep(user) {
     }).populate('formId').lean();
 
     console.log(`Found ${trackers.length} trackers at Adviser step`);
+    validTrackers = trackers.filter(t => t.formId && t.formId._id);
   }
-else if (user.faculty === 'Dean') {
-  if (!user.deanForOrganization) {
-    console.error('Dean missing deanForOrganization field');
-    return [];
+  // Dean-specific filtering
+  else if (user.faculty === 'Dean') {
+    if (!user.deanForOrganization) {
+      console.error('Dean missing deanForOrganization field');
+      return [];
+    }
+
+    console.log(`Looking for academic forms in organization: ${user.deanForOrganization}`);
+    
+    // 1. First verify this is an academic organization
+    const academicOrg = await User.findOne({
+      organizationName: user.deanForOrganization,
+      organizationType: 'Recognized Student Organization - Academic'
+    }).select('_id organizationName faculty').lean();
+
+    if (!academicOrg) {
+      console.error(`Organization ${user.deanForOrganization} is not an academic organization`);
+      return [];
+    }
+
+    // 2. Get all forms for this academic organization
+    const orgFormIds = await getFormIdsForOrganization(user.deanForOrganization);
+    console.log(`Found ${orgFormIds.length} form IDs for academic organization`);
+    
+    if (orgFormIds.length === 0) {
+      console.log('No forms found for academic organization');
+      return [];
+    }
+
+    // 3. Find trackers for these forms at Dean step
+    const trackers = await EventTracker.find({
+      formId: { $in: orgFormIds },
+      currentStep: 'Dean'
+    }).populate('formId').lean();
+
+    console.log(`Found ${trackers.length} trackers at Dean step`);
+    validTrackers = trackers.filter(t => t.formId && t.formId._id);
   }
 
-  console.log(`Looking for academic forms in organization: ${user.deanForOrganization}`);
-  
-  // 1. First verify this is an academic organization
-  const academicOrg = await User.findOne({
-    organizationName: user.deanForOrganization,
-    organizationType: 'Recognized Student Organization - Academic'
-  }).select('_id organizationName faculty').lean();
-
-  if (!academicOrg) {
-    console.error(`Organization ${user.deanForOrganization} is not an academic organization`);
-    return [];
-  }
-
-  // 2. Get all forms for this academic organization
-  const orgFormIds = await getFormIdsForOrganization(user.deanForOrganization);
-  console.log(`Found ${orgFormIds.length} form IDs for academic organization`);
-  
-  if (orgFormIds.length === 0) {
-    console.log('No forms found for academic organization');
-    return [];
-  }
-
-  // 3. Find trackers for these forms at Dean step
-  const trackers = await EventTracker.find({
-    formId: { $in: orgFormIds },
-    currentStep: 'Dean'
-  }).populate('formId').lean();
-
-  console.log(`Found ${trackers.length} trackers at Dean step`);
-  validTrackers = trackers.filter(t => t.formId && t.formId._id);
-}
-
-  console.log('Final tracker query:', trackersQuery);
-  const trackers = await EventTracker.find(trackersQuery)
-    .populate('formId')
-    .lean();
-
-  const validTrackers = trackers.filter(t => t.formId && t.formId._id);
   console.log(`Found ${validTrackers.length} valid trackers`);
 
   if (validTrackers.length === 0) return [];
