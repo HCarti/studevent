@@ -260,21 +260,43 @@ async function getFormsByTrackerStep(user) {
 
     console.log(`Found ${trackers.length} trackers at Adviser step`);
   }
-  // Dean-specific filtering
-  else if (user.faculty === 'Dean') {
-    if (!user.deanForOrganization) {
-      console.error('Dean missing deanForOrganization field');
-      return [];
-    }
-
-    console.log(`Looking for forms in academic organization: ${user.deanForOrganization}`);
-    const orgFormIds = await getFormIdsForOrganization(user.deanForOrganization);
-    console.log(`Found ${orgFormIds.length} form IDs for academic organization`);
-    
-    if (orgFormIds.length === 0) return [];
-    
-    trackersQuery.formId = { $in: orgFormIds };
+else if (user.faculty === 'Dean') {
+  if (!user.deanForOrganization) {
+    console.error('Dean missing deanForOrganization field');
+    return [];
   }
+
+  console.log(`Looking for academic forms in organization: ${user.deanForOrganization}`);
+  
+  // 1. First verify this is an academic organization
+  const academicOrg = await User.findOne({
+    organizationName: user.deanForOrganization,
+    organizationType: 'Recognized Student Organization - Academic'
+  }).select('_id organizationName faculty').lean();
+
+  if (!academicOrg) {
+    console.error(`Organization ${user.deanForOrganization} is not an academic organization`);
+    return [];
+  }
+
+  // 2. Get all forms for this academic organization
+  const orgFormIds = await getFormIdsForOrganization(user.deanForOrganization);
+  console.log(`Found ${orgFormIds.length} form IDs for academic organization`);
+  
+  if (orgFormIds.length === 0) {
+    console.log('No forms found for academic organization');
+    return [];
+  }
+
+  // 3. Find trackers for these forms at Dean step
+  const trackers = await EventTracker.find({
+    formId: { $in: orgFormIds },
+    currentStep: 'Dean'
+  }).populate('formId').lean();
+
+  console.log(`Found ${trackers.length} trackers at Dean step`);
+  validTrackers = trackers.filter(t => t.formId && t.formId._id);
+}
 
   console.log('Final tracker query:', trackersQuery);
   const trackers = await EventTracker.find(trackersQuery)
@@ -318,30 +340,30 @@ async function getFormsByTrackerStep(user) {
 // Helper function to get form IDs for an organization name
 async function getFormIdsForOrganization(organizationName) {
   try {
-    // 1. First find the organization document to get its ID
+    // Find organization by name (works for both regular and academic orgs)
     const organization = await User.findOne({
       organizationName: organizationName,
-      role: 'Organization'
-    }).select('_id').lean();
+      $or: [
+        { role: 'Organization' },
+        { organizationType: 'Recognized Student Organization - Academic' }
+      ]
+    }).select('_id organizationType').lean();
 
     if (!organization) {
       console.log(`No organization found with name: ${organizationName}`);
       return [];
     }
 
-    console.log(`Found organization ID: ${organization._id} for ${organizationName}`);
+    console.log(`Found ${organization.organizationType || 'regular'} organization: ${organization._id}`);
 
-    // 2. Find all forms associated with this organization
+    // Rest of the function remains the same...
     const [regularForms, localOffForms] = await Promise.all([
-      // Regular forms where studentOrganization matches the org ID
       Form.find({ 
         $or: [
           { studentOrganization: organization._id },
           { 'studentOrganization.organizationName': organizationName }
         ]
       }).select('_id').lean(),
-      
-      // Local off-campus forms where nameOfHei matches
       LocalOffCampus.find({ 
         $or: [
           { nameOfHei: organizationName },
@@ -350,12 +372,7 @@ async function getFormIdsForOrganization(organizationName) {
       }).select('_id').lean()
     ]);
 
-    console.log(`Found ${regularForms.length} regular forms and ${localOffForms.length} local forms`);
-    
-    return [
-      ...regularForms.map(f => f._id),
-      ...localOffForms.map(f => f._id)
-    ];
+    return [...regularForms.map(f => f._id), ...localOffForms.map(f => f._id)];
   } catch (error) {
     console.error('Error in getFormIdsForOrganization:', error);
     return [];
