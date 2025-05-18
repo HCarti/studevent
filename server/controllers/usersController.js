@@ -509,7 +509,7 @@ const updateProfile = async (req, res) => {
     const userId = req.user._id;
     
     // Debugging logs
-    console.log('Request body:', req.body);
+    console.log('Request body fields:', req.body);
     console.log('Uploaded file:', req.file ? 'Exists' : 'None');
 
     // Get current user data
@@ -518,38 +518,47 @@ const updateProfile = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Create update object
-    const updateData = {
-      firstName: req.body.firstName || currentUser.firstName,
-      lastName: req.body.lastName || currentUser.lastName,
-      email: req.body.email || currentUser.email
-    };
+    // Create update object with only provided fields
+    const updateData = {};
+    
+    // Only update fields that are provided in the request
+    if (req.body.firstName) updateData.firstName = req.body.firstName;
+    if (req.body.lastName) updateData.lastName = req.body.lastName;
+    if (req.body.email) updateData.email = req.body.email;
 
-    // Handle image upload if present
+    // Handle image upload if present (optional)
     if (req.file) {
       const imageBlob = await put(
         `user-${Date.now()}-profile`,
         req.file.buffer,
         { access: 'public' }
       );
-      updateData.logo = imageBlob.url; // Changed from 'image' to 'logo' to match your schema
+      updateData.logo = imageBlob.url;
     }
 
-    // Perform the update
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      updateData,
-      { new: true, runValidators: true }
-    ).select('-password');
+    // Perform the update only if there are changes
+    if (Object.keys(updateData).length > 0) {
+      const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        updateData,
+        { new: true, runValidators: true }
+      ).select('-password');
 
-    if (!updatedUser) {
-      return res.status(400).json({ message: 'Update failed' });
+      if (!updatedUser) {
+        return res.status(400).json({ message: 'Update failed' });
+      }
+
+      // Return the complete updated user data
+      return res.status(200).json({
+        message: 'Profile updated successfully',
+        user: updatedUser
+      });
     }
 
-    // Return the complete updated user data
-    res.status(200).json({
-      message: 'Profile updated successfully',
-      user: updatedUser
+    // If no fields were provided to update
+    return res.status(200).json({
+      message: 'No changes detected',
+      user: currentUser
     });
 
   } catch (error) {

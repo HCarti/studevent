@@ -133,23 +133,22 @@ const handleSaveChanges = async () => {
     setIsSaving(true);
     const token = localStorage.getItem('token');
     
-    // Create form data
     const formData = new FormData();
     
-    // Always include all fields (required by your current backend validation)
-    formData.append('firstName', editedUser.firstName);
-    formData.append('lastName', editedUser.lastName);
-    formData.append('email', editedUser.email);
+    // Only append fields that have been changed
+    if (editedUser.firstName !== user.firstName) {
+      formData.append('firstName', editedUser.firstName);
+    }
+    if (editedUser.lastName !== user.lastName) {
+      formData.append('lastName', editedUser.lastName);
+    }
+    if (editedUser.email !== user.email) {
+      formData.append('email', editedUser.email);
+    }
     
-    // Only append image if it exists
+    // Only append image if a new one was selected
     if (profileImage) {
       formData.append('image', profileImage);
-    }
-
-    // Debugging - log what's being sent
-    console.log('FormData contents:');
-    for (let [key, value] of formData.entries()) {
-      console.log(key, value);
     }
 
     const response = await axios.put(
@@ -169,13 +168,8 @@ const handleSaveChanges = async () => {
     );
 
     // Verify the response
-    // Update ALL user state from server response
+ // Update state with the new user data
     setUser(response.data.user);
-    setEditedUser({
-      firstName: response.data.user.firstName,
-      lastName: response.data.user.lastName,
-      email: response.data.user.email
-    });
     setImagePreview(response.data.user.logo || '/default-profile.png');
     
     setIsEditing(false);
