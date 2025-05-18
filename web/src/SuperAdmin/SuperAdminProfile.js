@@ -129,54 +129,64 @@ const SuperAdminProfile = () => {
   };
 
 const handleSaveChanges = async () => {
-  try {
+ try {
     setIsSaving(true);
     const token = localStorage.getItem('token');
     
+    // Create form data with all fields (even unchanged ones)
+    // This ensures the backend receives all required fields
     const formData = new FormData();
+    formData.append('firstName', editedUser.firstName);
+    formData.append('lastName', editedUser.lastName);
+    formData.append('email', editedUser.email);
     
-    // Only append fields that have been changed
-    if (editedUser.firstName !== user.firstName) {
-      formData.append('firstName', editedUser.firstName);
-    }
-    if (editedUser.lastName !== user.lastName) {
-      formData.append('lastName', editedUser.lastName);
-    }
-    if (editedUser.email !== user.email) {
-      formData.append('email', editedUser.email);
-    }
-    
-    // Only append image if a new one was selected
     if (profileImage) {
       formData.append('image', profileImage);
     }
 
+    // Debug: Log what's being sent
+    console.log('Sending form data with:');
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
     const response = await axios.put(
       'https://studevent-server.vercel.app/api/users/update/profile',
       formData,
-      { 
+     { 
         headers: { 
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
+          // Let axios set Content-Type automatically with boundary
         },
-        transformRequest: (data, headers) => {
-          // Remove Content-Type header - let axios set it automatically
-          delete headers['Content-Type'];
-          return data;
-        }
+        transformRequest: (data) => data // Bypass axios JSON transformation
       }
     );
 
-    // Verify the response
- // Update state with the new user data
-    setUser(response.data.user);
-    setImagePreview(response.data.user.logo || '/default-profile.png');
+    // Verify response
+    console.log('Update response:', response.data);
     
-    setIsEditing(false);
-    toast.success('Profile updated successfully!');
+    if (response.data && response.data.user) {
+      // Update ALL state from server response
+      setUser(response.data.user);
+      setEditedUser({
+        firstName: response.data.user.firstName,
+        lastName: response.data.user.lastName,
+        email: response.data.user.email
+      });
+      setImagePreview(response.data.user.logo || '/default-profile.png');
+      
+      setIsEditing(false);
+      toast.success('Profile updated successfully!');
+    } else {
+      throw new Error('Invalid response format');
+    }
   } catch (error) {
     console.error('Update error:', error);
-    toast.error(error.response?.data?.message || 'Update failed. Please try again.');
+    if (error.response) {
+      console.error('Server response:', error.response.data);
+      toast.error(error.response.data.message || 'Update failed. Please try again.');
+    } else {
+      toast.error('Network error. Please check your connection.');
+    }
   } finally {
     setIsSaving(false);
     setProfileImage(null);

@@ -507,26 +507,31 @@ const getAllUsers = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const userId = req.user._id;
+    console.log('Raw request body:', req.body); // Debug log
     
-    // Debugging logs
-    console.log('Request body fields:', req.body);
-    console.log('Uploaded file:', req.file ? 'Exists' : 'None');
-
     // Get current user data
     const currentUser = await User.findById(userId);
     if (!currentUser) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Create update object with only provided fields
+    // Create update object with only changed fields
     const updateData = {};
     
-    // Only update fields that are provided in the request
-    if (req.body.firstName) updateData.firstName = req.body.firstName;
-    if (req.body.lastName) updateData.lastName = req.body.lastName;
-    if (req.body.email) updateData.email = req.body.email;
+    // Check each field individually
+    if (req.body.firstName && req.body.firstName !== currentUser.firstName) {
+      updateData.firstName = req.body.firstName;
+    }
+    
+    if (req.body.lastName && req.body.lastName !== currentUser.lastName) {
+      updateData.lastName = req.body.lastName;
+    }
+    
+    if (req.body.email && req.body.email !== currentUser.email) {
+      updateData.email = req.body.email;
+    }
 
-    // Handle image upload if present (optional)
+    // Handle image upload if present
     if (req.file) {
       const imageBlob = await put(
         `user-${Date.now()}-profile`,
@@ -536,36 +541,44 @@ const updateProfile = async (req, res) => {
       updateData.logo = imageBlob.url;
     }
 
-    // Perform the update only if there are changes
-    if (Object.keys(updateData).length > 0) {
-      const updatedUser = await User.findByIdAndUpdate(
-        userId,
-        updateData,
-        { new: true, runValidators: true }
-      ).select('-password');
-
-      if (!updatedUser) {
-        return res.status(400).json({ message: 'Update failed' });
-      }
-
-      // Return the complete updated user data
+    // Only proceed with update if there are changes
+    if (Object.keys(updateData).length === 0) {
       return res.status(200).json({
-        message: 'Profile updated successfully',
-        user: updatedUser
+        message: 'No changes detected',
+        user: currentUser
       });
     }
 
-    // If no fields were provided to update
+    // Perform the update with proper error handling
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: userId },
+      updateData,
+      { 
+        new: true,
+        runValidators: true,
+        context: 'query' // Ensures proper validation
+      }
+    ).select('-password');
+
+    if (!updatedUser) {
+      return res.status(400).json({ message: 'Update failed - no document was modified' });
+    }
+
+    // Verify the update in database
+    const dbUser = await User.findById(userId);
+    console.log('Database state after update:', dbUser); // Debug log
+
     return res.status(200).json({
-      message: 'No changes detected',
-      user: currentUser
+      message: 'Profile updated successfully',
+      user: updatedUser
     });
 
   } catch (error) {
     console.error('Update error:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       message: 'Server error during update',
-      error: error.message 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
