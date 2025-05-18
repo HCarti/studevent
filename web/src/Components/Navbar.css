@@ -714,6 +714,51 @@
   color: white;
 }
 
+/* Welcome Speech Bubble Styles */
+.welcome-bubble {
+  position: absolute;
+  right: 20px;
+  background-color: #1a3ab5;
+  color: white;
+  padding: 15px 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1001;
+  animation: fadeInOut 10s ease-in-out forwards;
+  transform-origin: top right;
+  max-width: 250px;
+  text-align: center;
+}
+
+.welcome-bubble::after {
+  content: '';
+  position: absolute;
+  top: -200px;
+  right: 20px;
+  border-width: 0 10px 10px;
+  border-style: solid;
+  border-color: transparent transparent #1a3ab5;
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(-10px);
+  }
+  15% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  85% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.8) translateY(-10px);
+  }
+}
+
 /* Responsive Styles */
 @media (max-width: 768px) {
   .navbar-menu {

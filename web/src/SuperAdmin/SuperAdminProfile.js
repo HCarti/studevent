@@ -169,11 +169,14 @@ const handleSaveChanges = async () => {
     );
 
     // Verify the response
-    console.log('Server response:', response.data);
-    
     // Update ALL user state from server response
     setUser(response.data.user);
-    setImagePreview(response.data.user.image || imagePreview);
+    setEditedUser({
+      firstName: response.data.user.firstName,
+      lastName: response.data.user.lastName,
+      email: response.data.user.email
+    });
+    setImagePreview(response.data.user.logo || '/default-profile.png');
     
     setIsEditing(false);
     toast.success('Profile updated successfully!');

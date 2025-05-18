@@ -17,6 +17,8 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [organizationId, setOrganizationId] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [showWelcomeBubble, setShowWelcomeBubble] = useState(false);
+  const prevIsLoggedInRef = useRef();
 
   // Refs for dropdown containers
   const notificationDropdownRef = useRef(null);
@@ -84,6 +86,18 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
       setOrganizationId(parsedUser?._id);
     }
   }, []);
+
+  useEffect(() => {
+    // Check if user just logged in
+    if (isLoggedIn && prevIsLoggedInRef.current === false) {
+      setShowWelcomeBubble(true);
+      const timer = setTimeout(() => {
+        setShowWelcomeBubble(false);
+      }, 3000); // Hide after 3 seconds
+      return () => clearTimeout(timer);
+    }
+    prevIsLoggedInRef.current = isLoggedIn;
+  }, [isLoggedIn]);
 
   // Notifications
   useEffect(() => {
@@ -370,6 +384,11 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
 
   return (
     <div className="navbar" ref={navbarRef}>
+      {showWelcomeBubble && isLoggedIn && user && (
+        <div className="welcome-bubble">
+          Welcome, {user.firstName} {user.lastName}!
+        </div>
+      )}
       <div className="navbar-logo" onClick={handleNavbarClick}>
         <img src={StudeventLogo} alt="StudEvent Logo" />
         <div className="navbar-title">StudEvent</div>

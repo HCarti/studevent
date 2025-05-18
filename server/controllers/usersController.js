@@ -508,12 +508,8 @@ const updateProfile = async (req, res) => {
   try {
     const userId = req.user._id;
     
-    // Debugging logs - critical for troubleshooting
-    console.log('Request body fields:', {
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      email: req.body.email
-    });
+    // Debugging logs
+    console.log('Request body:', req.body);
     console.log('Uploaded file:', req.file ? 'Exists' : 'None');
 
     // Get current user data
@@ -522,7 +518,7 @@ const updateProfile = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Create update object - use provided values or current ones
+    // Create update object
     const updateData = {
       firstName: req.body.firstName || currentUser.firstName,
       lastName: req.body.lastName || currentUser.lastName,
@@ -536,12 +532,12 @@ const updateProfile = async (req, res) => {
         req.file.buffer,
         { access: 'public' }
       );
-      updateData.image = imageBlob.url;
+      updateData.logo = imageBlob.url; // Changed from 'image' to 'logo' to match your schema
     }
 
     // Perform the update
-    const updatedUser = await User.findOneAndUpdate(
-      { _id: userId },
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
       updateData,
       { new: true, runValidators: true }
     ).select('-password');
