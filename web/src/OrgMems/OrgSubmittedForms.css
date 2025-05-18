@@ -7,7 +7,7 @@
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  min-height: 650px;
+  min-height: 92vh;
   height: auto;
   display: flex;
   flex-direction: column;

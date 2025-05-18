@@ -26,7 +26,7 @@
   align-items: center;
   justify-content: center;
   max-width: 50%;
-  max-height: 65vh; /* Set maximum height for the form container */
+  max-height: 69vh; /* Set maximum height for the form container */
   overflow-y: auto; /* Enable vertical scrolling */
   scrollbar-width: none !important; /* Firefox */
   -ms-overflow-style: none !important;  /* IE and Edge */

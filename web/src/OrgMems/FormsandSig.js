@@ -114,7 +114,7 @@ const FormsandSig = () => {
 
   return (
     <div className="fs-container">
-      <h1 className="fs-title">Forms and Signature</h1>
+      <h1 className="fs-title">Forms and Proposal Tracker</h1>
 
       {/* Icon to toggle modal */}
       {!isMobile && (

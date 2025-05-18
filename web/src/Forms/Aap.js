@@ -1283,33 +1283,33 @@ const Aap = () => {
     </>
   )}
 
-  <label className="required-field">Budget Amount:</label>
-  <input
-    type="number"
-    name="budgetAmount"
-    value={formData.budgetAmount}
-    onChange={handleChange}
-    readOnly={!!formData.attachedBudget}
-    className={fieldErrors.budgetAmount ? 'invalid-field' : ''}
-    min="0"
-    disabled={loading}
-  />
+        <label className="required-field">Budget Amount:</label>
+        <input
+          type="number"
+          name="budgetAmount"
+          value={formData.budgetAmount}
+          onChange={handleChange}
+          readOnly={!!formData.attachedBudget}
+          className={fieldErrors.budgetAmount ? 'invalid-field' : ''}
+          min="0"
+          disabled={loading}
+        />
 
-  <label className="required-field">Budget From:</label>
-  <select
-    name="budgetFrom"
-    value={formData.budgetFrom}
-    onChange={handleChange}
-    readOnly={!!formData.attachedBudget}
-    className={fieldErrors.budgetFrom ? 'invalid-field' : ''}
-    disabled={loading}
-  >
-    <option value="">Select An Option...</option>
-    <option value="College/Department">College/Department</option>
-    <option value="Org">Organization</option>
-    <option value="SDAO">SDAO</option>
-  </select>
-</div>
+        <label className="required-field">Budget From:</label>
+        <select
+          name="budgetFrom"
+          value={formData.budgetFrom}
+          onChange={handleChange}
+          readOnly={!!formData.attachedBudget}
+          className={fieldErrors.budgetFrom ? 'invalid-field' : ''}
+          disabled={loading}
+        >
+          <option value="">Select An Option...</option>
+          <option value="College/Department">College/Department</option>
+          <option value="Org">Organization</option>
+          <option value="SDAO">SDAO</option>
+        </select>
+      </div>
             <p className="venue-note">
               Note: Budget amount is not automatically approved by this system. Please confirm
               budget availability separately with the budget management before submission.

@@ -113,7 +113,7 @@
   width: 100%;
   max-width: 1000px;
   box-sizing: border-box;
-  max-height: 74vh; /* Set maximum height for the form container */
+  max-height: 69vh; /* Set maximum height for the form container */
   overflow-y: auto; /* Enable vertical scrolling */
 }
 
