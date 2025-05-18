@@ -129,12 +129,10 @@ const SuperAdminProfile = () => {
   };
 
 const handleSaveChanges = async () => {
- try {
+  try {
     setIsSaving(true);
     const token = localStorage.getItem('token');
     
-    // Create form data with all fields (even unchanged ones)
-    // This ensures the backend receives all required fields
     const formData = new FormData();
     formData.append('firstName', editedUser.firstName);
     formData.append('lastName', editedUser.lastName);
@@ -144,52 +142,43 @@ const handleSaveChanges = async () => {
       formData.append('image', profileImage);
     }
 
-    // Debug: Log what's being sent
-    console.log('Sending form data with:');
+    // Debug: Verify FormData contents
     for (let [key, value] of formData.entries()) {
       console.log(key, value);
     }
-    const response = await axios.put(
-      'https://studevent-server.vercel.app/api/users/update/profile',
-      formData,
-     { 
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          // Let axios set Content-Type automatically with boundary
-        },
-        transformRequest: (data) => data // Bypass axios JSON transformation
-      }
-    );
+
+    const response = await axios({
+      method: 'put',
+      url: 'https://studevent-server.vercel.app/api/users/updateProfile',
+      data: formData,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        // Let browser set Content-Type with boundary automatically
+      },
+      transformRequest: [(data, headers) => {
+        // Remove any automatic Content-Type header
+        delete headers['Content-Type'];
+        return data;
+      }]
+    });
 
     // Verify response
-    console.log('Update response:', response.data);
+    console.log('Server response:', response.data);
     
-    if (response.data && response.data.user) {
-      // Update ALL state from server response
-      setUser(response.data.user);
-      setEditedUser({
-        firstName: response.data.user.firstName,
-        lastName: response.data.user.lastName,
-        email: response.data.user.email
-      });
-      setImagePreview(response.data.user.logo || '/default-profile.png');
-      
-      setIsEditing(false);
-      toast.success('Profile updated successfully!');
-    } else {
-      throw new Error('Invalid response format');
-    }
+    setUser(response.data.user);
+    setIsEditing(false);
+    toast.success('Profile updated successfully!');
+    
   } catch (error) {
     console.error('Update error:', error);
     if (error.response) {
-      console.error('Server response:', error.response.data);
-      toast.error(error.response.data.message || 'Update failed. Please try again.');
+      console.error('Response error:', error.response.data);
+      toast.error(error.response.data.message || 'Update failed');
     } else {
-      toast.error('Network error. Please check your connection.');
+      toast.error('Network error. Please try again.');
     }
   } finally {
     setIsSaving(false);
-    setProfileImage(null);
   }
 };
 

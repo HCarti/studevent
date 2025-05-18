@@ -506,67 +506,62 @@ const getAllUsers = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const userId = req.user._id;
-    console.log('Raw request body:', req.body); // Debug log
+    // Debug raw request
+    console.log('Request headers:', req.headers);
+    console.log('Raw request data available:', !!req.rawBody);
+
+    // Use multiparty to parse FormData manually
+    const form = new multiparty.Form();
     
-    // Get current user data
+    const { fields, files } = await new Promise((resolve, reject) => {
+      form.parse(req, (err, fields, files) => {
+        if (err) reject(err);
+        resolve({ fields, files });
+      });
+    });
+
+    console.log('Parsed fields:', fields);
+    console.log('Parsed files:', files);
+
+    const userId = req.user._id;
     const currentUser = await User.findById(userId);
     if (!currentUser) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Create update object with only changed fields
+    // Create update object
     const updateData = {};
     
-    // Check each field individually
-    if (req.body.firstName && req.body.firstName !== currentUser.firstName) {
-      updateData.firstName = req.body.firstName;
+    if (fields.firstName && fields.firstName[0] !== currentUser.firstName) {
+      updateData.firstName = fields.firstName[0];
     }
     
-    if (req.body.lastName && req.body.lastName !== currentUser.lastName) {
-      updateData.lastName = req.body.lastName;
+    if (fields.lastName && fields.lastName[0] !== currentUser.lastName) {
+      updateData.lastName = fields.lastName[0];
     }
     
-    if (req.body.email && req.body.email !== currentUser.email) {
-      updateData.email = req.body.email;
+    if (fields.email && fields.email[0] !== currentUser.email) {
+      updateData.email = fields.email[0];
     }
 
-    // Handle image upload if present
-    if (req.file) {
+    // Handle file upload
+    if (files.image && files.image[0]) {
+      const file = files.image[0];
       const imageBlob = await put(
-        `user-${Date.now()}-profile`,
-        req.file.buffer,
+        `user-${Date.now()}-${file.originalFilename}`,
+        fs.readFileSync(file.path),
         { access: 'public' }
       );
       updateData.logo = imageBlob.url;
+      fs.unlinkSync(file.path); // Clean up temp file
     }
 
-    // Only proceed with update if there are changes
-    if (Object.keys(updateData).length === 0) {
-      return res.status(200).json({
-        message: 'No changes detected',
-        user: currentUser
-      });
-    }
-
-    // Perform the update with proper error handling
-    const updatedUser = await User.findOneAndUpdate(
-      { _id: userId },
+    // Update user
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
       updateData,
-      { 
-        new: true,
-        runValidators: true,
-        context: 'query' // Ensures proper validation
-      }
-    ).select('-password');
-
-    if (!updatedUser) {
-      return res.status(400).json({ message: 'Update failed - no document was modified' });
-    }
-
-    // Verify the update in database
-    const dbUser = await User.findById(userId);
-    console.log('Database state after update:', dbUser); // Debug log
+      { new: true, runValidators: true }
+    );
 
     return res.status(200).json({
       message: 'Profile updated successfully',
@@ -575,10 +570,9 @@ const updateProfile = async (req, res) => {
 
   } catch (error) {
     console.error('Update error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       message: 'Server error during update',
-      error: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      error: error.message
     });
   }
 };

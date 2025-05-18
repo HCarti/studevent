@@ -50,7 +50,7 @@ router.get('/:userId/organizations', authenticateToken, usersController.getUserO
 router.get('/academic-organizations', authenticateToken, usersController.getAcademicOrganizationsByFaculty);
 // Add this with your other routes
 router.get('/getall', authenticateToken, usersController.getAllUsers);
-router.put('/update/profile', authenticateToken, usersController.updateProfile);
+router.put('/updateProfile', authenticateToken, usersController.updateProfile);
 router.put('/change-password', authenticateToken, usersController.changePassword);
 router.post('/check-adviser-assignment', authenticateToken, usersController.checkAdviserAssignment);
 // Add these routes to user_routes.js
