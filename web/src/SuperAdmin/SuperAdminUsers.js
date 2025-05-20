@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "./SuperAdminUsers.css";
-import { FaSearch} from "react-icons/fa";
+import { FaSearch, FaEdit, FaTrash, FaCheck, FaTimes, FaClock, FaBan } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { IoTrashBinSharp } from "react-icons/io5";
 import { IoClose } from "react-icons/io5";
@@ -234,37 +234,45 @@ const closeNotification = () => {
   });
 
   return (
-    <div className="table-container">
+    <div className="super-admin-container">
       {/* Notification System */}
-    {notification.show && (
-      <div className={`sad-users-notification ${notification.type}`}>
-        <div className="sad-users-notification-content">
-          {notification.message}
-          <button className="sad-users-notification-close" onClick={closeNotification}>
-            <IoClose />
-          </button>
+      {notification.show && (
+        <div className={`notification ${notification.type}`}>
+          <div className="notification-content">
+            {notification.message}
+            <button className="notification-close" onClick={closeNotification}>
+              <IoClose />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="dashboard-header">
+        <h1 className="dashboard-title">ORGANIZATION MANAGEMENT</h1>
+        <p className="dashboard-subtitle">Track and manage all your organizations</p>
+      </div>
+
+      <div className="search-section">
+        <div className="search-bar-container">
+          <FaSearch className="search-icon" />
+          <input
+            type="text"
+            className="search-bar"
+            placeholder="Search organizations..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="results-count">
+          <span>{filteredOrganizations.length}</span> organizations found
         </div>
       </div>
-    )}
-      <h1 className="dashboard-title">ORGANIZATION MANAGEMENT</h1>
-      <p className="dashboard-subtitle">Track and manage all your organizations</p>
-      <div className="dashboard-controls">
-  <div className="search-bar-container">
-    <FaSearch className="search-icon" />
-    <input
-      type="text"
-      className="search-bar"
-      placeholder="Search organizations..."
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-    />
-  </div>
-</div>
-      <div className="results-count">
-        <span>{filteredOrganizations.length}</span> organizations found
-      </div>
+
       {loading ? (
-        <p className="loading-message">Loading organizations...</p>
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading organizations...</p>
+        </div>
       ) : (
         <div className="card-grid-container">
           {filteredOrganizations.map((organization) => (
@@ -277,13 +285,16 @@ const closeNotification = () => {
                     className="org-card-logo"
                   />
                 ) : (
-                  <div className="org-card-no-logo">No Logo</div>
+                  <div className="org-card-no-logo">
+                    {organization.organizationName?.charAt(0).toUpperCase()}
+                  </div>
                 )}
-                <div>
-                  <div className="org-card-title">{organization.organizationName}</div>
-                  <div className="org-card-email">{organization.email}</div>
+                <div className="org-card-info">
+                  <h3 className="org-card-title">{organization.organizationName}</h3>
+                  <p className="org-card-email">{organization.email}</p>
                 </div>
               </div>
+
               <div className="org-card-details">
                 <div className="org-card-row">
                   <span className="org-card-label">Type</span>
@@ -291,27 +302,43 @@ const closeNotification = () => {
                 </div>
                 <div className="org-card-row">
                   <span className="org-card-label">Status</span>
-                  <span className={getStatusBadgeClass(organization.status)}>{organization.status}</span>
+                  <span className={`status-badge ${getStatusBadgeClass(organization.status)}`}>
+                    {organization.status}
+                  </span>
                 </div>
               </div>
+
               <div className="org-card-actions">
-                <button className="btn btn-sm delete-btn" onClick={() => handleDeleteClick(organization._id)}>
-                  <DeleteIcon /> <span>Delete</span>
+                <button 
+                  className="btn edit-btn" 
+                  onClick={() => handleEditClick(organization)}
+                >
+                  <FaEdit /> Edit
                 </button>
-                <button className="btn btn-sm edit-btn" onClick={() => handleEditClick(organization)}>
-                  <EditIcon /> <span>Edit</span>
+                <button 
+                  className="btn delete-btn" 
+                  onClick={() => handleDeleteClick(organization._id)}
+                >
+                  <FaTrash /> Delete
                 </button>
               </div>
             </div>
           ))}
         </div>
       )}
-      {/* Edit Form Modal */}
+
+      {/* Edit Modal */}
       {editingOrg && (
         <div className="modal-overlay">
-          <div className="edit-form-container">
-            <h2>Edit Organization</h2>
-            <form onSubmit={handleEditSubmit}>
+          <div className="modal-container edit-modal">
+            <div className="modal-header">
+              <h2>Edit Organization</h2>
+              <button className="modal-close" onClick={() => setEditingOrg(null)}>
+                <IoClose />
+              </button>
+            </div>
+            
+            <form onSubmit={handleEditSubmit} className="edit-form">
               <div className="form-group">
                 <label>Email</label>
                 <input
@@ -322,6 +349,7 @@ const closeNotification = () => {
                   required
                 />
               </div>
+
               <div className="form-group">
                 <label>Organization Type</label>
                 <input
@@ -331,6 +359,7 @@ const closeNotification = () => {
                   onChange={handleInputChange}
                 />
               </div>
+
               <div className="form-group">
                 <label>Status</label>
                 <select
@@ -342,8 +371,7 @@ const closeNotification = () => {
                   <option value="Inactive">Inactive</option>
                 </select>
               </div>
-              
-              {/* Password Fields */}
+
               <div className="form-group">
                 <label>New Password</label>
                 <input
@@ -354,6 +382,7 @@ const closeNotification = () => {
                   placeholder="Leave blank to keep current password"
                 />
               </div>
+
               <div className="form-group">
                 <label>Confirm New Password</label>
                 <input
@@ -364,20 +393,18 @@ const closeNotification = () => {
                   placeholder="Leave blank to keep current password"
                 />
                 {passwordError && (
-                  <p className="error-message" style={{ color: 'red', fontSize: '0.8rem', marginTop: '5px' }}>
-                    {passwordError}
-                  </p>
+                  <p className="error-message">{passwordError}</p>
                 )}
-                <p className="password-note" style={{ fontSize: '0.8rem', color: '#666', marginTop: '5px' }}>
+                <p className="password-note">
                   Note: Leave password fields blank if you don't want to change the password.
                 </p>
               </div>
-              
-              <div className="form-actions">
+
+              <div className="modal-actions">
                 <button type="button" className="btn cancel-btn" onClick={() => setEditingOrg(null)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn update-btn">
+                <button type="submit" className="btn save-btn">
                   Save Changes
                 </button>
               </div>
@@ -385,25 +412,35 @@ const closeNotification = () => {
           </div>
         </div>
       )}
-      {/* Delete Confirmation Modal */}
+
+      {/* Delete Modal */}
       {showDeleteModal && (
-          <div className="modal-overlay">
-            <div className="delete-confirmation-modal">
-              <h3>Confirm Deletion</h3>
+        <div className="modal-overlay">
+          <div className="modal-container delete-modal">
+            <div className="modal-header">
+              <h2>Confirm Deletion</h2>
+              <button className="modal-close" onClick={cancelDelete}>
+                <IoClose />
+              </button>
+            </div>
+
+            <div className="delete-content">
               <p>This organization will be moved to trash and automatically deleted after 30 days.</p>
               <p>You can restore it from the trash bin during this period.</p>
               {deleteError && <p className="error-message">{deleteError}</p>}
-              <div className="modal-actions">
-                <button className="btn cancel-delete-btn" onClick={cancelDelete}>
-                  Cancel
-                </button>
-                <button className="btn confirm-delete-btn" onClick={confirmDelete}>
-                  Move to Trash
-                </button>
-              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button className="btn cancel-btn" onClick={cancelDelete}>
+                Cancel
+              </button>
+              <button className="btn delete-btn" onClick={confirmDelete}>
+                Move to Trash
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
     </div>
   );
 };

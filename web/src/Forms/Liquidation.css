@@ -7,14 +7,16 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .top-section {
-  display: flex;
+  display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
   margin-bottom: 20px;
-  width: 1460px;
+  width: 100%;
 }
 
 .section-title {
@@ -32,6 +34,8 @@
   border-radius: 10px;
   background-color: #fff;
   box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .data-preview {
@@ -40,6 +44,7 @@
   margin-top: 15px;
   border: 1px solid #eee;
   border-radius: 6px;
+  width: 100%;
 }
 
 .section-subtitle {
@@ -47,14 +52,6 @@
   font-weight: 500;
   color: #555;
   margin-bottom: 20px;
-}
-
-
-.upload-section {
-  padding: 25px;
-  border-radius: 10px;
-  background-color: #fff;
-  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
 }
 
 .dropzone {
@@ -69,8 +66,8 @@
   margin-bottom: 20px;
   background-color: #f9fafb;
   cursor: pointer;
+  box-sizing: border-box;
 }
-
 
 .dropzone.dragging {
   border-color: #3b82f6;
@@ -86,6 +83,7 @@
   text-align: center;
   padding: 20px;
   width: 100%;
+  max-width: 100%;
 }
 
 .upload-icon {
@@ -155,6 +153,9 @@
   background-color: #f8fafc;
   border-radius: 6px;
   border: 1px solid #e5e7eb;
+  box-sizing: border-box;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .file-icon {
@@ -167,8 +168,8 @@
 }
 
 .file-info {
-  flex-grow: 1;
-  text-align: left;
+  flex: 1;
+  min-width: 0;
   margin-left: 12px;
 }
 
@@ -180,7 +181,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 200px;
+  max-width: 100%;
 }
 
 .file-size {
@@ -212,7 +213,7 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
-.data-preview, .results-table {
+.results-table {
   max-height: 300px;
   overflow-y: auto;
   margin-top: 15px;
@@ -322,6 +323,7 @@ tr:hover {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
+  width: 100%;
 }
 
 .submissions-section {
@@ -329,6 +331,12 @@ tr:hover {
   border-radius: 10px;
   background-color: #fff;
   box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.submissions-list {
+  width: 100%;
 }
 
 .submissions-list table {
@@ -338,7 +346,7 @@ tr:hover {
 
 .submissions-list th, 
 .submissions-list td {
-  padding: 0.75rem;
+  padding: 12px 15px;
   text-align: left;
   border-bottom: 1px solid #eee;
 }
@@ -346,41 +354,103 @@ tr:hover {
 .submissions-list th {
   font-weight: 600;
   color: #555;
+  background-color: #f8f9fa;
 }
 
-.status-badge {
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: 600;
+.submissions-list tbody tr {
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
-.status-badge.pending {
-  background: #fff3cd;
-  color: #856404;
+.submissions-list tbody tr:hover {
+  background-color: #f5f5f5;
 }
 
-.status-badge.approved {
-  background-color: #d1fae5;
-  color: #065f46;
+/* Mobile Card Layout for Submissions */
+@media (max-width: 768px) {
+  .submissions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .submissions-list table,
+  .submissions-list thead,
+  .submissions-list tbody,
+  .submissions-list tr {
+    display: block;
+  }
+
+  .submissions-list thead {
+    display: none;
+  }
+
+  .submissions-list tbody tr {
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .submissions-list td {
+    display: flex;
+    padding: 8px 0;
+    border: none;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .submissions-list td:last-child {
+    border-bottom: none;
+  }
+
+  .submissions-list td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #555;
+    width: 120px;
+    flex-shrink: 0;
+  }
+
+  .submissions-list td .view-btn {
+    margin-left: auto;
+  }
+
+  .status-badge {
+    margin-left: auto;
+  }
 }
 
-.status-badge.declined {
-  background-color: #fee2e2;
-  color: #991b1b;
-}
+@media (max-width: 480px) {
+  .submissions-section {
+    padding: 15px;
+  }
 
-.loading-submissions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-}
+  .submissions-list tbody tr {
+    padding: 12px;
+  }
 
-.no-submissions {
-  padding: 2rem;
-  text-align: center;
-  color: #666;
+  .submissions-list td {
+    font-size: 14px;
+  }
+
+  .submissions-list td::before {
+    width: 100px;
+    font-size: 13px;
+  }
+
+  .status-badge {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  .view-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
 }
 
 /* Modal Styles */
@@ -402,11 +472,12 @@ tr:hover {
   background-color: white;
   border-radius: 10px;
   width: 90%;
-  max-width: 800px; /* Increased from 600px */
+  max-width: 800px;
   max-height: 85vh;
   overflow-y: auto;
   box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
   animation: modalFadeIn 0.3s ease-out;
+  margin: 20px;
 }
 
 @keyframes modalFadeIn {
@@ -455,6 +526,8 @@ tr:hover {
   display: flex;
   flex-direction: column;
   gap: 25px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .modal-section {
@@ -497,6 +570,7 @@ tr:hover {
   font-family: inherit;
   font-size: 14px;
   line-height: 1.5;
+  box-sizing: border-box;
 }
 
 .remarks-input:read-only {
@@ -551,6 +625,7 @@ tr:hover {
   margin-top: 20px;
   padding-top: 20px;
   border-top: 1px solid #eee;
+  flex-wrap: wrap;
 }
 
 .cancel-btn {
@@ -598,51 +673,175 @@ tr:hover {
   font-size: 13px;
 }
 
-/* Add to your Liquidation.css */
-.submissions-list tbody tr {
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.submissions-list tbody tr:hover {
-  background-color: #f5f5f5;
-}
-
-/* Prevent the link from inheriting the row's cursor */
-.submissions-list tbody tr a {
-  cursor: default;
-}
-
-/* If you want to highlight the clicked row */
-.submissions-list tbody tr:active {
-  background-color: #ebebeb;
-}
-
-@media (max-width: 768px) {
-  .dropzone-content {
-    max-width: 50vh;
-  }
+/* Responsive Design */
+@media (max-width: 1024px) {
   .liquidation-container {
-    padding: 20px;
+    padding: 15px;
+  }
+
+  .top-section,
+  .liquidation-sections {
+    grid-template-columns: 1fr;
   }
 
   .section-title {
-    font-size: 24px;
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .liquidation-container {
+    padding: 10px;
   }
 
-  .section-subtitle {
-    font-size: 16px;
+  .upload-section, 
+  .preview-section,
+  .submissions-section {
+    padding: 15px;
   }
 
-  .upload-section {
-    padding: 20px;
+  .section-title {
+    font-size: 18px;
   }
 
   .dropzone {
     min-height: 150px;
   }
 
-  .file-preview, .results-table {
-    max-height: 200px;
+  .file-preview {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .file-info {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .change-file-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .modal-header {
+    padding: 15px;
+  }
+
+  .modal-content {
+    padding: 15px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
+
+  .submit-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .liquidation-container {
+    padding: 10px;
+  }
+
+  .upload-section, 
+  .preview-section,
+  .submissions-section {
+    padding: 12px;
+  }
+
+  .section-title {
+    font-size: 16px;
+  }
+
+  .section-subtitle {
+    font-size: 14px;
+  }
+
+  .dropzone {
+    min-height: 120px;
+  }
+
+  .dropzone-content {
+    padding: 10px;
+  }
+
+  .upload-icon svg {
+    width: 36px;
+    height: 36px;
+  }
+
+  .dropzone-text {
+    font-size: 14px;
+  }
+
+  .file-requirements {
+    font-size: 12px;
+  }
+
+  .browse-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+
+  .file-preview {
+    padding: 8px;
+  }
+
+  .file-name {
+    font-size: 13px;
+  }
+
+  .file-size {
+    font-size: 11px;
+  }
+
+  .change-file-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .submit-btn {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+
+  .error-message,
+  .success-message {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+
+  .submission-modal {
+    width: 95%;
+    margin: 10px;
+  }
+
+  .modal-header h3 {
+    font-size: 18px;
+  }
+
+  .modal-section h4 {
+    font-size: 14px;
+  }
+
+  .file-link {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .remarks-input {
+    font-size: 13px;
+    min-height: 100px;
+  }
+
+  .file-upload-label {
+    padding: 8px 16px;
+    font-size: 13px;
   }
 }
