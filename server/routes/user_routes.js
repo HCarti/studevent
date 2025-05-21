@@ -50,6 +50,8 @@ router.get('/:userId/organizations', authenticateToken, usersController.getUserO
 router.get('/academic-organizations', authenticateToken, usersController.getAcademicOrganizationsByFaculty);
 // Add this with your other routes
 router.get('/getall', authenticateToken, usersController.getAllUsers);
+router.get('/admin',authenticateToken, usersController.getAdminsAndAuthorities);
+router.put('/admin/:id',authenticateToken, usersController.updateAdminOrAuthority);
 router.put('/updateProfile', authenticateToken, usersController.updateProfile);
 router.put('/change-password', authenticateToken, usersController.changePassword);
 router.post('/check-adviser-assignment', authenticateToken, usersController.checkAdviserAssignment);
@@ -57,8 +59,6 @@ router.post('/check-adviser-assignment', authenticateToken, usersController.chec
 router.delete('/permanent/:id', authenticateToken, usersController.permanentlyDeleteUser);
 router.patch('/restore/:id', authenticateToken, usersController.restoreUser);
 router.get('/organizations/deleted', authenticateToken, usersController.getDeletedOrganizations);
-router.get('/admins',authenticateToken, usersController.getAdminsAndAuthorities);
-router.put('/admins/:id',authenticateToken, usersController.updateAdminOrAuthority);
 
 // User registration route with dual signature support
 router.post('/', 
