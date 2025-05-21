@@ -48,28 +48,31 @@ const SuperAdminAdmins = () => {
     type: 'success'
   });
 
-  useEffect(() => {
-    const fetchAdmins = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(
-          "https://studevent-server.vercel.app/api/users/admins",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        setAdmins(response.data);
-      } catch (error) {
-        console.error("Error fetching admins:", error);
-      } finally {
-        setLoading(false);
-      }
-    };    
+useEffect(() => {
+  const fetchAdmins = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        "https://studevent-server.vercel.app/api/users/admins",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      
+      // Handle different response structures
+      const adminsData = response.data.data || response.data;
+      setAdmins(adminsData);
+    } catch (error) {
+      console.error("Error fetching admins:", error.response?.data || error.message);
+    } finally {
+      setLoading(false);
+    }
+  };    
 
-    fetchAdmins();
-  }, []);
+  fetchAdmins();
+}, []);
 
   const handleDeleteClick = (userId) => {
     setAdminToDelete(userId);

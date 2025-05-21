@@ -804,25 +804,21 @@ const getAcademicOrganizationsByFaculty = async (req, res) => {
 // Add this to your usersController.js
 const getAdminsAndAuthorities = async (req, res) => {
   try {
-    // Get query parameters for filtering (optional)
     const { status, faculty } = req.query;
     
-    // Build the filter object
     const filter = {
       role: { $in: ['Admin', 'Authority'] },
-      isDeleted: { $ne: true } // Exclude deleted accounts
+      isDeleted: { $ne: true }
     };
     
     if (status) filter.status = status;
     if (faculty) filter.faculty = faculty;
 
-    // Find admin/authority accounts with optional filters
     const users = await User.find(filter)
       .select('_id firstName lastName email role faculty status signature createdAt')
-      .sort({ createdAt: -1 }) // Sort by newest first
+      .sort({ createdAt: -1 })
       .lean();
 
-    // Transform the data for frontend
     const transformedUsers = users.map(user => ({
       _id: user._id,
       name: `${user.firstName} ${user.lastName}`,
@@ -830,19 +826,14 @@ const getAdminsAndAuthorities = async (req, res) => {
       role: user.role,
       faculty: user.faculty || 'N/A',
       status: user.status,
-      avatar: user.signature, // Using signature as avatar for now
+      avatar: user.signature,
       createdAt: user.createdAt
     }));
 
-    res.status(200).json({
-      success: true,
-      count: transformedUsers.length,
-      data: transformedUsers
-    });
+    res.status(200).json(transformedUsers); // Make sure you're sending just the array
   } catch (error) {
     console.error('Error fetching admin/authority accounts:', error);
     res.status(500).json({ 
-      success: false,
       message: 'Server error while fetching admin/authority accounts',
       error: error.message 
     });
