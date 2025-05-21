@@ -480,7 +480,7 @@ if (status === "approved") {
                           'Recognized Student Organization - Academic';
 
       if (isAcademicOrg && nextReviewers.length > 0) {
-        const deanMessage = `Form ${formName} from ${form.studentOrganization.organizationName} ` +
+        const deanMessage = `Form ${formName} ` +
                            `has been approved by adviser ${currentReviewerName} ` +
                            `and requires your review as Dean.`;
         
