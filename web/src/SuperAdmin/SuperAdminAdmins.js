@@ -50,26 +50,30 @@ const SuperAdminAdmins = () => {
 
 useEffect(() => {
   const fetchAdmins = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        "https://studevent-server.vercel.app/api/users/admins",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      
-      // Handle different response structures
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.get(
+      "https://studevent-server.vercel.app/api/users/admins",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    
+    if (response.status === 200) {
       const adminsData = response.data.data || response.data;
       setAdmins(adminsData);
-    } catch (error) {
-      console.error("Error fetching admins:", error.response?.data || error.message);
-    } finally {
-      setLoading(false);
+    } else {
+      console.error("Unexpected response:", response);
     }
-  };    
+  } catch (error) {
+    console.error("Error fetching admins:", error);
+    showNotification('Failed to fetch admins', 'error');
+  } finally {
+    setLoading(false);
+  }
+}; 
 
   fetchAdmins();
 }, []);
@@ -177,11 +181,11 @@ useEffect(() => {
         `https://studevent-server.vercel.app/api/users/admins/${editingAdmin}`,
         dataToSend,
         {
-          headers: {
+            headers: {
             Authorization: `Bearer ${token}`,
-          },
+            },
         }
-      );
+        );
       setAdmins(
         admins.map((admin) =>
           admin._id === editingAdmin ? { ...admin, ...dataToSend } : admin
