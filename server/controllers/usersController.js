@@ -818,7 +818,7 @@ const getAdminsAndAuthorities = async (req, res) => {
 
     // Find admin/authority accounts with optional filters
     const users = await User.find(filter)
-      .select('firstName lastName email role faculty status signature createdAt')
+      .select('_id firstName lastName email role faculty status signature createdAt')
       .sort({ createdAt: -1 }) // Sort by newest first
       .lean();
 

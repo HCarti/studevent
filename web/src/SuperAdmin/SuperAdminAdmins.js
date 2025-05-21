@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import "./SuperAdminUsers.css"; // Reusing the same CSS but with modified classnames
+import "./SuperAdminAdmins.css"; // Reusing the same CSS but with modified classnames
 import { FaSearch } from "react-icons/fa";
 import { IoTrashBinSharp } from "react-icons/io5";
 import { IoClose } from "react-icons/io5";
