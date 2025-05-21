@@ -57,6 +57,8 @@ router.post('/check-adviser-assignment', authenticateToken, usersController.chec
 router.delete('/permanent/:id', authenticateToken, usersController.permanentlyDeleteUser);
 router.patch('/restore/:id', authenticateToken, usersController.restoreUser);
 router.get('/organizations/deleted', authenticateToken, usersController.getDeletedOrganizations);
+router.get('/admins',authenticateToken, usersController.getAdminsAndAuthorities);
+router.put('/admins/:id',authenticateToken, usersController.updateAdminOrAuthority);
 
 // User registration route with dual signature support
 router.post('/', 

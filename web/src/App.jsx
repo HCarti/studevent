@@ -38,6 +38,7 @@ import SuperAdminProfile from './SuperAdmin/SuperAdminProfile';
 import NotificationsPage from './Components/NotificationsPage';
 import SuperAdminLogs from './SuperAdmin/SuperAdminLogs';
 import SuperAdminCalendar from './SuperAdmin/SuperAdminCalendar';
+import SuperAdminAdmins from './SuperAdmin/SuperAdminAdmins';
 import TrashBin from './SuperAdmin/TrashBin';
 
 // Global styles to hide scrollbar
@@ -223,6 +224,7 @@ const App = () => {
             <Route path="authorities" element={<SuperAdminAuthorities />} />
             <Route path="adminuser" element={<SuperAdminUsers />} />
             <Route path="adduser" element={<SuperAdminAddUser />} />
+            <Route path="adminusers" element={<SuperAdminAdmins />} />
             <Route path="admintab" element={<AdminTab />} />
           </Route>
 

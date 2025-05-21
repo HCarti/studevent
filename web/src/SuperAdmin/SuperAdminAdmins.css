@@ -1,0 +1,568 @@
+/* SuperAdminAdmins.css - Modified version of SuperAdminUsers.css with saa- prefix */
+
+/* Color Variables (reused) */
+:root {
+  --primary: #4361ee;
+  --primary-dark: #3a56d4;
+  --secondary: #3f37c9;
+  --danger: #f72585;
+  --danger-dark: #e5177e;
+  --success: #4cc9f0;
+  --success-dark: #38b6db;
+  --warning: #f8961e;
+  --warning-dark: #e68a17;
+  --light: #f8f9fa;
+  --dark: #212529;
+  --gray: #6c757d;
+  --light-gray: #e9ecef;
+  --border-radius: 12px;
+  --box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Base Container */
+.saa-container {
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1rem;
+  min-height: 100vh;
+}
+
+/* Dashboard Header */
+.saa-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #4361ee;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.saa-subtitle {
+  color: #64748b;
+  font-size: 1.1rem;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+/* Search Section */
+.saa-controls {
+  margin-bottom: 2rem;
+}
+
+.saa-search-container {
+  position: relative;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.saa-search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+.saa-search-bar {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: var(--transition);
+}
+
+.saa-search-bar:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+}
+
+.saa-results-count {
+  text-align: center;
+  margin: 1rem 0;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Card Grid */
+.saa-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem 0;
+}
+
+/* Admin Card */
+.saa-card {
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  transition: var(--transition);
+  overflow: hidden;
+}
+
+.saa-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.saa-card-header {
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.saa-card-logo {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.saa-card-no-logo {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.saa-card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.saa-card-email {
+  font-size: 0.9rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.saa-card-details {
+  padding: 1rem 1.5rem;
+}
+
+.saa-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.saa-card-row:last-child {
+  border-bottom: none;
+}
+
+.saa-card-label {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.saa-card-value {
+  color: #1e293b;
+  font-weight: 500;
+}
+
+/* Status Badge */
+.saa-status-badge {
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.saa-status-active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.saa-status-inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.saa-status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.saa-status-declined {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* Card Actions */
+.saa-card-actions {
+  padding: 1rem 1.5rem;
+  display: flex;
+  gap: 0.75rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.saa-btn {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: var(--transition);
+  cursor: pointer;
+  border: none;
+}
+
+.saa-btn-sm {
+  padding: 0.5rem 0.75rem;
+}
+
+.saa-btn-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.saa-edit-btn {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.saa-edit-btn:hover {
+  background: #bae6fd;
+}
+
+.saa-delete-btn {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.saa-delete-btn:hover {
+  background: #fecaca;
+}
+
+/* Modal Styles */
+.saa-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  overflow-y: auto;
+}
+
+.saa-edit-form {
+  background: white;
+  border-radius: var(--border-radius);
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  animation: modalSlideIn 0.3s ease-out;
+  margin: auto;
+  padding: 1.5rem;
+}
+
+.saa-delete-modal {
+  background: white;
+  border-radius: var(--border-radius);
+  width: 100%;
+  max-width: 400px;
+  padding: 1.5rem;
+}
+
+.saa-edit-form h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 1.5rem;
+}
+
+/* Form Elements */
+.saa-form-group {
+  margin-bottom: 1.25rem;
+}
+
+.saa-form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.saa-form-group input,
+.saa-form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: var(--transition);
+  box-sizing: border-box;
+}
+
+.saa-form-group input:focus,
+.saa-form-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+}
+
+.saa-error-message {
+  color: var(--danger);
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.saa-password-note {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-top: 0.5rem;
+}
+
+/* Form Actions */
+.saa-form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.saa-cancel-btn {
+  background: white;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  flex: 1;
+}
+
+.saa-cancel-btn:hover {
+  background: #f1f5f9;
+}
+
+.saa-update-btn {
+  background: var(--primary);
+  color: white;
+  flex: 1;
+}
+
+.saa-update-btn:hover {
+  background: var(--primary-dark);
+}
+
+/* Delete Modal */
+.saa-delete-modal h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 1rem;
+}
+
+.saa-delete-modal p {
+  color: #64748b;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.saa-modal-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.saa-cancel-delete-btn {
+  background: white;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  flex: 1;
+}
+
+.saa-cancel-delete-btn:hover {
+  background: #f1f5f9;
+}
+
+.saa-confirm-delete-btn {
+  background: var(--danger);
+  color: white;
+  flex: 1;
+}
+
+.saa-confirm-delete-btn:hover {
+  background: var(--danger-dark);
+}
+
+/* Notification */
+.saa-notification {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 1100;
+  animation: slideIn 0.3s ease-out;
+  max-width: 400px;
+}
+
+.saa-notification.success {
+  background: var(--success);
+}
+
+.saa-notification.error {
+  background: var(--danger);
+}
+
+.saa-notification-content {
+  flex: 1;
+}
+
+.saa-notification-close {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0.25rem;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.saa-notification-close:hover {
+  opacity: 1;
+}
+
+/* Loading State */
+.saa-loading-message {
+  text-align: center;
+  padding: 2rem;
+  color: #64748b;
+}
+
+/* Animations */
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .saa-container {
+    padding: 0.75rem;
+  }
+
+  .saa-title {
+    font-size: 1.5rem;
+  }
+
+  .saa-subtitle {
+    font-size: 1rem;
+  }
+
+  .saa-card-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .saa-card {
+    margin: 0 0.5rem;
+  }
+
+  .saa-modal-overlay {
+    padding: 0.75rem;
+  }
+
+  .saa-edit-form,
+  .saa-delete-modal {
+    max-height: 95vh;
+    margin: 0.5rem;
+    padding: 1.25rem;
+  }
+
+  .saa-form-actions,
+  .saa-modal-actions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .saa-container {
+    padding: 0.5rem;
+  }
+
+  .saa-card-header {
+    padding: 1rem;
+  }
+
+  .saa-card-details {
+    padding: 1rem;
+  }
+
+  .saa-card-actions {
+    padding: 1rem;
+  }
+
+  .saa-modal-overlay {
+    padding: 0.5rem;
+  }
+
+  .saa-edit-form,
+  .saa-delete-modal {
+    margin: 0.25rem;
+    padding: 1rem;
+  }
+
+  .saa-form-group {
+    margin-bottom: 1rem;
+  }
+
+  .saa-form-group input,
+  .saa-form-group select {
+    padding: 0.625rem;
+  }
+
+  .saa-notification {
+    left: 1rem;
+    right: 1rem;
+    max-width: none;
+  }
+}

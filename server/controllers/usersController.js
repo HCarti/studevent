@@ -801,6 +801,139 @@ const getAcademicOrganizationsByFaculty = async (req, res) => {
   }
 };
 
+// Add this to your usersController.js
+const getAdminsAndAuthorities = async (req, res) => {
+  try {
+    // Get query parameters for filtering (optional)
+    const { status, faculty } = req.query;
+    
+    // Build the filter object
+    const filter = {
+      role: { $in: ['Admin', 'Authority'] },
+      isDeleted: { $ne: true } // Exclude deleted accounts
+    };
+    
+    if (status) filter.status = status;
+    if (faculty) filter.faculty = faculty;
+
+    // Find admin/authority accounts with optional filters
+    const users = await User.find(filter)
+      .select('firstName lastName email role faculty status signature createdAt')
+      .sort({ createdAt: -1 }) // Sort by newest first
+      .lean();
+
+    // Transform the data for frontend
+    const transformedUsers = users.map(user => ({
+      _id: user._id,
+      name: `${user.firstName} ${user.lastName}`,
+      email: user.email,
+      role: user.role,
+      faculty: user.faculty || 'N/A',
+      status: user.status,
+      avatar: user.signature, // Using signature as avatar for now
+      createdAt: user.createdAt
+    }));
+
+    res.status(200).json({
+      success: true,
+      count: transformedUsers.length,
+      data: transformedUsers
+    });
+  } catch (error) {
+    console.error('Error fetching admin/authority accounts:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error while fetching admin/authority accounts',
+      error: error.message 
+    });
+  }
+};
+
+// Add this to your usersController.js
+const updateAdminOrAuthority = async (req, res) => {
+  const { id } = req.params;
+  const { email, role, status, password, faculty } = req.body;
+
+  try {
+    // Validate input
+    if (!email || !status || !role) {
+      return res.status(400).json({ message: 'Email, role and status are required' });
+    }
+
+    if (!['Admin', 'Authority'].includes(role)) {
+      return res.status(400).json({ message: 'Invalid role specified' });
+    }
+
+    // Find the user
+    const user = await User.findOne({ 
+      _id: id,
+      role: { $in: ['Admin', 'Authority'] }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'Admin/Authority account not found' });
+    }
+
+    // Update the user
+    user.email = email;
+    user.role = role;
+    user.status = status;
+    
+    // Only update faculty if role is Authority
+    if (role === 'Authority') {
+      user.faculty = faculty || null;
+    } else {
+      user.faculty = null;
+    }
+    
+    // Update password if provided (and meets length requirement)
+    if (password && password.length >= 6) {
+      user.password = password;
+    } else if (password && password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    await user.save();
+
+    // Log the action if performed by SuperAdmin
+    if (req.user.role === 'SuperAdmin') {
+      const changedFields = {
+        email: email,
+        status: status,
+        role: role
+      };
+      if (faculty) changedFields.faculty = faculty;
+      if (password) changedFields.password = 'updated';
+
+      await logSuperAdminAction(
+        req.user,
+        'ADMIN_UPDATED',
+        user,
+        changedFields
+      );
+    }
+
+    res.status(200).json({
+      message: 'Admin/Authority account updated successfully',
+      user: {
+        _id: user._id,
+        email: user.email,
+        role: user.role,
+        faculty: user.faculty,
+        status: user.status,
+        firstName: user.firstName,
+        lastName: user.lastName
+      }
+    });
+  } catch (error) {
+    console.error('Error updating admin/authority account:', error);
+    res.status(500).json({ 
+      message: 'Error updating admin/authority account',
+      error: error.message 
+    });
+  }
+};
+
 module.exports = { 
   getUserById, 
   updateUser, 
@@ -819,5 +952,7 @@ module.exports = {
   restoreUser,
   getDeletedOrganizations,
   getUserOrganizations, 
-  getAcademicOrganizationsByFaculty
+  getAcademicOrganizationsByFaculty,
+  getAdminsAndAuthorities,
+  updateAdminOrAuthority
 };
