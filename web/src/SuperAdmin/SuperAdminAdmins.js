@@ -53,7 +53,7 @@ useEffect(() => {
   try {
     const token = localStorage.getItem('token');
     const response = await axios.get(
-      "https://studevent-server.vercel.app/api/users/admin",
+      "https://studevent-server.vercel.app/api/users/authorities",
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -178,7 +178,7 @@ useEffect(() => {
       }
 
       await axios.put(
-        `https://studevent-server.vercel.app/api/users/admin/${editingAdmin}`,
+        `https://studevent-server.vercel.app/api/users/authorities/${editingAdmin}`,
         dataToSend,
         {
             headers: {

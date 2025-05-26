@@ -28,7 +28,7 @@ const Sidebar = () => {
   const menuItems = [
     { name: 'Dashboard', icon: <MdDashboard />, path: '/superadmin/controlpanel' },
     { name: 'Organizations', icon: <FaUsers />, path: '/superadmin/adminuser' },
-    { name: 'Authorities', icon: <FaUsers />, path: '/superadmin/adminusers' },
+    // { name: 'Authorities', icon: <FaUsers />, path: '/superadmin/adminusers' },
     { name: 'TrasBin', icon:<IoTrashBinSharp />, path: '/superadmin/s-admintrash-bin' },
     { name: 'Add User', icon: <FaUserPlus />, path: '/superadmin/adduser' },
     { name: 'Activity Logs', icon:<TbLogs />, path: '/superadmin/s-adminlogs' },
