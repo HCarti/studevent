@@ -7,6 +7,10 @@ import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import StarIcon from '@mui/icons-material/Star';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import ActivityPdf from '../PdfForms/ActivityPdf';
+import BudgetPdf from '../PdfForms/BudgetPdf';
+import ProjectPdf from '../PdfForms/ProjectPdf';
 
 const OrgTrackerViewer = () => {
     const navigate = useNavigate();
@@ -131,20 +135,66 @@ const OrgTrackerViewer = () => {
         return { ...trackerData, steps: processedSteps };
     };
 
-    const handleViewForms = () => {
-        if (isLocalOffCampus) {
-            const formPhase = trackerData?.formPhase || state?.formPhase;
-            navigate(formPhase === 'BEFORE' 
-                ? `/local-off-campus-before/${formId}`
-                : `/local-off-campus-after/${formId}`,
-                { state: { formData: state?.form } }
-            );
-        } else {
-            navigate(`/formdetails/${formId}`, { 
-                state: { form: formDetails || state?.form } 
-            });
-        }
+const handleViewForms = () => {
+    if (isLocalOffCampus) {
+        const formPhase = trackerData?.formPhase || state?.formPhase;
+        navigate(formPhase === 'BEFORE' 
+            ? `/local-off-campus-before/${formId}`
+            : `/local-off-campus-after/${formId}`,
+            { state: { formData: state?.form } }
+        );
+    } else {
+        // For regular forms, use PDF download like ProgressTracker
+        return (
+            <PDFDownloadLink
+                document={React.createElement(
+                    getPdfComponent(formDetails?.formType),
+                    { 
+                        formData: sanitizeFormData(formDetails),
+                        signatures: {} // Add signatures if available
+                    }
+                )}
+                fileName={getPdfFileName(formDetails?.formType, formDetails)}
+            >
+                {({ loading }) => (
+                    <Button 
+                        variant="contained" 
+                        disabled={loading}
+                        className="org-action-button"
+                    >
+                        {loading ? 'Preparing PDF...' : 'VIEW FORMS'}
+                    </Button>
+                )}
+            </PDFDownloadLink>
+        );
+    }
+};
+
+const getPdfComponent = (formType) => {
+    switch (formType) {
+        case 'Budget': return BudgetPdf;
+        case 'Project': return ProjectPdf;
+        default: return ActivityPdf;
+    }
+};
+
+const getPdfFileName = (formType, details) => {
+    switch (formType) {
+        case 'Budget': return `budget_${details?.nameOfRso || ''}.pdf`;
+        case 'Project': return `project_${details?.projectTitle || ''}.pdf`;
+        default: return `activity_${details?.eventTitle || ''}.pdf`;
+    }
+};
+
+const sanitizeFormData = (formData) => {
+    if (!formData) return {};
+    return {
+        ...formData,
+        presidentSignature: formData.presidentSignature?.url || formData.presidentSignature,
+        studentOrganization: formData.studentOrganization?.organizationName || formData.studentOrganization,
+        organizationType: formData.studentOrganization?.organizationType || formData.organizationType
     };
+};
 
     const handleFeedbackSubmit = async () => {
         if (!rating || !feedbackText.trim()) {
@@ -284,13 +334,17 @@ const OrgTrackerViewer = () => {
                         })}
                     </div>
                     <div className="org-action-buttons">
-                        <Button 
-                            variant="contained" 
-                            className="org-action-button" 
-                            onClick={handleViewForms}
-                        >
-                            {isLocalOffCampus ? 'VIEW FORM' : 'VIEW FORMS'}
-                        </Button>
+                        {isLocalOffCampus ? (
+                            <Button 
+                                variant="contained" 
+                                className="org-action-button" 
+                                onClick={handleViewForms}
+                            >
+                                VIEW FORM
+                            </Button>
+                        ) : (
+                            handleViewForms() // This will render the PDFDownloadLink for regular forms
+                        )}
                     </div>
                 </div>
 
