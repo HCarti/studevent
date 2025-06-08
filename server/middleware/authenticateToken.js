@@ -6,13 +6,25 @@ const authenticateToken = (req, res, next) => {
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
-    return res.status(403).json({ message: 'Access denied. Token missing or malformed.' });
+    return res.status(401).json({ 
+      message: 'Authorization required',
+      code: 'UNAUTHORIZED'
+    });
   }
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) {
-      return res.status(403).json({ message: 'Invalid token.' });
+      return res.status(403).json({
+        message: err.name === 'TokenExpiredError' 
+          ? 'Session expired' 
+          : 'Invalid token',
+        code: err.name === 'TokenExpiredError' 
+          ? 'TOKEN_EXPIRED' 
+          : 'INVALID_TOKEN',
+        expiredAt: err.expiredAt // Only present for expired tokens
+      });
     }
+    
     req.user = user;
     next();
   });
