@@ -152,7 +152,7 @@ const App = () => {
       <Navbar isLoggedIn={isSignedIn} user={user} handleLogout={handleLogout} />
       <div className="main-content">
         {/* Conditionally render SessionExpiredModal */}
-        {isSignedIn && <SessionExpiredModal />}
+        {isSignedIn && <SessionExpiredModal onLogout={handleLogout} />}
         <Routes>
           <Route
             path="/"

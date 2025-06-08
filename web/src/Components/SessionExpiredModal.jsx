@@ -1,29 +1,26 @@
-// components/SessionExpiredModal.jsx
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Modal, Button, Alert } from 'antd';
-import { jwtDecode } from 'jwt-decode'; // Changed to named import
+import { jwtDecode } from 'jwt-decode';
 
-const SessionExpiredModal = () => {
+const SessionExpiredModal = ({ onLogout }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [showWarning, setShowWarning] = useState(false);
-  const navigate = useNavigate();
+  const [checkedInitial, setCheckedInitial] = useState(false);
 
-  // Enhanced token check with expiration buffer (5 minutes)
   const checkTokenStatus = () => {
     const token = localStorage.getItem('token');
     if (!token) return { expired: true };
     
     try {
       const decoded = jwtDecode(token);
-      const now = Date.now() / 1000; // Current time in seconds
+      const now = Date.now() / 1000;
       const expiresIn = decoded.exp - now;
       
       return {
         expired: expiresIn <= 0,
         expiresIn,
-        willExpireSoon: expiresIn > 0 && expiresIn <= 300 // 5 minutes
+        willExpireIn30Seconds: expiresIn > 0 && expiresIn <= 30 // Only care about 30 seconds now
       };
     } catch (error) {
       console.error('Token decode error:', error);
@@ -33,51 +30,57 @@ const SessionExpiredModal = () => {
 
   const handleLogout = () => {
     localStorage.clear();
-    setIsVisible(false);
-    navigate('/', { state: { sessionExpired: true } });
+    if (onLogout) onLogout();
+    window.location.href = '/';
   };
 
   useEffect(() => {
     // Immediate check on component mount
     const tokenStatus = checkTokenStatus();
+    setCheckedInitial(true);
+    
     if (tokenStatus.expired) {
       setIsVisible(true);
       return;
     }
 
-    // Set up countdown timer if token will expire soon
-    if (tokenStatus.willExpireSoon) {
+    // Only set up timer if we're within 30 seconds
+    if (tokenStatus.willExpireIn30Seconds) {
       setSecondsLeft(Math.floor(tokenStatus.expiresIn));
       setShowWarning(true);
     }
 
-    // Check token status every 30 seconds
+    // Check more frequently when we're close to expiration
     const interval = setInterval(() => {
       const status = checkTokenStatus();
       
       if (status.expired) {
         setIsVisible(true);
         clearInterval(interval);
-      } else if (status.willExpireSoon) {
+      } else if (status.willExpireIn30Seconds) {
         setSecondsLeft(Math.floor(status.expiresIn));
         setShowWarning(true);
+      } else if (secondsLeft > 30) {
+        setShowWarning(false);
       }
-    }, 30000);
+    }, 1000); // Check every second when we're close
 
     return () => clearInterval(interval);
   }, []);
 
   // Countdown effect for warning message
   useEffect(() => {
-    if (!showWarning || secondsLeft <= 0) return;
+    if (!showWarning) return;
 
     const timer = setInterval(() => {
       setSecondsLeft(prev => {
-        if (prev <= 1) {
+        const newSeconds = prev - 1;
+        if (newSeconds <= 0) {
           clearInterval(timer);
+          setIsVisible(true);
           return 0;
         }
-        return prev - 1;
+        return newSeconds;
       });
     }, 1000);
 
@@ -86,8 +89,8 @@ const SessionExpiredModal = () => {
 
   return (
     <>
-      {/* Warning message before expiration */}
-      {showWarning && (
+      {/* Warning message - only shows at exactly 30 seconds */}
+      {showWarning && secondsLeft <= 30 && (
         <Alert
           message={`Your session will expire in ${secondsLeft} seconds. Please save your work.`}
           type="warning"
@@ -96,7 +99,7 @@ const SessionExpiredModal = () => {
           onClose={() => setShowWarning(false)}
           style={{
             position: 'fixed',
-            top: 20,
+            top: 70,
             right: 20,
             zIndex: 1000,
             maxWidth: 400
