@@ -32,8 +32,7 @@ const SessionExpiredModal = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.clear();
     setIsVisible(false);
     navigate('/', { state: { sessionExpired: true } });
   };
