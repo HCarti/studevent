@@ -25,7 +25,7 @@ const createToken = (user) => {
       deanForOrganization: user.deanForOrganization || '',
     },
     process.env.JWT_SECRET,
-    { expiresIn: "1d" }
+    { expiresIn: "1m" }
   );
 };
 

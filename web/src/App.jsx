@@ -40,6 +40,7 @@ import SuperAdminLogs from './SuperAdmin/SuperAdminLogs';
 import SuperAdminCalendar from './SuperAdmin/SuperAdminCalendar';
 import SuperAdminAdmins from './SuperAdmin/SuperAdminAdmins';
 import TrashBin from './SuperAdmin/TrashBin';
+import SessionExpiredModal from './Components/SessionExpiredModal';
 
 // Global styles to hide scrollbar
 const globalStyles = `
@@ -150,6 +151,7 @@ const App = () => {
     <Router>
       <Navbar isLoggedIn={isSignedIn} user={user} handleLogout={handleLogout} />
       <div className="main-content">
+        <SessionExpiredModal />
         <Routes>
           <Route
             path="/"
