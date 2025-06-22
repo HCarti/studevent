@@ -398,7 +398,7 @@ const handleBlockSubmit = async () => {
 
   return (
     <div className="superadmin-calendar-container">
-      <h1 className="calendar-title">SUPERADMIN CALENDAR - DATE MANAGEMENT</h1>
+      <h1 className="calendar-title">CALENDAR - DATE MANAGEMENT</h1>
 
       {loading && (
         <div className="loader-overlay">
