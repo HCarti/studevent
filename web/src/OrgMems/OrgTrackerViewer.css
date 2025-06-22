@@ -1,4 +1,17 @@
 /* Main Container - Matched to ProgressTracker */
+.org-submitted-forms-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-height: calc(100vh - 200px); /* Added max-height with overflow */
+  overflow: auto; /* Added scroll if content overflows */
+  padding: 10px 0; /* Adjusted padding */
+  min-width: 0; /* Prevent flex item overflow */
+  border: 1px solid;
+  border-radius: 20px;
+}
+
 .org-prog-box {
   border: 1px solid #e8e8e8;
   background-color: #ffffff;
@@ -11,6 +24,7 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   overflow: hidden;
   box-sizing: border-box;
+  border: 1px solid;
 }
 
 .proposal-ttl {

@@ -366,7 +366,7 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
         navigate(`/organization/${organizationId}/forms`);
         break;
       case 'liquidation':
-        navigate(`/liquidations`);
+        navigate(`/dashboard`);
         break;
       case 'orgtracker':
         if (notification.trackerId) {
