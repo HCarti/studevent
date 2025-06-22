@@ -88,16 +88,17 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   }, []);
 
   useEffect(() => {
-    // Check if user just logged in
-    if (isLoggedIn && prevIsLoggedInRef.current === false) {
-      setShowWelcomeBubble(true);
-      const timer = setTimeout(() => {
-        setShowWelcomeBubble(false);
-      }, 3000); // Hide after 3 seconds
-      return () => clearTimeout(timer);
-    }
-    prevIsLoggedInRef.current = isLoggedIn;
-  }, [isLoggedIn]);
+  // Check if user just logged in
+  if (isLoggedIn && prevIsLoggedInRef.current === false && 
+      user && (user.role === 'Admin' || user.role === 'Authority' || user.role === 'SuperAdmin')) {
+    setShowWelcomeBubble(true);
+    const timer = setTimeout(() => {
+      setShowWelcomeBubble(false);
+    }, 3000); // Hide after 3 seconds
+    return () => clearTimeout(timer);
+  }
+  prevIsLoggedInRef.current = isLoggedIn;
+}, [isLoggedIn, user]);
 
   // Notifications
   useEffect(() => {
@@ -383,12 +384,8 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
   };
 
   return (
+    <>
     <div className="navbar" ref={navbarRef}>
-      {showWelcomeBubble && isLoggedIn && user && (
-        <div className="welcome-bubble">
-          Welcome, {user.firstName} {user.lastName}!
-        </div>
-      )}
       <div className="navbar-logo" onClick={handleNavbarClick}>
         <img src={StudeventLogo} alt="StudEvent Logo" />
         <div className="navbar-title">StudEvent</div>
@@ -621,6 +618,14 @@ const Navbar = ({ isLoggedIn, user, handleLogout }) => {
         </div>
       )}
     </div>
+    {showWelcomeBubble && isLoggedIn && user && 
+    (user.role === 'Admin' || user.role === 'Authority' || user.role === 'SuperAdmin') && (
+      <div className="welcome-bubble">
+        Welcome, {user.firstName} {user.lastName}!
+      </div>
+    )
+  }
+    </>
   );
 };
 

@@ -717,6 +717,7 @@
 /* Welcome Speech Bubble Styles */
 .welcome-bubble {
   position: absolute;
+  margin-top: 50px;
   right: 20px;
   background-color: #1a3ab5;
   color: white;
